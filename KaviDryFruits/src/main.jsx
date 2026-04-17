@@ -14,6 +14,7 @@ import { StoreProvider } from "./Context/StoreContext.jsx";
 import AddToFav from "./Shop/AddToFav.jsx";
 import Checkout from "./Shop/Checkout.jsx";
 import PrivateRouter from "./PrivateRouter/PrivateRouter.jsx";
+import { AuthProvider } from "./PrivateRouter/AuthContext.jsx";
 import Orders from "./Shop/Orders.jsx";
 import ErrorPage from "./Component/ErrorPage.jsx";
 import Account from "./MyAccount/Account.jsx";
@@ -26,8 +27,11 @@ import Offers from "./Offers/Offers.jsx";
 import SingleComboProduct from "./Combos/SingleComboProduct.jsx";
 import Adminpanel from "./Admin/AdminPanel.jsx";
 import { Toaster } from "react-hot-toast";
-import ViewInvoice from "./Admin/ViewInvoice.jsx";
+// import ViewInvoice from "./Admin/ViewInvoice.jsx";
 import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
+
+import Dashboard from "./Admin/Dashboard.jsx";
+
 
 const router = createBrowserRouter([
   {
@@ -89,18 +93,30 @@ const router = createBrowserRouter([
       },
     ],
   },
+
+  {
+    path: "/adminpanel",
+    element: (
+      <PrivateRouter allowedRoles={["admin"]}>
+        <Adminpanel />
+      </PrivateRouter>
+    ),
+    children: [
+      { index: true, element: <Dashboard /> },
+    ]},
+
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
-  { path: "/adminpanel", element: <Adminpanel /> },
-  { path: "/admin/invoice", element: <ViewInvoice /> },
+  // { path: "/admin/invoice", element: <ViewInvoice /> },
   
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <StoreProvider>
-        <RouterProvider router={router} />
+      <AuthProvider>
+        <StoreProvider>
+          <RouterProvider router={router} />
         <Toaster
           position="top-right"
           toastOptions={{
@@ -113,7 +129,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             duration: 2000,
           }}
         />
-      </StoreProvider>
+        </StoreProvider>
+      </AuthProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>
 );

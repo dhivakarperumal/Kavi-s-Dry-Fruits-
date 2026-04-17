@@ -1,11 +1,10 @@
-
-
-
 import React, { useEffect, useState } from "react";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 import Sidebar from "./Headers/Sidebar";
 import Topbar from "./Headers/TopHeader";
@@ -43,28 +42,28 @@ const AdminPanel = () => {
   const [lowStockCount, setLowStockCount] = useState(0);
 
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   // Fetch admin name
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (!user) return navigate("/");
+    if (!user) {
+      navigate("/");
+      return;
+    }
 
-      const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
-        const matched = snap.docs.find((doc) => doc.data()?.email === user.email);
-        if (matched) setAdminName(matched.data()?.username || "Administrator");
+    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
+      const matched = snap.docs.find((doc) => doc.data()?.email === user?.email);
+      if (matched) setAdminName(matched.data()?.username || "Administrator");
 
-        // Update collection counts
-        setCollectionCounts({
-          users: snap.docs.length,
-          // orders and products updated elsewhere
-        });
-      });
-
-      return () => unsubUsers();
+      // Update collection counts
+      setCollectionCounts((prev) => ({
+        ...prev,
+        users: snap.docs.length,
+      }));
     });
 
-    return () => unsubscribeAuth();
-  }, [navigate]);
+    return () => unsubUsers();
+  }, [user, navigate]);
 
   // Fetch orders and stock
   useEffect(() => {
@@ -135,7 +134,8 @@ const AdminPanel = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      try { await signOut(auth); } catch (e) {} // sign out of firebase silently if connected
+      if (logout) logout();
       toast.success("Logged out successfully!");
       navigate("/");
     } catch (err) {

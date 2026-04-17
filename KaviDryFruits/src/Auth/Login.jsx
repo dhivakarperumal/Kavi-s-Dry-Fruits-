@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import api from "../services/api";
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const Login = () => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,7 +26,8 @@ const Login = () => {
         password,
       });
       const result = response.data;
-      localStorage.setItem('user', JSON.stringify({
+      
+      const userData = {
         userId: result.userId,
         user_id: result.user_id || result.userUuid,
         userUuid: result.userUuid || result.user_id,
@@ -32,7 +35,10 @@ const Login = () => {
         firstName: result.firstName || result.username,
         email: result.email,
         role: result.role,
-      }));
+      };
+
+      // Call the context login function which sets localStorage AND updates state
+      login(userData, result.token || "user-token");
 
       setMessage(result.message || 'Login Successful!');
       setMessageType('success');
@@ -204,8 +210,7 @@ const Login = () => {
                 const response = await api.post('/auth/google-login', googleUserData);
                 const result = response.data;
 
-                // Store backend response in localStorage
-                localStorage.setItem('user', JSON.stringify({
+                const userData = {
                   userId: result.userId,
                   user_id: result.user_id,
                   userUuid: result.userUuid,
@@ -215,8 +220,10 @@ const Login = () => {
                   role: result.role,
                   provider: result.provider,
                   photoURL: decoded.picture || "",
-                }));
-                localStorage.setItem('token', credentialResponse.credential);
+                };
+
+                // Call the context login function which sets localStorage AND updates state
+                login(userData, credentialResponse.credential);
 
                 setMessage("Google login successful. Redirecting...");
                 setMessageType("success");

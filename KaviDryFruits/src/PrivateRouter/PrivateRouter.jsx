@@ -1,12 +1,14 @@
 import React, { useState } from "react";
+import { Navigate } from "react-router-dom";
 
 import { useAuth } from "./AuthContext";
 
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { user } = useAuth();
-  const [showLogin, setShowLogin] = useState(!user);
 
-
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (allowedRoles.length && !allowedRoles.includes(user.role)) {
     return (

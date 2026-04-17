@@ -188,7 +188,7 @@ const Navbar = () => {
                     >
                       <FaBoxOpen  size={15} /> My Orders
                     </button>
-                    {role === "Admin" && (
+                    {role === "admin" && (
                       <Link to="/adminpanel" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-4 py-3 font-bold hover:text-green-600">
                         <RiAdminLine  size={15} /> Admin Dashboard
                       </Link>
