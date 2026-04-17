@@ -204,7 +204,7 @@ const AdminPanel = () => {
         handleLogout={handleLogout}
       />
 
-      <div className="flex-1 flex flex-col ml-0 md:ml-64 overflow-hidden">
+      <div className="flex-1 flex flex-col ml-0 md:ml-72 overflow-hidden">
         <Topbar
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
