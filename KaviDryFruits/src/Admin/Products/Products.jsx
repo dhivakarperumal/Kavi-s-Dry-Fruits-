@@ -485,6 +485,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Description *</label><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows="4" className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 outline-none resize-none font-medium text-gray-700 shadow-sm" placeholder="Describe pack contents..." /></div>
               </div>
               <div className="space-y-6">
+                <div className="bg-white p-6 rounded-[2rem] border border-dashed border-amber-200 shadow-inner flex flex-col items-center justify-center relative group min-h-[160px]">
+                  <div className="absolute top-4 left-6"><span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Pack Barcode</span></div>
+                  <div className="mt-4"><svg ref={barcodeRef}></svg></div>
+                  <p className="mt-3 text-[9px] font-bold text-gray-400 font-mono tracking-widest">{form.productId}</p>
+                </div>
                 <div className="bg-amber-50/30 p-6 rounded-[2rem] border border-amber-100">
                   <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Combo Strategy Registry</h4>
                   <div className="flex gap-4">
@@ -610,8 +615,6 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 ))}
               </div>
             </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <div className="bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100 shadow-xl overflow-hidden relative">
               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/40 rounded-full blur-3xl"></div>
               <div className="relative z-10">
@@ -628,15 +631,6 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 </div>
               </div>
             </div>
-
-            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col items-center justify-center">
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8">Pack Barcode</h3>
-              <div className="bg-white p-6 rounded-3xl border-2 border-dashed border-orange-100 shadow-inner">
-                <svg ref={barcodeRef}></svg>
-              </div>
-              <p className="mt-4 text-[10px] font-black text-orange-400 uppercase tracking-widest">Auto-Generated for {form.productId}</p>
-            </div>
-          </div>
           </div>
         </div>
         <div className="pt-10 flex justify-end">
