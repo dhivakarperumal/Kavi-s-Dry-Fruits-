@@ -1,16 +1,12 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-
+import api from "../services/api";
 
 const Register = () => {
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +24,6 @@ const Register = () => {
   // -----------------------------------------------------------
   const validateInputs = () => {
     if (!firstName.trim()) return "First name is required.";
-    if (!lastName.trim()) return "Last name is required.";
 
     if (!email.trim()) return "Email address is required.";
     if (!email.includes("@") || !email.includes(".")) return "Invalid email format.";
@@ -61,33 +56,19 @@ const Register = () => {
     }
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      await setDoc(doc(db, "users", user.uid), {
-        username: `${firstName} ${lastName}`,
+      const response = await api.post('/auth/register', {
+        firstName,
         email,
         phone,
-        createdAt: serverTimestamp(),
+        password,
       });
-
-      setMessage("Registration successful!");
-      setMessageType("success");
-
-      setTimeout(() => navigate("/login"), 1500);
+      const result = response.data;
+      setMessage(result.message || 'Registration successful!');
+      setMessageType('success');
+      setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
-      let errorMsg = "Registration failed.";
-
-      if (error.code === "auth/email-already-in-use") {
-        errorMsg = "This email is already registered.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMsg = "Invalid email format.";
-      } else if (error.code === "auth/weak-password") {
-        errorMsg = "Password must be at least 6 characters.";
-      }
-
-      setMessage(errorMsg);
-      setMessageType("error");
+      setMessage(error.response?.data?.message || error.message || 'Registration failed.');
+      setMessageType('error');
     }
   };
 
@@ -123,21 +104,34 @@ const Register = () => {
           )}
 
           <form onSubmit={handleRegister} className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">Need a test user?</h3>
+                <p className="text-xs text-gray-500">Click below to fill the register form.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFirstName('TestUser');
+                  setEmail('testuser@example.com');
+                  setPhone('9999999999');
+                  setPassword('Test@1234');
+                  setConfirmPassword('Test@1234');
+                  setAgreed(true);
+                }}
+                className="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              >
+                Fill Test User
+              </button>
+            </div>
             {/* Name */}
-            <div className="flex gap-2">
+            <div>
               <input
                 type="text"
                 placeholder="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-1/2 border border-green-400 rounded-md px-4 py-2"
-              />
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-1/2 border border-green-400 rounded-md px-4 py-2"
+                className="w-full border border-green-400 rounded-md px-4 py-2"
               />
             </div>
 

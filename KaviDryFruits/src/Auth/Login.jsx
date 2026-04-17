@@ -1,16 +1,7 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { auth, provider, db } from "../firebase";
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  EmailAuthProvider,
-  linkWithCredential,
-  sendPasswordResetEmail,
-  GoogleAuthProvider, // added fallback provider
-} from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import api from "../services/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -22,134 +13,45 @@ const Login = () => {
   const [messageType, setMessageType] = useState("");
   const navigate = useNavigate();
 
-  // small helper to ensure firebase exports exist
-  const ensureFirebase = (setMsg = true) => {
-    if (!auth || !db) {
-      if (setMsg) {
-        setMessage("Firebase not initialized. Check src/firebase.js exports (auth, db).");
-        setMessageType("error");
-      }
-      console.error("Missing Firebase exports: ", { auth, db, provider });
-      return false;
-    }
-    return true;
-  };
-
-  const checkAndSetRole = async (user) => {
-    if (!ensureFirebase()) return;
-    const userDocRef = doc(db, "users", user.uid);
-    let userSnap = null;
-
-    try {
-      userSnap = await getDoc(userDocRef);
-    } catch (err) {
-      console.warn("getDoc failed (maybe offline):", err);
-    }
-
-    // normalize email (trim + lowercase) and remove stray spaces
-    const role = (user?.email || "").trim().toLowerCase() === "kavisdryfruits@gmail.com"
-      ? "Admin"
-      : "User";
-
-    try {
-      if (userSnap && userSnap.exists()) {
-        const userData = userSnap.data();
-        if (!userData.role) {
-          await setDoc(userDocRef, { ...userData, role }, { merge: true });
-        }
-      } else {
-        await setDoc(userDocRef, {
-          username: user.displayName || "No Name",
-          email: user.email,
-          role,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    } catch (err) {
-      console.warn("Failed to write user doc (may be offline):", err);
-      // don't block login on Firestore write failure
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!ensureFirebase()) return;
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      await checkAndSetRole(user);
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+      });
+      const result = response.data;
+      localStorage.setItem('user', JSON.stringify({
+        userId: result.userId,
+        user_id: result.user_id || result.userUuid,
+        userUuid: result.userUuid || result.user_id,
+        username: result.username,
+        firstName: result.firstName || result.username,
+        email: result.email,
+        role: result.role,
+      }));
 
-      setMessage("Login Successful!");
-      setMessageType("success");
-
-      let userData = null;
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        userData = snap?.data();
-      } catch (err) {
-        console.warn("Failed to fetch user doc after login (offline?):", err);
-      }
-      setTimeout(() => navigate(userData?.role === "Admin" ? "/adminpanel" : "/"), 1000);
+      setMessage(result.message || 'Login Successful!');
+      setMessageType('success');
+      setTimeout(() => navigate(result.role === 'Admin' ? '/adminpanel' : '/'), 1000);
     } catch (error) {
-      setMessage("Invalid email or password.");
-      setMessageType("error");
-      console.error("Login error:", error);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (!ensureFirebase()) return;
-    try {
-      // fallback to creating provider if not exported from ../firebase
-      const googleProvider = provider || new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      // Navigate immediately after successful authentication
-      navigate("/");
-
-      await checkAndSetRole(user);
-      setMessage("Login Successful via Google!");
-      setMessageType("success");
-
-      let userData = null;
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        userData = snap?.data();
-      } catch (err) {
-        console.warn("Failed to fetch user doc after Google sign-in (offline?):", err);
-      }
-
-      // Update navigation based on user role after fetching user data
-      if (userData?.role === "Admin") {
-        navigate("/adminpanel");
-      }
-    } catch (error) {
-      console.error("Google Sign-In error:", error);
-      setMessage("Google Sign-In failed. Check console for details.");
-      setMessageType("error");
+      setMessage(error.response?.data?.message || error.message || 'Invalid email or password.');
+      setMessageType('error');
+      console.error('Login error:', error);
     }
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     if (!resetEmail) {
-      setMessage("Please enter your email.");
-      setMessageType("error");
+      setMessage('Please enter your email.');
+      setMessageType('error');
       return;
     }
 
-    try {
-      await sendPasswordResetEmail(auth, resetEmail);
-      setMessage("Password reset email sent successfully!");
-      setMessageType("success");
-      setResetEmail("");
-      setShowResetForm(false);
-    } catch (error) {
-      console.error("Reset error:", error);
-      setMessage("Failed to send reset email. Check the email entered.");
-      setMessageType("error");
-    }
+    setMessage('Password reset is not available in the current MySQL auth flow.');
+    setMessageType('error');
   };
 
   return (
@@ -266,20 +168,6 @@ const Login = () => {
               Log in
             </button>
 
-            <div className="text-center text-gray-500 my-2 text-sm ">or Sign in with</div>
-
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              className="cursor-pointer w-full flex items-center justify-center border border-primary py-2 rounded-md hover:bg-gray-100 transition"
-            >
-              <img
-                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                alt="Google"
-                className="w-5 h-5 mr-3 "
-              />
-              <span className="text-sm font-medium">Sign in with Google</span>
-            </button>
           </form>
 
           <p className="text-sm text-center text-gray-600 mt-6">
