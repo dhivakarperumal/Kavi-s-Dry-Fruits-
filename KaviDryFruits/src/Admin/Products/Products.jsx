@@ -163,15 +163,32 @@ const SingleProductForm = ({ categories, onSuccess, products }) => {
     }
   }, [form.productId, form.barcodeValue]);
 
+  const handleImageUpload = async (e) => {
+    const rawFiles = Array.from(e.target.files);
+    try {
+      toast.loading("Compressing...", { id: "up-p" });
+      const base64 = await Promise.all(
+        rawFiles.map((file) =>
+          imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1000, useWebWorker: true }).then((blob) => {
+            return new Promise((res) => {
+              const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
+            });
+          }),
+        ),
+      );
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
+      toast.success("Ready!", { id: "up-p" });
+    } catch { toast.error("Fail", { id: "up-p" }); }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       await api.post("/products", form);
       onSuccess();
-      setForm({ ...form, name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }], totalStock: "0" });
-      toast.success("Product Registered Successfully");
-    } catch { toast.error("Failed to register product"); }
+      setForm({ ...form, name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0" });
+    } catch { toast.error("Failed"); }
     setLoading(false);
   };
 
@@ -180,93 +197,113 @@ const SingleProductForm = ({ categories, onSuccess, products }) => {
       <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-400 p-10 text-white relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-black uppercase tracking-tight">Product Studio</h2>
-            <p className="opacity-90 font-medium mt-1 text-emerald-50 uppercase tracking-[0.2em] text-[10px]">Direct Inventory Entry Mode</p>
-          </div>
+          <div><h2 className="text-3xl font-black uppercase tracking-tight">Product Studio</h2><p className="opacity-90 font-medium mt-1 text-emerald-50 uppercase tracking-[0.2em] text-xs"> Fresh Inventory Entry</p></div>
           <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30"><span className="font-black tracking-widest text-sm">{form.productId}</span></div>
         </div>
       </div>
-      <form onSubmit={handleSubmit} className="p-10 space-y-12">
+      <form onSubmit={handleSubmit} className="p-10 space-y-10">
         <div className="space-y-12">
-          {/* Section 1: Identity */}
+          {/* Identity Section - Full Width */}
           <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
-            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Core Identity</h3>
+            <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Identity & Details</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               <div className="space-y-6">
-                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Product Title *</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm transition-all" placeholder="e.g. Premium Roasted Almonds" /></div>
+                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Product Title *</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold text-gray-900 shadow-sm" placeholder="e.g. Premium Roasted Almonds" /></div>
                 <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Composition / Description *</label><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows="3" className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none transition-all resize-none font-medium text-gray-700 leading-relaxed shadow-sm" placeholder="Describe quality, origin, benefits..." /></div>
               </div>
               <div className="space-y-6">
-                <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category Select *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm transition-all cursor-pointer hover:bg-emerald-50"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
-                <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100 h-full flex flex-col justify-center">
-                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Sync Radar</h4>
+                <div className="grid grid-cols-2 gap-6">
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Stock (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalStock}</span><span className="text-[10px] text-emerald-400">UNITS</span></div></div>
+                </div>
+                <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
+                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
                    <div className="flex items-center gap-4">
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[95%] animate-pulse"></div></div>
-                      <span className="text-[10px] font-black text-emerald-700">95% READY</span>
+                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[60%] animate-pulse"></div></div>
+                      <span className="text-[10px] font-black text-emerald-700">60% COMPLETE</span>
                    </div>
-                   <p className="text-[9px] text-emerald-400 mt-2 font-black uppercase tracking-tighter">Photography Layer Bypassed</p>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Registry & Ranges - Full Width Spanning */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {/* Section 2: Registry */}
             <div className="bg-emerald-50/50 p-8 rounded-[3rem] border border-emerald-100 shadow-xl shadow-emerald-50/20">
-              <div className="flex justify-between items-center mb-10"><div><h3 className="text-xl font-black text-emerald-900 uppercase tracking-tight">Digital Registry</h3><div className="w-12 h-1.5 bg-emerald-500 mt-1 rounded-full"></div></div><div className="px-5 py-3 bg-white rounded-2xl border border-emerald-200 font-black text-emerald-700 shadow-sm">{form.productId}</div></div>
+              <div className="flex justify-between items-center mb-8"><div><h3 className="text-xl font-black text-emerald-900 uppercase tracking-tight">Digital Registry</h3><div className="w-12 h-1.5 bg-emerald-500 mt-1 rounded-full"></div></div><div className="px-5 py-3 bg-white rounded-2xl border border-emerald-200 font-black text-emerald-700 shadow-sm">{form.productId}</div></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4"><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 block">SKU / Barcode Input</label><input value={form.barcodeValue} onChange={(e) => setForm({ ...form, barcodeValue: e.target.value })} className="w-full bg-white border-2 border-emerald-100 focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold shadow-sm" placeholder="System Generated ID" /></div>
-                <div className="bg-white p-6 rounded-[2rem] border border-emerald-100 flex flex-col items-center justify-center gap-2 shadow-inner"><svg className="absolute -left-[9999px]" ref={barcodeRef}></svg>{form.barcode ? <img src={form.barcode} alt="bc" className="h-20 w-full object-contain" /> : <div className="animate-pulse text-[10px] text-emerald-300 font-black uppercase">Syncing...</div>}</div>
+                <div className="space-y-4"><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1 block">SKU Code / Barcode</label><input value={form.barcodeValue} onChange={(e) => setForm({ ...form, barcodeValue: e.target.value })} className="w-full bg-white border-2 border-emerald-100 focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-bold shadow-sm" placeholder="System Default" /></div>
+                <div className="bg-white p-8 rounded-[2rem] border-2 border-dashed border-emerald-200 flex flex-col items-center justify-center gap-2 shadow-inner"><svg className="absolute -left-[9999px]" ref={barcodeRef}></svg>{form.barcode ? <img src={form.barcode} alt="bc" className="h-24 w-full object-contain" /> : <div className="animate-pulse text-[10px] text-emerald-300 font-black uppercase">Generating...</div>}</div>
               </div>
             </div>
 
-            {/* Section 3: Health Benefits */}
-            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Health Analysis</h3>
-                <button type="button" onClick={() => setForm({ ...form, healthBenefits: [...form.healthBenefits, ""] })} className="bg-emerald-500 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2"><FaPlus size={10}/> Add Factor</button>
-              </div>
-              <div className="space-y-4 overflow-y-auto max-h-[180px] pr-2 scrollbar-thin scrollbar-thumb-emerald-100">
-                {form.healthBenefits.map((benefit, idx) => (
-                  <div key={idx} className="flex gap-3 group">
-                    <div className="flex-1 relative">
-                       <FaHeartbeat className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-200 group-focus-within:text-emerald-500 transition-colors" />
-                       <input
-                        value={benefit} 
-                        onChange={(e) => { const newBenefits = [...form.healthBenefits]; newBenefits[idx] = e.target.value; setForm({ ...form, healthBenefits: newBenefits }); }}
-                        className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-xl pl-12 pr-6 py-3.5 outline-none font-bold text-sm text-gray-800 transition-all shadow-inner"
-                        placeholder="e.g. Rich in Omega-3"
-                      />
-                    </div>
-                    {form.healthBenefits.length > 1 && (
-                      <button type="button" onClick={() => setForm({ ...form, healthBenefits: form.healthBenefits.filter((_, i) => i !== idx) })} className="p-3 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all"><FaTrash size={12}/></button>
-                    )}
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+              <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
+              <div className="space-y-6">
+                {form.variants.map((v, i) => (
+                  <div key={i} className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 relative group truncate">
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Weight</label><input placeholder="250g" value={v.weight} onChange={(e) => { const u = [...form.variants]; u[i].weight = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold shadow-sm" /></div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">MRP (₹)</label><input type="number" placeholder="500" value={v.mrp} onChange={(e) => { const u = [...form.variants]; u[i].mrp = e.target.value; u[i].offerPrice = Math.round(Number(e.target.value) - (Number(e.target.value) * Number(u[i].offerPercent)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-emerald-700 shadow-sm" /></div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Discount %</label><input type="number" placeholder="10" value={v.offerPercent} onChange={(e) => { const u = [...form.variants]; u[i].offerPercent = e.target.value; u[i].offerPrice = Math.round(Number(u[i].mrp) - (Number(u[i].mrp) * Number(e.target.value)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-orange-600 shadow-sm" /></div>
+                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Stock Qty</label><input type="number" placeholder="0" value={v.stock} onChange={(e) => { const u = [...form.variants]; u[i].stock = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-black text-blue-600 shadow-sm" /></div>
+                    <div><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1.5 ml-1">Final Price</label><div className="bg-emerald-100 px-4 py-3 rounded-xl font-black text-emerald-800 text-[11px] shadow-inner text-center">₹{v.offerPrice || 0}</div></div>
+                    {form.variants.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }))} className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><FaTrash size={10} /></button>)}
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Section 4: Variants - Full Width */}
-          <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
-            <div className="flex justify-between items-center mb-10"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Price & Weight Matrix</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }] }))} className="bg-emerald-600 text-white px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Add New Range</button></div>
-            <div className="grid grid-cols-1 gap-6">
-              {form.variants.map((v, i) => (
-                <div key={i} className="grid grid-cols-2 md:grid-cols-5 gap-6 bg-gray-50/50 p-7 rounded-[2.5rem] border border-gray-100 relative group animate-in slide-in-from-left-4 duration-500">
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Item Weight</label><input placeholder="e.g. 500g" value={v.weight} onChange={(e) => { const u = [...form.variants]; u[i].weight = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 font-bold shadow-sm transition-all" /></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">MRP (₹)</label><input type="number" placeholder="0" value={v.mrp} onChange={(e) => { const u = [...form.variants]; u[i].mrp = e.target.value; u[i].offerPrice = Math.round(Number(e.target.value) - (Number(e.target.value) * Number(u[i].offerPercent)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 font-bold text-emerald-700 shadow-sm transition-all" /></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Discount %</label><input type="number" placeholder="0" value={v.offerPercent} onChange={(e) => { const u = [...form.variants]; u[i].offerPercent = e.target.value; u[i].offerPrice = Math.round(Number(u[i].mrp) - (Number(u[i].mrp) * Number(e.target.value)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 font-bold text-orange-600 shadow-sm transition-all" /></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 ml-1">Current Stock</label><input type="number" placeholder="0" value={v.stock} onChange={(e) => { const u = [...form.variants]; u[i].stock = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 font-black text-blue-600 shadow-sm transition-all" /></div>
-                  <div className="flex flex-col justify-center"><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-2 ml-1">Studio Price</label><div className="bg-emerald-100 flex items-center justify-center px-6 py-4 rounded-2xl font-black text-emerald-800 text-xl shadow-inner group-hover:scale-105 transition-transform">₹{v.offerPrice || 0}</div></div>
-                  {form.variants.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }))} className="absolute -top-3 -right-3 w-10 h-10 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xl hover:rotate-90 duration-300 z-10"><FaTrash size={14} /></button>)}
+           {/* Visual & Health Grid - Full Width Spanning */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Visual Assets</h3>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative aspect-square border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-emerald-200 hover:bg-emerald-50/20 transition-all cursor-pointer group">
+                  <input type="file" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" /><FaPlus className="text-emerald-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Add Photo</span>
                 </div>
-              ))}
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-2 ring-white hover:ring-emerald-500 transition-all">
+                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Health Analysis Points</h3>
+                <button type="button" onClick={() => setForm({ ...form, healthBenefits: [...form.healthBenefits, ""] })} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2"><FaPlus size={10}/> Add Point</button>
+              </div>
+              <div className="space-y-4 overflow-y-auto max-h-[250px] pr-2 scrollbar-thin scrollbar-thumb-emerald-100">
+                {form.healthBenefits.map((benefit, idx) => (
+                  <div key={idx} className="flex gap-3 group">
+                    <div className="flex-1 relative">
+                       <FaHeartbeat className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-200 group-focus-within:text-emerald-500 transition-colors" />
+                       <input
+                        value={benefit} 
+                        onChange={(e) => {
+                          const newBenefits = [...form.healthBenefits];
+                          newBenefits[idx] = e.target.value;
+                          setForm({ ...form, healthBenefits: newBenefits });
+                        }}
+                        className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-xl pl-12 pr-6 py-3 outline-none font-bold text-sm text-gray-800 transition-all shadow-inner"
+                        placeholder="e.g. Rich in Omega-3 Fatty Acids"
+                      />
+                    </div>
+                    {form.healthBenefits.length > 1 && (
+                      <button type="button" onClick={() => setForm({ ...form, healthBenefits: form.healthBenefits.filter((_, i) => i !== idx) })} className="p-3 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all">
+                        <FaTrash size={12}/>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-        <div className="pt-10 flex justify-end">
-          <button disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-24 py-6 rounded-[2.5rem] text-white font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all tracking-tight"> {loading ? "Syncing Logic..." : "Finalize Inventory Entry"}</button>
+        <div className="pt-10 flex justify-end border-t border-gray-100">
+          <button disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-20 py-5 rounded-3xl text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? "Saving Master Registry..." : "Save Product Details"}</button>
         </div>
       </form>
     </div>
