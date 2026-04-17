@@ -110,7 +110,7 @@ const Products = () => {
             <ComboProductForm categories={categories} onSuccess={fetchData} combos={combos} />
           )}
         </div>
-        
+
       </div>
     </div>
   );
@@ -240,11 +240,11 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Stock (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalStock}</span><span className="text-[10px] text-emerald-400">UNITS</span></div></div>
                 </div>
                 <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
-                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
-                   <div className="flex items-center gap-4">
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[60%] animate-pulse"></div></div>
-                      <span className="text-[10px] font-black text-emerald-700">60% COMPLETE</span>
-                   </div>
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[60%] animate-pulse"></div></div>
+                    <span className="text-[10px] font-black text-emerald-700">60% COMPLETE</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -277,7 +277,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
             </div>
           </div>
 
-           {/* Visual & Health Grid - Full Width Spanning */}
+          {/* Visual & Health Grid - Full Width Spanning */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
               <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Visual Assets</h3>
@@ -296,15 +296,15 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
             <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-emerald-500 rounded-full"></div> Health Analysis Points</h3>
-                <button type="button" onClick={() => setForm({ ...form, healthBenefits: [...form.healthBenefits, ""] })} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2"><FaPlus size={10}/> Add Point</button>
+                <button type="button" onClick={() => setForm({ ...form, healthBenefits: [...form.healthBenefits, ""] })} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg flex items-center gap-2"><FaPlus size={10} /> Add Point</button>
               </div>
               <div className="space-y-4 overflow-y-auto max-h-[250px] pr-2 scrollbar-thin scrollbar-thumb-emerald-100">
                 {form.healthBenefits.map((benefit, idx) => (
                   <div key={idx} className="flex gap-3 group">
                     <div className="flex-1 relative">
-                       <FaHeartbeat className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-200 group-focus-within:text-emerald-500 transition-colors" />
-                       <input
-                        value={benefit} 
+                      <FaHeartbeat className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-200 group-focus-within:text-emerald-500 transition-colors" />
+                      <input
+                        value={benefit}
                         onChange={(e) => {
                           const newBenefits = [...form.healthBenefits];
                           newBenefits[idx] = e.target.value;
@@ -316,7 +316,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                     </div>
                     {form.healthBenefits.length > 1 && (
                       <button type="button" onClick={() => setForm({ ...form, healthBenefits: form.healthBenefits.filter((_, i) => i !== idx) })} className="p-3 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all">
-                        <FaTrash size={12}/>
+                        <FaTrash size={12} />
                       </button>
                     )}
                   </div>
@@ -454,8 +454,8 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
                 <div className="bg-amber-50/30 p-6 rounded-[2rem] border border-amber-100">
                   <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Combo Strategy Registry</h4>
                   <div className="flex gap-4">
-                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
-                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Stock</p><p className="text-xl font-black text-amber-600">{form.totalStock}</p></div>
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Stock</p><p className="text-xl font-black text-amber-600">{form.totalStock}</p></div>
                   </div>
                 </div>
               </div>
@@ -486,7 +486,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
                 {form.healthBenefits.map((benefit, idx) => (
                   <div key={idx} className="flex gap-3 group">
                     <input
-                      value={benefit} 
+                      value={benefit}
                       onChange={(e) => {
                         const newBenefits = [...form.healthBenefits];
                         newBenefits[idx] = e.target.value;
@@ -497,7 +497,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
                     />
                     {form.healthBenefits.length > 1 && (
                       <button type="button" onClick={() => setForm({ ...form, healthBenefits: form.healthBenefits.filter((_, i) => i !== idx) })} className="p-3 bg-red-50 text-red-300 hover:text-red-500 rounded-xl transition-all">
-                        <FaTrash size={12}/>
+                        <FaTrash size={12} />
                       </button>
                     )}
                   </div>
@@ -521,8 +521,8 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
             </div>
 
             <div className="bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100 shadow-xl overflow-hidden relative">
-               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/40 rounded-full blur-3xl"></div>
-               <div className="relative z-10">
+              <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/40 rounded-full blur-3xl"></div>
+              <div className="relative z-10">
                 <div className="mb-10"><h3 className="text-xl font-black text-amber-900 uppercase tracking-tight">Financial Summary</h3><div className="w-12 h-1.5 bg-amber-500 mt-1 rounded-full"></div></div>
                 <div className="space-y-8">
                   <div className="grid grid-cols-2 gap-8">
@@ -534,7 +534,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
                     <div className="text-5xl font-black text-amber-900 flex items-baseline gap-2 transition-transform group-hover:scale-105 duration-500"><span className="text-2xl font-medium opacity-50">₹</span>{form.comboDetails.offerPrice || 0}</div>
                   </div>
                 </div>
-               </div>
+              </div>
             </div>
           </div>
         </div>
