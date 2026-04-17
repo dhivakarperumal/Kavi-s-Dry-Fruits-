@@ -11,6 +11,7 @@ const comboRoutes = require('./src/routers/comboRoutes');
 const userRoutes = require('./src/routers/userRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const dealerRoutes = require('./src/routers/dealerRoutes');
+const stickerRoutes = require('./src/routers/stickerRoutes');
 
 
 
@@ -34,6 +35,7 @@ app.use('/api/combos', comboRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dealers', dealerRoutes);
+app.use('/api/stickers', stickerRoutes);
 
 
 
