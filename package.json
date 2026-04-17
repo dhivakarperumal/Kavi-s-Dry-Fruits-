@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "name": "kavi's",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "backend": "nodemon Backend/index.js",
+    "frontend": "npm start --prefix KaviDryFruits",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
