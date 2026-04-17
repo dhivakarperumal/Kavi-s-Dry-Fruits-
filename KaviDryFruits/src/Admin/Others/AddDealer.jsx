@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import { db } from "../../firebase";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-} from "firebase/firestore";
+import api from "../../services/api";
 import { toast } from "react-hot-toast";
 
 const AddDealer = () => {
@@ -27,13 +19,16 @@ const AddDealer = () => {
   // --- Generate Next Dealer ID ---
   const generateDealerId = async () => {
     try {
-      const q = query(collection(db, "dealers"), orderBy("dealerId", "desc"), limit(1));
-      const snap = await getDocs(q);
-
-      if (snap.empty) {
+      const res = await api.get("/dealers");
+      if (res.data.length === 0) {
         setDealerId("KD0001");
       } else {
-        const lastId = snap.docs[0].data().dealerId;
+        const sorted = res.data.sort((a, b) => {
+          const numA = parseInt(a.dealerId.replace("KD", ""), 10);
+          const numB = parseInt(b.dealerId.replace("KD", ""), 10);
+          return numB - numA;
+        });
+        const lastId = sorted[0].dealerId;
         const num = parseInt(lastId.replace("KD", ""), 10) + 1;
         const newId = "KD" + num.toString().padStart(4, "0");
         setDealerId(newId);
@@ -47,9 +42,8 @@ const AddDealer = () => {
   // --- Fetch Dealers ---
   const fetchDealers = async () => {
     try {
-      const snap = await getDocs(collection(db, "dealers"));
-      const list = snap.docs.map((doc) => doc.data());
-      setDealers(list);
+      const res = await api.get("/dealers");
+      setDealers(res.data);
     } catch (error) {
       console.error("Error fetching dealers:", error);
       toast.error("Error loading dealers");
@@ -80,10 +74,9 @@ const AddDealer = () => {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "dealers"), {
+      await api.post("/dealers", {
         dealerId,
         ...formData,
-        createdAt: new Date().toISOString(),
       });
 
       toast.success("Dealer added successfully!");
