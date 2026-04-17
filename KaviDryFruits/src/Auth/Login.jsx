@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 import api from "../services/api";
 
 const Login = () => {
@@ -34,7 +36,7 @@ const Login = () => {
 
       setMessage(result.message || 'Login Successful!');
       setMessageType('success');
-      setTimeout(() => navigate(result.role === 'Admin' ? '/adminpanel' : '/'), 1000);
+      setTimeout(() => navigate(result.role === 'admin' ? '/adminpanel' : '/'), 1000);
     } catch (error) {
       setMessage(error.response?.data?.message || error.message || 'Invalid email or password.');
       setMessageType('error');
@@ -93,6 +95,11 @@ const Login = () => {
               {message}
             </div>
           )}
+        
+
+         
+
+         
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
@@ -170,7 +177,67 @@ const Login = () => {
 
           </form>
 
-          <p className="text-sm text-center text-gray-600 mt-6">
+
+
+         
+
+           <div className="flex items-center gap-2 text-gray-500 text-sm my-4">
+            <span className="flex-1 h-px bg-gray-300" />
+            <span>or</span>
+            <span className="flex-1 h-px bg-gray-300" />
+          </div>
+
+           <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              try {
+                const decoded = jwtDecode(credentialResponse.credential);
+                const googleUserData = {
+                  firstName: decoded.given_name || decoded.name?.split(" ")[0] || "User",
+                  lastName: decoded.family_name || "",
+                  username: decoded.name || decoded.email?.split("@")[0] || "User",
+                  email: decoded.email,
+                  googleId: decoded.sub,
+                  provider: "google",
+                };
+
+                // Call backend to store user data in database
+                const response = await api.post('/auth/google-login', googleUserData);
+                const result = response.data;
+
+                // Store backend response in localStorage
+                localStorage.setItem('user', JSON.stringify({
+                  userId: result.userId,
+                  user_id: result.user_id,
+                  userUuid: result.userUuid,
+                  username: result.username,
+                  firstName: result.firstName,
+                  email: result.email,
+                  role: result.role,
+                  provider: result.provider,
+                  photoURL: decoded.picture || "",
+                }));
+                localStorage.setItem('token', credentialResponse.credential);
+
+                setMessage("Google login successful. Redirecting...");
+                setMessageType("success");
+                setTimeout(() => navigate(result.role === 'Admin' ? '/adminpanel' : '/'), 1000);
+              } catch (error) {
+                setMessage(error.response?.data?.message || "Google login failed.");
+                setMessageType("error");
+                console.error("Google login error:", error);
+              }
+            }}
+            onError={() => {
+              setMessage("Google login failed.");
+              setMessageType("error");
+            }}
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+          />
+
+           <p className="text-sm text-center text-gray-600 mt-6">
             Don’t have an account?{" "}
             <Link to="/register" className="text-green-600 hover:underline font-medium">
               Sign Up

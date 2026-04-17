@@ -8,26 +8,21 @@ import {
 } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../firebase";
 
 const Header = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
-  // Real Firebase Auth State Checker
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user); // true if user exists
-    });
-
-    // Cleanup on unmount
-    return () => unsubscribe();
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!storedUser && !!token);
   }, []);
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setIsAuthenticated(false);
       navigate("/");
       window.location.reload();

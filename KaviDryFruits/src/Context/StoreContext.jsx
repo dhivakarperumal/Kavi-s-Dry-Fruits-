@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { auth, db } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "../firebase";
 import {
   collection,
   getDocs,
@@ -34,22 +33,24 @@ export const StoreProvider = ({ children }) => {
     let unsubscribeCart = () => {};
     let unsubscribeFav = () => {};
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
+    const storedUserStr = localStorage.getItem("user");
+    const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
+    setUser(storedUser);
 
-      if (currentUser) {
+    const setupListeners = async () => {
+      if (storedUser && storedUser.userId) {
         try {
-          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          const userDoc = await getDoc(doc(db, "users", storedUser.userId));
           setUserData(userDoc.exists() ? userDoc.data() : null);
 
           // CART LISTENER
-          const cartRef = collection(db, "users", currentUser.uid, "cart");
+          const cartRef = collection(db, "users", storedUser.userId, "cart");
           unsubscribeCart = onSnapshot(cartRef, (snap) => {
             setCartItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
           });
 
           // FAVORITES LISTENER
-          const favRef = collection(db, "users", currentUser.uid, "favorites");
+          const favRef = collection(db, "users", storedUser.userId, "favorites");
           unsubscribeFav = onSnapshot(favRef, (snap) => {
             setFavItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
           });
@@ -64,10 +65,11 @@ export const StoreProvider = ({ children }) => {
       }
 
       setLoading(false);
-    });
+    };
+
+    setupListeners();
 
     return () => {
-      unsubscribeAuth();
       unsubscribeCart();
       unsubscribeFav();
     };

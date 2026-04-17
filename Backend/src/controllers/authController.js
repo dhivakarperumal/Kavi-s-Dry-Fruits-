@@ -101,7 +101,7 @@ const login = async (req, res) => {
       firstName: user.username,
       email: user.email,
       phone: user.phone,
-      role: user.role || 'User',
+      role: user.role || 'user',
     });
   } catch (error) {
     console.error('Auth login error:', error);
@@ -112,7 +112,67 @@ const login = async (req, res) => {
   }
 };
 
+const googleLogin = async (req, res) => {
+  const { firstName, lastName, username, email, googleId, provider } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required.',
+    });
+  }
+
+  try {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if user exists
+    const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+
+    let user;
+    if (existingUsers.length > 0) {
+      user = existingUsers[0];
+    } else {
+      // Create new user
+      const userUuid = createUuid();
+      const fullName = `${firstName} ${lastName}`.trim();
+      const [result] = await db.query(
+        'INSERT INTO users (user_id, username, email, role, provider, google_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [userUuid, fullName || username, normalizedEmail, 'User', provider || 'google', googleId]
+      );
+      user = {
+        id: result.insertId,
+        user_id: userUuid,
+        username: fullName || username,
+        email: normalizedEmail,
+        role: 'User',
+        provider: provider || 'google',
+        google_id: googleId,
+      };
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Google login successful.',
+      userId: user.id,
+      user_id: user.user_id,
+      userUuid: user.user_id,
+      username: user.username,
+      firstName: user.username,
+      email: user.email,
+      role: user.role,
+      provider: user.provider,
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to process Google login.',
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
+  googleLogin,
 };

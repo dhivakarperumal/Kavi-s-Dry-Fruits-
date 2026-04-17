@@ -6,9 +6,6 @@ import { RiAdminLine } from "react-icons/ri";
 import { IoCartOutline } from "react-icons/io5";
 import { FiLogIn, FiLogOut } from "react-icons/fi";
 import { CgProfile } from "react-icons/cg";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { useStore } from "../Context/StoreContext";
 import Search from "./Search";
 
@@ -25,19 +22,16 @@ const Navbar = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userDocRef);
-        if (userSnap.exists()) {
-          setRole(userSnap.data().role || "User");
-        }
-      } else {
-        setRole("");
-      }
-    });
-    return () => unsubscribe();
+    const storedUserStr = localStorage.getItem("user");
+    const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
+
+    if (storedUser) {
+      setUser(storedUser);
+      setRole(storedUser.role || "User");
+    } else {
+      setUser(null);
+      setRole("");
+    }
   }, []);
 
   const uniqueCategories = [
@@ -60,7 +54,8 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setUserDropdownOpen(false);
       navigate("/");
       window.location.reload();

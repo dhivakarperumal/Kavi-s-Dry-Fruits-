@@ -68,6 +68,8 @@ const initializeDatabase = async () => {
   await ensureColumnExists('phone', 'VARCHAR(50) NULL', 'AFTER email');
   await ensureColumnExists('password_hash', 'VARCHAR(255) NULL', 'AFTER phone');
   await ensureColumnExists('role', "VARCHAR(50) DEFAULT 'User' NULL", 'AFTER password_hash');
+  await ensureColumnExists('provider', "VARCHAR(50) DEFAULT 'local' NULL", 'AFTER role');
+  await ensureColumnExists('google_id', 'VARCHAR(255) NULL', 'AFTER provider');
 
   await dropIndexIfExists('user_id_2');
   await dropIndexIfExists('uid');
