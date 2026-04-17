@@ -76,10 +76,14 @@ enablePersistenceWithFallback(db).catch((e) => console.error("Persistence setup 
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+// Storage
+import { getStorage } from "firebase/storage";
+const storage = getStorage(app);
+
 // Helpful network logs for debugging offline/online behaviour
 if (typeof window !== "undefined") {
   window.addEventListener("online", () => console.info("🔌 Network online — Firestore will sync."));
   window.addEventListener("offline", () => console.warn("⚠️ Network offline — using cached Firestore data if available."));
 }
 
-export { app, auth, db, provider };
+export { app, auth, db, provider, storage };
