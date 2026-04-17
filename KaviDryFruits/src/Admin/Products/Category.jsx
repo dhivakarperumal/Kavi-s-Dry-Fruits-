@@ -18,6 +18,8 @@ const Category = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("add");
+  const [searchTerm, setSearchTerm] = useState("");
+
 
   const generateCategoryId = (existingCategories) => {
     if (!existingCategories || existingCategories.length === 0) return "CAT001";
@@ -279,9 +281,22 @@ const Category = () => {
       )}
 
       {activeTab === "show" && (
-        <div className="mt-15">
+        <div className="mt-8">
+          <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h3 className="text-xl font-semibold text-green-900">Total Categories: {categories.length}</h3>
+            <div className="relative w-full md:w-64">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
           
-         <div className="bg-white shadow rounded-2xl overflow-x-auto">
+          <div className="bg-white shadow rounded-2xl overflow-x-auto hidden md:block">
+
         <table className="min-w-full text-sm rounded-lg overflow-hidden">
           <thead className="bg-green-500 text-white">
                 <tr>
@@ -293,7 +308,10 @@ const Category = () => {
               </thead>
               <tbody>
                 {categories.length > 0 ? (
-                  categories.map((cat) => (
+                  categories
+                    .filter(cat => cat.cname.toLowerCase().includes(searchTerm.toLowerCase()) || cat.catId.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map((cat) => (
+
                     <tr key={cat.id} className="text-center hover:bg-gray-50">
                       <td className="px-4 py-3">{cat.catId}</td>
                       <td className="px-4 py-3">{cat.cname}</td>
@@ -335,7 +353,10 @@ const Category = () => {
           </div>
 
           <div className="md:hidden grid grid-cols-1 gap-4">
-            {categories.map((cat) => (
+            {categories
+              .filter(cat => cat.cname.toLowerCase().includes(searchTerm.toLowerCase()) || cat.catId.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((cat) => (
+
               <div key={cat.id} className="bg-white p-4 rounded-lg shadow border">
                 <div className="flex justify-between">
                   <div>

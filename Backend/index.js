@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const db = require('./src/config/db');
 const authRoutes = require('./src/routers/authRoutes');
 const categoryRoutes = require('./src/routers/categoryRoutes');
+const productRoutes = require('./src/routers/productRoutes');
+
 
 
 // Load environment variables
@@ -23,6 +25,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+
 
 
 // Basic Route
@@ -63,6 +67,27 @@ const initializeDatabase = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50) NOT NULL UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      category VARCHAR(255),
+      rating DECIMAL(3,2) DEFAULT 0,
+      barcode VARCHAR(100),
+      barcodeValue TEXT,
+      productType ENUM('single', 'combo') DEFAULT 'single',
+      images LONGTEXT,
+      variants LONGTEXT,
+      comboItems LONGTEXT,
+      comboDetails LONGTEXT,
+      totalStock INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+
 
 
   const ensureColumnExists = async (name, definition, positionAfter) => {
