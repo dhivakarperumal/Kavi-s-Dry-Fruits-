@@ -83,12 +83,12 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 w-64 transform shadow bg-white text-black transition-transform duration-300 md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-[60] w-64 transform shadow lg:shadow-md bg-white text-black transition-transform duration-300 md:translate-x-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      {/* Logo */}
-      <div className="flex items-center justify-center px-4 py-4 border-b border-gray-200 bg-white">
+      {/* Logo and Mobile Header */}
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <img
             src="/images/Kavi_logo.png"
@@ -100,12 +100,7 @@ const Sidebar = ({
           />
           <span className="text-lg md:text-xl font-bold text-gray-800 truncate">Kavi's Dry Fruits</span>
         </Link>
-      </div>
-
-      {/* Mobile Header */}
-      <div className="flex items-center justify-between px-4 py-4 md:hidden border-b border-gray-200">
-        <h2 className="text-xl font-bold">Menu</h2>
-        <button onClick={() => setIsOpen(false)} className="text-black text-xl">
+        <button onClick={() => setIsOpen(false)} className="md:hidden text-gray-500 hover:text-black">
           ✕
         </button>
       </div>

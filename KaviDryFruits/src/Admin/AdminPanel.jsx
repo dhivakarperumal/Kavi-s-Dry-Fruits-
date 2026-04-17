@@ -25,7 +25,7 @@ import Stickers from "./PrintStickers/Stikers";
 import { auth, db } from "../firebase";
 import NewUsers from "./Users/NewUsers";
 import AddUsers from "./Users/AddUser";
-import Category from "./Products/Categorey";
+import Category from "./Products/Category";
 import Allproduct from "./Products/Allproduct";
 import NewOrders from "./Orders/NewOrders";
 import AllOrders from "./Orders/AllOrders";
@@ -214,17 +214,13 @@ const AdminPanel = () => {
         />
 
         <main className="flex-1 overflow-y-auto p-2">{renderContent()}</main>
-
-       
-      </div>
-
-      
-    </div>
-     <footer className="text-center text-sm text-black py-3">
+        <footer className="text-center text-sm text-black py-3">
           © {new Date().getFullYear()} Admin Panel. All rights reserved.
         </footer>
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default AdminPanel;

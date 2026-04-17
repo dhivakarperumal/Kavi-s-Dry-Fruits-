@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../../firebase";
-import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import api from "../../services/api";
 import imageCompression from "browser-image-compression";
+
 import toast from "react-hot-toast";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
@@ -19,33 +19,40 @@ const Category = () => {
   const [categories, setCategories] = useState([]);
   const [activeTab, setActiveTab] = useState("add");
 
-  const generateCategoryId = async () => {
-    const snapshot = await getDocs(collection(db, "categories"));
-    const count = snapshot.size + 1;
-    return `CAT${String(count).padStart(3, "0")}`;
+  const generateCategoryId = (existingCategories) => {
+    if (!existingCategories || existingCategories.length === 0) return "CAT001";
+    
+    const ids = existingCategories
+      .map((cat) => {
+        const match = cat.catId.match(/\d+/);
+        return match ? parseInt(match[0]) : 0;
+      })
+      .filter((id) => !isNaN(id));
+    
+    const maxId = ids.length > 0 ? Math.max(...ids) : 0;
+    return `CAT${String(maxId + 1).padStart(3, "0")}`;
   };
+
 
   const fetchCategories = async () => {
     try {
-      const snapshot = await getDocs(collection(db, "categories"));
-      const catList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategories(catList);
+      const response = await api.get("/categories");
+      setCategories(response.data);
+      if (!editId) {
+        const nextId = generateCategoryId(response.data);
+        setCategory((prev) => ({ ...prev, catId: nextId }));
+      }
     } catch (err) {
       console.error("Error fetching categories:", err);
+      toast.error("Failed to fetch categories.");
     }
   };
 
+
   useEffect(() => {
-    const init = async () => {
-      const id = await generateCategoryId();
-      setCategory((prev) => ({ ...prev, catId: id }));
-      await fetchCategories();
-    };
-    init();
+    fetchCategories();
   }, []);
+
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -98,38 +105,35 @@ const Category = () => {
       return;
     }
 
-    const payload = {
-      ...category,
-      createdAt: new Date().toISOString(),
-    };
-
     setLoading(true);
     try {
       if (editId) {
-        await updateDoc(doc(db, "categories", editId), payload);
+        await api.put(`/categories/${editId}`, category);
         toast.success("Category updated!");
         setEditId(null);
       } else {
-        await addDoc(collection(db, "categories"), payload);
+        await api.post("/categories", category);
         toast.success("Category added!");
       }
 
-      const newId = await generateCategoryId();
       setCategory({
-        catId: newId,
+        catId: "",
         cname: "",
         cdescription: "",
         cimgs: [],
       });
       setPreviewImgs([]);
-      document.getElementById("cimgs").value = "";
+      if (document.getElementById("cimgs")) {
+        document.getElementById("cimgs").value = "";
+      }
       await fetchCategories();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to save category.");
+      toast.error(err.response?.data?.message || "Failed to save category.");
     }
     setLoading(false);
   };
+
 
   const handleEdit = (cat) => {
     setCategory({
@@ -148,7 +152,7 @@ const Category = () => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
 
     try {
-      await deleteDoc(doc(db, "categories", id));
+      await api.delete(`/categories/${id}`);
       toast.success("Category deleted.");
       await fetchCategories();
     } catch (err) {
@@ -157,15 +161,17 @@ const Category = () => {
     }
   };
 
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 mt-20 ">
       <div className="flex justify-between items-start sm:items-center mb-6 gap-4 flex-col sm:flex-row">
         <div className="mt-10">
-          <h2 className="text-3xl font-bold text-blue-900 mb-1">
-           
+          <h2 className="text-3xl font-bold text-green-900 mb-1">
+            Manage Categories
           </h2>
-         
+          <p className="text-gray-500 text-sm">Create and organize your product categories</p>
         </div>
+
         <div className="flex gap-3">
           <button
             onClick={() => {
