@@ -24,7 +24,7 @@ const imagePreloadManager = {
   preloadHomepageImages: async (products = []) => {
     const imagePromises = products.map((product) => {
       const imageUrl = product.image || product.img || product.imageUrl || product.thumbnail || "";
-      return imageUrl ? loadImage(imageUrl) : Promise.resolve();
+      return loadImage(imageUrl);
     });
 
     await Promise.all(imagePromises);

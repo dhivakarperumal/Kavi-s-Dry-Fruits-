@@ -52,6 +52,15 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error('Auth register error:', error);
+
+    if (error.code === 'ER_DUP_ENTRY') {
+      const duplicateField = error.sqlMessage.includes('email') ? 'Email' : 'User ID';
+      return res.status(409).json({
+        success: false,
+        message: `${duplicateField} already exists. Please use a different value.`,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: 'Unable to register user.',
