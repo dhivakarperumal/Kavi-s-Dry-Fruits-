@@ -8,6 +8,7 @@ const authRoutes = require('./src/routers/authRoutes');
 const categoryRoutes = require('./src/routers/categoryRoutes');
 const productRoutes = require('./src/routers/productRoutes');
 const userRoutes = require('./src/routers/userRoutes');
+const reviewRoutes = require('./src/routers/reviewRoutes');
 
 
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 
 
@@ -91,6 +93,17 @@ const initializeDatabase = async () => {
   `);
 
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      reviewId VARCHAR(50) NOT NULL UNIQUE,
+      userName VARCHAR(255) NOT NULL,
+      comment TEXT NOT NULL,
+      image LONGTEXT,
+      selected BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
 
 
   const ensureColumnExists = async (name, definition, positionAfter) => {
