@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import {
   FaPlus,
   FaTrash,
@@ -17,7 +18,10 @@ import JsBarcode from "jsbarcode";
 import imageCompression from "browser-image-compression";
 
 const Products = () => {
-  const [activeTab, setActiveTab] = useState("single");
+  const location = useLocation();
+  const editItem = location.state?.editItem;
+
+  const [activeTab, setActiveTab] = useState(editItem?.type === "combo" ? "combo" : "single");
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
@@ -105,9 +109,20 @@ const Products = () => {
         {/* Forms Section */}
         <div className="animate-in slide-in-from-bottom-8 duration-700">
           {activeTab === "single" ? (
-            <SingleProductForm categories={categories} onSuccess={fetchData} products={products} />
+            <SingleProductForm 
+              categories={categories} 
+              onSuccess={() => { fetchData(); }} 
+              products={products} 
+              editItem={editItem} 
+            />
           ) : (
-            <ComboProductForm categories={categories} onSuccess={fetchData} combos={combos} />
+            <ComboProductForm 
+              categories={categories} 
+              onSuccess={() => { fetchData(); }} 
+              combos={combos} 
+              products={products} 
+              editItem={editItem} 
+            />
           )}
         </div>
 
@@ -126,6 +141,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     images: [],
     variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }],
     totalStock: "0",
+    totalWeight: 0,
     barcode: "",
     barcodeValue: "",
     rating: 5,
@@ -163,9 +179,16 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   }, [editItem, products]);
 
   useEffect(() => {
-    const total = form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
-    if (String(total) !== form.totalStock) {
-      setForm(prev => ({ ...prev, totalStock: String(total) }));
+    const totalS = form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    const totalW = form.variants.reduce((sum, v) => {
+      const wStr = String(v.weight || "").toLowerCase();
+      const val = parseFloat(wStr) || 0;
+      const factor = wStr.includes("kg") ? 1000 : 1;
+      return sum + (val * factor * (Number(v.stock) || 0));
+    }, 0);
+
+    if (String(totalS) !== form.totalStock || totalW !== form.totalWeight) {
+      setForm(prev => ({ ...prev, totalStock: String(totalS), totalWeight: totalW }));
     }
   }, [form.variants]);
 
@@ -238,6 +261,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Stock (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalStock}</span><span className="text-[10px] text-emerald-400">UNITS</span></div></div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Total Weight (Auto)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) : form.totalWeight}</span><span className="text-[10px] text-emerald-400">{form.totalWeight >= 1000 ? "KG" : "G"}</span></div></div>
                 </div>
                 <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
@@ -333,7 +357,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   );
 };
 
-const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
+const ComboProductForm = ({ categories, onSuccess, combos, products, editItem }) => {
   const [form, setForm] = useState({
     productId: "",
     name: "",
@@ -344,6 +368,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
     comboItems: [{ name: "", weight: "" }],
     comboDetails: { mrp: "", offerPercent: "", offerPrice: "" },
     totalStock: "0",
+    totalWeight: 0,
     barcode: "",
     barcodeValue: "",
     rating: 5,
@@ -380,6 +405,19 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
       }));
     }
   }, [editItem, combos]);
+
+  useEffect(() => {
+    const totalW = form.comboItems.reduce((sum, item) => {
+      const wStr = String(item.weight || "").toLowerCase();
+      const val = parseFloat(wStr) || 0;
+      const factor = wStr.includes("kg") ? 1000 : 1;
+      return sum + (val * factor);
+    }, 0);
+
+    if (totalW !== form.totalWeight) {
+      setForm(prev => ({ ...prev, totalWeight: totalW }));
+    }
+  }, [form.comboItems]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -456,6 +494,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
                   <div className="flex gap-4">
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Stock</p><p className="text-xl font-black text-amber-600">{form.totalStock}</p></div>
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Weight</p><p className="text-xl font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p></div>
                   </div>
                 </div>
               </div>
@@ -512,7 +551,22 @@ const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
               <div className="space-y-4">
                 {form.comboItems.map((item, i) => (
                   <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center bg-gray-50/50 p-5 rounded-3xl border border-gray-100 hover:bg-white hover:border-blue-100 transition-all group shadow-sm">
-                    <div className="flex-1"><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label><input placeholder="e.g. Chilean Walnuts" value={item.name} onChange={(e) => { const u = [...form.comboItems]; u[i].name = e.target.value; setForm({ ...form, comboItems: u }); }} className="w-full outline-none font-bold bg-transparent text-gray-900 border-none p-0 focus:ring-0" /></div>
+                      <div className="flex-1">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
+                        <select 
+                          value={item.name} 
+                          onChange={(e) => { const u = [...form.comboItems]; u[i].name = e.target.value; setForm({ ...form, comboItems: u }); }} 
+                          className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                        >
+                          <option value="">Choose Existing Product</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} ({p.productId})
+                            </option>
+                          ))}
+                          <option value="custom">-- Custom Item --</option>
+                        </select>
+                      </div>
                     <div className="w-24 border-l pl-5 flex flex-col"><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label><input placeholder="100g" value={item.weight} onChange={(e) => { const u = [...form.comboItems]; u[i].weight = e.target.value; setForm({ ...form, comboItems: u }); }} className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0" /></div>
                     {form.comboItems.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} className="text-red-300 hover:text-red-600 p-2"><FaTrash size={16} /></button>)}
                   </div>
