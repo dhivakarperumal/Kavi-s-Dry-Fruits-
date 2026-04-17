@@ -51,18 +51,20 @@ const AdminPanel = () => {
       return;
     }
 
-    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
-      const matched = snap.docs.find((doc) => doc.data()?.email === user?.email);
-      if (matched) setAdminName(matched.data()?.username || "Administrator");
+    const fetchUserCount = async () => {
+      try {
+        const response = await api.get("/users");
+        setCollectionCounts((prev) => ({
+          ...prev,
+          users: response.data.users?.length || 0,
+        }));
+      } catch (err) {
+        console.error("Error fetching user count:", err);
+      }
+    };
+    fetchUserCount();
 
-      // Update collection counts
-      setCollectionCounts((prev) => ({
-        ...prev,
-        users: snap.docs.length,
-      }));
-    });
-
-    return () => unsubUsers();
+    return () => {};
   }, [user, navigate]);
 
   // Fetch orders and stock

@@ -7,6 +7,7 @@ const db = require('./src/config/db');
 const authRoutes = require('./src/routers/authRoutes');
 const categoryRoutes = require('./src/routers/categoryRoutes');
 const productRoutes = require('./src/routers/productRoutes');
+const userRoutes = require('./src/routers/userRoutes');
 
 
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
 
 
 
@@ -111,7 +113,8 @@ const initializeDatabase = async () => {
   await ensureColumnExists('phone', 'VARCHAR(50) NULL', 'AFTER email');
   await ensureColumnExists('password_hash', 'VARCHAR(255) NULL', 'AFTER phone');
   await ensureColumnExists('role', "VARCHAR(50) DEFAULT 'User' NULL", 'AFTER password_hash');
-  await ensureColumnExists('provider', "VARCHAR(50) DEFAULT 'local' NULL", 'AFTER role');
+  await ensureColumnExists('password', 'VARCHAR(255) NULL', 'AFTER role');
+  await ensureColumnExists('provider', "VARCHAR(50) DEFAULT 'local' NULL", 'AFTER password');
   await ensureColumnExists('google_id', 'VARCHAR(255) NULL', 'AFTER provider');
 
   await dropIndexIfExists('user_id_2');

@@ -47,9 +47,8 @@ const Sidebar = ({
       label: "users",
       icon: <FaUsersCog />,
       dropdown: [
-        { label: "New Users", icon: <FaUsers /> },
-        { label: "All Users", icon: <FaUsers /> },
-        // { label: "Add Users", icon: <MdOutlineAddBox /> },
+        { label: "New Users", collection: "users", icon: <FaUsers /> },
+        { label: "All Users", collection: "users", icon: <FaUsers /> },
       ],
     },
 
@@ -83,7 +82,7 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] w-64 transform shadow lg:shadow-md bg-white text-black transition-transform duration-300 md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-[60] w-72 transform shadow lg:shadow-md bg-white text-black transition-transform duration-300 md:translate-x-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >

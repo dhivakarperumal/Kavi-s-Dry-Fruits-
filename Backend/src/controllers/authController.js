@@ -36,8 +36,8 @@ const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const userUuid = createUuid();
     const [result] = await db.query(
-      'INSERT INTO users (user_id, username, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?, ?)',
-      [userUuid, firstName.trim(), normalizedEmail, normalizedPhone, passwordHash, 'User']
+      'INSERT INTO users (user_id, username, email, phone, password_hash, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userUuid, firstName.trim(), normalizedEmail, normalizedPhone, passwordHash, password, 'User']
     );
 
     return res.status(201).json({
