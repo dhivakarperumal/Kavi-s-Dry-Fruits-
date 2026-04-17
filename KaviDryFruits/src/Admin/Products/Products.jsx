@@ -611,6 +611,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
               </div>
             </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             <div className="bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100 shadow-xl overflow-hidden relative">
               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/40 rounded-full blur-3xl"></div>
               <div className="relative z-10">
@@ -627,6 +628,15 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 </div>
               </div>
             </div>
+
+            <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col items-center justify-center">
+              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8">Pack Barcode</h3>
+              <div className="bg-white p-6 rounded-3xl border-2 border-dashed border-orange-100 shadow-inner">
+                <svg ref={barcodeRef}></svg>
+              </div>
+              <p className="mt-4 text-[10px] font-black text-orange-400 uppercase tracking-widest">Auto-Generated for {form.productId}</p>
+            </div>
+          </div>
           </div>
         </div>
         <div className="pt-10 flex justify-end">
