@@ -192,8 +192,8 @@ const Users = () => {
       </div>
 
       {viewMode === "table" ? (
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-in fade-in duration-500">
-          <div className="overflow-x-auto">
+        <div className="overflow-hidden animate-in fade-in duration-500">
+          <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm bg-white">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gradient-to-r from-green-600 to-green-700 text-white">

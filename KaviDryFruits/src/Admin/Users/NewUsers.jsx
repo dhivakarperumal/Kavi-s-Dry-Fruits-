@@ -160,15 +160,16 @@ const NewUsers = () => {
       </div>
 
       {viewMode === "table" ? (
-        <div className="bg-white shadow-xl rounded-[2rem] overflow-hidden border border-gray-100 transition-all animate-in fade-in duration-500">
-          <div className="overflow-x-auto">
+        <div className="overflow-hidden animate-in fade-in duration-500">
+          <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm bg-white">
             <table className="min-w-full text-sm font-medium">
               <thead className="bg-gradient-to-r from-green-500 to-green-600 text-white">
                 <tr className="bg-gradient-to-r from-green-500 to-green-600 text-white">
                   <th className="p-5 text-left font-bold uppercase tracking-wider">S No</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">User Info</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">Contact</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">Joined At</th>
+                  <th className="p-5 text-left font-bold uppercase tracking-wider">User Profile</th>
+                  <th className="p-5 text-left font-bold uppercase tracking-wider">Contact Info</th>
+                  <th className="p-5 text-left font-bold uppercase tracking-wider">Access Level</th>
+                  <th className="p-5 text-left font-bold uppercase tracking-wider">Registered</th>
                   <th className="p-5 text-center font-bold uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -192,9 +193,14 @@ const NewUsers = () => {
                       </td>
                       <td className="p-5">
                         <p className="text-gray-600">{user.email}</p>
-                        <p className="text-xs text-gray-400">{user.phone || "—"}</p>
+                        <p className="text-xs text-gray-400 font-bold tracking-tight">{user.phone || "—"}</p>
                       </td>
-                      <td className="p-5 text-gray-500">
+                      <td className="p-5">
+                        <span className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest ${user.role?.toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {user.role || 'User'}
+                        </span>
+                      </td>
+                      <td className="p-5 text-gray-500 font-bold text-xs uppercase tracking-tighter">
                         {user.createdAt ? user.createdAt.toLocaleDateString() : "—"}
                       </td>
                       <td className="p-5 text-center">
