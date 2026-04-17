@@ -365,7 +365,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     healthBenefits: [""],
     category: "Combo Packs",
     images: [],
-    comboItems: [{ name: "", weight: "" }],
+    comboItems: [{ name: "", weight: "", image: "" }],
     comboDetails: { mrp: "", offerPercent: "", offerPrice: "" },
     totalStock: "0",
     totalWeight: 0,
@@ -401,7 +401,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       setForm((prev) => ({
         ...prev,
         productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
-        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }
+        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }
       }));
     }
   }, [editItem, combos]);
@@ -550,23 +550,65 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
               <div className="flex justify-between items-center mb-10"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Included Range</h3><button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: [...p.comboItems, { name: "", weight: "" }] }))} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"><FaPlus size={10} /> Add Item</button></div>
               <div className="space-y-4">
                 {form.comboItems.map((item, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center bg-gray-50/50 p-5 rounded-3xl border border-gray-100 hover:bg-white hover:border-blue-100 transition-all group shadow-sm">
-                      <div className="flex-1">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
-                        <select 
-                          value={item.name} 
-                          onChange={(e) => { const u = [...form.comboItems]; u[i].name = e.target.value; setForm({ ...form, comboItems: u }); }} 
-                          className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
-                        >
-                          <option value="">Choose Existing Product</option>
-                          {products.map((p) => (
-                            <option key={p.id} value={p.name}>
-                              {p.name} ({p.productId})
-                            </option>
-                          ))}
-                          <option value="custom">-- Custom Item --</option>
-                        </select>
-                      </div>
+                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center bg-gray-50/50 p-5 rounded-3xl border border-gray-100 hover:bg-white hover:border-blue-100 transition-all group shadow-sm">
+                    <div className="relative w-14 h-14 bg-white rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 group/img">
+                      {item.image ? (
+                        <img src={item.image} alt="p" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-200"><FaBoxOpen size={16} /></div>
+                      )}
+                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if(!file) return;
+                            try {
+                              const compressed = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 500, useWebWorker: true });
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const u = [...form.comboItems];
+                                u[i].image = reader.result;
+                                setForm({ ...form, comboItems: u });
+                              };
+                              reader.readAsDataURL(compressed);
+                            } catch (err) { toast.error("Upload failed"); }
+                          }}
+                        />
+                        <FaEdit className="text-white text-xs" />
+                      </label>
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
+                      <select 
+                        value={item.name} 
+                        onChange={(e) => { 
+                          const val = e.target.value;
+                          const u = [...form.comboItems]; 
+                          const matchedProd = products.find(p => p.name === val);
+                          if (matchedProd) {
+                            const variants = typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : matchedProd.variants;
+                            const images = typeof matchedProd.images === 'string' ? JSON.parse(matchedProd.images || '[]') : matchedProd.images;
+                            u[i].name = matchedProd.name;
+                            u[i].weight = variants[0]?.weight || "";
+                            u[i].image = images[0] || "";
+                          } else {
+                            u[i].name = val;
+                          }
+                          setForm({ ...form, comboItems: u }); 
+                        }} 
+                        className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                      >
+                        <option value="">Choose Existing Product</option>
+                        {products.map((p) => (
+                          <option key={p.id} value={p.name}>
+                            {p.name} ({p.productId})
+                          </option>
+                        ))}
+                        <option value="custom">-- Custom Item --</option>
+                      </select>
+                    </div>
                     <div className="w-24 border-l pl-5 flex flex-col"><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label><input placeholder="100g" value={item.weight} onChange={(e) => { const u = [...form.comboItems]; u[i].weight = e.target.value; setForm({ ...form, comboItems: u }); }} className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0" /></div>
                     {form.comboItems.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} className="text-red-300 hover:text-red-600 p-2"><FaTrash size={16} /></button>)}
                   </div>
