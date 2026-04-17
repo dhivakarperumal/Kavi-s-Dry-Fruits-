@@ -10,6 +10,7 @@ const productRoutes = require('./src/routers/productRoutes');
 const comboRoutes = require('./src/routers/comboRoutes');
 const userRoutes = require('./src/routers/userRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
+const dealerRoutes = require('./src/routers/dealerRoutes');
 
 
 
@@ -32,6 +33,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/combos', comboRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/dealers', dealerRoutes);
 
 
 
@@ -120,6 +122,19 @@ const initializeDatabase = async () => {
       comment TEXT NOT NULL,
       image LONGTEXT,
       selected BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS dealers (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      dealerId VARCHAR(50) NOT NULL UNIQUE,
+      dealerName VARCHAR(255) NOT NULL,
+      dealerGSTNumber VARCHAR(100),
+      dealerPhoneNumber VARCHAR(20) NOT NULL,
+      dealerMail VARCHAR(255),
+      dealerAddress TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
