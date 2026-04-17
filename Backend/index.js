@@ -77,19 +77,34 @@ const initializeDatabase = async () => {
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       productId VARCHAR(50) NOT NULL UNIQUE,
       name VARCHAR(255) NOT NULL,
+      description TEXT,
       category VARCHAR(255),
       rating DECIMAL(3,2) DEFAULT 0,
       barcode LONGTEXT,
       barcodeValue VARCHAR(100),
-      productType ENUM('single', 'combo') DEFAULT 'single',
       images LONGTEXT,
       variants LONGTEXT,
+      totalStock INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS combos (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50) NOT NULL UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      category VARCHAR(255) DEFAULT 'Combo Packs',
+      rating DECIMAL(3,2) DEFAULT 0,
+      barcode LONGTEXT,
+      barcodeValue VARCHAR(100),
+      images LONGTEXT,
       comboItems LONGTEXT,
       comboDetails LONGTEXT,
       totalStock INT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
   `);
 
 

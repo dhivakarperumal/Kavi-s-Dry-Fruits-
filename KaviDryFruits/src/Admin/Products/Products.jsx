@@ -35,42 +35,49 @@ const Products = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 mt-15">
+    <div className="w-full p-4 md:p-10 mt-15 min-h-screen bg-transparent animate-in fade-in duration-700">
       {/* Header & Tabs */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-4xl font-black text-gray-900 flex items-center gap-3">
-            <span className="text-emerald-600 border-b-4 border-emerald-500 pb-1">
-              Products
-            </span>{" "}
-            Management
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Manage your inventory and create new product listings
-          </p>
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-12 gap-8 bg-white/40 backdrop-blur-md p-8 rounded-[3rem] border border-white/60 shadow-xl shadow-gray-100">
+        <div className="flex-1">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100 transition-all duration-500 ${activeTab === "single" ? "bg-gradient-to-tr from-emerald-600 to-green-400 rotate-0" : "bg-gradient-to-tr from-amber-600 to-orange-400 rotate-12"}`}>
+              {activeTab === "single" ? <FaBoxOpen size={24} /> : <FaLayerGroup size={24} />}
+            </div>
+            <div>
+              <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none">
+                {activeTab === "single" ? "Single Product" : "Combo Pack"} <span className="text-gray-400 font-medium tracking-normal text-3xl">Studio</span>
+              </h1>
+              <p className="text-sm font-black text-emerald-600 uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+                <span className="w-8 h-1 bg-emerald-500 rounded-full"></span>
+                Inventory Master Control
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex bg-gray-100 p-1.5 rounded-2xl shadow-inner inline-flex">
+        <div className="flex bg-gray-200/50 p-2 rounded-[2rem] shadow-inner backdrop-blur-sm border border-white/50">
           <button
             onClick={() => setActiveTab("single")}
-            className={`flex items-center gap-2 px-8 py-2 rounded-xl transition-all duration-500 font-bold ${activeTab === "single" ? "bg-emerald-600 text-white shadow-xl scale-105" : "text-gray-500 hover:text-emerald-600"}`}
+            className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] transition-all duration-500 font-black uppercase tracking-widest text-xs ${activeTab === "single" ? "bg-white text-emerald-700 shadow-xl scale-105 border border-emerald-100" : "text-gray-500 hover:text-emerald-600"}`}
           >
-            <FaBoxOpen /> Single Product
+            <FaBoxOpen className={activeTab === "single" ? "animate-bounce" : ""} /> Single
           </button>
           <button
             onClick={() => setActiveTab("combo")}
-            className={`flex items-center gap-2 px-8 py-2 rounded-xl transition-all duration-500 font-bold ${activeTab === "combo" ? "bg-amber-600 text-white shadow-xl scale-105" : "text-gray-500 hover:text-amber-600"}`}
+            className={`flex items-center gap-3 px-10 py-4 rounded-[1.5rem] transition-all duration-500 font-black uppercase tracking-widest text-xs ${activeTab === "combo" ? "bg-white text-amber-700 shadow-xl scale-105 border border-amber-100" : "text-gray-500 hover:text-amber-600"}`}
           >
-            <FaLayerGroup /> Combo Pack
+            <FaLayerGroup className={activeTab === "combo" ? "animate-bounce" : ""} /> Combo
           </button>
         </div>
       </div>
 
-      {activeTab === "single" ? (
-        <SingleProductForm categories={categories} onSuccess={handleSuccess} />
-      ) : (
-        <ComboProductForm categories={categories} onSuccess={handleSuccess} />
-      )}
+      <div className="animate-in slide-in-from-bottom-8 duration-700">
+        {activeTab === "single" ? (
+          <SingleProductForm categories={categories} onSuccess={handleSuccess} />
+        ) : (
+          <ComboProductForm categories={categories} onSuccess={handleSuccess} />
+        )}
+      </div>
     </div>
   );
 };
@@ -105,7 +112,7 @@ const SingleProductForm = ({ categories, onSuccess }) => {
           ...prev,
           productId: `PR${String(count).padStart(3, "0")}`,
         }));
-      } catch (err) {}
+      } catch (err) { }
     };
     generateId();
   }, []);
@@ -131,7 +138,7 @@ const SingleProductForm = ({ categories, onSuccess }) => {
             barcode: base64Data,
             barcodeValue: code,
           }));
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [form.productId, form.barcodeValue]);
 
@@ -195,14 +202,22 @@ const SingleProductForm = ({ categories, onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-emerald-50">
-      <div className="bg-emerald-600 p-8 text-white">
-        <h2 className="text-2xl font-bold">Add Single Product Listing</h2>
-        <p className="opacity-80">
-          Create a standard dry fruit product with description and variants
-        </p>
+    <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-emerald-100 ring-1 ring-emerald-50">
+      <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-400 p-10 text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-black uppercase tracking-tight">Product Studio</h2>
+            <p className="opacity-90 font-medium mt-1 text-emerald-50 uppercase tracking-[0.2em] text-xs">
+              Fresh Inventory Entry
+            </p>
+          </div>
+          <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30">
+             <span className="font-black tracking-widest text-sm">{form.productId}</span>
+          </div>
+        </div>
       </div>
-      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+      <form onSubmit={handleSubmit} className="p-10 space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4">
@@ -214,7 +229,8 @@ const SingleProductForm = ({ categories, onSuccess }) => {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none transition-all"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold text-gray-900"
+                  placeholder="e.g. Premium Roasted Almonds"
                 />
               </div>
               <div>
@@ -235,7 +251,7 @@ const SingleProductForm = ({ categories, onSuccess }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           
               <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm">
                 <div className="space-y-6">
                   <div>
@@ -258,18 +274,7 @@ const SingleProductForm = ({ categories, onSuccess }) => {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2 block">
-                      Total Stock *
-                    </label>
-                    <input
-                      type="number"
-                      value={form.totalStock}
-                      disabled
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold text-emerald-700"
-                      placeholder="Total Qty"
-                    />
-                  </div>
+
                 </div>
               </div>
 
@@ -310,7 +315,7 @@ const SingleProductForm = ({ categories, onSuccess }) => {
                   </div>
                 </div>
               </div>
-            </div>
+            
           </div>
 
           <div className="space-y-4">
@@ -384,14 +389,14 @@ const SingleProductForm = ({ categories, onSuccess }) => {
           {form.variants.map((v, i) => (
             <div
               key={i}
-              className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-gradient-to-r from-gray-50 to-slate-50 p-6 rounded-2xl border border-gray-100 relative group hover:shadow-md transition-all"
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gradient-to-r from-gray-50 to-slate-50 p-6 rounded-2xl border border-gray-100 relative group hover:shadow-md transition-all"
             >
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  Weight
+                <label className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1 block">
+                  Weight / Unit
                 </label>
                 <input
-                  placeholder="250g"
+                  placeholder="e.g. 250g, 500g, 1kg"
                   value={v.weight}
                   onChange={(e) => {
                     const u = [...form.variants];
@@ -402,12 +407,12 @@ const SingleProductForm = ({ categories, onSuccess }) => {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  MRP (₹)
+                <label className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1 block">
+                  MRP Tag (₹)
                 </label>
                 <input
                   type="number"
-                  placeholder="500"
+                  placeholder="e.g. 500"
                   value={v.mrp}
                   onChange={(e) => {
                     const u = [...form.variants];
@@ -423,12 +428,12 @@ const SingleProductForm = ({ categories, onSuccess }) => {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  Offer %
+                <label className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1 block">
+                  DISCOUNT %
                 </label>
                 <input
                   type="number"
-                  placeholder="10"
+                  placeholder="e.g. 10"
                   value={v.offerPercent}
                   onChange={(e) => {
                     const u = [...form.variants];
@@ -443,32 +448,43 @@ const SingleProductForm = ({ categories, onSuccess }) => {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  Final Price
+                <label className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-1 block">
+                  SELLING PRICE
                 </label>
                 <div className="bg-emerald-100 px-4 py-3 rounded-xl border border-emerald-200 text-emerald-700 font-black shadow-inner flex items-center ">
                   ₹{v.offerPrice || 0}
                 </div>
               </div>
-              <div className="flex items-end justify-end">
-                {form.variants.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setForm((p) => ({
-                        ...p,
-                        variants: p.variants.filter((_, idx) => idx !== i),
-                      }))
-                    }
-                    className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-all"
-                    title="Remove variant"
-                  >
-                    <FaTrash size={16} />
-                  </button>
-                )}
-              </div>
+              {form.variants.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((p) => ({
+                      ...p,
+                      variants: p.variants.filter((_, idx) => idx !== i),
+                    }))
+                  }
+                  className="absolute -top-3 -right-3 w-8 h-8 bg-white text-red-400 hover:text-red-600 rounded-full flex items-center justify-center border border-gray-100 shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                  title="Remove variant"
+                >
+                  <FaTrash size={12} />
+                </button>
+              )}
             </div>
           ))}
+        </div>
+
+        <div>
+          <label className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2 block">
+            Total Stock *
+          </label>
+          <input
+            type="number"
+            value={form.totalStock}
+            disabled
+            className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold text-emerald-700"
+            placeholder="Total Qty"
+          />
         </div>
 
         <div className="pt-8 space-y-4 border-t border-gray-100">
@@ -579,7 +595,7 @@ const ComboProductForm = ({ categories, onSuccess }) => {
           ...prev,
           productId: `KPR${String(count).padStart(3, "0")}`,
         }));
-      } catch (err) {}
+      } catch (err) { }
     };
     generateId();
   }, []);
@@ -605,7 +621,7 @@ const ComboProductForm = ({ categories, onSuccess }) => {
             barcode: base64Data,
             barcodeValue: code,
           }));
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [form.productId, form.barcodeValue]);
 
@@ -657,14 +673,22 @@ const ComboProductForm = ({ categories, onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-amber-50">
-      <div className="bg-amber-600 p-8 text-white">
-        <h2 className="text-2xl font-bold">Add Premium Combo Pack</h2>
-        <p className="opacity-80">
-          Create a bundled set with description and pack details
-        </p>
+    <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-amber-100 ring-1 ring-amber-50">
+      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-400 p-10 text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-black uppercase tracking-tight">Combo Studio</h2>
+            <p className="opacity-90 font-medium mt-1 text-amber-50 uppercase tracking-[0.2em] text-xs">
+              Premium Pack Creation
+            </p>
+          </div>
+          <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30">
+            <span className="font-black tracking-widest text-sm">{form.productId}</span>
+          </div>
+        </div>
       </div>
-      <form onSubmit={handleSubmit} className="p-8 space-y-8">
+      <form onSubmit={handleSubmit} className="p-10 space-y-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4">
@@ -676,7 +700,8 @@ const ComboProductForm = ({ categories, onSuccess }) => {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 outline-none transition-all"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 outline-none transition-all font-bold text-gray-900"
+                  placeholder="e.g. Healthy Morning Combo"
                 />
               </div>
               <div>
@@ -816,11 +841,14 @@ const ComboProductForm = ({ categories, onSuccess }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 border-t border-gray-100">
           {/* Combo Items List */}
-          <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold font-serif text-amber-900 italic">
-                Contents of the Pack
-              </h3>
+          <div className="bg-gray-50 p-8 rounded-[3rem] border border-gray-100 shadow-inner">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">
+                  Pack Contents
+                </h3>
+                <div className="w-12 h-1 bg-amber-500 mt-1 rounded-full"></div>
+              </div>
               <button
                 type="button"
                 onClick={() =>
@@ -829,37 +857,43 @@ const ComboProductForm = ({ categories, onSuccess }) => {
                     comboItems: [...p.comboItems, { name: "", weight: "" }],
                   }))
                 }
-                className="text-amber-600 font-bold border-b-2 border-amber-600 hover:text-amber-800 transition"
+                className="bg-amber-600 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:bg-amber-700 transition-all flex items-center gap-2"
               >
-                + Add Item
+                <FaPlus size={10} /> Add Item
               </button>
             </div>
             <div className="space-y-4">
               {form.comboItems.map((item, i) => (
                 <div
                   key={i}
-                  className="flex gap-4 items-center bg-white p-4 rounded-2xl shadow-sm border border-amber-50 group"
+                  className="grid grid-cols-[1fr_auto_auto] gap-4 items-center bg-white p-4 rounded-2xl shadow-sm border border-amber-50 group hover:border-amber-200 transition-all"
                 >
-                  <input
-                    placeholder="Item Name (e.g. Almonds)"
-                    value={item.name}
-                    onChange={(e) => {
-                      const u = [...form.comboItems];
-                      u[i].name = e.target.value;
-                      setForm({ ...form, comboItems: u });
-                    }}
-                    className="flex-1 outline-none text-gray-700"
-                  />
-                  <input
-                    placeholder="Wt"
-                    value={item.weight}
-                    onChange={(e) => {
-                      const u = [...form.comboItems];
-                      u[i].weight = e.target.value;
-                      setForm({ ...form, comboItems: u });
-                    }}
-                    className="w-20 outline-none text-emerald-600 font-bold border-l pl-4"
-                  />
+                  <div className="flex-1">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Name</label>
+                    <input
+                      placeholder="e.g. Roasted Cashews"
+                      value={item.name}
+                      onChange={(e) => {
+                        const u = [...form.comboItems];
+                        u[i].name = e.target.value;
+                        setForm({ ...form, comboItems: u });
+                      }}
+                      className="w-full outline-none text-gray-900 font-bold bg-transparent"
+                    />
+                  </div>
+                  <div className="w-24 border-l pl-4">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
+                    <input
+                      placeholder="500g"
+                      value={item.weight}
+                      onChange={(e) => {
+                        const u = [...form.comboItems];
+                        u[i].weight = e.target.value;
+                        setForm({ ...form, comboItems: u });
+                      }}
+                      className="w-full outline-none text-emerald-600 font-black bg-transparent"
+                    />
+                  </div>
                   {form.comboItems.length > 1 && (
                     <button
                       type="button"
@@ -871,7 +905,7 @@ const ComboProductForm = ({ categories, onSuccess }) => {
                           ),
                         }))
                       }
-                      className="text-red-200 group-hover:text-red-500 transition-colors"
+                      className="text-red-300 hover:text-red-500 transition-colors p-2"
                     >
                       <FaTrash size={14} />
                     </button>
@@ -882,55 +916,66 @@ const ComboProductForm = ({ categories, onSuccess }) => {
           </div>
 
           {/* Pricing Summary */}
-          <div className="bg-amber-50 p-8 rounded-[2rem] flex flex-col justify-center border border-amber-100 space-y-6">
-            <h3 className="text-xl font-bold text-amber-900 border-b border-amber-200 pb-2">
-              Pricing Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[10px] font-black text-amber-700 uppercase mb-1 block">
-                  Combo MRP (₹)
-                </label>
-                <input
-                  type="number"
-                  value={form.comboDetails.mrp}
-                  onChange={(e) => {
-                    const u = { ...form.comboDetails };
-                    u.mrp = e.target.value;
-                    u.offerPrice = Math.round(
-                      Number(u.mrp) -
+          <div className="bg-amber-50/50 p-8 rounded-[3rem] flex flex-col justify-center border border-amber-100 shadow-inner">
+            <div className="mb-8">
+              <h3 className="text-xl font-black text-amber-900 uppercase tracking-tight">
+                Pricing Summary
+              </h3>
+              <div className="w-12 h-1 bg-amber-400 mt-1 rounded-full"></div>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
+                    Pack MRP (₹)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1500"
+                    value={form.comboDetails.mrp}
+                    onChange={(e) => {
+                      const u = { ...form.comboDetails };
+                      u.mrp = e.target.value;
+                      u.offerPrice = Math.round(
+                        Number(u.mrp) -
                         (Number(u.mrp) * Number(u.offerPercent)) / 100,
-                    );
-                    setForm({ ...form, comboDetails: u });
-                  }}
-                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 font-bold"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-amber-700 uppercase mb-1 block">
-                  Discount (%)
-                </label>
-                <input
-                  type="number"
-                  value={form.comboDetails.offerPercent}
-                  onChange={(e) => {
-                    const u = { ...form.comboDetails };
-                    u.offerPercent = e.target.value;
-                    u.offerPrice = Math.round(
-                      Number(u.mrp) -
+                      );
+                      setForm({ ...form, comboDetails: u });
+                    }}
+                    className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black text-gray-900 shadow-sm transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
+                    Discount %
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 15"
+                    value={form.comboDetails.offerPercent}
+                    onChange={(e) => {
+                      const u = { ...form.comboDetails };
+                      u.offerPercent = e.target.value;
+                      u.offerPrice = Math.round(
+                        Number(u.mrp) -
                         (Number(u.mrp) * Number(u.offerPercent)) / 100,
-                    );
-                    setForm({ ...form, comboDetails: u });
-                  }}
-                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3"
-                />
+                      );
+                      setForm({ ...form, comboDetails: u });
+                    }}
+                    className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black text-gray-900 shadow-sm transition-all outline-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-[10px] font-black text-amber-700 uppercase mb-1 block">
-                  Offer Price
+
+              <div className="bg-white p-6 rounded-[2rem] border-2 border-amber-200 shadow-lg relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
+                <label className="text-[11px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1 block relative z-10">
+                  Total Combo Price
                 </label>
-                <div className="w-full bg-white border-2 border-amber-400 text-amber-800 font-black rounded-xl px-4 py-3 shadow-inner">
-                  ₹{form.comboDetails.offerPrice}
+                <div className="text-4xl font-black text-amber-900 relative z-10 flex items-baseline gap-1">
+                  <span className="text-xl">₹</span>
+                  {form.comboDetails.offerPrice || 0}
                 </div>
               </div>
             </div>
