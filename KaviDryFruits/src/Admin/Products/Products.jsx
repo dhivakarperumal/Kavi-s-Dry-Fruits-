@@ -116,7 +116,7 @@ const Products = () => {
   );
 };
 
-const SingleProductForm = ({ categories, onSuccess, products }) => {
+const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   const [form, setForm] = useState({
     productId: "",
     name: "",
@@ -124,7 +124,7 @@ const SingleProductForm = ({ categories, onSuccess, products }) => {
     healthBenefits: [""],
     category: "",
     images: [],
-    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
+    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }],
     totalStock: "0",
     barcode: "",
     barcodeValue: "",
@@ -133,16 +133,34 @@ const SingleProductForm = ({ categories, onSuccess, products }) => {
   const [loading, setLoading] = useState(false);
   const barcodeRef = useRef();
 
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try { return JSON.parse(data); } catch { return []; }
+  };
+
   useEffect(() => {
-    const maxId = products.reduce((max, p) => {
-      const num = parseInt(p.productId?.replace(/\D/g, "") || 0);
-      return Math.max(max, num);
-    }, 0);
-    setForm((prev) => ({
-      ...prev,
-      productId: `PR${String(maxId + 1).padStart(3, "0")}`,
-    }));
-  }, [products]);
+    if (editItem) {
+      setForm({
+        ...editItem,
+        healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
+        variants: safeParse(editItem.variants),
+        images: safeParse(editItem.images),
+        barcodeValue: editItem.barcodeValue || editItem.productId
+      });
+    } else {
+      const maxId = products.reduce((max, p) => {
+        const match = p.productId?.match(/\d+/);
+        const num = match ? parseInt(match[0]) : 0;
+        return Math.max(max, num);
+      }, 0);
+      setForm((prev) => ({
+        ...prev,
+        productId: `PR${String(maxId + 1).padStart(3, "0")}`,
+        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }], totalStock: "0"
+      }));
+    }
+  }, [editItem, products]);
 
   useEffect(() => {
     const total = form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
@@ -185,10 +203,15 @@ const SingleProductForm = ({ categories, onSuccess, products }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post("/products", form);
+      if (editItem) {
+        await api.put(`/products/${editItem.id}`, form);
+        toast.success("Inventory Pulse Updated");
+      } else {
+        await api.post("/products", form);
+        toast.success("Product Registered Successfully");
+      }
       onSuccess();
-      setForm({ ...form, name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0" });
-    } catch { toast.error("Failed"); }
+    } catch { toast.error("Studio Sync Failed"); }
     setLoading(false);
   };
 
@@ -310,7 +333,7 @@ const SingleProductForm = ({ categories, onSuccess, products }) => {
   );
 };
 
-const ComboProductForm = ({ categories, onSuccess, combos }) => {
+const ComboProductForm = ({ categories, onSuccess, combos, editItem }) => {
   const [form, setForm] = useState({
     productId: "",
     name: "",
@@ -328,16 +351,35 @@ const ComboProductForm = ({ categories, onSuccess, combos }) => {
   const [loading, setLoading] = useState(false);
   const barcodeRef = useRef();
 
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try { return JSON.parse(data); } catch { return []; }
+  };
+
   useEffect(() => {
-    const maxId = combos.reduce((max, c) => {
-      const num = parseInt(c.productId?.replace(/\D/g, "") || 0);
-      return Math.max(max, num);
-    }, 0);
-    setForm((prev) => ({
-      ...prev,
-      productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
-    }));
-  }, [combos]);
+    if (editItem) {
+      setForm({
+        ...editItem,
+        healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
+        images: safeParse(editItem.images),
+        comboItems: safeParse(editItem.comboItems),
+        comboDetails: typeof editItem.comboDetails === 'string' ? JSON.parse(editItem.comboDetails || '{}') : editItem.comboDetails,
+        barcodeValue: editItem.barcodeValue || editItem.productId
+      });
+    } else {
+      const maxId = combos.reduce((max, c) => {
+        const match = c.productId?.match(/\d+/);
+        const num = match ? parseInt(match[0]) : 0;
+        return Math.max(max, num);
+      }, 0);
+      setForm((prev) => ({
+        ...prev,
+        productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
+        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }
+      }));
+    }
+  }, [editItem, combos]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -373,10 +415,15 @@ const ComboProductForm = ({ categories, onSuccess, combos }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post("/combos", form);
+      if (editItem) {
+        await api.put(`/combos/${editItem.id}`, form);
+        toast.success("Combo Registry Updated");
+      } else {
+        await api.post("/combos", form);
+        toast.success("Pack Registered");
+      }
       onSuccess();
-      setForm({ ...form, name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" } });
-    } catch { toast.error("Failed"); }
+    } catch { toast.error("Submission Failure"); }
     setLoading(false);
   };
 
