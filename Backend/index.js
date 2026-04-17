@@ -75,8 +75,8 @@ const initializeDatabase = async () => {
       name VARCHAR(255) NOT NULL,
       category VARCHAR(255),
       rating DECIMAL(3,2) DEFAULT 0,
-      barcode VARCHAR(100),
-      barcodeValue TEXT,
+      barcode LONGTEXT,
+      barcodeValue VARCHAR(100),
       productType ENUM('single', 'combo') DEFAULT 'single',
       images LONGTEXT,
       variants LONGTEXT,
@@ -85,6 +85,7 @@ const initializeDatabase = async () => {
       totalStock INT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
   `);
 
 
@@ -122,7 +123,21 @@ const initializeDatabase = async () => {
   }
 
   await db.query("ALTER TABLE users MODIFY COLUMN user_id VARCHAR(36) NOT NULL");
+
+  // Maintenance for products table
+  const [pDescription] = await db.query('SHOW COLUMNS FROM products LIKE "description"');
+  if (pDescription.length === 0) {
+    console.log('Adding products.description column');
+    await db.query('ALTER TABLE products ADD COLUMN description TEXT AFTER name');
+  }
+
+  const [pBarcode] = await db.query('SHOW COLUMNS FROM products LIKE "barcode"');
+  if (pBarcode.length > 0 && pBarcode[0].Type.toLowerCase().indexOf('longtext') === -1) {
+    console.log('Updating products.barcode to LONGTEXT');
+    await db.query('ALTER TABLE products MODIFY COLUMN barcode LONGTEXT');
+  }
 };
+
 
 const ensureAdminUser = async () => {
   const [admins] = await db.query('SELECT id FROM users WHERE email = ?', ['admin@gmail.com']);
