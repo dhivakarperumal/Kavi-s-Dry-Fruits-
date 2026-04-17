@@ -210,7 +210,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       toast.loading("Compressing...", { id: "up-p" });
       const base64 = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1000, useWebWorker: true }).then((blob) => {
+          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
             return new Promise((res) => {
               const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
             });
@@ -437,7 +437,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       toast.loading("Uploading...", { id: "up-c" });
       const base64 = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1000, useWebWorker: true }).then((blob) => {
+          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
             return new Promise((res) => {
               const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
             });
@@ -485,15 +485,10 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Description *</label><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required rows="4" className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 outline-none resize-none font-medium text-gray-700 shadow-sm" placeholder="Describe pack contents..." /></div>
               </div>
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category</label><div className="w-full bg-gray-100 rounded-2xl px-6 py-4 font-black text-gray-500 italic shadow-inner border border-gray-200">{form.category}</div></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Pack Stock</label><input type="number" value={form.totalStock} onChange={(e) => setForm({ ...form, totalStock: e.target.value })} required className="w-full bg-amber-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black text-amber-700 shadow-sm" placeholder="Qty" /></div>
-                </div>
                 <div className="bg-amber-50/30 p-6 rounded-[2rem] border border-amber-100">
                   <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Combo Strategy Registry</h4>
                   <div className="flex gap-4">
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
-                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Stock</p><p className="text-xl font-black text-amber-600">{form.totalStock}</p></div>
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Weight</p><p className="text-xl font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p></div>
                   </div>
                 </div>
@@ -565,7 +560,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                             const file = e.target.files[0];
                             if(!file) return;
                             try {
-                              const compressed = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 500, useWebWorker: true });
+                              const compressed = await imageCompression(file, { maxSizeMB: 0.05, maxWidthOrHeight: 300, useWebWorker: true });
                               const reader = new FileReader();
                               reader.onloadend = () => {
                                 const u = [...form.comboItems];
