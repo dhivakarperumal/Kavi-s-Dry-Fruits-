@@ -7,6 +7,7 @@ const db = require('./src/config/db');
 const authRoutes = require('./src/routers/authRoutes');
 const categoryRoutes = require('./src/routers/categoryRoutes');
 const productRoutes = require('./src/routers/productRoutes');
+const comboRoutes = require('./src/routers/comboRoutes');
 const userRoutes = require('./src/routers/userRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const dealerRoutes = require('./src/routers/dealerRoutes');
@@ -30,6 +31,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/combos', comboRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dealers', dealerRoutes);
@@ -82,6 +84,7 @@ const initializeDatabase = async () => {
       productId VARCHAR(50) NOT NULL UNIQUE,
       name VARCHAR(255) NOT NULL,
       description TEXT,
+      healthBenefits TEXT,
       category VARCHAR(255),
       rating DECIMAL(3,2) DEFAULT 0,
       barcode LONGTEXT,
@@ -99,6 +102,7 @@ const initializeDatabase = async () => {
       productId VARCHAR(50) NOT NULL UNIQUE,
       name VARCHAR(255) NOT NULL,
       description TEXT,
+      healthBenefits TEXT,
       category VARCHAR(255) DEFAULT 'Combo Packs',
       rating DECIMAL(3,2) DEFAULT 0,
       barcode LONGTEXT,

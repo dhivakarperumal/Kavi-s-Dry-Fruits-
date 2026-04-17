@@ -1,87 +1,88 @@
 const db = require('../config/db');
 
-exports.getProducts = async (req, res) => {
+exports.getCombos = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM products ORDER BY created_at DESC');
-    const products = rows.map(row => ({
+    const [rows] = await db.query('SELECT * FROM combos ORDER BY created_at DESC');
+    const combos = rows.map(row => ({
       ...row,
       images: JSON.parse(row.images || '[]'),
-      variants: JSON.parse(row.variants || '[]'),
-      healthBenefits: JSON.parse(row.healthBenefits || '[]'),
       comboItems: JSON.parse(row.comboItems || '[]'),
+      healthBenefits: JSON.parse(row.healthBenefits || '[]'),
       comboDetails: JSON.parse(row.comboDetails || '{}'),
     }));
-    res.json(products);
+    res.json(combos);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.addProduct = async (req, res) => {
+exports.addCombo = async (req, res) => {
   try {
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, variants, totalStock
+      images, comboItems, comboDetails, totalStock
     } = req.body;
 
     const [result] = await db.query(
-      `INSERT INTO products 
-      (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, variants, totalStock) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO combos 
+      (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, comboItems, comboDetails, totalStock) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId, name, description, 
         JSON.stringify(healthBenefits || []),
         category, rating, barcode, barcodeValue,
         JSON.stringify(images || []),
-        JSON.stringify(variants || []),
+        JSON.stringify(comboItems || []),
+        JSON.stringify(comboDetails || {}),
         totalStock || 0
       ]
     );
 
-    res.status(201).json({ id: result.insertId, message: 'Product added successfully' });
+    res.status(201).json({ id: result.insertId, message: 'Combo pack added successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error: ' + error.message });
   }
 };
 
-exports.updateProduct = async (req, res) => {
+exports.updateCombo = async (req, res) => {
   try {
     const { id } = req.params;
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, variants, totalStock
+      images, comboItems, comboDetails, totalStock
     } = req.body;
 
     await db.query(
-      `UPDATE products SET 
+      `UPDATE combos SET 
       productId = ?, name = ?, description = ?, healthBenefits = ?, category = ?, rating = ?, barcode = ?, barcodeValue = ?, 
-      images = ?, variants = ?, totalStock = ? 
+      images = ?, comboItems = ?, comboDetails = ?, totalStock = ? 
       WHERE id = ?`,
       [
         productId, name, description, 
         JSON.stringify(healthBenefits || []),
         category, rating, barcode, barcodeValue,
         JSON.stringify(images || []),
-        JSON.stringify(variants || []),
+        JSON.stringify(comboItems || []),
+        JSON.stringify(comboDetails || {}),
         totalStock || 0,
         id
       ]
     );
 
-    res.json({ message: 'Product updated successfully' });
+    res.json({ message: 'Combo pack updated successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.deleteProduct = async (req, res) => {
+exports.deleteCombo = async (req, res) => {
   try {
     const { id } = req.params;
-    await db.query('DELETE FROM products WHERE id = ?', [id]);
-    res.json({ message: 'Product deleted' });
+    await db.query('DELETE FROM combos WHERE id = ?', [id]);
+    res.json({ message: 'Combo pack deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
