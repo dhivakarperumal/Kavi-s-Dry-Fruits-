@@ -41,7 +41,9 @@ const ProductCard = React.memo(({
 
   const avgRating = product.rating || 4.5;
 
-  const handleAddToFav = () => {
+  const handleAddToFav = (event) => {
+    event.stopPropagation();
+    event.preventDefault();
     addToFav({
       ...product,
       imageUrl: product.images[0],
@@ -82,6 +84,7 @@ const ProductCard = React.memo(({
           Bestseller
         </span>
         <button
+          type="button"
           onClick={handleAddToFav}
           className="absolute top-2 right-2 border p-2 rounded-full group-hover:text-white group-hover:bg-primary transition cursor-pointer"
         >

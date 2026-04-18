@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { useAuth } from "../PrivateRouter/AuthContext";
 import { db } from "../firebase";
 import {
   collection,
@@ -19,6 +20,7 @@ import imagePreloadManager from "../services/imagePreloadManager";
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
@@ -36,22 +38,24 @@ export const StoreProvider = ({ children }) => {
 
     const storedUserStr = localStorage.getItem("user");
     const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
-    setUser(storedUser);
+    const currentUser = authUser || storedUser;
+    setUser(currentUser);
 
     const setupListeners = async () => {
-      if (storedUser && storedUser.userId) {
+      if (currentUser && (currentUser.userId || currentUser.user_id || currentUser.userUuid || currentUser.uid)) {
         try {
-          const userDoc = await getDoc(doc(db, "users", storedUser.userId));
+          const userDoc = await getDoc(doc(db, "users", currentUser.userId || currentUser.uid));
           setUserData(userDoc.exists() ? userDoc.data() : null);
 
           // CART LISTENER
-          const cartRef = collection(db, "users", storedUser.userId, "cart");
+          const rawCartUserId = currentUser.userId || currentUser.uid;
+          const cartRef = collection(db, "users", rawCartUserId, "cart");
           unsubscribeCart = onSnapshot(cartRef, (snap) => {
             setCartItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
           });
 
           // FAVORITES LOAD
-          const sqlUserId = getSqlUserId(storedUser);
+          const sqlUserId = getSqlUserId(currentUser);
           await loadFavorites(sqlUserId);
         } catch (err) {
           console.error("Firestore Auth Error:", err.message);
@@ -72,7 +76,7 @@ export const StoreProvider = ({ children }) => {
       unsubscribeCart();
       unsubscribeFav();
     };
-  }, []);
+  }, [authUser]);
 
   const parseJsonField = (value, fallback) => {
     if (value == null) return fallback;
@@ -85,7 +89,20 @@ export const StoreProvider = ({ children }) => {
   };
 
   const getSqlUserId = (userObj) =>
-    userObj?.userId || userObj?.user_id || userObj?.userUuid || userObj?.uid || null;
+    userObj?.user_id || userObj?.userUuid || userObj?.userId || userObj?.uid || null;
+
+  const normalizeFavoriteItem = (item) => {
+    const productId = String(item.productId ?? item.product_id ?? item.id ?? "");
+    return {
+      ...item,
+      id: item.id ?? productId,
+      productId,
+      imageUrl: item.imageUrl || item.image_url || item.image || "",
+      weights: parseJsonField(item.weights, []),
+      prices: parseJsonField(item.prices, {}),
+      date: item.date || item.createdAt || item.created_at || item.timestamp || "",
+    };
+  };
 
   const loadFavorites = async (userId) => {
     if (!userId) {
@@ -94,7 +111,7 @@ export const StoreProvider = ({ children }) => {
     }
     try {
       const response = await api.get(`/favorites?userId=${encodeURIComponent(userId)}`);
-      setFavItems(response.data || []);
+      setFavItems((response.data || []).map(normalizeFavoriteItem));
     } catch (err) {
       console.error("Favorites fetch error:", err);
       setFavItems([]);
@@ -253,8 +270,18 @@ export const StoreProvider = ({ children }) => {
     const sqlUserId = getSqlUserId(user);
     if (!sqlUserId) return toast.error("Login to add to favorites!");
 
+    const productId = String(product.productId ?? product.id ?? "");
+    if (!productId) {
+      toast.error("Invalid product selected for favorites.");
+      return;
+    }
+
+    if (favItems.some((item) => String(item.productId) === productId)) {
+      toast('Product is already in favorites.');
+      return;
+    }
+
     try {
-      const productId = product.id || product.productId;
       const payload = {
         userId: sqlUserId,
         productId,
@@ -268,14 +295,14 @@ export const StoreProvider = ({ children }) => {
       };
 
       const response = await api.post('/favorites', payload);
-      const newFav = response.data || {
+      const newFav = normalizeFavoriteItem(response.data || {
         ...payload,
         id: productId,
         productId,
-      };
+      });
 
       setFavItems((current) => [
-        ...current.filter((item) => item.productId !== productId),
+        ...current.filter((item) => String(item.productId) !== productId),
         newFav,
       ]);
       toast.success("Added to Favorites!");
@@ -297,6 +324,54 @@ export const StoreProvider = ({ children }) => {
     } catch (err) {
       console.error('Remove favorite error:', err);
       toast.error("Failed to remove.");
+    }
+  };
+
+  const clearFavorites = async () => {
+    if (!user) return;
+    const sqlUserId = getSqlUserId(user);
+    if (!sqlUserId) return;
+
+    try {
+      await api.delete(`/favorites/${encodeURIComponent(sqlUserId)}`);
+      setFavItems([]);
+      toast.success("Favorites cleared");
+    } catch (err) {
+      console.error('Clear favorites error:', err);
+      toast.error("Failed to clear favorites.");
+    }
+  };
+
+  const addAllToCart = async () => {
+    if (!user) return toast.error("Login to add to cart!");
+    const sqlUserId = getSqlUserId(user);
+    if (!sqlUserId) return toast.error("Login to add to cart!");
+
+    if (favItems.length === 0) {
+      toast.error("No favorites to add to cart.");
+      return;
+    }
+
+    try {
+      for (const item of favItems) {
+        const activeWeight = item.selectedWeight || item.weights?.[0] || "100g";
+        const price = item.prices?.[activeWeight] || item.price || 0;
+
+        await addToCart({
+          id: item.productId,
+          name: item.name,
+          price,
+          image: item.imageUrl,
+          selectedWeight: activeWeight,
+          qty: 1,
+          weights: item.weights,
+          prices: item.prices,
+        });
+      }
+      toast.success("All favorites added to cart!");
+    } catch (err) {
+      console.error('Add all to cart error:', err);
+      toast.error("Failed to add some items to cart.");
     }
   };
 
@@ -416,15 +491,18 @@ export const StoreProvider = ({ children }) => {
         allProducts,
         cartItems,
         favItems,
+        setFavItems,
         addToCart,
         addToFav,
         increaseQuantity,
         decreaseQuantity,
         removeItem,
         removeFavItem,
+        clearFavorites,
+        addAllToCart,
         clearCart,
         updateWeight,
-      }), [user, userData, loading, loadingProducts, allProducts, cartItems, favItems, addToCart, addToFav, increaseQuantity, decreaseQuantity, removeItem, removeFavItem, clearCart, updateWeight])}
+      }), [user, userData, loading, loadingProducts, allProducts, cartItems, favItems, setFavItems, addToCart, addToFav, increaseQuantity, decreaseQuantity, removeItem, removeFavItem, clearFavorites, addAllToCart, clearCart, updateWeight])}
     >
       {children}
     </StoreContext.Provider>

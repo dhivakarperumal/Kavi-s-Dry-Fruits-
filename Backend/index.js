@@ -189,6 +189,20 @@ app.delete('/api/favorites/:userId/:productId', async (req, res) => {
   }
 });
 
+app.delete('/api/favorites/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: 'Missing userId' });
+    }
+    await db.query('DELETE FROM favorites WHERE user_id = ?', [userId]);
+    res.json({ message: 'All favorites cleared' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Health Benefits Routes
 app.get('/api/health-benefits', async (req, res) => {
   try {

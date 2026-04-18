@@ -281,7 +281,10 @@ const Category = () => {
                        Bestseller
                       </span>
                       <button
-                        onClick={() => {
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          event.preventDefault();
                           addToFav({ ...product, qty: 1, selectedWeight: activeWeight, price: offerPrice });
                           toast.success("Added to Favorites");
                         }}

@@ -110,7 +110,10 @@ const PopularProduct = () => {
                     Bestseller
                   </span>
                   <button
-                    onClick={() => {
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      event.preventDefault();
                       addToFav({
                         ...product,
                         imageUrl: product.images[0],
