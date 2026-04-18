@@ -86,9 +86,11 @@ const Sidebar = ({
 
   const handleClick = (item) => {
     if (item.dropdown) {
+      // Toggle this dropdown; close if already open
       setOpenDropdown(openDropdown === item.label ? null : item.label);
     } else {
       setActiveSection(item.label);
+      setOpenDropdown(null); // close any open dropdown
       if (typeof setIsOpen === 'function') setIsOpen(false);
     }
   };
@@ -98,8 +100,12 @@ const Sidebar = ({
       item.label === activeSection ||
       (item.dropdown && item.dropdown.some(sub => sub.label === activeSection))
     );
-    if (parent && parent.dropdown && openDropdown !== parent.label) {
+    if (parent && parent.dropdown) {
+      // Open the parent dropdown of the active section
       setOpenDropdown(parent.label);
+    } else {
+      // No parent dropdown — close all dropdowns
+      setOpenDropdown(null);
     }
   }, [activeSection]);
 
