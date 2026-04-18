@@ -355,8 +355,8 @@ const CreateBilling = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-                <h1 className="text-3xl font-black text-slate-800">Checkout Terminal</h1>
-                <p className="text-sm text-gray-500 font-medium mt-1">Generate dynamic POS invoices and manage stock</p>
+                <h1 className="text-2xl font-[900] text-slate-950 tracking-tight">Checkout Terminal</h1>
+                <p className="text-xs text-slate-500 font-bold mt-1">Generate premium POS invoices & dynamic stock management</p>
             </div>
             <div className="flex items-center gap-3">
                 <button 
@@ -391,37 +391,37 @@ const CreateBilling = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Panel: Client Info */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:shadow-gray-100">
-              <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-tight">
-                <span className="w-2 h-2 bg-primary rounded-full"></span> Client Profile
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-100 transition-all hover:scale-[1.01]">
+              <h3 className="text-base font-[900] text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-tight">
+                <span className="w-2.5 h-2.5 bg-indigo-600 rounded-full animate-pulse"></span> Client Profile
               </h3>
               
               <div className="space-y-4">
                 <div className="group">
-                  <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1 ml-1 block group-focus-within:text-primary transition-colors">Full Name</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block group-focus-within:text-indigo-600 transition-colors">Full Name</label>
                   <input
-                    placeholder="e.g. Dhivakar Perumal"
-                    className="w-full bg-gray-50/50 border-2 border-transparent rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-700"
+                    placeholder="Enter customer name..."
+                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm placeholder:text-slate-300"
                     value={client.name}
                     onChange={(e) => setClient({ ...client, name: e.target.value })}
                   />
                 </div>
                 
                 <div className="group">
-                  <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1 ml-1 block group-focus-within:text-primary transition-colors">Phone Number</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block group-focus-within:text-indigo-600 transition-colors">Phone Number</label>
                   <input
-                    placeholder="Auto-fill triggers at 5+ digits"
-                    className="w-full bg-gray-50/50 border-2 border-transparent rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all font-bold text-slate-700"
+                    placeholder="Search by mobile..."
+                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm placeholder:text-slate-300"
                     value={client.phone}
                     onChange={(e) => setClient({ ...client, phone: e.target.value })}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1 ml-1 block">Type</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block">Type</label>
                     <select
-                      className="w-full bg-gray-50/50 border-2 border-transparent rounded-2xl px-4 py-3.5 outline-none focus:bg-white focus:border-primary/20 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 outline-none focus:bg-white focus:border-indigo-500/30 transition-all font-black text-slate-900 text-xs appearance-none cursor-pointer"
                       value={client.customerType}
                       onChange={(e) => setClient({ ...client, customerType: e.target.value })}
                     >
@@ -430,9 +430,9 @@ const CreateBilling = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1 ml-1 block">Mode</label>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block">Mode</label>
                     <select
-                      className="w-full bg-gray-50/50 border-2 border-transparent rounded-2xl px-4 py-3.5 outline-none focus:bg-white focus:border-primary/20 transition-all font-bold text-slate-700 appearance-none cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-3 outline-none focus:bg-white focus:border-indigo-500/30 transition-all font-black text-slate-900 text-xs appearance-none cursor-pointer"
                       value={client.paymentMode}
                       onChange={(e) => setClient({ ...client, paymentMode: e.target.value })}
                     >
@@ -443,20 +443,20 @@ const CreateBilling = () => {
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-4">
                   <button
                     onClick={() => setExpandAddress(!expandAddress)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-all text-sm font-bold text-slate-600 cursor-pointer"
+                    className="w-full flex items-center justify-between p-5 bg-slate-900 rounded-[1.5rem] hover:bg-black transition-all text-sm font-black text-white cursor-pointer shadow-lg shadow-indigo-100"
                   >
-                    <span>Shipping Address</span>
-                    {expandAddress ? <MdKeyboardArrowUp /> : <MdKeyboardArrowDown />}
+                    <span className="uppercase tracking-[0.1em]">Shipping Address details</span>
+                    {expandAddress ? <MdKeyboardArrowUp size={20} /> : <MdKeyboardArrowDown size={20} />}
                   </button>
                   {expandAddress && (
-                    <div className="p-4 mt-2 space-y-3 bg-gray-50/30 rounded-2xl border border-dashed border-gray-200 animate-in fade-in slide-in-from-top-2">
-                      <input placeholder="Street" className="w-full bg-white rounded-xl px-4 py-2.5 text-xs font-bold border-none" value={client.shippingAddress.street} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, street:e.target.value}})} />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input placeholder="City" className="w-full bg-white rounded-xl px-4 py-2.5 text-xs font-bold border-none" value={client.shippingAddress.city} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, city:e.target.value}})} />
-                        <input placeholder="Zip" className="w-full bg-white rounded-xl px-4 py-2.5 text-xs font-bold border-none" value={client.shippingAddress.zip} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, zip:e.target.value}})} />
+                    <div className="p-6 mt-3 space-y-4 bg-white rounded-[2rem] border-2 border-slate-100 animate-in fade-in slide-in-from-top-2 shadow-inner">
+                      <input placeholder="Street / Door No." className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.street} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, street:e.target.value}})} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <input placeholder="City" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.city} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, city:e.target.value}})} />
+                        <input placeholder="Zip Code" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.zip} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, zip:e.target.value}})} />
                       </div>
                     </div>
                   )}
@@ -464,30 +464,21 @@ const CreateBilling = () => {
               </div>
             </div>
 
-            <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 flex items-center gap-4 relative overflow-hidden group">
-               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <FiSearch size={24} />
-               </div>
-               <div>
-                  <h4 className="font-black text-lg">Barcode Ready</h4>
-                  <p className="text-xs font-bold opacity-70 uppercase tracking-widest mt-1">Scan physical products anytime</p>
-               </div>
-            </div>
+
           </div>
 
           {/* Right Panel: POS and Cart */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
-                    <div className="flex-1 relative">
-                        <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-indigo-50 overflow-hidden">
+                <div className="flex flex-col md:flex-row items-center gap-4 mb-5">
+                    <div className="flex-1 relative group">
+                        <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-600 transition-colors" size={16} />
                         <select
-                            className="w-full pl-14 pr-10 py-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 font-bold text-slate-700 appearance-none cursor-pointer"
+                            className="w-full pl-14 pr-10 py-3.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 font-black text-slate-900 text-sm appearance-none cursor-pointer transition-all"
                             value={selectedProduct.id || ""}
                             onChange={(e) => handleProductSelect(e.target.value)}
                         >
-                            <option value="">Search or Select Product ID...</option>
+                            <option value="">Search Inventory...</option>
                             {productList.map((p) => (
                                 <option key={p.id} value={p.productId}>
                                    {p.productId} — {p.name} ({p.category === 'Combo' ? 'COMBO' : 'SINGLE'})
@@ -496,11 +487,11 @@ const CreateBilling = () => {
                         </select>
                     </div>
 
-                    <div className="w-full md:w-48 relative">
+                    <div className="w-full md:w-56 relative">
                         <input
                            type="text"
-                           placeholder="Manual Barcode..."
-                           className="w-full pl-4 pr-10 py-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-primary/5 font-bold text-slate-700"
+                           placeholder="Type Barcode..."
+                           className="w-full pl-5 pr-10 py-3.5 bg-indigo-50 border border-indigo-100 rounded-xl outline-none focus:bg-white focus:border-indigo-500 transition-all font-black text-indigo-950 text-sm placeholder:text-indigo-300"
                            value={manualBarcode}
                            onChange={(e) => setManualBarcode(e.target.value)}
                            onKeyDown={(e) => {
@@ -514,34 +505,35 @@ const CreateBilling = () => {
                 </div>
 
                 {selectedProduct.name && (
-                    <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 animate-in zoom-in-95">
+                    <div className="p-6 bg-indigo-50/50 rounded-[2rem] border border-indigo-100 animate-in zoom-in-95 duration-500">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
                             <div className="md:col-span-2">
-                                <label className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 block ml-1">Current Item</label>
-                                <div className="bg-white p-4 rounded-2xl border border-primary/10 shadow-sm flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100 italic text-[8px] text-gray-300 flex items-center justify-center">
+                                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block ml-1">Focused Item</label>
+                                <div className="bg-white p-4 rounded-2xl border border-indigo-50 shadow-lg shadow-indigo-100/20 flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-xl bg-white overflow-hidden flex-shrink-0 border border-slate-100 flex items-center justify-center p-0.5">
                                        {selectedProduct.primaryImage ? (
                                          <img 
                                            src={selectedProduct.primaryImage.startsWith('http') ? selectedProduct.primaryImage : `http://localhost:5000${selectedProduct.primaryImage}`} 
                                            alt="" 
-                                           className="w-full h-full object-cover"
+                                           className="w-full h-full object-contain"
                                          />
                                        ) : (
-                                         "No Image"
+                                         <FiPackage className="text-slate-100" size={24} />
                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="font-black text-slate-800 text-lg truncate">{selectedProduct.name}</p>
-                                      <div className="mt-1 flex flex-wrap gap-2">
-                                        <span className="text-[10px] font-black px-2 py-0.5 bg-gray-100 text-gray-500 rounded-md uppercase">{selectedProduct.category}</span>
+                                      <p className="font-black text-slate-950 text-sm truncate leading-tight">{selectedProduct.name}</p>
+                                      <div className="mt-1 flex flex-wrap gap-1.5">
+                                        <span className="text-[8px] font-black px-2 py-0.5 bg-indigo-600 text-white rounded uppercase tracking-wider">{selectedProduct.category}</span>
                                         {selectedProduct.category === "Combo" && selectedProduct.comboProducts?.length > 0 && (
                                             <div className="w-full mt-2 space-y-1">
-                                                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Included Items:</p>
-                                                {selectedProduct.comboProducts.map((sub, sIdx) => (
-                                                    <div key={sIdx} className="text-[10px] font-bold text-gray-400 bg-gray-50/50 px-2 py-1 rounded inline-block mr-2">
-                                                        {sub.name} ({sub.weight})
-                                                    </div>
-                                                ))}
+                                                <div className="flex flex-wrap gap-1">
+                                                    {selectedProduct.comboProducts.map((sub, sIdx) => (
+                                                        <div key={sIdx} className="text-[8px] font-black text-slate-500 bg-white border border-slate-50 px-1.5 py-1 rounded">
+                                                            {sub.name} • <span className="text-indigo-600">{sub.weight}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                       </div>
@@ -550,10 +542,10 @@ const CreateBilling = () => {
                             </div>
                             
                             <div>
-                                <label className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 block ml-1">Unit Price (₹)</label>
+                                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block ml-1 whitespace-nowrap">Unit Price</label>
                                 <input
                                     type="number"
-                                    className="w-full bg-white rounded-2xl px-5 py-4 outline-none border border-primary/10 focus:ring-4 focus:ring-primary/10 font-black text-slate-800"
+                                    className="w-full bg-white rounded-xl px-4 py-3 outline-none border border-slate-100 focus:border-indigo-500 font-black text-slate-950 text-sm shadow-sm"
                                     value={selectedProduct.price || 0}
                                     onChange={(e) => setSelectedProduct({...selectedProduct, price: parseFloat(e.target.value) || 0})}
                                 />
@@ -561,9 +553,9 @@ const CreateBilling = () => {
                             
                             {selectedProduct.category !== "Combo" && (
                               <div>
-                                  <label className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 block ml-1">Select Weight</label>
+                                  <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block ml-1 whitespace-nowrap">Variant</label>
                                   <select
-                                      className="w-full bg-white rounded-2xl px-5 py-4 outline-none border border-primary/10 focus:ring-4 focus:ring-primary/10 font-black text-slate-800 appearance-none cursor-pointer"
+                                      className="w-full bg-white rounded-xl px-3 py-3 outline-none border border-slate-100 focus:border-indigo-500 font-black text-slate-950 appearance-none cursor-pointer shadow-sm text-xs"
                                       value={selectedProduct.weight || ""}
                                       onChange={(e) => {
                                         const newWeight = e.target.value;
@@ -583,10 +575,10 @@ const CreateBilling = () => {
                             )}
 
                             <div>
-                                <label className="text-[10px] font-black text-primary uppercase tracking-widest mb-2 block ml-1">Quantity</label>
+                                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 block ml-1">Qty</label>
                                 <input
                                     type="number"
-                                    className="w-full bg-white rounded-2xl px-5 py-4 outline-none border border-primary/10 focus:ring-4 focus:ring-primary/10 font-black text-slate-800"
+                                    className="w-full bg-white rounded-xl px-4 py-3 outline-none border border-slate-100 focus:border-indigo-500 font-black text-slate-950 text-sm shadow-sm"
                                     value={selectedProduct.quantity || 1}
                                     min="1"
                                     onChange={(e) => setSelectedProduct({...selectedProduct, quantity: parseInt(e.target.value) || 1})}
@@ -595,9 +587,9 @@ const CreateBilling = () => {
 
                             <button
                                 onClick={addProductToInvoice}
-                                className="bg-primary text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                                className="bg-indigo-600 text-white font-black py-3.5 rounded-xl shadow-xl shadow-indigo-100 hover:bg-black hover:scale-[1.02] transition-all flex items-center justify-center gap-1.5 uppercase tracking-widest text-[10px]"
                             >
-                                <FiPlus /> Add
+                                <FiPlus size={14} /> Add Item
                             </button>
                         </div>
                     </div>
