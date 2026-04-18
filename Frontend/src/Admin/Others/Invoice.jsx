@@ -153,7 +153,7 @@ const Invoice = () => {
               "transportAmount",
             ].map((field, idx) => (
               <div key={idx}>
-                <label className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2 block flex items-center gap-2">
+                <label className="text-xs font-black text-gray-700 uppercase tracking-tighter mb-2 block flex items-center gap-2">
                   <FaFileInvoiceDollar size={14} className="text-green-500" />
                   {field
                     .replace(/([A-Z])/g, " $1")

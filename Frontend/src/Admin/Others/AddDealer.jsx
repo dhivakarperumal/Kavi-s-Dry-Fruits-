@@ -157,7 +157,7 @@ const AddDealer = () => {
               {/* Dealer Name & Phone - Top Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2 block flex items-center gap-2">
+                  <label className="text-xs font-black text-gray-700 uppercase tracking-tighter mb-2 block flex items-center gap-2">
                     <FaStore size={14} className="text-green-500" /> Dealer Name *
                   </label>
                   <input
@@ -172,7 +172,7 @@ const AddDealer = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2 block flex items-center gap-2">
+                  <label className="text-xs font-black text-gray-700 uppercase tracking-tighter mb-2 block flex items-center gap-2">
                     <FaPhone size={14} className="text-green-500" /> Phone Number *
                   </label>
                   <input
@@ -222,7 +222,7 @@ const AddDealer = () => {
 
               {/* Address */}
               <div>
-                <label className="text-xs font-black text-gray-400 uppercase tracking-tighter mb-2 block flex items-center gap-2">
+                <label className="text-xs font-black text-gray-700 uppercase tracking-tighter mb-2 block flex items-center gap-2">
                   <FaMapLocationDot size={14} className="text-green-500" /> Dealer Address (Optional)
                 </label>
                 <textarea
