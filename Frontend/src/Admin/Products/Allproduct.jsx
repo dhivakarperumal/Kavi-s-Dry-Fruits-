@@ -14,11 +14,14 @@ const Allproduct = () => {
 
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [selectedWeight, setSelectedWeight] = useState("All");
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [selectedTag, setSelectedTag] = useState("All");
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [search, setSearch] = useState("");
 
   const [categories, setCategories] = useState([]);
   const [weights, setWeights] = useState([]);
+  const [tags, setTags] = useState([]);
   const [maxPrice, setMaxPrice] = useState(5000);
 
   const [showFilters, setShowFilters] = useState(false);
@@ -54,6 +57,7 @@ const Allproduct = () => {
         return ['Combo Pack'];
       });
       setWeights([...new Set(allWeights.filter(Boolean))]);
+      setTags([...new Set(unified.flatMap(item => item.tags || []).filter(Boolean))]);
       const allPrices = unified.flatMap(item => {
         if (item.type === 'single') return safeParse(item.variants).map(v => Number(v.offerPrice) || 0);
         const details = typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}') : item.comboDetails;
@@ -73,9 +77,17 @@ const Allproduct = () => {
     if (search.trim()) {
       filtered = filtered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.productId.toLowerCase().includes(search.toLowerCase()));
     }
-    if (categoryFilter.length) filtered = filtered.filter(p => categoryFilter.includes(p.category));
+    if (categoryFilter.length > 0) {
+      filtered = filtered.filter(p => categoryFilter.includes(p.category));
+    }
     if (selectedWeight !== "All") {
       filtered = filtered.filter(p => p.type === 'single' ? safeParse(p.variants).some(v => v.weight === selectedWeight) : selectedWeight === "Combo Pack");
+    }
+    if (selectedRating > 0) {
+      filtered = filtered.filter(p => (Number(p.rating) || 0) >= selectedRating);
+    }
+    if (selectedTag !== "All") {
+      filtered = filtered.filter(p => (p.tags || []).includes(selectedTag));
     }
     filtered = filtered.filter(p => {
       const details = p.type === 'single' ? safeParse(p.variants)[0] : (typeof p.comboDetails === 'string' ? JSON.parse(p.comboDetails || '{}') : p.comboDetails);
@@ -84,7 +96,16 @@ const Allproduct = () => {
     });
     setFilteredItems(filtered);
     setCurrentPage(1);
-  }, [search, categoryFilter, selectedWeight, priceRange, items]);
+  }, [search, categoryFilter, selectedWeight, selectedRating, selectedTag, priceRange, items]);
+
+  const clearFilters = () => {
+    setCategoryFilter([]);
+    setSelectedWeight("All");
+    setSelectedRating(0);
+    setSelectedTag("All");
+    setPriceRange([0, maxPrice]);
+    setSearch("");
+  };
 
   const handleDelete = async (item) => {
     if (!window.confirm(`Delete ${item.name}?`)) return;
@@ -121,28 +142,139 @@ const Allproduct = () => {
 
       <div className="flex flex-col lg:flex-row gap-6">
         {showFilters && (
-          <div className="w-full lg:w-64">
-            <div className="bg-gray-50 p-5 rounded-2xl border sticky top-28 space-y-5">
+          <div className="w-full lg:w-64 flex-shrink-0">
+            <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 space-y-6 sticky top-28 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+              {/* Search */}
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Search</label>
-                <div className="relative">
-                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                  <input placeholder="SKU/Name" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-white border rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:border-emerald-500" />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Search by name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Category</p>
-                <div className="flex flex-wrap gap-1">
-                  {categories.map(cat => (
-                    <button key={cat} onClick={() => categoryFilter.includes(cat) ? setCategoryFilter(categoryFilter.filter(c => c !== cat)) : setCategoryFilter([...categoryFilter, cat])} className={`px-2 py-1 rounded text-[9px] font-bold transition-all ${categoryFilter.includes(cat) ? 'bg-emerald-600 text-white' : 'bg-white border text-gray-500'}`}>{cat}</button>
+
+              {/* Categories */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">Categories:</p>
+                {categories.map((cat) => (
+                  <label key={cat} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      value={cat}
+                      checked={categoryFilter.includes(cat)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (checked) setCategoryFilter([...categoryFilter, cat]);
+                        else setCategoryFilter(categoryFilter.filter((c) => c !== cat));
+                      }}
+                      className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                    />
+                    {cat}
+                  </label>
+                ))}
+              </div>
+
+              {/* Weights */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">Weight:</p>
+                <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="weight"
+                    value="All"
+                    checked={selectedWeight === "All"}
+                    onChange={() => setSelectedWeight("All")}
+                    className="accent-emerald-600 cursor-pointer"
+                  />
+                  All
+                </label>
+                {weights.map((w) => (
+                  <label key={w} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weight"
+                      value={w}
+                      checked={selectedWeight === w}
+                      onChange={() => setSelectedWeight(w)}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    {w}
+                  </label>
+                ))}
+              </div>
+
+              {/* Ratings */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">Ratings:</p>
+                {[4, 3, 0].map((r) => (
+                  <label key={r} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="rating"
+                      value={r}
+                      checked={selectedRating === r}
+                      onChange={() => setSelectedRating(r)}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    {r === 0 ? "All Ratings" : `${r}★ & up`}
+                  </label>
+                ))}
+              </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold text-gray-800">Tags:</p>
+                  <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tag"
+                      value="All"
+                      checked={selectedTag === "All"}
+                      onChange={() => setSelectedTag("All")}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    All
+                  </label>
+                  {tags.map((t) => (
+                    <label key={t} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="tag"
+                        value={t}
+                        checked={selectedTag === t}
+                        onChange={() => setSelectedTag(t)}
+                        className="accent-emerald-600 cursor-pointer"
+                      />
+                      {t}
+                    </label>
                   ))}
                 </div>
+              )}
+
+              {/* Price */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">
+                  Price: ₹{priceRange[0]} - ₹{priceRange[1]}
+                </p>
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPrice}
+                  value={priceRange[1]}
+                  onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+                  className="w-full accent-emerald-500 cursor-pointer"
+                />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Price: ₹{priceRange[1]}</label>
-                <input type="range" min={0} max={maxPrice} value={priceRange[1]} onChange={(e) => setPriceRange([0, Number(e.target.value)])} className="w-full accent-emerald-500" />
-              </div>
-              <button onClick={() => { setCategoryFilter([]); setSearch(""); }} className="w-full py-2 text-[10px] font-bold text-gray-400 underline uppercase">Clear All</button>
+
+              <button
+                onClick={clearFilters}
+                className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl w-full transition-colors shadow-sm"
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
         )}
@@ -151,7 +283,7 @@ const Allproduct = () => {
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-48 bg-gray-50 rounded-2xl animate-pulse border" />)}</div>
           ) : viewMode === "card" ? (            
-           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+           <div className={`grid grid-cols-2 gap-5 ${showFilters ? 'lg:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-3 xl:grid-cols-4'}`}>
               {currentItems.map(item => {
                 const images = safeParse(item.images);
                 const isCombo = item.type === 'combo';
