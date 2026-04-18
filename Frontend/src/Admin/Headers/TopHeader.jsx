@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaBars, FaBell } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-const Topbar = ({ setIsSidebarOpen, activeSection, adminName, todayOrdersCount, lowStockCount, ordersold, handleLogout }) => {
+const Topbar = ({ setIsSidebarOpen, activeSection, adminName = "Administrator", todayOrdersCount = 0, lowStockCount = 0, ordersold = [], handleLogout }) => {
   const [isOrderDropdown, setIsOrderDropdown] = useState(false);
   const [isStockDropdown, setIsStockDropdown] = useState(false);
   const [isProfileDropdown, setIsProfileDropdown] = useState(false);
@@ -102,7 +102,7 @@ const Topbar = ({ setIsSidebarOpen, activeSection, adminName, todayOrdersCount, 
             onClick={() => setIsProfileDropdown(!isProfileDropdown)}
             className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center text-indigo-600 font-bold text-lg shadow-md cursor-pointer"
           >
-            {adminName.charAt(0).toUpperCase()}
+            {(adminName || "A").charAt(0).toUpperCase()}
           </button>
           {isProfileDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded shadow-lg py-2 cursor-pointer border border-gray-200">

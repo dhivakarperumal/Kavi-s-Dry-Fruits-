@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FaPlus,
   FaTrash,
@@ -19,6 +19,7 @@ import imageCompression from "browser-image-compression";
 
 const Products = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const editItem = location.state?.editItem;
 
   const [activeTab, setActiveTab] = useState(editItem?.type === "combo" ? "combo" : "single");
@@ -111,14 +112,28 @@ const Products = () => {
           {activeTab === "single" ? (
             <SingleProductForm 
               categories={categories} 
-              onSuccess={() => { fetchData(); }} 
+              onSuccess={() => { 
+                fetchData(); 
+                if (editItem) {
+                  navigate('/adminpanel/all-products');
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset view if adding new
+                }
+              }} 
               products={products} 
               editItem={editItem} 
             />
           ) : (
             <ComboProductForm 
               categories={categories} 
-              onSuccess={() => { fetchData(); }} 
+              onSuccess={() => { 
+                fetchData(); 
+                if (editItem) {
+                  navigate('/adminpanel/all-products');
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset view if adding new
+                }
+              }} 
               combos={combos} 
               products={products} 
               editItem={editItem} 
