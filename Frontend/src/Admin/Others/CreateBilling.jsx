@@ -182,13 +182,20 @@ const CreateBilling = () => {
 
         if (deliveries.length > 0) {
           const latest = deliveries[0]; 
+          const addr = typeof latest.shippingAddress === 'string' ? JSON.parse(latest.shippingAddress) : (latest.shippingAddress || {});
           setClient((prev) => ({
             ...prev,
             name: latest.clientName || "",
             gst: latest.clientGST || "",
             customerType: latest.customerType || "Online Customer",
             paymentMode: latest.paymentMode || "Cash",
-            shippingAddress: typeof latest.shippingAddress === 'string' ? JSON.parse(latest.shippingAddress) : latest.shippingAddress,
+            shippingAddress: {
+              street: addr.street || "",
+              city: addr.city || "",
+              state: addr.state || "Tamil Nadu",
+              zip: addr.zip || "",
+              country: addr.country || "India",
+            },
           }));
           toast.success("Client details auto-filled.");
         }
@@ -461,7 +468,9 @@ const CreateBilling = () => {
                       <input placeholder="Street / Door No." className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.street} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, street:e.target.value}})} />
                       <div className="grid grid-cols-2 gap-3">
                         <input placeholder="City" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.city} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, city:e.target.value}})} />
+                        <input placeholder="State" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.state} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, state:e.target.value}})} />
                         <input placeholder="Zip Code" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.zip} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, zip:e.target.value}})} />
+                        <input placeholder="Country" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.country} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, country:e.target.value}})} />
                       </div>
                     </div>
                   )}

@@ -343,6 +343,15 @@ const initializeDatabase = async () => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS seo_keywords (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      keywords VARCHAR(255) NOT NULL UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
 
   const ensureColumnExists = async (name, definition, positionAfter) => {
     const [cols] = await db.query('SHOW COLUMNS FROM users LIKE ?', [name]);
