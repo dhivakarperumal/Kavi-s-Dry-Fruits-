@@ -89,10 +89,10 @@ app.get('/api/orders', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { orderId, clientName, clientPhone, clientGST, shippingAddress, customerType, paymentMode, orderStatus, shippingCharge, items, gstAmount, totalAmount } = req.body;
+    const { orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount } = req.body;
     const [result] = await db.query(
-      'INSERT INTO orders (orderId, clientName, clientPhone, clientGST, shippingAddress, customerType, paymentMode, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, clientName, clientPhone, clientGST, JSON.stringify(shippingAddress), customerType, paymentMode, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
+      'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
     );
     res.json({ id: result.insertId, message: 'Order created' });
   } catch (error) {
@@ -146,6 +146,30 @@ app.put('/api/health-benefits/:id', async (req, res) => {
       [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore, req.params.id]
     );
     res.json({ message: 'Health benefit updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// User Addresses Routes
+app.get('/api/users/:userId/addresses', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM user_addresses WHERE user_id = ? ORDER BY created_at DESC', [req.params.userId]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users/:userId/addresses', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { fullname, email, contact, zip, city, state, street, country } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO user_addresses (user_id, fullname, email, contact, zip, city, state, street, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [userId, fullname, email, contact, zip, city, state, street, country]
+    );
+    res.json({ id: result.insertId, message: 'Address saved' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -268,12 +292,16 @@ const initializeDatabase = async () => {
     CREATE TABLE IF NOT EXISTS orders (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       orderId VARCHAR(50) NOT NULL UNIQUE,
+      userId VARCHAR(50),
       clientName VARCHAR(255),
       clientPhone VARCHAR(50),
       clientGST VARCHAR(100),
+      email VARCHAR(255),
       shippingAddress TEXT,
       customerType VARCHAR(100),
       paymentMode VARCHAR(100),
+      paymentStatus VARCHAR(100),
+      paymentId VARCHAR(255),
       orderStatus VARCHAR(100) DEFAULT 'Pending',
       shippingCharge DECIMAL(15,2),
       items LONGTEXT,
@@ -352,13 +380,33 @@ const initializeDatabase = async () => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_addresses (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(50) NOT NULL,
+      fullname VARCHAR(255),
+      email VARCHAR(255),
+      contact VARCHAR(50),
+      zip VARCHAR(20),
+      city VARCHAR(100),
+      state VARCHAR(100),
+      street TEXT,
+      country VARCHAR(100) DEFAULT 'India',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+
+  const ensureTableColumnExists = async (table, name, definition, positionAfter) => {
+    const [cols] = await db.query(`SHOW COLUMNS FROM ${table} LIKE ?`, [name]);
+    if (cols.length === 0) {
+      console.log(`Adding missing ${table}.${name} column`);
+      await db.query(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition} ${positionAfter || ''}`);
+    }
+  };
 
   const ensureColumnExists = async (name, definition, positionAfter) => {
-    const [cols] = await db.query('SHOW COLUMNS FROM users LIKE ?', [name]);
-    if (cols.length === 0) {
-      console.log(`Adding missing users.${name} column`);
-      await db.query(`ALTER TABLE users ADD COLUMN ${name} ${definition} ${positionAfter || ''}`);
-    }
+    await ensureTableColumnExists('users', name, definition, positionAfter);
   };
 
   const dropIndexIfExists = async (indexName) => {
@@ -387,18 +435,17 @@ const initializeDatabase = async () => {
 
   await db.query("ALTER TABLE users MODIFY COLUMN user_id VARCHAR(36) NOT NULL");
 
-  // Maintenance for products table
-  const [pDescription] = await db.query('SHOW COLUMNS FROM products LIKE "description"');
-  if (pDescription.length === 0) {
-    console.log('Adding products.description column');
-    await db.query('ALTER TABLE products ADD COLUMN description TEXT AFTER name');
-  }
-
   const [pBarcode] = await db.query('SHOW COLUMNS FROM products LIKE "barcode"');
   if (pBarcode.length > 0 && pBarcode[0].Type.toLowerCase().indexOf('longtext') === -1) {
     console.log('Updating products.barcode to LONGTEXT');
     await db.query('ALTER TABLE products MODIFY COLUMN barcode LONGTEXT');
   }
+
+  // Maintenance for orders table
+  await ensureTableColumnExists('orders', 'userId', 'VARCHAR(50) NULL', 'AFTER orderId');
+  await ensureTableColumnExists('orders', 'email', 'VARCHAR(255) NULL', 'AFTER clientGST');
+  await ensureTableColumnExists('orders', 'paymentStatus', 'VARCHAR(100) NULL', 'AFTER paymentMode');
+  await ensureTableColumnExists('orders', 'paymentId', 'VARCHAR(255) NULL', 'AFTER paymentStatus');
 };
 
 

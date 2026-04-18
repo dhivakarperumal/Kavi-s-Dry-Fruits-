@@ -4,18 +4,9 @@ import { useStore } from "../Context/StoreContext";
 import PageHeader from "../Component/PageHeader";
 import { useNavigate, useLocation } from "react-router-dom";
 import emailjs from "@emailjs/browser";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  runTransaction,
-  doc,
-  updateDoc,
-  getDoc,
-} from "firebase/firestore";
-import { db } from "../firebase";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
+import api from "../services/api";
 
 const Checkout = () => {
   const { cartItems, clearCart, user } = useStore();
@@ -47,19 +38,11 @@ const Checkout = () => {
   // ---------------- Order ID generation ----------------
   const generateOrderId = async () => {
     try {
-      const counterRef = doc(db, "metadata", "orderCounter");
-      return await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(counterRef);
-        let orderNumber = 1;
-        if (snap.exists()) {
-          orderNumber = (snap.data().lastOrderNumber || 0) + 1;
-        }
-        transaction.set(counterRef, { lastOrderNumber: orderNumber }, { merge: true });
-        return `KDF00${String(orderNumber).padStart(3, "0")}`;
-      });
+      const res = await api.get("/orders");
+      const orderNumber = (res.data?.length || 0) + 1;
+      return `KDF00${String(orderNumber).padStart(3, "0")}`;
     } catch (err) {
       console.error("generateOrderId error:", err);
-      // fallback to timestamp based id to avoid breaking flow
       return `KDF${Date.now()}`;
     }
   };
@@ -67,10 +50,10 @@ const Checkout = () => {
   // ---------------- Fetch saved addresses ----------------
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (user) {
+      if (user && user.uid) {
         try {
-          const snap = await getDocs(collection(db, "users", user.uid, "addresses"));
-          setSavedAddresses(snap.docs.map((d) => d.data()));
+          const res = await api.get(`/users/${user.uid}/addresses`);
+          setSavedAddresses(res.data || []);
         } catch (err) {
           console.error("Fetch addresses error:", err);
         }
@@ -228,10 +211,10 @@ const Checkout = () => {
     );
 
   const saveAddressAfterPayment = async () => {
-    if (!user) return;
+    if (!user || !user.uid) return;
     if (isDuplicateAddress(form)) return;
     try {
-      await addDoc(collection(db, "users", user.uid, "addresses"), form);
+      await api.post(`/users/${user.uid}/addresses`, form);
       toast.success("Address saved!");
     } catch (err) {
       console.error("Save address error:", err);
@@ -300,43 +283,51 @@ const Checkout = () => {
     const orderData = {
       orderId,
       userId: user.uid,
-      cartItems: trimmedCartItems,
-      totalAmount: finalAmount,
-      shippingCharge: shippingCost,
-      paymentMethod,
-      paymentStatus: paymentMethod === "Online Payment" ? "Paid" : "Pending",
-      shippingAddress: form,
-      date: new Date().toISOString(),
-      orderStatus: "Placed",
-      paymentId,
+      clientName: form.fullname,
+      clientPhone: form.contact,
       email: form.email,
-      fullname: form.fullname,
+      shippingAddress: form,
+      customerType: "Online Customer",
+      paymentMode: "Online Payment",
+      paymentStatus: "Paid",
+      paymentId: paymentId,
+      orderStatus: "Placed",
+      shippingCharge: shippingCost,
+      items: trimmedCartItems,
+      gstAmount: 0, // Simplified or calculated if needed
+      totalAmount: finalAmount,
     };
 
     try {
-      // Save order under user's orders
-      await addDoc(collection(db, "users", user.uid, "orders"), orderData);
+      // Save order to MySQL
+      await api.post("/orders", orderData);
 
-      // Update product stocks
+      // Update product stocks in MySQL
       for (const item of itemsToCheckout) {
         try {
           const qty = parseInt(item.qty || item.quantity || 1, 10);
-          const productRef = doc(db, "products", item.id);
-          const productSnap = await getDoc(productRef);
-
-          if (productSnap.exists()) {
-            const productData = productSnap.data();
-            let updatedStock = productData.stock || 0;
+          const endpoint = item.category === "Combo" ? `/combos/${item.id}` : `/products/${item.id}`;
+          
+          // Get current stock
+          const res = await api.get(endpoint);
+          const productData = res.data;
+          
+          if (productData) {
+            let currentStock = Number(productData.totalStock || productData.stock || 0);
+            let updatedStock = currentStock;
 
             if (item.category === "Combo") {
-              updatedStock = Math.max(updatedStock - qty, 0);
+              updatedStock = Math.max(currentStock - qty, 0);
             } else {
+              // Standard logic: grams
               const weightInGrams = parseInt(String(item.selectedWeight || "").replace("g", ""), 10) || 0;
-              // If product stock is stored as grams (original logic)
-              updatedStock = Math.max(updatedStock - qty * weightInGrams, 0);
+              updatedStock = Math.max(currentStock - (qty * weightInGrams), 0);
             }
 
-            await updateDoc(productRef, { stock: updatedStock });
+            await api.put(endpoint, { 
+               ...productData, 
+               totalStock: String(updatedStock) 
+            });
           }
         } catch (err) {
           console.error("Stock update error for item", item.id, err);
@@ -344,7 +335,11 @@ const Checkout = () => {
       }
 
       // Post-order actions
-      sendInvoiceEmail(orderData);
+      sendInvoiceEmail({
+        ...orderData,
+        fullname: form.fullname,
+        cartItems: trimmedCartItems
+      });
       await saveAddressAfterPayment();
       if (!checkoutProduct) clearCart();
     } catch (err) {

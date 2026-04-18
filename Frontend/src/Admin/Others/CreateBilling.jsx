@@ -7,11 +7,20 @@ import { FiMic, FiMaximize, FiTrash2, FiPlus, FiPrinter, FiSearch, FiPackage, Fi
 import { Html5QrcodeScanner } from "html5-qrcode";
 import logo from "/images/Kavi_logo.png";
 
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa", "Gujarat", "Haryana",
+  "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttarakhand", "Uttar Pradesh", "West Bengal", "Andaman & Nicobar", "Chandigarh",
+  "Dadra & Nagar Haveli", "Daman & Diu", "Lakshadweep", "Puducherry",
+];
+
 const CreateBilling = () => {
   const [expandAddress, setExpandAddress] = useState(false);
   const [client, setClient] = useState({
     name: "",
     phone: "",
+    email: "",
     gst: "",
     shippingAddress: {
       street: "",
@@ -186,6 +195,7 @@ const CreateBilling = () => {
           setClient((prev) => ({
             ...prev,
             name: latest.clientName || "",
+            email: latest.email || "",
             gst: latest.clientGST || "",
             customerType: latest.customerType || "Online Customer",
             paymentMode: latest.paymentMode || "Cash",
@@ -325,12 +335,16 @@ const CreateBilling = () => {
       
       await api.post("/orders", {
         orderId: newOrderId,
+        userId: "POS-GUEST",
         clientName: client.name,
         clientPhone: client.phone,
         clientGST: client.gst,
+        email: client.email || "",
         shippingAddress: client.shippingAddress,
         customerType: client.customerType,
         paymentMode: client.paymentMode,
+        paymentStatus: "Paid",
+        paymentId: "POS-OFFLINE",
         orderStatus: "Delivered",
         shippingCharge,
         items: invoiceItems,
@@ -429,6 +443,16 @@ const CreateBilling = () => {
                   />
                 </div>
 
+                <div className="group">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block group-focus-within:text-indigo-600 transition-colors">Email Address</label>
+                  <input
+                    placeholder="Enter email..."
+                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm placeholder:text-slate-300"
+                    value={client.email}
+                    onChange={(e) => setClient({ ...client, email: e.target.value })}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block">Type</label>
@@ -468,7 +492,14 @@ const CreateBilling = () => {
                       <input placeholder="Street / Door No." className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.street} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, street:e.target.value}})} />
                       <div className="grid grid-cols-2 gap-3">
                         <input placeholder="City" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.city} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, city:e.target.value}})} />
-                        <input placeholder="State" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.state} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, state:e.target.value}})} />
+                        <select 
+                          className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 appearance-none cursor-pointer" 
+                          value={client.shippingAddress.state} 
+                          onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, state:e.target.value}})}
+                        >
+                          <option value="">Select State</option>
+                          {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
                         <input placeholder="Zip Code" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.zip} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, zip:e.target.value}})} />
                         <input placeholder="Country" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.country} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, country:e.target.value}})} />
                       </div>
