@@ -12,6 +12,7 @@ import {
   runTransaction,
 } from "firebase/firestore";
 import { toast } from "react-hot-toast";
+import api from "../services/api";
 import dataPreloadService from "../services/dataPreloadService";
 import imagePreloadManager from "../services/imagePreloadManager";
 
@@ -75,30 +76,80 @@ export const StoreProvider = ({ children }) => {
     };
   }, []);
 
+  const parseJsonField = (value, fallback) => {
+    if (value == null) return fallback;
+    if (typeof value === "object") return value;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const normalizeSqlProduct = (product) => {
+    const variants = parseJsonField(product.variants, []);
+    const images = parseJsonField(product.images, []);
+    const healthBenefits = parseJsonField(product.healthBenefits, []);
+    const comboItems = parseJsonField(product.comboItems, []);
+    const comboDetails = parseJsonField(product.comboDetails, {});
+
+    const prices = {};
+    const weights = [];
+
+    if (Array.isArray(variants)) {
+      variants.forEach((variant) => {
+        const weight = variant.weight || variant.size || variant.label;
+        if (!weight) return;
+
+        const mrp = Number(variant.mrp || variant.mrpPrice || variant.price || 0) || 0;
+        const offerPrice = Number(
+          variant.offerPrice || variant.offer_price || variant.discountedPrice || variant.price || mrp
+        ) || 0;
+
+        weights.push(weight);
+        prices[weight] = {
+          mrp,
+          offerPrice,
+          offerPercent: variant.offerPercent || variant.offer_percent || variant.discount || 0,
+        };
+      });
+    }
+
+    return {
+      ...product,
+      variants,
+      images,
+      healthBenefits,
+      comboItems,
+      comboDetails,
+      weights: [...new Set(weights)],
+      prices,
+      imageUrl: product.imageUrl || product.image || images[0] || "",
+    };
+  };
+
   // ============================
   // ⚡ SUPER FAST PRODUCT LOADING (WITH CACHING & PRELOADING)
   // ============================
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        // Try to get from cache first
         let products = await dataPreloadService.preloadProducts(async () => {
-          const snap = await getDocs(collection(db, "products"));
-          return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+          const response = await api.get("/products");
+          return (response.data || []).map(normalizeSqlProduct);
         });
 
         setAllProducts(products);
 
         // Preload critical images for homepage
         if (products && products.length > 0) {
-          // Get top 12 products for preloading
           const topProducts = products.slice(0, 12);
-          imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
-            console.warn('Image preload error:', err)
+          imagePreloadManager.preloadHomepageImages(topProducts).catch((err) =>
+            console.warn("Image preload error:", err)
           );
         }
       } catch (err) {
-        console.error("Product fetch error:", err.message);
+        console.error("Product fetch error:", err.message || err);
         toast.error("Cannot load products.");
       } finally {
         setLoadingProducts(false);
@@ -196,6 +247,7 @@ export const StoreProvider = ({ children }) => {
         selectedWeight: product.selectedWeight || "",
         weights: product.weights || [],
         prices: product.prices || {},
+        date: product.date || product.createdAt || product.created_at || "",
       });
       toast.success("Added to Favorites!");
     } catch {

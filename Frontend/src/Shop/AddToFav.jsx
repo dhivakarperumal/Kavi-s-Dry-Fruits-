@@ -102,6 +102,12 @@ const AddToFav = () => {
                   {favItems.map((item, index) => {
                     const activeWeight = item.selectedWeight || item.weights?.[0] || "100g";
                     const price = item.prices?.[activeWeight] || item.price || 0;
+                    const rawDate = item.date || item.createdAt || item.created_at || item.addedAt || item.timestamp || "";
+                    const formattedDate = rawDate
+                      ? (isNaN(new Date(rawDate).getTime()) ? rawDate : new Date(rawDate).toLocaleDateString("en-GB", {
+                          day: "numeric", month: "long", year: "numeric"
+                        }))
+                      : "-";
 
                     return (
                       <tr
@@ -119,9 +125,7 @@ const AddToFav = () => {
                           </div>
                         </td>
                         <td className="p-4 font-semibold">₹{price}</td>
-                        <td className="p-4">{new Date().toLocaleDateString("en-GB", {
-                          day: "numeric", month: "long", year: "numeric"
-                        })}</td>
+                        <td className="p-4">{formattedDate}</td>
                         <td className="p-4">
                           <button
                             onClick={() => {
