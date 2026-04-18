@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaBars, FaBell, FaBoxOpen, FaSignOutAlt, FaUserCircle, FaSearch } from "react-icons/fa";
+import { FaBars, FaBell, FaBoxOpen, FaSignOutAlt, FaUserCircle, FaSearch, FaCog, FaUsers } from "react-icons/fa";
 import { MdWarning } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
@@ -184,6 +184,12 @@ const Topbar = ({
                 className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition text-left"
               >
                 <FaUserCircle className="text-emerald-500" size={15} /> Profile
+              </button>
+              <button
+                onClick={() => navigate('/adminpanel/settings')}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition text-left"
+              >
+                <FaCog className="text-emerald-500" size={14} /> Settings
               </button>
               <button
                 onClick={() => { if (typeof handleLogout === 'function') handleLogout(); else navigate('/login'); }}

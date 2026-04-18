@@ -45,14 +45,14 @@ const Sidebar = ({
       ],
     },
 
-    {
-      label: "users",
-      icon: <FaUsersCog />,
-      dropdown: [
-        { label: "New Users", collection: "users", icon: <FaUsers /> },
-        { label: "All Users", collection: "users", icon: <FaUsers /> },
-      ],
-    },
+    // {
+    //   label: "users",
+    //   icon: <FaUsersCog />,
+    //   dropdown: [
+    //     { label: "New Users", collection: "users", icon: <FaUsers /> },
+    //     { label: "All Users", collection: "users", icon: <FaUsers /> },
+    //   ],
+    // },
 
     {
       label: "Orders",
@@ -67,10 +67,10 @@ const Sidebar = ({
     },
 
     { label: "Stickers", icon: <FaStickyNote /> },
-    { label: "Dealer", icon: <FaUsers /> },
-    { label: "Reviews", icon: <MdPreview /> },
+    // { label: "Dealer", icon: <FaUsers /> },
+    // { label: "Reviews", icon: <MdPreview /> },
     { label: "SEO Keywords", icon: <FaSearch /> },
-    { label: "Invoice", icon: <FaFileInvoice /> },
+    // { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
 
 
