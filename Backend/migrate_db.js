@@ -4,6 +4,21 @@ async function migrate() {
   try {
     console.log("Starting deep migration...");
     
+    // Create seo_keywords table if it doesn't exist
+    try {
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS seo_keywords (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          keywords LONGTEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `);
+      console.log("[+] Created seo_keywords table");
+    } catch (e) {
+      console.log("seo_keywords table already exists or error:", e.message);
+    }
+    
     const tables = ['products', 'combos'];
     const columns = [
         { name: 'healthBenefits', type: 'LONGTEXT' },

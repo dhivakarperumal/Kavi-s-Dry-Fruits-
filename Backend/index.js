@@ -11,6 +11,8 @@ const comboRoutes = require('./src/routers/comboRoutes');
 const userRoutes = require('./src/routers/userRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const dealerRoutes = require('./src/routers/dealerRoutes');
+const stickerRoutes = require('./src/routers/stickerRoutes');
+const seoRoutes = require('./src/routers/seoRoutes');
 
 
 
@@ -34,6 +36,130 @@ app.use('/api/combos', comboRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dealers', dealerRoutes);
+app.use('/api/stickers', stickerRoutes);
+app.use('/api/seo', seoRoutes);
+app.use('/api/users', userRoutes);
+
+// Invoices Routes
+app.get('/api/invoices', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM invoices ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/invoices', async (req, res) => {
+  try {
+    const { invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO invoices (invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName]
+    );
+    res.json({ id: result.insertId, message: 'Invoice created' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stock History Routes
+app.post('/api/stock-history', async (req, res) => {
+  try {
+    const { productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO stock_history (productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type]
+    );
+    res.json({ id: result.insertId, message: 'Stock history logged' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Orders Routes
+app.get('/api/orders', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { orderId, clientName, clientPhone, clientGST, shippingAddress, customerType, paymentMode, orderStatus, shippingCharge, items, gstAmount, totalAmount } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO orders (orderId, clientName, clientPhone, clientGST, shippingAddress, customerType, paymentMode, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [orderId, clientName, clientPhone, clientGST, JSON.stringify(shippingAddress), customerType, paymentMode, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
+    );
+    res.json({ id: result.insertId, message: 'Order created' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/orders/:id', async (req, res) => {
+  try {
+    const { orderStatus } = req.body;
+    await db.query('UPDATE orders SET orderStatus = ? WHERE id = ?', [orderStatus, req.params.id]);
+    res.json({ message: 'Order updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Health Benefits Routes
+app.get('/api/health-benefits', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM health_benefits ORDER BY createdAt DESC');
+    res.json(rows.map(row => ({
+      ...row,
+      benefits: JSON.parse(row.benefits || '[]'),
+      images: JSON.parse(row.images || '[]'),
+      videos: JSON.parse(row.videos || '[]')
+    })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/health-benefits', async (req, res) => {
+  try {
+    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO health_benefits (productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore]
+    );
+    res.json({ id: result.insertId, message: 'Health benefit created' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/health-benefits/:id', async (req, res) => {
+  try {
+    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
+    await db.query(
+      'UPDATE health_benefits SET productId=?, productName=?, category=?, shortDescription=?, detailedDescription=?, benefits=?, images=?, videos=?, howToEat=?, howToStore=? WHERE id=?',
+      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore, req.params.id]
+    );
+    res.json({ message: 'Health benefit updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/health-benefits/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM health_benefits WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Health benefit deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.use('/api/seo', seoRoutes);
 
 
 
@@ -52,6 +178,18 @@ const createUuid = () => {
 };
 
 const initializeDatabase = async () => {
+  try {
+    console.log('Optimizing MySQL connection settings...');
+    await db.query('SET GLOBAL max_allowed_packet = 104857600'); // 100MB
+  } catch (e) {
+    console.warn('⚠️ Could not set GLOBAL max_allowed_packet (Root privileges required). Trying SESSION instead.');
+    try {
+      await db.query('SET SESSION max_allowed_packet = 104857600');
+    } catch (err) {
+       console.error('❌ Failed to increase packet size via SESSION:', err.message);
+    }
+  }
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -127,6 +265,25 @@ const initializeDatabase = async () => {
   `);
 
   await db.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      orderId VARCHAR(50) NOT NULL UNIQUE,
+      clientName VARCHAR(255),
+      clientPhone VARCHAR(50),
+      clientGST VARCHAR(100),
+      shippingAddress TEXT,
+      customerType VARCHAR(100),
+      paymentMode VARCHAR(100),
+      orderStatus VARCHAR(100) DEFAULT 'Pending',
+      shippingCharge DECIMAL(15,2),
+      items LONGTEXT,
+      gstAmount DECIMAL(15,2),
+      totalAmount DECIMAL(15,2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS dealers (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       dealerId VARCHAR(50) NOT NULL UNIQUE,
@@ -136,6 +293,53 @@ const initializeDatabase = async () => {
       dealerMail VARCHAR(255),
       dealerAddress TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      invoiceNo VARCHAR(100) NOT NULL UNIQUE,
+      invoiceDate DATE,
+      invoiceValue DECIMAL(15,2),
+      invoiceGSTValue DECIMAL(15,2),
+      invoiceTotalValue DECIMAL(15,2),
+      transportAmount DECIMAL(15,2),
+      billPdfBase64 LONGTEXT,
+      billPdfName VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS stock_history (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50) NOT NULL,
+      productName VARCHAR(255),
+      productCategory VARCHAR(255),
+      addedQuantity INT,
+      finalStock INT,
+      invoiceNumber VARCHAR(100),
+      type VARCHAR(50),
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS health_benefits (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50),
+      productName VARCHAR(255),
+      category VARCHAR(255),
+      shortDescription TEXT,
+      detailedDescription TEXT,
+      benefits LONGTEXT,
+      images LONGTEXT,
+      videos LONGTEXT,
+      howToEat TEXT,
+      howToStore TEXT,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 

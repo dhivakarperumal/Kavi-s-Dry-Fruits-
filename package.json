@@ -9,9 +9,7 @@
   "devDependencies": {},
   "scripts": {
     "backend": "nodemon Backend/index.js",
-    "frontend": "npm start --prefix KaviDryFruits",
-
-    
+    "frontend": "npm start --prefix frontend",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "keywords": [],
