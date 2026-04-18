@@ -4,9 +4,13 @@ const db = require('../config/db');
 exports.getProducts = async (req, res) => {
   try {
     const query = `
-      SELECT id, productId, name, barcode, barcodeValue, 'Single Product' as productType FROM products
+      SELECT id, productId, name, barcode, barcodeValue, 
+             'Single Product' as type, 'Single Product' as productType 
+      FROM products
       UNION ALL
-      SELECT id, productId, name, barcode, barcodeValue, 'Combo Pack' as productType FROM combos
+      SELECT id, productId, name, barcode, barcodeValue, 
+             'Combo Pack' as type, 'Combo Pack' as productType 
+      FROM combos
       ORDER BY name ASC
     `;
     const [rows] = await db.query(query);

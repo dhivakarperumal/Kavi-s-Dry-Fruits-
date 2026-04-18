@@ -300,8 +300,8 @@ const Stickers = () => {
                 >
                   <option value="">-- Choose Existing Product or Combo --</option>
                   {productsList.map((p, index) => (
-                    <option key={`${p.productType}-${p.id}-${index}`} value={index}>
-                      [{p.productType}] {p.productId} - {p.name}
+                    <option key={`${p.productType || p.type}-${p.id}-${index}`} value={index}>
+                      {p.productId} - {p.name} ({p.productType || p.type})
                     </option>
                   ))}
                 </select>
