@@ -108,6 +108,56 @@ app.put('/api/orders/:id', async (req, res) => {
   }
 });
 
+// Health Benefits Routes
+app.get('/api/health-benefits', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM health_benefits ORDER BY createdAt DESC');
+    res.json(rows.map(row => ({
+      ...row,
+      benefits: JSON.parse(row.benefits || '[]'),
+      images: JSON.parse(row.images || '[]'),
+      videos: JSON.parse(row.videos || '[]')
+    })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/health-benefits', async (req, res) => {
+  try {
+    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO health_benefits (productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore]
+    );
+    res.json({ id: result.insertId, message: 'Health benefit created' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/health-benefits/:id', async (req, res) => {
+  try {
+    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
+    await db.query(
+      'UPDATE health_benefits SET productId=?, productName=?, category=?, shortDescription=?, detailedDescription=?, benefits=?, images=?, videos=?, howToEat=?, howToStore=? WHERE id=?',
+      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore, req.params.id]
+    );
+    res.json({ message: 'Health benefit updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/health-benefits/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM health_benefits WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Health benefit deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 // Basic Route
@@ -125,6 +175,18 @@ const createUuid = () => {
 };
 
 const initializeDatabase = async () => {
+  try {
+    console.log('Optimizing MySQL connection settings...');
+    await db.query('SET GLOBAL max_allowed_packet = 104857600'); // 100MB
+  } catch (e) {
+    console.warn('⚠️ Could not set GLOBAL max_allowed_packet (Root privileges required). Trying SESSION instead.');
+    try {
+      await db.query('SET SESSION max_allowed_packet = 104857600');
+    } catch (err) {
+       console.error('❌ Failed to increase packet size via SESSION:', err.message);
+    }
+  }
+
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -257,6 +319,24 @@ const initializeDatabase = async () => {
       invoiceNumber VARCHAR(100),
       type VARCHAR(50),
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS health_benefits (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50),
+      productName VARCHAR(255),
+      category VARCHAR(255),
+      shortDescription TEXT,
+      detailedDescription TEXT,
+      benefits LONGTEXT,
+      images LONGTEXT,
+      videos LONGTEXT,
+      howToEat TEXT,
+      howToStore TEXT,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 

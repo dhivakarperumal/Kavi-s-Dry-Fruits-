@@ -121,6 +121,12 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Limit to 50MB
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Video file is too large (Maximum 50MB)");
+      return;
+    }
+
     setLoading(true);
     const toastId = toast.loading("Processing video file...");
 
