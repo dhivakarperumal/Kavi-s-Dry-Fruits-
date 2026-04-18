@@ -169,6 +169,10 @@ const Allproduct = () => {
                         ? <img src={images[0]} className="h-full w-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" alt={item.name} />
                         : <FaBoxOpen className="text-gray-200" size={40}/>
                       }
+                      {/* Type badge */}
+                      <span className={`absolute top-2 left-2 px-2 py-1 rounded font-black text-[9px] uppercase text-white shadow ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                        {isCombo ? 'Combo' : 'Single'}
+                      </span>
                       {/* Offer badge */}
                       {offerPercent && <span className="absolute top-2 right-2 px-2 py-1 rounded text-[9px] font-black bg-red-500 text-white shadow">{offerPercent}% OFF</span>}
                     </div>
