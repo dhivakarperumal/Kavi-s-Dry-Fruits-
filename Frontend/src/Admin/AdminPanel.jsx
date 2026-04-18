@@ -34,7 +34,8 @@ import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
 
 
 import SEOKeywords from "./SEOKeywords";
-import Settings from "./Settings/Settings"
+import Settings from "./Settings/Settings";
+import Profile from "./Settings/Profile";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -81,6 +82,7 @@ const AdminPanel = () => {
       "add-health-benefit": "Add Health Benefit",
       "view-health-benefits": "View Health Benefits",
       "settings": "Settings",
+      "profile": "Profile",
     };
 
     const mappedSection = routeMap[path];
@@ -116,6 +118,7 @@ const AdminPanel = () => {
       "Add Health Benefit": "add-health-benefit",
       "View Health Benefits": "view-health-benefits",
       "Settings": "settings",
+      "Profile": "profile",
     };
     
     const urlPath = reverseMap[newSection] || "dashboard";
@@ -195,6 +198,7 @@ const AdminPanel = () => {
       case "Add Health Benefit":  return <AddHealthBenefit />;
       case "View Health Benefits": return <ViewHealthBenefits />;
       case "Settings":           return <Settings />;
+      case "Profile":            return <Profile />;
 
       default:
         return (

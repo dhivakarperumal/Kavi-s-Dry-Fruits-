@@ -49,9 +49,9 @@ const Settings = () => {
           <div
             key={index}
             onClick={() => navigate(card.path)}
-            className={`p-4 md:p-6 rounded-2xl border ${card.borderColor} ${card.bgColor} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 w-full flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6 group`}
+            className={`p-4 md:p-6 rounded-2xl border border-gray-200 ${card.bgColor} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 w-full flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6 group`}
           >
-            <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+            <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 border border-gray-200">
               {card.icon}
             </div>
             

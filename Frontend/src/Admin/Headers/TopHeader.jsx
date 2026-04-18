@@ -180,7 +180,7 @@ const Topbar = ({
                 </div>
               </div>
               <button
-                onClick={() => navigate('/adminpanel')}
+                onClick={() => navigate('/adminpanel/profile')}
                 className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition text-left"
               >
                 <FaUserCircle className="text-emerald-500" size={15} /> Profile
