@@ -126,10 +126,10 @@ const Sidebar = ({
             <div key={item.label} className="mb-1">
               <button
                 onClick={() => handleClick(item)}
-                className={`flex justify-between items-center w-full text-left px-4 py-4 rounded font-semibold cursor-pointer transition-all capitalize ${
+                className={`flex justify-between items-center w-full text-left px-4 py-3.5 rounded-xl font-bold cursor-pointer transition-all capitalize ${
                   isActiveParent
-                    ? "bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white"
-                    : "hover:bg-gradient-to-r hover:from-green-400 hover:via-green-500 hover:to-green-600 hover:text-white"
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                    : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
                 }`}
               >
                 <span className="flex items-center gap-2 ">
@@ -163,10 +163,10 @@ const Sidebar = ({
                         setActiveSection(subItem.label);
                         if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
-                      className={`flex items-center gap-2 text-left px-4 py-2.5 font-semibold rounded text-sm transition-all cursor-pointer capitalize ${
+                      className={`flex items-center gap-2 text-left px-4 py-2.5 font-bold rounded-lg text-sm transition-all cursor-pointer capitalize ${
                         activeSection === subItem.label
-                          ? "bg-green-600 text-white"
-                          : "hover:bg-green-500 hover:text-white"
+                          ? "bg-emerald-600 text-white shadow-sm mb-1"
+                          : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-700 mb-1"
                       }`}
                     >
                       {subItem.icon} {subItem.label}
