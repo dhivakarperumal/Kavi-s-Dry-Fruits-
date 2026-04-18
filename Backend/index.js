@@ -12,6 +12,7 @@ const userRoutes = require('./src/routers/userRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const dealerRoutes = require('./src/routers/dealerRoutes');
 const stickerRoutes = require('./src/routers/stickerRoutes');
+const seoRoutes = require('./src/routers/seoRoutes');
 
 
 
@@ -36,6 +37,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/stickers', stickerRoutes);
+app.use('/api/seo', seoRoutes);
 app.use('/api/users', userRoutes);
 
 // Invoices Routes

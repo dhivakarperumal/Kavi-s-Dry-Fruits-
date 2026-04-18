@@ -31,6 +31,8 @@ import AllOrders from "./Orders/AllOrders";
 import AddHealthBenefit from "./HealthBenefits/AddHealthBenefit";
 import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
 
+import MigrateProducts from "./MigrateProducts";
+import SEOKeywords from "./SEOKeywords";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -70,6 +72,7 @@ const AdminPanel = () => {
       "stickers": "Stickers",
       "dealer": "Dealer",
       "reviews": "Reviews",
+      "seo-keywords": "SEO Keywords",
       "invoice": "Invoice",
       "billing": "Billing",
       "billing/create": "Create Billing",
@@ -103,6 +106,7 @@ const AdminPanel = () => {
       "Stickers": "stickers",
       "Dealer": "dealer",
       "Reviews": "reviews",
+      "SEO Keywords": "seo-keywords",
       "Invoice": "invoice",
       "Billing": "billing",
       "Create Billing": "billing/create",
