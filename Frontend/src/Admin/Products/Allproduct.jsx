@@ -121,21 +121,17 @@ const Allproduct = () => {
 
   return (
     <div className="p-4 md:p-6 mt-15 min-h-screen bg-white">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 pb-6">
-        <div>
-          <h1 className="text-xl font-black text-gray-900 uppercase tracking-tight">Master Inventory</h1>
-          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
-            <span className="w-6 h-1 bg-emerald-500 rounded-full"></span>
-            Real-time Asset Control
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="bg-gray-50 p-1 rounded-lg flex">
-            <button onClick={() => setViewMode("card")} className={`p-2 rounded-md ${viewMode === "card" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}><FaThLarge size={14}/></button>
-            <button onClick={() => setViewMode("table")} className={`p-2 rounded-md ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}><FaListUl size={14}/></button>
+      <div className="flex flex-col md:flex-row justify-end items-center mb-6 gap-4 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-gray-50 p-1.5 rounded-xl flex items-center h-11">
+            <button onClick={() => setViewMode("card")} className={`px-3 py-2 h-full rounded-lg transition-all ${viewMode === "card" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}><FaThLarge size={15}/></button>
+            <button onClick={() => setViewMode("table")} className={`px-3 py-2 h-full rounded-lg transition-all ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}><FaListUl size={15}/></button>
           </div>
-          <button onClick={() => setShowFilters(!showFilters)} className={`px-4 py-2 rounded-lg text-xs font-bold border ${showFilters ? 'bg-gray-800 text-white' : 'bg-white text-gray-600'}`}>
+          <button onClick={() => setShowFilters(!showFilters)} className={`px-5 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
             <FaFilter className="inline mr-2"/> Filters
+          </button>
+          <button onClick={() => navigate('/adminpanel/products')} className="px-6 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg transition-all shadow-sm">
+            <FaPlus className="inline mr-2"/> Add Product
           </button>
         </div>
       </div>
