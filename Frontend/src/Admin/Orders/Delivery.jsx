@@ -187,11 +187,13 @@ const Delivery = () => {
          
           <h2>Kavi's Dry Fruits</h2>
           <div class="info">
-            <p><strong>Order ID:</strong> ${order.orderId || order.id}</p>
-            <p><strong>Client Name:</strong> ${address.fullname || order.client?.name || "-"}</p>
-            <p><strong>Phone:</strong> ${address.contact || order.client?.phone || "-"}</p>
-            <p><strong>Address:</strong> ${address.street || ""} ${address.city || ""} ${address.state || ""} ${address.zip || ""}</p>
-          </div>
+          <p><strong>Order ID:</strong> ${order.orderId}</p>
+          <p><strong>Client Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
+          <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+          <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+          <p><strong>Payment Mode:</strong> ${order.paymentMethod || order.paymentMode || "-"}</p>
+          <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+        </div>
           <table>
             <thead>
               <tr>
