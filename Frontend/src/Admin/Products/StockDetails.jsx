@@ -273,13 +273,13 @@ const StockDetail = () => {
         ) : (
           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
                <table className="w-full text-left">
-                  <thead className="bg-emerald-50/50 border-b border-emerald-100">
+                  <thead className="bg-[#009669] border-b border-emerald-700">
                      <tr>
-                        <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest">Descriptor</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest">Identify & Preview</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest">Classification</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest text-center">Current Stock</th>
-                        <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest text-right">Last Source</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Descriptor</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identify & Preview</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Classification</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Current Stock</th>
+                        <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Last Source</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-emerald-50/50">

@@ -266,13 +266,13 @@ const Category = () => {
         ) : (
           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
              <table className="w-full text-left">
-                <thead className="bg-emerald-50 border-b border-emerald-100">
+                <thead className="bg-[#009669] border-b border-emerald-700">
                    <tr>
-                      <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest">ID</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest">Identity</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest">Description</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest text-center">Gallery</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-emerald-900 uppercase tracking-widest text-right">Actions</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Description</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
