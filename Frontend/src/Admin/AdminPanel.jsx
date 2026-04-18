@@ -20,6 +20,7 @@ import AddDealer from "./Others/AddDealer";
 import Reviews from "./Reviews/Reviews";
 import Invoice from "./Others/Invoice";
 import Billing from "./Others/Billing";
+import CreateBilling from "./Others/CreateBilling";
 import Stickers from "./PrintStickers/Stikers";
 import NewUsers from "./Users/NewUsers";
 import AddUsers from "./Users/AddUser";
@@ -69,6 +70,7 @@ const AdminPanel = () => {
       "reviews": "Reviews",
       "invoice": "Invoice",
       "billing": "Billing",
+      "billing/create": "Create Billing",
     };
 
     const mappedSection = routeMap[path];
@@ -100,6 +102,7 @@ const AdminPanel = () => {
       "Reviews": "reviews",
       "Invoice": "invoice",
       "Billing": "billing",
+      "Create Billing": "billing/create",
     };
     
     const urlPath = reverseMap[newSection] || "dashboard";
@@ -174,6 +177,7 @@ const AdminPanel = () => {
       case "Reviews":            return <Reviews />;
       case "Invoice":            return <Invoice />;
       case "Billing":            return <Billing />;
+      case "Create Billing":     return <CreateBilling />;
 
       default:
         return (
