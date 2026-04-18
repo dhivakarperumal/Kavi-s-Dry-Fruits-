@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../../services/api";
 import { db } from "../../firebase";
 import {
   collection,
@@ -28,47 +29,52 @@ const StockDetail = () => {
   const itemsPerPage = 10; // number of rows per page
 
   // Fetch invoices and products
+  const fetchStocks = async () => {
+    try {
+      const [prodRes, comboRes] = await Promise.all([
+        api.get("/products"),
+        api.get("/combos")
+      ]);
+      const unified = [
+        ...prodRes.data.map(p => ({ ...p, type: 'single' })),
+        ...comboRes.data.map(c => ({ ...c, type: 'combo' }))
+      ];
+      setLiveStocks(unified.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load live stocks");
+    }
+  };
+
   useEffect(() => {
     const unsubInvoice = onSnapshot(collection(db, "invoices"), (snap) => {
       const invoices = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setInvoiceNumbers(invoices);
     });
 
-    const unsubStock = onSnapshot(collection(db, "products"), (snap) => {
-      const products = snap.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .sort((a, b) => {
-          const idA = a.productId?.toLowerCase() || "";
-          const idB = b.productId?.toLowerCase() || "";
-          return idA.localeCompare(idB, "en", { numeric: true });
-        });
-      setLiveStocks(products);
-    });
+    fetchStocks();
 
     return () => {
       unsubInvoice();
-      unsubStock();
     };
   }, []);
 
   // Handle product ID selection
-  const handleProductIdChange = async (e) => {
+  const handleProductIdChange = (e) => {
     const value = e.target.value;
     setForm({ ...form, productId: value });
     if (!value.trim()) return;
 
-    const snap = await getDocs(collection(db, "products"));
-    const matched = snap.docs.find(
-      (doc) => doc.data().productId === value.trim()
+    const matched = liveStocks.find(
+      (item) => item.productId === value.trim()
     );
 
     if (matched) {
-      const data = matched.data();
-      setIsCombo(!!data.combos?.length);
+      setIsCombo(matched.type === 'combo');
       setForm((prev) => ({
         ...prev,
-        productName: data.name || "",
-        productCategory: data.category || "",
+        productName: matched.name || "",
+        productCategory: matched.category || "",
         currentQuantity: "",
       }));
     } else {
@@ -91,23 +97,26 @@ const StockDetail = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const snap = await getDocs(collection(db, "products"));
-      const matched = snap.docs.find(
-        (doc) => doc.data().productId === form.productId.trim()
+      const matched = liveStocks.find(
+        (item) => item.productId === form.productId.trim()
       );
       if (!matched) return toast.error("Product not found in database.");
 
-      const docRef = matched.ref;
-      const existingStock = matched.data().stock || 0;
+      const existingStock = Number(matched.totalStock) || 0;
       const addedQuantity = isCombo
         ? parseInt(form.currentQuantity)
         : parseInt(form.currentQuantity) * 1000;
       const newStock = existingStock + addedQuantity;
 
-      await updateDoc(docRef, {
-        stock: newStock,
-        lastInvoice: form.invoiceNumber,
-      });
+      const endpoint = matched.type === 'combo' ? `/combos/${matched.id}` : `/products/${matched.id}`;
+      
+      const updatedProduct = {
+        ...matched,
+        totalStock: String(newStock),
+        lastInvoice: form.invoiceNumber
+      };
+
+      await api.put(endpoint, updatedProduct);
 
       await addDoc(collection(db, "stockRecords"), {
         ...form,
@@ -125,6 +134,7 @@ const StockDetail = () => {
         invoiceNumber: "",
       });
       setIsCombo(false);
+      fetchStocks();
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Error submitting stock detail");
@@ -287,9 +297,9 @@ const StockDetail = () => {
                       <td className="px-3 py-4">{item.name}</td>
                       <td className="px-3 py-4">{item.category}</td>
                       <td className="px-3 py-4">
-                        {item.combos?.length > 0
-                          ? `${item.stock || 0} pcs`
-                          : `${(item.stock || 0) / 1000} kg`}
+                        {item.type === 'combo'
+                          ? `${item.totalStock || 0} pcs`
+                          : `${(Number(item.totalStock) || 0) / 1000} kg`}
                       </td>
                       <td className="px-3 py-4">
                         {item.lastInvoice ? (
