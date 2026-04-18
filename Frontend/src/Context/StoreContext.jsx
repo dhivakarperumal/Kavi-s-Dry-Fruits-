@@ -50,11 +50,9 @@ export const StoreProvider = ({ children }) => {
             setCartItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
           });
 
-          // FAVORITES LISTENER
-          const favRef = collection(db, "users", storedUser.userId, "favorites");
-          unsubscribeFav = onSnapshot(favRef, (snap) => {
-            setFavItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-          });
+          // FAVORITES LOAD
+          const sqlUserId = getSqlUserId(storedUser);
+          await loadFavorites(sqlUserId);
         } catch (err) {
           console.error("Firestore Auth Error:", err.message);
           toast.error("Unable to load user data.");
@@ -83,6 +81,23 @@ export const StoreProvider = ({ children }) => {
       return JSON.parse(value);
     } catch {
       return fallback;
+    }
+  };
+
+  const getSqlUserId = (userObj) =>
+    userObj?.userId || userObj?.user_id || userObj?.userUuid || userObj?.uid || null;
+
+  const loadFavorites = async (userId) => {
+    if (!userId) {
+      setFavItems([]);
+      return;
+    }
+    try {
+      const response = await api.get(`/favorites?userId=${encodeURIComponent(userId)}`);
+      setFavItems(response.data || []);
+    } catch (err) {
+      console.error("Favorites fetch error:", err);
+      setFavItems([]);
     }
   };
 
@@ -235,32 +250,52 @@ export const StoreProvider = ({ children }) => {
   // ============================
   const addToFav = async (product) => {
     if (!user) return toast.error("Login to add to favorites!");
+    const sqlUserId = getSqlUserId(user);
+    if (!sqlUserId) return toast.error("Login to add to favorites!");
 
     try {
-      const docId = product.id || product.productId;
-      await setDoc(doc(db, "users", user.uid, "favorites", docId), {
-        id: docId,
-        productId: docId,
+      const productId = product.id || product.productId;
+      const payload = {
+        userId: sqlUserId,
+        productId,
         name: product.name,
         price: product.price || 0,
         imageUrl: product.image || product.img || product.imageUrl || "",
         selectedWeight: product.selectedWeight || "",
         weights: product.weights || [],
         prices: product.prices || {},
-        date: product.date || product.createdAt || product.created_at || "",
-      });
+        date: product.date || product.createdAt || product.created_at || new Date().toISOString(),
+      };
+
+      const response = await api.post('/favorites', payload);
+      const newFav = response.data || {
+        ...payload,
+        id: productId,
+        productId,
+      };
+
+      setFavItems((current) => [
+        ...current.filter((item) => item.productId !== productId),
+        newFav,
+      ]);
       toast.success("Added to Favorites!");
-    } catch {
+    } catch (err) {
+      console.error('Add to favorites error:', err);
       toast.error("Failed to add to favorites.");
     }
   };
 
   const removeFavItem = async (itemId) => {
     if (!user || !itemId) return;
+    const sqlUserId = getSqlUserId(user);
+    if (!sqlUserId) return;
+
     try {
-      await deleteDoc(doc(db, "users", user.uid, "favorites", itemId));
+      await api.delete(`/favorites/${encodeURIComponent(sqlUserId)}/${encodeURIComponent(itemId)}`);
+      setFavItems((current) => current.filter((item) => item.productId !== itemId));
       toast.success("Removed from Favorites");
-    } catch {
+    } catch (err) {
+      console.error('Remove favorite error:', err);
       toast.error("Failed to remove.");
     }
   };

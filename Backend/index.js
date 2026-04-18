@@ -110,6 +110,85 @@ app.put('/api/orders/:id', async (req, res) => {
   }
 });
 
+// Favorites Routes
+app.get('/api/favorites', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ message: 'Missing userId query parameter' });
+    }
+    const [rows] = await db.query('SELECT * FROM favorites WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+    res.json(rows.map(row => ({
+      ...row,
+      weights: JSON.parse(row.weights || '[]'),
+      prices: JSON.parse(row.prices || '{}'),
+      imageUrl: row.image_url,
+      productId: row.product_id,
+      date: row.date,
+    })));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/favorites', async (req, res) => {
+  try {
+    const { userId, productId, name, price, imageUrl, selectedWeight, weights, prices, date } = req.body;
+    if (!userId || !productId) {
+      return res.status(400).json({ message: 'userId and productId are required' });
+    }
+    await db.query(
+      `INSERT INTO favorites (user_id, product_id, name, price, image_url, selected_weight, weights, prices, date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE name = VALUES(name), price = VALUES(price), image_url = VALUES(image_url), selected_weight = VALUES(selected_weight), weights = VALUES(weights), prices = VALUES(prices), date = VALUES(date)`,
+      [
+        userId,
+        productId,
+        name || '',
+        price || 0,
+        imageUrl || '',
+        selectedWeight || '',
+        JSON.stringify(weights || []),
+        JSON.stringify(prices || {}),
+        date || new Date(),
+      ]
+    );
+
+    const [rows] = await db.query('SELECT * FROM favorites WHERE user_id = ? AND product_id = ?', [userId, productId]);
+    const row = rows[0] || null;
+    if (!row) {
+      return res.status(500).json({ message: 'Unable to save favorite item' });
+    }
+
+    res.status(201).json({
+      ...row,
+      weights: JSON.parse(row.weights || '[]'),
+      prices: JSON.parse(row.prices || '{}'),
+      imageUrl: row.image_url,
+      productId: row.product_id,
+      date: row.date,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/favorites/:userId/:productId', async (req, res) => {
+  try {
+    const { userId, productId } = req.params;
+    if (!userId || !productId) {
+      return res.status(400).json({ message: 'Missing userId or productId' });
+    }
+    await db.query('DELETE FROM favorites WHERE user_id = ? AND product_id = ?', [userId, productId]);
+    res.json({ message: 'Favorite removed' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Health Benefits Routes
 app.get('/api/health-benefits', async (req, res) => {
   try {
@@ -280,6 +359,23 @@ const initializeDatabase = async () => {
       gstAmount DECIMAL(15,2),
       totalAmount DECIMAL(15,2),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS favorites (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      product_id VARCHAR(50) NOT NULL,
+      name VARCHAR(255),
+      price DECIMAL(15,2) DEFAULT 0,
+      image_url LONGTEXT,
+      selected_weight VARCHAR(100),
+      weights LONGTEXT,
+      prices LONGTEXT,
+      date DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uniq_user_product (user_id, product_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
