@@ -215,15 +215,15 @@ const Orders = () => {
       <h1 className="text-2xl font-bold mb-6">Order Management</h1>
       <div className="overflow-x-auto">
         <table className="w-full table-auto border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 border">Order ID</th>
-              <th className="p-3 border">Client Name</th>
-              <th className="p-3 border">Payment</th>
-              <th className="p-3 border">Payment ID</th>
-              <th className="p-3 border">Total</th>
-              <th className="p-3 border">Status</th>
-              <th className="p-3 border">Action</th>
+          <thead className="bg-[#009669] border-b border-emerald-700">
+            <tr className="text-white">
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Order ID</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Client Name</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Payment</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Payment ID</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Total</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Status</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Action</th>
             </tr>
           </thead>
           <tbody>

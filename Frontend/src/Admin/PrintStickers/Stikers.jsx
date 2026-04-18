@@ -425,7 +425,7 @@ const Stickers = () => {
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-green-100 ring-1 ring-green-50 mb-6 animate-in slide-in-from-top-4">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gradient-to-r from-green-600 to-green-500 text-white">
+                <thead className="bg-[#009669] border-b border-emerald-700 text-white">
                   <tr>
                     <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-[10px]">Product/Combo</th>
                     <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-[10px]">Price</th>

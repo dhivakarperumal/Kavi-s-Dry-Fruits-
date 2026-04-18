@@ -195,8 +195,8 @@ const Users = () => {
         <div className="overflow-hidden animate-in fade-in duration-500">
           <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm bg-white">
             <table className="min-w-full text-sm">
-              <thead>
-              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+              <thead className="bg-[#009669] border-b border-emerald-700">
+              <tr className="text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Identity Profile</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Connectivity</th>

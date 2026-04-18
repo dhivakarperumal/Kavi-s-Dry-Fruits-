@@ -178,14 +178,14 @@ const Billing = () => {
                         </div>
                     ) : (
                         <table className="w-full text-left">
-                            <thead>
-                                <tr className="bg-gray-50/50">
-                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Descriptor</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Identity</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Volume</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Classification</th>
-                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Settlement</th>
+                            <thead className="bg-[#009669] border-b border-emerald-700">
+                                <tr>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Descriptor</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Timestamp</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Identity</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest text-center">Volume</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Classification</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest text-right">Settlement</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">

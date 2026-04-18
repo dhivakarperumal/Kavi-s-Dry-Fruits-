@@ -105,9 +105,13 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] transform shadow lg:shadow-md bg-white text-black transition-all duration-300 md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-[60] transform shadow-2xl transition-all duration-300 md:translate-x-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       } ${isCollapsed ? "w-20" : "w-72"}`}
+      style={{
+        background: "linear-gradient(160deg, #064e3b 0%, #065f46 40%, #047857 80%, #059669 100%)",
+        color: "#ecfdf5"
+      }}
     >
       {/* ========== COLLAPSE BUTTON ========== */}
       <button
@@ -129,7 +133,9 @@ const Sidebar = ({
       </button>
 
       {/* Logo and Mobile Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-emerald-700/50"
+        style={{ background: "rgba(0,0,0,0.15)" }}
+      >
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity overflow-hidden">
           <img
             src="/images/Kavi_logo.png"
@@ -139,9 +145,9 @@ const Sidebar = ({
               e.target.style.display = 'none';
             }}
           />
-          {!isCollapsed && <span className="text-lg md:text-xl font-bold text-gray-800 truncate">Kavi's Dry Fruits</span>}
+          {!isCollapsed && <span className="text-lg md:text-xl font-bold text-white truncate drop-shadow">Kavi's Dry Fruits</span>}
         </Link>
-        <button onClick={() => setIsOpen(false)} className="md:hidden text-gray-500 hover:text-black">
+        <button onClick={() => setIsOpen(false)} className="md:hidden text-emerald-200 hover:text-white">
           ✕
         </button>
       </div>
@@ -160,10 +166,10 @@ const Sidebar = ({
                 onClick={() => handleClick(item)}
                 className={`flex justify-between items-center w-full text-left px-4 py-3.5 rounded-xl font-bold cursor-pointer transition-all capitalize ${
                   activeSection === item.label
-                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                    ? "bg-white/20 text-white shadow-md shadow-black/30 backdrop-blur-sm"
                     : isActiveParent
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
+                    ? "bg-white/10 text-white"
+                    : "text-emerald-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -177,7 +183,7 @@ const Sidebar = ({
                   </span>
                 ) : (
                   showBadge && (
-                    <span className="text-xs px-2 rounded-full bg-emerald-100 text-emerald-700 font-bold shadow-sm">
+                    <span className="text-xs px-2 rounded-full bg-white/20 text-white font-bold shadow-sm">
                       {count}
                     </span>
                   )
@@ -200,14 +206,14 @@ const Sidebar = ({
                       }}
                       className={`flex items-center gap-3 text-left px-4 py-3 font-bold rounded-lg text-sm transition-all cursor-pointer capitalize ${
                         activeSection === subItem.label
-                          ? "bg-emerald-600 text-white shadow-sm mb-1"
-                          : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-700 mb-1"
+                          ? "bg-white/20 text-white shadow-sm mb-1"
+                          : "text-emerald-200 hover:bg-white/10 hover:text-white mb-1"
                       }`}
                     >
                       <span className="text-[1.1rem] flex-shrink-0">{subItem.icon}</span> 
                       {!isCollapsed && <span className="truncate">{subItem.label}</span>}
                       {!isCollapsed && subItem.collection && collectionCounts[subItem.label] > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer font-bold ml-2 shadow-sm">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white cursor-pointer font-bold ml-2 shadow-sm">
                           {collectionCounts[subItem.label]}
                         </span>
                       )}
@@ -222,7 +228,7 @@ const Sidebar = ({
         {/* Back to Site */}
         <Link
           to="/"
-          className="flex items-center gap-3 px-4 py-3 mt-1 text-sm font-bold rounded-xl text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+          className="flex items-center gap-3 px-4 py-3 mt-1 text-sm font-bold rounded-xl text-emerald-200 hover:bg-white/10 hover:text-white transition-colors"
         >
           <span className="text-[1.25rem] flex-shrink-0"><FaHome /></span> 
           {!isCollapsed && <span>Back to Site</span>}

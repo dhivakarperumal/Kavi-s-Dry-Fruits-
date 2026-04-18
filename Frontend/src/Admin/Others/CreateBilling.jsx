@@ -651,13 +651,13 @@ const CreateBilling = () => {
 
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead>
-                                <tr className="text-left border-b border-gray-50">
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">ID</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Product</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-center">Qty</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-right">Amount</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-center">Action</th>
+                            <thead className="bg-[#009669] border-b border-emerald-700">
+                                <tr className="text-left">
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">Product</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Qty</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Amount</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
