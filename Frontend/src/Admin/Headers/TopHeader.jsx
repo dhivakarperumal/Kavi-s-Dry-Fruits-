@@ -1,113 +1,196 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaBars, FaBell } from "react-icons/fa";
+import { FaBars, FaBell, FaBoxOpen, FaSignOutAlt, FaUserCircle, FaSearch } from "react-icons/fa";
+import { MdWarning } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-const Topbar = ({ setIsSidebarOpen, activeSection, adminName = "Administrator", todayOrdersCount = 0, lowStockCount = 0, ordersold = [], handleLogout }) => {
-  const [isOrderDropdown, setIsOrderDropdown] = useState(false);
-  const [isStockDropdown, setIsStockDropdown] = useState(false);
+const Topbar = ({
+  setIsSidebarOpen,
+  activeSection,
+  adminName = "Administrator",
+  todayOrdersCount = 0,
+  lowStockCount = 0,
+  ordersold = [],
+  handleLogout,
+}) => {
+  const [isOrderDropdown,   setIsOrderDropdown]   = useState(false);
+  const [isStockDropdown,   setIsStockDropdown]   = useState(false);
   const [isProfileDropdown, setIsProfileDropdown] = useState(false);
+  const [searchQuery,       setSearchQuery]       = useState("");
+  const [showSearch,        setShowSearch]        = useState(false);
+  const searchInputRef = useRef();
 
-  const orderRef = useRef();
-  const stockRef = useRef();
+  const orderRef   = useRef();
+  const stockRef   = useRef();
   const profileRef = useRef();
+  const navigate   = useNavigate();
 
-  const navigate = useNavigate();
-
-  // Close dropdowns on outside click
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (orderRef.current && !orderRef.current.contains(event.target)) {
-        setIsOrderDropdown(false);
-      }
-      if (stockRef.current && !stockRef.current.contains(event.target)) {
-        setIsStockDropdown(false);
-      }
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setIsProfileDropdown(false);
-      }
+    const handleClickOutside = (e) => {
+      if (orderRef.current   && !orderRef.current.contains(e.target))   setIsOrderDropdown(false);
+      if (stockRef.current   && !stockRef.current.contains(e.target))   setIsStockDropdown(false);
+      if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileDropdown(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Focus input when search opens
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
+
+  // Close search on Escape
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") { setShowSearch(false); setSearchQuery(""); } };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 bg-white text-black shadow border-b border-gray-200">
-      
-      {/* Left section */}
-      <div className="flex items-center gap-4">
-        {/* Mobile menu button */}
+    <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 bg-white border-b border-gray-200 shadow-sm">
+
+      {/* ── LEFT: Hamburger + Title ── */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="md:hidden p-2 rounded hover:bg-gray-100 transition text-gray-700"
+          className="md:hidden p-2 rounded-lg hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition"
         >
-          <FaBars size={20} />
+          <FaBars size={18} />
         </button>
 
-        {/* Section title */}
-        <div className=" hidden sm:flex flex-col">
-          <h1 className="text-xl font-bold text-gray-800 capitalize">{activeSection}</h1>
-          <span className="text-sm text-gray-600">Hello, {adminName}! Welcome back.</span>
+        <div className="hidden sm:flex flex-col leading-tight">
+          <h1 className="text-[17px] font-bold text-gray-800 capitalize">{activeSection}</h1>
+          <span className="text-[11px] text-gray-500 font-medium">Welcome back, {adminName}!</span>
         </div>
       </div>
 
-      {/* Right section */}
-      <div className="flex items-center gap-4">
-        {/* Orders Dropdown */}
+
+      {/* ── RIGHT: Icons ── */}
+      <div className="flex items-center gap-2">
+
+        {/* 🔍 Expanding search input — appears LEFT of the search icon */}
+        <div
+          style={{
+            overflow: "hidden",
+            maxWidth: showSearch ? "220px" : "0px",
+            opacity: showSearch ? 1 : 0,
+            transition: "max-width 0.3s ease, opacity 0.25s ease",
+          }}
+        >
+          <div className="relative" style={{ width: "220px" }}>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-4 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none text-gray-700 placeholder-gray-400 focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* 🔍 Search icon toggle */}
+        <button
+          onClick={() => { setShowSearch(!showSearch); setSearchQuery(""); }}
+          className={`w-9 h-9 flex items-center justify-center rounded-xl transition shadow-sm ${
+            showSearch
+              ? "bg-emerald-600 text-white"
+              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+          }`}
+        >
+          <FaSearch size={14} />
+        </button>
+
+        {/* 🔔 Orders Bell */}
         <div className="relative" ref={orderRef}>
           <button
-            onClick={() => setIsOrderDropdown(!isOrderDropdown)}
-            className="relative w-10 h-10 rounded-full bg-white flex items-center cursor-pointer justify-center text-indigo-600 font-bold text-lg shadow-md"
+            onClick={() => { setIsOrderDropdown(!isOrderDropdown); setIsStockDropdown(false); setIsProfileDropdown(false); }}
+            className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition shadow-sm"
           >
-            <FaBell size={18} />
+            <FaBell size={16} />
             {todayOrdersCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs font-bold px-1.5 rounded-full ">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-px rounded-full border-2 border-white">
                 {todayOrdersCount}
               </span>
             )}
           </button>
           {isOrderDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded shadow-lg py-2 border border-gray-200">
-              <p className="px-4 py-2 font-medium hover:bg-gray-100 cursor-pointer">
-                Today's Orders: {todayOrdersCount}
-              </p>
+            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              <div className="px-4 py-2 text-[10px] font-bold text-emerald-600 uppercase tracking-widest border-b border-gray-100">
+                Orders
+              </div>
+              <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-emerald-50 transition">
+                <FaBoxOpen className="text-emerald-500" />
+                Today's Orders: <span className="font-bold ml-auto">{todayOrdersCount}</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Low Stock Dropdown */}
+        {/* ⚠️ Low Stock */}
         <div className="relative" ref={stockRef}>
           <button
-            onClick={() => setIsStockDropdown(!isStockDropdown)}
-            className="relative w-10 h-10 rounded-full bg-white flex items-center cursor-pointer justify-center text-indigo-600 font-bold text-lg shadow-md"
+            onClick={() => { setIsStockDropdown(!isStockDropdown); setIsOrderDropdown(false); setIsProfileDropdown(false); }}
+            className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition shadow-sm ${
+              lowStockCount > 0
+                ? "bg-amber-50 text-amber-500 hover:bg-amber-100"
+                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+            }`}
           >
-            S
+            <MdWarning size={18} />
             {lowStockCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs font-bold px-1.5 rounded-full ">
+              <span className="absolute -top-1 -right-1 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-px rounded-full border-2 border-white">
                 {lowStockCount}
               </span>
             )}
           </button>
           {isStockDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded cursor-pointer shadow-lg py-2 border border-gray-200">
-              <p className="px-4 py-2 font-medium hover:bg-gray-100 cursor-pointer">
-                Low Stock Items: {lowStockCount}
-              </p>
+            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              <div className="px-4 py-2 text-[10px] font-bold text-amber-500 uppercase tracking-widest border-b border-gray-100">
+                Stock Alerts
+              </div>
+              <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-amber-50 transition">
+                <MdWarning className="text-amber-400" />
+                Low Stock: <span className="font-bold ml-auto">{lowStockCount}</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Profile Dropdown */}
+        {/* 👤 Profile */}
         <div className="relative" ref={profileRef}>
           <button
-            onClick={() => setIsProfileDropdown(!isProfileDropdown)}
-            className="relative w-10 h-10 rounded-full bg-white flex items-center justify-center text-indigo-600 font-bold text-lg shadow-md cursor-pointer"
+            onClick={() => { setIsProfileDropdown(!isProfileDropdown); setIsOrderDropdown(false); setIsStockDropdown(false); }}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[15px] shadow-md shadow-emerald-200 transition cursor-pointer"
           >
             {(adminName || "A").charAt(0).toUpperCase()}
           </button>
           {isProfileDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded shadow-lg py-2 cursor-pointer border border-gray-200">
-              <p onClick={() => navigate('/adminpanel')} className="px-4 py-2 font-medium hover:bg-gray-100 cursor-pointer">Profile</p>
-              <p onClick={() => { if (typeof handleLogout === 'function') { handleLogout(); } else { navigate('/login'); } }} className="px-4 py-2 font-medium hover:bg-gray-100 cursor-pointer">Logout</p>
+            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              {/* Profile card */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  {(adminName || "A").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-800 leading-tight">{adminName}</p>
+                  <p className="text-[10px] text-emerald-600 font-medium">Administrator</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/adminpanel')}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition text-left"
+              >
+                <FaUserCircle className="text-emerald-500" size={15} /> Profile
+              </button>
+              <button
+                onClick={() => { if (typeof handleLogout === 'function') handleLogout(); else navigate('/login'); }}
+                className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 transition text-left border-t border-gray-100"
+              >
+                <FaSignOutAlt size={14} /> Logout
+              </button>
             </div>
           )}
         </div>
