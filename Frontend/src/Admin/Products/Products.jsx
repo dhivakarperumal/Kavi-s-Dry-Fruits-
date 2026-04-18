@@ -179,16 +179,15 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   }, [editItem, products]);
 
   useEffect(() => {
-    const totalS = form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
     const totalW = form.variants.reduce((sum, v) => {
       const wStr = String(v.weight || "").toLowerCase();
       const val = parseFloat(wStr) || 0;
       const factor = wStr.includes("kg") ? 1000 : 1;
-      return sum + (val * factor * (Number(v.stock) || 0));
+      return sum + (val * factor);
     }, 0);
 
-    if (String(totalS) !== form.totalStock || totalW !== form.totalWeight) {
-      setForm(prev => ({ ...prev, totalStock: String(totalS), totalWeight: totalW }));
+    if (String(totalW) !== form.totalStock || totalW !== form.totalWeight) {
+      setForm(prev => ({ ...prev, totalStock: String(totalW), totalWeight: totalW }));
     }
   }, [form.variants]);
 
@@ -260,7 +259,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Stock (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalStock}</span><span className="text-[10px] text-emerald-400">UNITS</span></div></div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Weight (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) : form.totalWeight}</span><span className="text-[10px] text-emerald-400">{form.totalWeight >= 1000 ? "KG" : "G"}</span></div></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Total Weight (Auto)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) : form.totalWeight}</span><span className="text-[10px] text-emerald-400">{form.totalWeight >= 1000 ? "KG" : "G"}</span></div></div>
                 </div>
                 <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
@@ -288,11 +287,11 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
               <div className="space-y-6">
                 {form.variants.map((v, i) => (
-                  <div key={i} className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 relative group truncate">
+                  <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 relative group truncate">
                     <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Weight</label><input placeholder="250g" value={v.weight} onChange={(e) => { const u = [...form.variants]; u[i].weight = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold shadow-sm" /></div>
                     <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">MRP (₹)</label><input type="number" placeholder="500" value={v.mrp} onChange={(e) => { const u = [...form.variants]; u[i].mrp = e.target.value; u[i].offerPrice = Math.round(Number(e.target.value) - (Number(e.target.value) * Number(u[i].offerPercent)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-emerald-700 shadow-sm" /></div>
                     <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Discount %</label><input type="number" placeholder="10" value={v.offerPercent} onChange={(e) => { const u = [...form.variants]; u[i].offerPercent = e.target.value; u[i].offerPrice = Math.round(Number(u[i].mrp) - (Number(u[i].mrp) * Number(e.target.value)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-orange-600 shadow-sm" /></div>
-                    <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Stock Qty</label><input type="number" placeholder="0" value={v.stock} onChange={(e) => { const u = [...form.variants]; u[i].stock = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-black text-blue-600 shadow-sm" /></div>
+
                     <div><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1.5 ml-1">Final Price</label><div className="bg-emerald-100 px-4 py-3 rounded-xl font-black text-emerald-800 text-[11px] shadow-inner text-center">₹{v.offerPrice || 0}</div></div>
                     {form.variants.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }))} className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><FaTrash size={10} /></button>)}
                   </div>
