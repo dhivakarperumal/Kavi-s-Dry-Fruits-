@@ -95,15 +95,13 @@ const router = createBrowserRouter([
   },
 
   {
-    path: "/adminpanel",
+    path: "/adminpanel/*",
     element: (
       <PrivateRouter allowedRoles={["admin"]}>
         <Adminpanel />
       </PrivateRouter>
-    ),
-    children: [
-      { index: true, element: <Dashboard /> },
-    ]},
+    )
+  },
 
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },

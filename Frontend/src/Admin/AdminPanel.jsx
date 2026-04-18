@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, onSnapshot } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
+import api from "../services/api";
 
 import Sidebar from "./Headers/Sidebar";
 import Topbar from "./Headers/TopHeader";
@@ -15,14 +14,13 @@ import Products from "./Products/Products";
 import Users from "./Users/AllUsers";
 import Delivery from "./Orders/Delivery";
 import CancelOrders from "./Orders/cancelOrders";
+import ReturenOrders from "./Orders/ReturenOrders";
 import StockDetails from "./Products/StockDetails";
 import AddDealer from "./Others/AddDealer";
 import Reviews from "./Reviews/Reviews";
 import Invoice from "./Others/Invoice";
 import Billing from "./Others/Billing";
 import Stickers from "./PrintStickers/Stikers";
-
-import { auth, db } from "../firebase";
 import NewUsers from "./Users/NewUsers";
 import AddUsers from "./Users/AddUser";
 import Category from "./Products/Category";
@@ -35,108 +33,109 @@ const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [collectionCounts, setCollectionCounts] = useState({});
-  const [orders, setOrders] = useState([]);
-  const [todayOrdersCount, setTodayOrdersCount] = useState(0);
-  const [adminName, setAdminName] = useState("Administrator");
-  const [liveStocks, setLiveStocks] = useState([]);
-  const [lowStockCount, setLowStockCount] = useState(0);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
 
-  // Fetch admin name
+  // Sync URL Path with Active Section
+  useEffect(() => {
+    const path = location.pathname.replace(/^\/adminpanel\/?/, "").toLowerCase();
+    
+    if (!path) {
+      if (activeSection !== "dashboard") setActiveSection("dashboard");
+      return;
+    }
+
+    const routeMap = {
+      "dashboard": "dashboard",
+      "all-users": "All Users",
+      "new-users": "New Users",
+      "add-users": "Add Users",
+      "products": "Add Products",
+      "add-products": "Add Products",
+      "all-products": "All Products",
+      "add-category": "Add Category",
+      "stock-details": "Stock Details",
+      "migrate-pricing": "Migrate Pricing",
+      "orders": "Orders",
+      "new-orders": "New Orders",
+      "all-orders": "All Orders",
+      "delivered-orders": "Delivered Orders",
+      "cancel-orders": "Cancel Orders",
+      "returned-orders": "Returned Orders",
+      "stickers": "Stickers",
+      "dealer": "Dealer",
+      "reviews": "Reviews",
+      "invoice": "Invoice",
+      "billing": "Billing",
+    };
+
+    const mappedSection = routeMap[path];
+    if (mappedSection && mappedSection !== activeSection) {
+      setActiveSection(mappedSection);
+    }
+  }, [location.pathname]);
+
+  const handleSectionChange = (newSection) => {
+    setActiveSection(newSection);
+    const reverseMap = {
+      "dashboard": "dashboard",
+      "All Users": "all-users",
+      "New Users": "new-users",
+      "Add Users": "add-users",
+      "Add Products": "products",
+      "All Products": "all-products",
+      "Add Category": "add-category",
+      "Stock Details": "stock-details",
+      "Migrate Pricing": "migrate-pricing",
+      "Orders": "orders",
+      "New Orders": "new-orders",
+      "All Orders": "all-orders",
+      "Delivered Orders": "delivered-orders",
+      "Cancel Orders": "cancel-orders",
+      "Returned Orders": "returned-orders",
+      "Stickers": "stickers",
+      "Dealer": "dealer",
+      "Reviews": "reviews",
+      "Invoice": "invoice",
+      "Billing": "billing",
+    };
+    
+    const urlPath = reverseMap[newSection] || "dashboard";
+    navigate(`/adminpanel/${urlPath === "dashboard" ? "" : urlPath}`);
+  };
+
+  // Fetch counts from MySQL API
   useEffect(() => {
     if (!user) {
       navigate("/");
       return;
     }
 
-    const fetchUserCount = async () => {
+    const fetchCounts = async () => {
       try {
-        const response = await api.get("/users");
-        setCollectionCounts((prev) => ({
-          ...prev,
-          users: response.data.users?.length || 0,
-        }));
+        const [usersRes, productsRes, ordersRes] = await Promise.allSettled([
+          api.get("/users"),
+          api.get("/products"),
+          api.get("/orders"),
+        ]);
+
+        setCollectionCounts({
+          users:    usersRes.status    === "fulfilled" ? (usersRes.value.data?.length    || usersRes.value.data?.users?.length    || 0) : 0,
+          products: productsRes.status === "fulfilled" ? (productsRes.value.data?.length || 0) : 0,
+          orders:   ordersRes.status   === "fulfilled" ? (ordersRes.value.data?.length   || 0) : 0,
+        });
       } catch (err) {
-        console.error("Error fetching user count:", err);
+        console.error("Error fetching counts:", err);
       }
     };
-    fetchUserCount();
 
-    return () => {};
+    fetchCounts();
   }, [user, navigate]);
-
-  // Fetch orders and stock
-  useEffect(() => {
-    const unsubs = [];
-
-    // Users & Orders
-    const unsubUsers = onSnapshot(collection(db, "users"), (userSnap) => {
-      let todayCount = 0;
-      const allOrders = [];
-
-      userSnap.docs.forEach((userDoc) => {
-        const uid = userDoc.id;
-        const orderCol = collection(db, "users", uid, "orders");
-        const unsubOrders = onSnapshot(orderCol, (orderSnap) => {
-          const userOrders = [];
-          orderSnap.forEach((doc) => {
-            const data = doc.data();
-            if (!["Delivered", "Cancelled"].includes(data.orderStatus)) {
-              userOrders.push({ id: doc.id, uid, ...data });
-
-              const date = data.date ? new Date(data.date) : null;
-              const today = new Date();
-              if (
-                date &&
-                date.getDate() === today.getDate() &&
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear()
-              ) {
-                todayCount++;
-              }
-            }
-          });
-
-          setOrders((prev) => [
-            ...prev.filter((order) => order.uid !== uid),
-            ...userOrders,
-          ]);
-          setTodayOrdersCount(todayCount);
-        });
-
-        unsubs.push(unsubOrders);
-      });
-    });
-    unsubs.push(unsubUsers);
-
-    // Products / Stock
-    const unsubStock = onSnapshot(collection(db, "products"), (snap) => {
-      const products = snap.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .sort((a, b) =>
-          (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })
-        );
-      setLiveStocks(products);
-
-      const lowStock = products.filter(
-        (p) =>
-          (p.category === "Combo" && (p.stock || 0) <= 5) ||
-          (p.category !== "Combo" && (p.stock || 0) <= 5000)
-      ).length;
-      setLowStockCount(lowStock);
-
-      setCollectionCounts((prev) => ({ ...prev, products: products.length }));
-    });
-    unsubs.push(unsubStock);
-
-    return () => unsubs.forEach((u) => u());
-  }, []);
 
   const handleLogout = async () => {
     try {
-      try { await signOut(auth); } catch (e) {} // sign out of firebase silently if connected
       if (logout) logout();
       toast.success("Logged out successfully!");
       navigate("/");
@@ -147,60 +146,52 @@ const AdminPanel = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard":
-        return <Dashboard />;
-      case "All Users":
-        return <Users />;
-      case "New Users":
-        return <NewUsers />;
-      case "Add Users":
-        return <AddUsers />;
-      case "Add Products":
-        return <Products />;
-      case "All Products":
-        return <Allproduct />;
-      case "Add Category":
-        return <Category />;
-      case "New Orders":
-        return <NewOrders />;
-      case "All Orders":
-        return <AllOrders />;
-      case "Delivered Orders":
-        return <Delivery />;
-      case "Cancel Orders":
-        return <CancelOrders />;
-      case "Returned Orders":
-        return <ReturenOrders/>;
-      case "Stickers":
-        return <Stickers />;
+      case "dashboard":          return <Dashboard />;
 
-      case "Stock Details":
-        return <StockDetails />;
-      case "Migrate Pricing":
-        return <MigrateProducts />;
-      case "Dealer":
-        return <AddDealer />;
-      case "Reviews":
-        return <Reviews />;
-      case "Invoice":
-        return <Invoice />;
-      case "Billing":
-        return <Billing />;
+      // Users
+      case "All Users":          return <Users />;
+      case "New Users":          return <NewUsers />;
+      case "Add Users":          return <AddUsers />;
+
+      // Products
+      case "Add Products":       return <Products />;
+      case "All Products":       return <Allproduct />;
+      case "Add Category":       return <Category />;
+      case "Stock Details":      return <StockDetails />;
+      case "Migrate Pricing":    return <MigrateProducts />;
+
+      // Orders
+      case "Orders":             return <Orders />;
+      case "New Orders":         return <NewOrders />;
+      case "All Orders":         return <AllOrders />;
+      case "Delivered Orders":   return <Delivery />;
+      case "Cancel Orders":      return <CancelOrders />;
+      case "Returned Orders":    return <ReturenOrders />;
+
+      // Others
+      case "Stickers":           return <Stickers />;
+      case "Dealer":             return <AddDealer />;
+      case "Reviews":            return <Reviews />;
+      case "Invoice":            return <Invoice />;
+      case "Billing":            return <Billing />;
+
       default:
-        return <p className="text-gray-500">Select a section.</p>;
+        return (
+          <div className="flex items-center justify-center h-64 text-gray-400 font-medium">
+            Select a section from the sidebar.
+          </div>
+        );
     }
   };
 
   return (
-    <div>
-      <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
-        setActiveSection={setActiveSection}
+        setActiveSection={handleSectionChange}
         activeSection={activeSection}
         collectionCounts={collectionCounts}
-        lowStockCount={lowStockCount}
         handleLogout={handleLogout}
       />
 
@@ -208,21 +199,19 @@ const AdminPanel = () => {
         <Topbar
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
-          adminName={adminName}
-          todayOrdersCount={todayOrdersCount}
-          lowStockCount={lowStockCount}
-          ordersold={orders}
           handleLogout={handleLogout}
         />
 
-        <main className="flex-1 overflow-y-auto p-2">{renderContent()}</main>
+        <main className="flex-1 overflow-y-auto p-2">
+          {renderContent()}
+        </main>
+
         <footer className="text-center text-sm text-black py-3">
           © {new Date().getFullYear()} Admin Panel. All rights reserved.
         </footer>
       </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default AdminPanel;

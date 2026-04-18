@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   AiOutlineStock, 
@@ -76,9 +76,19 @@ const Sidebar = ({
       setOpenDropdown(openDropdown === item.label ? null : item.label);
     } else {
       setActiveSection(item.label);
-      setIsOpen(false);
+      if (typeof setIsOpen === 'function') setIsOpen(false);
     }
   };
+
+  useEffect(() => {
+    const parent = SideBarmenu.find(item => 
+      item.label === activeSection || 
+      (item.dropdown && item.dropdown.some(sub => sub.label === activeSection))
+    );
+    if (parent && parent.dropdown && openDropdown !== parent.label) {
+      setOpenDropdown(parent.label);
+    }
+  }, [activeSection]);
 
   return (
     <aside
@@ -110,13 +120,14 @@ const Sidebar = ({
           const count =
             item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
           const showBadge = item.collection && count > 0 && activeSection !== item.label;
+          const isActiveParent = activeSection === item.label || (item.dropdown && item.dropdown.some(sub => sub.label === activeSection));
 
           return (
             <div key={item.label} className="mb-1">
               <button
                 onClick={() => handleClick(item)}
                 className={`flex justify-between items-center w-full text-left px-4 py-4 rounded font-semibold cursor-pointer transition-all capitalize ${
-                  activeSection === item.label
+                  isActiveParent
                     ? "bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white"
                     : "hover:bg-gradient-to-r hover:from-green-400 hover:via-green-500 hover:to-green-600 hover:text-white"
                 }`}
@@ -150,7 +161,7 @@ const Sidebar = ({
                       key={subItem.label}
                       onClick={() => {
                         setActiveSection(subItem.label);
-                        setIsOpen(false);
+                        if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
                       className={`flex items-center gap-2 text-left px-4 py-2.5 font-semibold rounded text-sm transition-all cursor-pointer capitalize ${
                         activeSection === subItem.label
