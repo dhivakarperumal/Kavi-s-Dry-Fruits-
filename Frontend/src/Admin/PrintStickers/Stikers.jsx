@@ -212,6 +212,7 @@ const Stickers = () => {
       for (let i = 0; i < product.printQty; i++) {
         doc.write(`
           <div class="sticker-card">
+            <div style="font-size: 7px; color: #555; font-weight: bold; margin-bottom: 2px;">${product.productId}</div>
             <img src="${product.barcodeImg}" class="barcode-img" onload="this.setAttribute('loaded', 'true')"/>
             <div class="price-tag">₹${product.price}</div>
             <div class="date-tag">${formatDate(product.packingDate)}</div>

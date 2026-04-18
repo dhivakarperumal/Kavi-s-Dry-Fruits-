@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   FaStar, FaPlus, FaFilter, FaEdit, FaTrash, FaEye, 
-  FaBoxOpen, FaLayerGroup, FaThLarge, FaListUl, FaSearch 
+  FaBoxOpen, FaLayerGroup, FaThLarge, FaListUl, FaSearch,
+  FaBarcode, FaPrint
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import api from "../../services/api";
+import JsBarcode from "jsbarcode";
 
 const Allproduct = () => {
   const [items, setItems] = useState([]);
@@ -119,6 +121,121 @@ const Allproduct = () => {
   const currentItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
+  const handlePrintAll = () => {
+    if (filteredItems.length === 0) {
+      toast.error("No products to print");
+      return;
+    }
+
+    setLoading(true);
+    
+    // Create iframe
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <html>
+        <head>
+          <title>Print All Barcodes</title>
+          <style>
+            @page { size: auto; margin: 5mm; }
+            body { font-family: 'Segoe UI', Arial; margin: 0; padding: 5mm; background: white; }
+            .sticker-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+            }
+            .sticker-card {
+              border: 0.5px solid #eee;
+              padding: 10px;
+              text-align: center;
+              border-radius: 8px;
+            }
+            .barcode-svg {
+              width: 100%;
+              max-height: 60px;
+            }
+            .product-name {
+              font-weight: bold;
+              font-size: 10px;
+              margin-bottom: 5px;
+              display: -webkit-box;
+              -webkit-line-clamp: 1;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
+            .price-tag {
+              font-weight: 900;
+              font-size: 14px;
+              margin-top: 5px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="sticker-grid">
+    `);
+
+    filteredItems.forEach((item) => {
+      const barcodeValue = item.barcode || item.barcodeValue || item.productId;
+      const canvas = document.createElement("canvas");
+      try {
+        JsBarcode(canvas, barcodeValue, { 
+          format: "CODE128", 
+          width: 2, 
+          height: 50, 
+          displayValue: false 
+        });
+        const barcodeDataUrl = canvas.toDataURL("image/png");
+        
+        const details = item.type === 'single' 
+          ? safeParse(item.variants)[0] 
+          : (typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}') : item.comboDetails);
+        const price = details?.offerPrice || details?.price || '—';
+
+        doc.write(`
+          <div class="sticker-card">
+            <div class="product-name">${item.name}</div>
+            <div style="font-size: 8px; color: #666; font-weight: bold; margin-bottom: 4px;">ID: ${item.productId}</div>
+            <img src="${barcodeDataUrl}" class="barcode-svg" onload="this.setAttribute('loaded', 'true')"/>
+            <div class="price-tag">₹${price}</div>
+          </div>
+        `);
+      } catch (e) {
+        console.error("Barcode fail for", item.name);
+      }
+    });
+
+    doc.write(`
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    const waitForLoad = () => {
+      const imgs = doc.querySelectorAll('img');
+      const allDone = Array.from(imgs).every(img => img.getAttribute('loaded') === 'true');
+      if (allDone || imgs.length === 0) {
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setLoading(false);
+          document.body.removeChild(iframe);
+          toast.success("Print jobs sent");
+        }, 1000);
+      } else {
+        setTimeout(waitForLoad, 100);
+      }
+    };
+    waitForLoad();
+  };
+
   return (
     <div className="p-4 md:p-6 mt-15 min-h-screen bg-white">
       <div className="flex flex-col md:flex-row justify-end items-center mb-6 gap-4 pb-6">
@@ -129,6 +246,12 @@ const Allproduct = () => {
           </div>
           <button onClick={() => setShowFilters(!showFilters)} className={`px-5 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
             <FaFilter className="inline mr-2"/> Filters
+          </button>
+          <button 
+            onClick={handlePrintAll}
+            className="px-6 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 transition-all shadow-sm"
+          >
+            <FaPrint className="inline mr-2"/> Print Barcodes
           </button>
           <button onClick={() => navigate('/adminpanel/products')} className="px-6 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg transition-all shadow-sm">
             <FaPlus className="inline mr-2"/> Add Product
@@ -277,7 +400,7 @@ const Allproduct = () => {
 
         <div className="flex-1">
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-48 bg-gray-50 rounded-2xl animate-pulse border" />)}</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-48 bg-gray-100/50 rounded-3xl animate-pulse" />)}</div>
           ) : viewMode === "card" ? (            
            <div className={`grid grid-cols-2 gap-5 ${showFilters ? 'lg:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-3 xl:grid-cols-4'}`}>
               {currentItems.map(item => {
@@ -290,9 +413,9 @@ const Allproduct = () => {
                 const offerPercent = isCombo ? details?.offerPercent : variants[0]?.offerPercent;
 
                 return (
-                  <div key={`${item.type}-${item.id}`} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                  <div key={`${item.type}-${item.id}`} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col group/card">
                     {/* Image Box */}
-                    <div className="relative h-44 w-full flex items-center justify-center border-2 border-dashed border-emerald-500 rounded-xl overflow-hidden bg-white mb-3 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
+                    <div className="relative h-48 w-full flex items-center justify-center rounded-2xl overflow-hidden bg-gray-50 mb-4 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
                       {images[0]
                         ? <img src={images[0]} className="h-full w-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" alt={item.name} />
                         : <FaBoxOpen className="text-gray-200" size={40}/>
@@ -371,7 +494,7 @@ const Allproduct = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-gray-400 font-mono">{item.productId}</td>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 flex-shrink-0 border border-dashed border-emerald-400 rounded-lg p-1 bg-white flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 transition-transform" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
+                              <div className="w-12 h-12 flex-shrink-0 rounded-lg p-1 bg-gray-50 flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 transition-transform" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
                                  {images[0] ? <img src={images[0]} alt="" className="w-full h-full object-contain" /> : <FaBoxOpen className="text-gray-300" />}
                               </div>
                               <div className="flex flex-col gap-1.5">
