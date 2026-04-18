@@ -275,6 +275,7 @@ const StockDetail = () => {
                <table className="w-full text-left">
                   <thead className="bg-[#009669] border-b border-emerald-700">
                      <tr>
+                        <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
                         <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Descriptor</th>
                         <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identify & Preview</th>
                         <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Classification</th>
@@ -283,13 +284,16 @@ const StockDetail = () => {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-emerald-50/50">
-                     {paginatedStocks.map((item) => {
+                     {paginatedStocks.map((item, index) => {
                         const images = safeParse(item.images || item.cimgs);
                         const variants = safeParse(item.variants);
                         const displayImg = images[0] || variants[0]?.img || (typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}').img : item.comboDetails?.img);
 
                         return (
                           <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors group">
+                             <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
+                                {(currentPage - 1) * itemsPerPage + index + 1}
+                             </td>
                              <td className="px-8 py-6">
                                 <span className="bg-white border border-emerald-100 text-emerald-900 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tight group-hover:bg-emerald-600 group-hover:text-white transition-all">
                                    #{item.productId}
@@ -332,7 +336,7 @@ const StockDetail = () => {
                      })}
                      {paginatedStocks.length === 0 && (
                         <tr>
-                          <td colSpan="5" className="px-8 py-20 text-center">
+                          <td colSpan="6" className="px-8 py-20 text-center">
                               <FaBoxOpen size={40} className="mx-auto text-slate-100 mb-4" />
                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No inventory matches found</p>
                           </td>
