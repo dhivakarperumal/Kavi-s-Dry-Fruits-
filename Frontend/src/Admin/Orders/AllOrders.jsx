@@ -269,7 +269,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
