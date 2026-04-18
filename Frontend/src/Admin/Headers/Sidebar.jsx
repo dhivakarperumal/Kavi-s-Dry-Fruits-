@@ -136,7 +136,7 @@ const Sidebar = ({
       </div>
 
       {/* Sidebar Menu */}
-      <nav className="flex flex-col px-2 py-5 h-full overflow-y-auto max-h-[calc(100vh-80px)]">
+      <nav className="flex flex-col px-2 py-5 h-full overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {SideBarmenu.map((item) => {
           const count =
             item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
@@ -148,8 +148,10 @@ const Sidebar = ({
               <button
                 onClick={() => handleClick(item)}
                 className={`flex justify-between items-center w-full text-left px-4 py-3.5 rounded-xl font-bold cursor-pointer transition-all capitalize ${
-                  isActiveParent
+                  activeSection === item.label
                     ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                    : isActiveParent
+                    ? "bg-emerald-50 text-emerald-700"
                     : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
                 }`}
               >
