@@ -10,6 +10,8 @@
   "scripts": {
     "backend": "nodemon Backend/index.js",
     "frontend": "npm start --prefix KaviDryFruits",
+
+    
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "keywords": [],
