@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaBoxOpen } from "react-icons/fa";
 
 const ReturnOrders = () => {
   const [returnOrders, setReturnOrders] = useState([]);
@@ -88,195 +88,161 @@ const ReturnOrders = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 bg-white min-h-screen">
-      
+    <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Return Management</h1>
+          <p className="text-sm font-bold text-slate-400 mt-1">Processing {filteredOrders.length} return requests</p>
+        </div>
 
-      {/* Search + Filters */}
-      <div className="flex flex-wrap justify-between gap-3 mb-4 items-center">
-        <input
-          type="text"
-          placeholder="Search by Order ID or Client Name"
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="border px-3 py-1 rounded flex-1 max-w-[300px]"
-        />
-
-        <select
-          value={filterType}
-          onChange={(e) => {
-            setFilterType(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="border px-3 py-1 rounded cursor-pointer"
-        >
-          <option value="all">All</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
-
-        {filterType === "custom" && (
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-80">
             <input
-              type="date"
-              value={customFrom}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="border px-2 py-1 rounded text-sm"
-            />
-            <span>to</span>
-            <input
-              type="date"
-              value={customTo}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="border px-2 py-1 rounded text-sm"
+              type="text"
+              placeholder="Search by ID or Name..."
+              value={searchText}
+              onChange={(e) => { setSearchText(e.target.value); setCurrentPage(1); }}
+              className="w-full pl-6 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
           </div>
-        )}
+          
+          <select
+            value={filterType}
+            onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
+            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+          >
+            <option value="all">Full History</option>
+            <option value="today">Today's Returns</option>
+            <option value="week">Weekly Summary</option>
+            <option value="month">Monthly Audit</option>
+            <option value="custom">Custom Selector</option>
+          </select>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white shadow rounded-2xl overflow-x-auto">
-        <table className="min-w-full text-sm rounded-lg overflow-hidden">
-          <thead className="bg-green-500 text-white">
-            <tr>
-              <th className="px-3 py-4">Order ID</th>
-              <th className="px-3 py-4">Payment Type</th>
-              <th className="px-3 py-4">Total</th>
-               <th className="px-3 py-4">Status</th>
-              <th className="px-3 py-4">Reason</th>
-              <th className="px-3 py-4">Refund Amount</th>
-             
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedOrders.map((order) => (
-              <tr key={order.id} className="hover:bg-gray-50">
-                <td className="px-3 py-4">{order.orderId}</td>
-                <td className="px-3 py-4">{order.paymentMethod}</td>
-                <td className="px-3 py-4 text-green-600 font-semibold">
-                  ₹ {order.refundAmount || order.totalAmount}
-                </td>
-                 <td className="px-3 py-4 ">
-                  {order.orderStatus}
-                </td>
-                <td className="px-3 py-4 text-red-500">
-                  {order.returnReason}
-                </td>
-               
-              </tr>
-            ))}
-
-            {paginatedOrders.length === 0 && (
-              <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
-                  No returned orders found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-3 mt-4">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() =>
-              setCurrentPage((p) => Math.min(p + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
+      {filterType === "custom" && (
+        <div className="mb-6 flex animate-in slide-in-from-top-4 duration-500">
+           <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+              <input type="date" className="px-4 py-2 text-xs font-black outline-none" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+              <div className="w-4 h-0.5 bg-slate-200"></div>
+              <input type="date" className="px-4 py-2 text-xs font-black outline-none" value={customTo} onChange={e => setCustomTo(e.target.value)} />
+           </div>
         </div>
       )}
 
-      {/* Modal for details */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-black"
-              onClick={() => setSelectedOrder(null)}
-            >
-              <FaTimes />
-            </button>
-            <h2 className="text-xl font-bold mb-4 text-blue-700">
-              Returned Order - {selectedOrder.orderId}
-            </h2>
-            <div className="space-y-2 text-sm">
-              <p>
-                <strong>Payment:</strong> {selectedOrder.paymentMethod}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedOrder.orderStatus}
-              </p>
-              <p>
-                <strong>Refund Amount:</strong> ₹
-                {selectedOrder.refundAmount || selectedOrder.totalAmount}
-              </p>
-              <p>
-                <strong>Date:</strong>{" "}
-                {selectedOrder.date
-                  ? new Date(selectedOrder.date).toLocaleString()
-                  : "N/A"}
-              </p>
-              <p>
-                <strong>Reason:</strong> {selectedOrder.returnReason}
-              </p>
-
-              <div className="mt-3">
-                <h4 className="font-semibold underline mb-1">Items:</h4>
-                <ul className="list-disc pl-5">
-                  {selectedOrder.cartItems?.map((item, idx) => (
-                    <li key={idx}>
-                      {item.name} {item.weight || item.selectedWeight || "-"} ×{" "}
-                      {item.qty || item.quantity} — ₹
-                      {(item.price * (item.qty || item.quantity)).toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-3">
-                <h4 className="font-semibold underline mb-1">
-                  Shipping Address:
-                </h4>
-                <p>
-                  {selectedOrder.shippingAddress?.fullname},{" "}
-                  {selectedOrder.shippingAddress?.street},{" "}
-                  {selectedOrder.shippingAddress?.city},{" "}
-                  {selectedOrder.shippingAddress?.state} -{" "}
-                  {selectedOrder.shippingAddress?.zip},{" "}
-                  {selectedOrder.shippingAddress?.country}
-                </p>
-                <p>
-                  <strong>Contact:</strong>{" "}
-                  {selectedOrder.shippingAddress?.contact}
-                </p>
-                <p>
-                  <strong>Email:</strong>{" "}
-                  {selectedOrder.shippingAddress?.email}
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Refundable</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Return Reason</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {paginatedOrders.length > 0 ? (
+                paginatedOrders.map((order) => (
+                  <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                    <td className="px-8 py-6">
+                       <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline">#{order.orderId}</button>
+                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
+                         {order.date ? new Date(order.date).toLocaleDateString() : "—"}
+                       </p>
+                    </td>
+                    <td className="px-8 py-6 uppercase">
+                      <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.shippingAddress?.fullname || "Guest Transaction"}</p>
+                      <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-black rounded-lg border border-amber-100 uppercase tracking-widest">{order.orderStatus}</span>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                       <span className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                         {order.paymentMethod || "PREPAID"}
+                       </span>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                       <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.refundAmount || order.totalAmount).toLocaleString('en-IN')}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                       <div className="bg-slate-50/50 p-3 rounded-xl border border-slate-100 flex items-center gap-3">
+                          <p className="text-[11px] font-black text-slate-500 leading-tight italic line-clamp-1">"{order.returnReason || "General Return Claim"}"</p>
+                       </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex justify-center flex-col gap-1">
+                        <button onClick={() => setSelectedOrder(order)} className="px-4 py-2 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all border border-slate-100 font-black text-[9px] uppercase tracking-widest shadow-sm">Review Claim</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                    <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                       <FaBoxOpen className="text-3xl opacity-20" />
+                    </div>
+                    No return requests found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center items-center gap-4">
+           <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:border-indigo-500 disabled:opacity-30 transition-all shadow-sm">Previous</button>
+           <span className="font-black text-xs text-slate-400">Page {currentPage} of {totalPages}</span>
+           <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:border-indigo-500 disabled:opacity-30 transition-all shadow-sm">Next</button>
+        </div>
+      )}
+
+      {selectedOrder && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedOrder(null)}>
+            <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden p-10 animate-in zoom-in duration-500" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-start mb-8 text-left">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Return Claim Details</h3>
+                    <p className="text-xs font-black text-amber-600 uppercase tracking-widest mt-1">Order Ref: #{selectedOrder.orderId}</p>
+                  </div>
+                  <button onClick={() => setSelectedOrder(null)} className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-2xl text-slate-400 text-xl hover:text-slate-900 transition-colors">✕</button>
+               </div>
+               
+               <div className="space-y-6 mb-10 text-left overflow-y-auto max-h-[50vh] pr-2 custom-scrollbar text-slate-900">
+                  <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 text-left">Internal Context</p>
+                     <p className="text-xs font-black text-slate-500 leading-relaxed mb-4">Reason for Return: <span className="text-rose-600 italic">"{selectedOrder.returnReason || "Not specified"}"</span></p>
+                     <div className="h-px bg-slate-200 mb-4"></div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 text-left">Order Composition</p>
+                     <div className="space-y-2">
+                        {(selectedOrder.cartItems || selectedOrder.items || []).map((item, idx) => (
+                           <div key={idx} className="flex justify-between items-center text-xs font-black text-slate-800">
+                              <span>{item.name || item.productName} {item.weight || item.selectedWeight} × {item.qty || item.quantity}</span>
+                              <span className="text-slate-400">₹{(item.price * (item.qty || item.quantity)).toFixed(2)}</span>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-left">Dispatch Target</p>
+                     <div className="text-xs font-black text-slate-800 space-y-1">
+                        <p>{selectedOrder.shippingAddress?.fullname}</p>
+                        <p className="text-slate-400 font-bold">{selectedOrder.shippingAddress?.street}, {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.zip}</p>
+                        <p className="pt-2 text-indigo-500 tracking-tighter underline">{selectedOrder.shippingAddress?.email}</p>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="flex gap-4">
+                  <button onClick={() => setSelectedOrder(null)} className="flex-1 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Approve & Settle Refund</button>
+                  <button onClick={() => setSelectedOrder(null)} className="px-10 py-5 bg-slate-50 text-slate-600 rounded-[1.5rem] font-black uppercase tracking-widest border border-slate-100 hover:bg-slate-100 transition-all">Close</button>
+               </div>
+            </div>
+         </div>
       )}
     </div>
   );

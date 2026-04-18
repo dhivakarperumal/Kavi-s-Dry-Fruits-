@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../services/api";
-import { FaPrint } from "react-icons/fa";
+import { FaPrint, FaEye } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
@@ -216,157 +216,138 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
    }, []);
 
   return (
-    <div className="p-4 bg-white min-h-screen">
+    <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Order Archives</h1>
+          <p className="text-sm font-bold text-slate-400 mt-1">Showing {filteredOrders.length} processed transactions</p>
+        </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4 items-center">
-        <input
-          type="text"
-          placeholder="Search Order ID or Client Name"
-          className="border p-2 rounded w-full sm:w-1/3"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-
-        <select
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="All">All</option>
-          <option value="Today">Today</option>
-          <option value="This Week">This Week</option>
-          <option value="This Month">This Month</option>
-          <option value="Custom">Custom Range</option>
-        </select>
-
-        {dateFilter === "Custom" && (
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-80">
             <input
-              type="date"
-              className="border p-2 rounded"
-              value={customRange.from}
-              onChange={(e) =>
-                setCustomRange({ ...customRange, from: e.target.value })
-              }
-            />
-            <span>→</span>
-            <input
-              type="date"
-              className="border p-2 rounded"
-              value={customRange.to}
-              onChange={(e) =>
-                setCustomRange({ ...customRange, to: e.target.value })
-              }
+              type="text"
+              placeholder="Search by Order ID or Client..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-6 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
           </div>
-        )}
+          
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+          >
+            <option value="All">Full History</option>
+            <option value="Today">Today's Log</option>
+            <option value="This Week">Weekly View</option>
+            <option value="This Month">Monthly View</option>
+            <option value="Custom">Custom Range</option>
+          </select>
 
-        <select
-          value={itemsPerPage}
-          onChange={(e) => setItemsPerPage(Number(e.target.value))}
-          className="border p-2 rounded cursor-pointer"
-        >
-        
-          <option value={25}>Show 25</option>
-          <option value={50}>Show 50</option>
-          <option value={100}>Show 100</option>
-          <option value={250}>Show 250</option>
-          <option value={500}>Show 500</option>
-        </select>
-      </div>
-
-      {/* Orders Table */}
-      <div className="bg-white shadow rounded-xl overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-green-500 text-white">
-            <tr>
-              <th className="px-3 py-3">Order ID</th>
-              <th className="px-3 py-3">Client Name</th>
-              <th className="px-3 py-3">Payment</th>
-              <th className="px-3 py-3">Total</th>
-              <th className="px-3 py-3">Status</th>
-              <th className="px-3 py-3">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {currentOrders.map((order) => (
-              <tr key={order.id} className="text-center hover:bg-gray-50">
-
-                <td
-                  className="px-3 py-4 text-blue-600 underline cursor-pointer"
-                  onClick={() => setSelectedOrder(order)}
-                >
-                  {order.orderId}
-                </td>
-
-                <td className="px-3 py-4 font-semibold text-green-700">
-                  {order.clientName || order.fullname || order.client?.name || order.shippingAddress?.fullname || order.shippingAddress?.contact || "—"}
-                </td>
-
-                <td className="px-3 py-4">{order.paymentMethod}</td>
-
-                <td className="px-3 py-4 text-green-600 font-semibold">
-                  ₹{order.totalAmount}
-                </td>
-
-                <td className="px-3 py-4">
-                  <select
-                    value={order.orderStatus}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "Cancelled") setShowCancelInput(order.id);
-                      else handleStatusUpdate(order.id, v);
-                    }}
-                    className="border p-1 rounded"
-                  >
-                    {getStatusOptions(order.orderStatus).map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-
-                  {showCancelInput === order.id && (
-                    <div className="mt-2">
-                      <textarea
-                        className="w-full border p-1 text-xs"
-                        placeholder="Reason for cancellation"
-                        onChange={(e) => setCancelReason(e.target.value)}
-                      />
-                      <button
-                        onClick={() =>
-                          handleStatusUpdate(order.id, "Cancelled")
-                        }
-                        className="mt-1 bg-red-600 text-white px-3 py-1 text-xs rounded"
-                      >
-                        Confirm Cancel
-                      </button>
-                    </div>
-                  )}
-                </td>
-
-                <td className="px-3 py-4 flex justify-center">
-                  <button
-                    onClick={() => handlePrint(order)}
-                    className="text-gray-600 hover:text-black"
-                  >
-                    <FaPrint />
-                  </button>
-                </td>
-
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="p-4 text-sm text-gray-600">
-          Showing {Math.min(currentOrders.length, itemsPerPage)} of {filteredOrders.length} orders
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+          >
+            <option value={25}>Show 25</option>
+            <option value={100}>Show 100</option>
+            <option value={500}>Show 500</option>
+          </select>
         </div>
       </div>
 
-      {/* Order Details Modal (shared) */}
+      {dateFilter === "Custom" && (
+        <div className="mb-6 flex gap-4 animate-in slide-in-from-top-4 duration-500">
+           <input type="date" className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-black" value={customRange.from} onChange={e => setCustomRange({...customRange, from: e.target.value})} />
+           <input type="date" className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-black" value={customRange.to} onChange={e => setCustomRange({...customRange, to: e.target.value})} />
+        </div>
+      )}
+
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Revenue</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">State</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {currentOrders.length > 0 ? (
+                currentOrders.map((order) => (
+                  <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                    <td className="px-8 py-6">
+                       <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline decoration-2">#{order.orderId}</button>
+                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
+                         {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                       </p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                      <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{order.shippingAddress?.city || "Local Order"}</p>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <span className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                        {order.paymentMethod || "COD"}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <select
+                        value={order.orderStatus}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "Cancelled") setShowCancelInput(order.id);
+                          else handleStatusUpdate(order.id, v);
+                        }}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${order.orderStatus === 'Delivered' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-600'}`}
+                      >
+                        {getStatusOptions(order.orderStatus).map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      {showCancelInput === order.id && (
+                         <div className="mt-2 flex flex-col gap-2">
+                            <textarea className="w-full text-xs p-2 border border-rose-100 rounded-xl bg-rose-50" placeholder="Reason..." onChange={e => setCancelReason(e.target.value)} />
+                            <button onClick={() => handleStatusUpdate(order.id, "Cancelled")} className="bg-rose-500 text-white text-[9px] font-black uppercase py-2 rounded-lg tracking-widest shadow-lg shadow-rose-100">Confirm Cancel</button>
+                         </div>
+                      )}
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex justify-center gap-3">
+                        <button onClick={() => setSelectedOrder(order)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaEye /></button>
+                        <button onClick={() => handlePrint(order)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaPrint /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                    <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                       <FaPrint className="text-3xl opacity-20" />
+                    </div>
+                    No archived orders found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center font-black text-[10px] text-slate-400 uppercase tracking-widest">
+           <span>Total Logs: {filteredOrders.length}</span>
+           <span>Showing: {currentOrders.length}</span>
+        </div>
+      </div>
+
       <OrderDetailsModal
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}

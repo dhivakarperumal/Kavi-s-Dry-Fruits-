@@ -196,15 +196,15 @@ const Users = () => {
           <div className="overflow-x-auto rounded-3xl border border-gray-100 shadow-sm bg-white">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="bg-gradient-to-r from-green-600 to-green-700 text-white">
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">S No</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">User Profile</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">Contact Info</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">Access Level</th>
-                  <th className="p-5 text-left font-bold uppercase tracking-wider">Registered</th>
-                  <th className="p-5 text-center font-bold uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
+              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Identity Profile</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Connectivity</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Authorization</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Activity</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
+              </tr>
+            </thead>
               <tbody className="divide-y divide-gray-100 font-medium">
                 {currentUsers.map((user, index) => (
                   <tr key={user.id} className="hover:bg-green-50/50 transition-colors group">

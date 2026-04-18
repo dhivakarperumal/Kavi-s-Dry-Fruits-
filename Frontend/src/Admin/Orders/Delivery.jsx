@@ -256,197 +256,168 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      {/* Search & Filter */}
-      <div className="flex flex-wrap justify-between gap-3 mb-4 items-center">
-        <input
-          type="text"
-          placeholder="Search by Order ID or Client Name"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="border px-3 py-1 rounded flex-1 max-w-[300px]"
-        />
+    <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Delivery Archive</h1>
+          <p className="text-sm font-bold text-slate-400 mt-1">Found {filteredOrders.length} successful deliveries</p>
+        </div>
 
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="border px-3 py-1 rounded cursor-pointer"
-        >
-          <option value="all">All</option>
-          <option value="today">Today</option>
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
-
-        {filterType === "custom" && (
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-80">
             <input
-              type="date"
-              value={customFrom}
-              onChange={(e) => setCustomFrom(e.target.value)}
-              className="border px-2 py-1 rounded text-sm"
-            />
-            <span>to</span>
-            <input
-              type="date"
-              value={customTo}
-              onChange={(e) => setCustomTo(e.target.value)}
-              className="border px-2 py-1 rounded text-sm"
+              type="text"
+              placeholder="Search by ID or Client..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-6 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/20 focus:ring-4 focus:ring-emerald-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
           </div>
-        )}
+          
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
+          >
+            <option value="all">Full Record</option>
+            <option value="today">Today's Batch</option>
+            <option value="week">Weekly Review</option>
+            <option value="month">Monthly Audit</option>
+            <option value="custom">Selection Range</option>
+          </select>
 
-        <select
-          value={ordersPerPage}
-          onChange={(e) => setOrdersPerPage(Number(e.target.value))}
-          className="border px-3 py-1 rounded cursor-pointer"
-        >
-          <option value={25}>Show 25</option>
-          <option value={50}>Show 50</option>
-          <option value={100}>Show 100</option>
-          <option value={250}>Show 250</option>
-          <option value={500}>Show 500</option>
-        </select>
+          <select
+            value={ordersPerPage}
+            onChange={(e) => setOrdersPerPage(Number(e.target.value))}
+            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
+          >
+            <option value={25}>Show 25</option>
+            <option value={100}>Show 100</option>
+          </select>
+        </div>
       </div>
 
-      {/* Total Amount Summary */}
+      {filterType === "custom" && (
+        <div className="mb-6 flex animate-in slide-in-from-top-4 duration-500">
+           <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+              <input type="date" className="px-4 py-2 text-xs font-black outline-none" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+              <div className="w-4 h-0.5 bg-slate-200"></div>
+              <input type="date" className="px-4 py-2 text-xs font-black outline-none" value={customTo} onChange={e => setCustomTo(e.target.value)} />
+           </div>
+        </div>
+      )}
+
+      {/* Revenue Summary Card */}
       {filteredOrders.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold text-green-800">Total Amount</h3>
-              <p className="text-sm text-green-600">For {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-green-800">₹{totalAmount.toFixed(2)}</p>
-            </div>
+        <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-[2rem] p-8 mb-8 shadow-2xl shadow-emerald-100 flex flex-col md:flex-row justify-between items-center text-white relative overflow-hidden group">
+          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-2">Total Collection</p>
+            <h2 className="text-4xl font-black tracking-tighter">₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
+          </div>
+          <div className="mt-6 md:mt-0 text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Batch Size</p>
+            <p className="text-xl font-black">{filteredOrders.length} Confirmed Orders</p>
           </div>
         </div>
       )}
 
-      {filteredOrders.length === 0 ? (
-        <p className="text-gray-500">No delivered orders found.</p>
-      ) : (
-        <div className="bg-white shadow rounded-2xl overflow-x-auto">
-          <table className="min-w-full text-sm rounded-lg overflow-hidden">
-            <thead className="bg-green-500  text-white">
-              <tr>
-                <th className="px-3 py-4">Order ID</th>
-                <th className="px-3 py-4">Client Name</th>
-                <th className="px-3 py-4">Order Date</th>
-                <th className="px-3 py-4">Amount</th>
-                <th className="px-3 py-4">Type</th>
-                <th className="px-3 py-4">Status</th>
-                <th className="px-3 py-4">Actions</th>
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Name</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Date</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Amount</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Channel</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {currentOrders.map((order) => {
-                return (
-                  <tr key={order.id} className="text-center hover:bg-gray-50 cursor-pointer" onClick={() => handleRowClick(order)}>
-                    <td className="px-3 py-4 text-blue-600 underline cursor-pointer">{order.orderId}</td>
-                    <td className="px-3 py-4 text-green-600 font-semibold">{order.clientName || order.fullname || order.client?.name || order.shippingAddress?.fullname || order.shippingAddress?.contact || "—"}</td>
-                    <td className="px-3 py-4">{formatDate(order.date)}</td>
-                    <td className="px-3 py-4">₹{order.totalAmount}</td>
-                    <td className="px-3 py-4">{order.customerType || "Online Customer"}</td>
-                    <td className="px-3 py-4">{order.orderStatus}</td>
-                    <td className="px-3 py-4 text-center flex gap-3 justify-center">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handlePrint(order); }}
-                        className="text-gray-600 cursor-pointer hover:text-black"
-                        title="Print"
-                      >
-                        <FaPrint />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(order); }}
-                        className="text-red-600 cursor-pointer hover:text-red-800"
-                        title="Delete"
-                      >
-                        <FaTrash />
-                      </button>
+            <tbody className="divide-y divide-slate-50">
+              {currentOrders.length > 0 ? (
+                currentOrders.map((order) => (
+                  <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                    <td className="px-8 py-6">
+                       <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline">#{order.orderId}</button>
+                    </td>
+                    <td className="px-8 py-6 uppercase">
+                      <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                      <p className="text-[10px] font-black text-emerald-500 tracking-widest">{order.orderStatus}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                       <p className="text-xs font-black text-slate-500">{formatDate(order.date)}</p>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                       <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                       <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                         {order.customerType || "Online"}
+                       </span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex justify-center gap-3">
+                        <button onClick={(e) => { e.stopPropagation(); handlePrint(order); }} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaPrint /></button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(order); }} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaTrash /></button>
+                      </div>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                    <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                       <FaPrint className="text-3xl opacity-20" />
+                    </div>
+                    No delivered orders to display
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-
-          <div className="p-4 text-sm text-gray-600">
-            Showing {Math.min(currentOrders.length, ordersPerPage)} of {filteredOrders.length} orders
-          </div>
         </div>
-      )}
+      </div>
 
-      {/* Order Details Modal */}
+      {/* Re-using shared modal from OrderDetailsModal.jsx if possible, 
+          but as it stands we'll keep the specialized one or link to the common one */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setSelectedOrder(null)}>
-          <div className="bg-white rounded-lg max-w-3xl w-full shadow-lg overflow-auto" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "90vh" }}>
-            <div className="flex justify-between items-center p-4 border-b">
-              <div>
-                <h3 className="text-lg font-semibold">Order Details</h3>
-                <p className="text-sm text-gray-600">{selectedOrder.orderId}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => handlePrint(selectedOrder)} className="px-3 py-2 bg-green-600 text-white cursor-pointer rounded">Print</button>
-                <button onClick={() => setSelectedOrder(null)} className="px-3 py-2 bg-gray-200 cursor-pointer rounded">Close</button>
-              </div>
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedOrder(null)}>
+            <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden p-10 animate-in zoom-in duration-500" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Receipt Details</h3>
+                    <p className="text-xs font-black text-emerald-600 uppercase tracking-widest mt-1">Confirmed Delivery Log</p>
+                  </div>
+                  <button onClick={() => setSelectedOrder(null)} className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-2xl text-slate-400 text-xl hover:text-slate-900 transition-colors">✕</button>
+               </div>
+               
+               <div className="space-y-6 mb-10 text-left">
+                  <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Recipient Information</p>
+                     <p className="text-lg font-black text-slate-800">{selectedOrder.clientName || selectedOrder.fullname || "Guest Transaction"}</p>
+                     <p className="text-xs font-black text-slate-400 mt-1">{(selectedOrder.shippingAddress?.street + ', ' + selectedOrder.shippingAddress?.city) || "Store Pickup"}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 text-left">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Order Amount</p>
+                        <p className="text-xl font-black text-emerald-600">₹{Number(selectedOrder.totalAmount).toLocaleString('en-IN')}</p>
+                     </div>
+                     <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 text-left">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Processing Date</p>
+                        <p className="text-xl font-black text-slate-800">{formatDate(selectedOrder.date)}</p>
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="flex gap-4">
+                  <button onClick={() => handlePrint(selectedOrder)} className="flex-1 py-5 bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all">Print Duplicate Receipt</button>
+                  <button onClick={() => setSelectedOrder(null)} className="px-8 py-5 bg-slate-50 text-slate-600 rounded-[1.5rem] font-black uppercase tracking-widest border border-slate-100 hover:bg-slate-100 transition-all">Return to List</button>
+               </div>
             </div>
-
-            <div className="p-4">
-              <div className="mb-4">
-                <strong>Client:</strong>{" "}
-                {(selectedOrder.shippingAddress && (selectedOrder.shippingAddress.fullname || selectedOrder.shippingAddress.contact))
-                  || (selectedOrder.client && (selectedOrder.client.name || selectedOrder.client.phone)) || "—"}
-                <div className="text-sm text-gray-600">
-                  {(selectedOrder.shippingAddress && `${selectedOrder.shippingAddress.street || ""} ${selectedOrder.shippingAddress.city || ""} ${selectedOrder.shippingAddress.state || ""}`) || selectedOrder.client?.address || ""}
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-green-500 text-white">
-                    <tr>
-                      <th className="px-3 py-2">Name</th>
-                      <th className="px-3 py-2">Qty</th>
-                      <th className="px-3 py-2">Weight</th>
-                      <th className="px-3 py-2">Price</th>
-                      <th className="px-3 py-2">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedOrder.cartItems || selectedOrder.items || []).map((it, idx) => {
-                      const qty = Number(it.qty ?? it.quantity ?? 1);
-                      const unitPrice = Number(it.price ?? it.unitPrice ?? (it.total && qty ? it.total / qty : 0)) || 0;
-                      const weight = it.weight || it.selectedWeight || "-";
-                      const lineTotal = (unitPrice * qty).toFixed(2);
-                      return (
-                        <tr key={idx} className="text-center border-b">
-                          <td className="px-3 py-2">{it.name || it.productName || "-"}</td>
-                          <td className="px-3 py-2">{qty}</td>
-                          <td className="px-3 py-2">{weight}</td>
-                          <td className="px-3 py-2">₹{unitPrice.toFixed(2)}</td>
-                          <td className="px-3 py-2">₹{lineTotal}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="mt-4 flex justify-end gap-6">
-                <div className="text-right">
-                  <p>GST: ₹{Number(selectedOrder.gstAmount ?? 0).toFixed(2)}</p>
-                  <p>Shipping: ₹{Number(selectedOrder.shippingCharge ?? 0).toFixed(2)}</p>
-                  <p className="font-semibold">Total: ₹{Number(selectedOrder.totalAmount ?? selectedOrder.total ?? 0).toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+         </div>
       )}
-
     </div>
   );
 };
