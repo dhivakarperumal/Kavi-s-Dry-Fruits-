@@ -100,7 +100,7 @@ const Allproduct = () => {
 
   return (
     <div className="p-4 md:p-6 mt-15 min-h-screen bg-white">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 pb-6">
         <div>
           <h1 className="text-xl font-black text-gray-900 uppercase tracking-tight">Master Inventory</h1>
           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
@@ -162,7 +162,7 @@ const Allproduct = () => {
                 const offerPercent = isCombo ? details?.offerPercent : variants[0]?.offerPercent;
 
                 return (
-                  <div key={item.id} className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                  <div key={`${item.type}-${item.id}`} className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
                     {/* Image Box */}
                     <div className="relative h-56 w-full flex items-center justify-center border-2 border-dashed border-emerald-500 rounded-xl overflow-hidden bg-white mb-5 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
                       {images[0]
@@ -218,35 +218,63 @@ const Allproduct = () => {
               })}
             </div>
           ) : (
-            <div className="border rounded-2xl overflow-hidden">
-              <table className="w-full text-[11px]">
-                <thead className="bg-gray-50 text-gray-400 uppercase font-bold border-b">
+            <div className="bg-white border border-gray-100 rounded-[24px] shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-emerald-50/40 text-emerald-800 uppercase font-black text-[10px] tracking-widest border-b border-emerald-100">
                   <tr>
-                    <th className="px-4 py-3 text-left">SKU</th>
-                    <th className="px-4 py-3 text-left">Product</th>
-                    <th className="px-4 py-3 text-left">Category</th>
-                    <th className="px-4 py-3 text-center">Price</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-6 py-5">SKU</th>
+                    <th className="px-6 py-5">Product Identity</th>
+                    <th className="px-6 py-5">Category</th>
+                    <th className="px-6 py-5">Pricing Summary</th>
+                    <th className="px-6 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y text-gray-600">
+                <tbody className="divide-y divide-gray-100/60 text-gray-600">
                   {currentItems.map(item => {
                     const isCombo = item.type === 'combo';
                     const variants = isCombo ? [] : safeParse(item.variants);
                     const details = isCombo ? (typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}') : item.comboDetails) : null;
                     const price = isCombo ? details?.offerPrice : variants[0]?.offerPrice;
+                    const mrp = isCombo ? details?.mrp : variants[0]?.mrp;
+                    const images = safeParse(item.images);
+                    
                     return (
-                      <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-gray-400 font-bold">{item.productId}</td>
-                        <td className="px-4 py-3 font-bold text-gray-800">{item.name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase ${isCombo ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>{item.category}</span>
+                      <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/20 transition-colors group">
+                        <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-gray-400 font-mono">{item.productId}</td>
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 flex-shrink-0 border border-dashed border-emerald-400 rounded-lg p-1 bg-white flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 transition-transform" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
+                                 {images[0] ? <img src={images[0]} alt="" className="w-full h-full object-contain" /> : <FaBoxOpen className="text-gray-300" />}
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                 <p className="text-[13px] font-black text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1">{item.name}</p>
+                                 <span className={`self-start px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white shadow-sm ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                                    {isCombo ? 'Combo' : 'Single'}
+                                 </span>
+                              </div>
+                           </div>
                         </td>
-                        <td className="px-4 py-3 text-center font-bold text-gray-900">₹{price}</td>
-                        <td className="px-4 py-3 text-right space-x-1">
-                          <button onClick={() => setViewProduct({ ...item, images: safeParse(item.images) })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEye size={12}/></button>
-                          <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEdit size={12}/></button>
-                          <button onClick={() => handleDelete(item)} className="p-1.5 text-gray-300 hover:text-red-500"><FaTrash size={12}/></button>
+                        <td className="px-6 py-4">
+                          <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full">{item.category}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                           <div className="flex flex-col gap-0.5">
+                              {mrp ? <span className="text-[10px] font-bold text-gray-400 line-through">MRP: ₹{mrp}</span> : null}
+                              <span className="text-[13px] font-black text-gray-900">₹{price || '—'}</span>
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex justify-end gap-2">
+                             <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-emerald-600 hover:border-emerald-600 hover:bg-emerald-50 transition-all shadow-sm bg-white">
+                               <FaEye size={13} />
+                             </button>
+                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all shadow-sm bg-white">
+                               <FaEdit size={13} />
+                             </button>
+                             <button onClick={() => handleDelete(item)} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all shadow-sm bg-white">
+                               <FaTrash size={13} />
+                             </button>
+                          </div>
                         </td>
                       </tr>
                     );
