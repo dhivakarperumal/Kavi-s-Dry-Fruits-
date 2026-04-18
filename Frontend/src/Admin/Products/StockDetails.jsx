@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
-import { db } from "../../firebase";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  Timestamp,
-  onSnapshot,
-} from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 

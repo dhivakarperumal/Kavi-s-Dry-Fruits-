@@ -237,6 +237,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
       toast.success("Ready!", { id: "up-p" });
     } catch { toast.error("Fail", { id: "up-p" }); }
+    finally { e.target.value = ""; }
   };
 
   const handleSubmit = async (e) => {
@@ -398,7 +399,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
           </div>
         </div>
         <div className="pt-10 flex justify-end border-t border-gray-100">
-          <button disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-20 py-5 rounded-3xl text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? "Saving Master Registry..." : "Save Product Details"}</button>
+          <button type="submit" disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-20 py-5 rounded-3xl text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? (editItem ? "Updating Master Registry..." : "Saving Master Registry...") : (editItem ? "Update Product Details" : "Save Product Details")}</button>
         </div>
       </form>
     </div>
@@ -497,6 +498,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
       toast.success("Ready!", { id: "up-c" });
     } catch { toast.error("Fail", { id: "up-c" }); }
+    finally { e.target.value = ""; }
   };
 
   const handleSubmit = async (e) => {
@@ -654,6 +656,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                               };
                               reader.readAsDataURL(compressed);
                             } catch (err) { toast.error("Upload failed"); }
+                            finally { e.target.value = ""; }
                           }}
                         />
                         <FaEdit className="text-white text-xs" />
@@ -714,7 +717,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
           </div>
         </div>
         <div className="pt-10 flex justify-end">
-          <button disabled={loading} className="bg-gradient-to-tr from-amber-600 to-orange-400 px-24 py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? "Executing Entry..." : "Finalize Premium Combo"}</button>
+          <button type="submit" disabled={loading} className="bg-gradient-to-tr from-amber-600 to-orange-400 px-24 py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? (editItem ? "Updating Entry..." : "Executing Entry...") : (editItem ? "Update Premium Combo" : "Finalize Premium Combo")}</button>
         </div>
       </form>
     </div>

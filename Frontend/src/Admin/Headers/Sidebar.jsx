@@ -41,7 +41,7 @@ const Sidebar = ({
         { label: "All Products", icon: <MdOutlineInventory2 /> },
         { label: "Add Category", icon: <MdCategory /> },
         { label: "Stock Details", collection: "products", icon: <AiOutlineStock /> },
-        { label: "Migrate Pricing", icon: <MdOutlineAddBox /> },
+        
       ],
     },
 
@@ -176,8 +176,8 @@ const Sidebar = ({
               {/* Dropdown */}
               {item.dropdown && (
                 <div
-                  className={`flex flex-col ml-6 mt-1 overflow-hidden transition-all cursor-pointer duration-300 ${
-                    openDropdown === item.label ? "max-h-60" : "max-h-0"
+                  className={`flex flex-col ml-6 mt-1 overflow-hidden transition-all cursor-pointer duration-500 ${
+                    openDropdown === item.label ? "max-h-[500px]" : "max-h-0"
                   }`}
                 >
                   {item.dropdown.map((subItem) => (
@@ -187,7 +187,7 @@ const Sidebar = ({
                         setActiveSection(subItem.label);
                         if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
-                      className={`flex items-center gap-3 text-left px-4 py-2.5 font-bold rounded-lg text-sm transition-all cursor-pointer capitalize ${
+                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold rounded-lg text-sm transition-all cursor-pointer capitalize ${
                         activeSection === subItem.label
                           ? "bg-emerald-600 text-white shadow-sm mb-1"
                           : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-700 mb-1"
