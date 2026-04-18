@@ -147,6 +147,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     rating: 5,
   });
   const [loading, setLoading] = useState(false);
+  const [manualWeight, setManualWeight] = useState(false);
   const barcodeRef = useRef();
 
   const safeParse = (data) => {
@@ -179,6 +180,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   }, [editItem, products]);
 
   useEffect(() => {
+    if (manualWeight) return; // user is manually controlling weight
     const totalW = form.variants.reduce((sum, v) => {
       const wStr = String(v.weight || "").toLowerCase();
       const val = parseFloat(wStr) || 0;
@@ -189,7 +191,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     if (String(totalW) !== form.totalStock || totalW !== form.totalWeight) {
       setForm(prev => ({ ...prev, totalStock: String(totalW), totalWeight: totalW }));
     }
-  }, [form.variants]);
+  }, [form.variants, manualWeight]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -260,7 +262,36 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Weight (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) : form.totalWeight}</span><span className="text-[10px] text-emerald-400">{form.totalWeight >= 1000 ? "KG" : "G"}</span></div></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Total Weight (Auto)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) : form.totalWeight}</span><span className="text-[10px] text-emerald-400">{form.totalWeight >= 1000 ? "KG" : "G"}</span></div></div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
+                      Total Weight
+                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
+                        {manualWeight ? 'Manual' : 'Auto'}
+                      </span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        value={form.totalWeight}
+                        onChange={(e) => { setManualWeight(true); setForm({ ...form, totalWeight: Number(e.target.value) }); }}
+                        className={`w-full rounded-2xl px-6 py-4 font-black border-2 shadow-sm outline-none transition-all ${
+                          manualWeight
+                            ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500'
+                            : 'bg-emerald-50 border-emerald-100 text-emerald-700 focus:border-emerald-400'
+                        }`}
+                        placeholder="Enter grams"
+                      />
+                      {manualWeight && (
+                        <button
+                          type="button"
+                          title="Reset to Auto"
+                          onClick={() => { setManualWeight(false); }}
+                          className="flex-shrink-0 w-11 h-11 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md transition-all"
+                        >↺</button>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">{manualWeight ? 'Type to override · click ↺ to sync from variants' : 'Auto-summed from variant weights'}</p>
+                  </div>
                 </div>
                 <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
@@ -287,13 +318,16 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
               <div className="space-y-6">
                 {form.variants.map((v, i) => (
-                  <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100 relative group truncate">
+                  <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-100 items-end">
                     <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Weight</label><input placeholder="250g" value={v.weight} onChange={(e) => { const u = [...form.variants]; u[i].weight = e.target.value; setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold shadow-sm" /></div>
                     <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">MRP (₹)</label><input type="number" placeholder="500" value={v.mrp} onChange={(e) => { const u = [...form.variants]; u[i].mrp = e.target.value; u[i].offerPrice = Math.round(Number(e.target.value) - (Number(e.target.value) * Number(u[i].offerPercent)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-emerald-700 shadow-sm" /></div>
                     <div><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Discount %</label><input type="number" placeholder="10" value={v.offerPercent} onChange={(e) => { const u = [...form.variants]; u[i].offerPercent = e.target.value; u[i].offerPrice = Math.round(Number(u[i].mrp) - (Number(u[i].mrp) * Number(e.target.value)) / 100); setForm({ ...form, variants: u }); }} className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold text-orange-600 shadow-sm" /></div>
-
-                    <div><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1.5 ml-1">Final Price</label><div className="bg-emerald-100 px-4 py-3 rounded-xl font-black text-emerald-800 text-[11px] shadow-inner text-center">₹{v.offerPrice || 0}</div></div>
-                    {form.variants.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }))} className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"><FaTrash size={10} /></button>)}
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1"><label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1.5 ml-1">Final Price</label><div className="bg-emerald-100 px-4 py-3 rounded-xl font-black text-emerald-800 text-[11px] shadow-inner text-center">₹{v.offerPrice || 0}</div></div>
+                      {form.variants.length > 1 && (
+                        <button type="button" onClick={() => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }))} className="w-9 h-9 flex-shrink-0 bg-red-50 hover:bg-red-500 text-red-400 hover:text-white rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm mb-0.5"><FaTrash size={11} /></button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
