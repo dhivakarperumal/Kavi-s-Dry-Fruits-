@@ -14,11 +14,14 @@ const Allproduct = () => {
 
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [selectedWeight, setSelectedWeight] = useState("All");
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [selectedTag, setSelectedTag] = useState("All");
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [search, setSearch] = useState("");
 
   const [categories, setCategories] = useState([]);
   const [weights, setWeights] = useState([]);
+  const [tags, setTags] = useState([]);
   const [maxPrice, setMaxPrice] = useState(5000);
 
   const [showFilters, setShowFilters] = useState(false);
@@ -54,6 +57,7 @@ const Allproduct = () => {
         return ['Combo Pack'];
       });
       setWeights([...new Set(allWeights.filter(Boolean))]);
+      setTags([...new Set(unified.flatMap(item => item.tags || []).filter(Boolean))]);
       const allPrices = unified.flatMap(item => {
         if (item.type === 'single') return safeParse(item.variants).map(v => Number(v.offerPrice) || 0);
         const details = typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}') : item.comboDetails;
@@ -73,9 +77,17 @@ const Allproduct = () => {
     if (search.trim()) {
       filtered = filtered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.productId.toLowerCase().includes(search.toLowerCase()));
     }
-    if (categoryFilter.length) filtered = filtered.filter(p => categoryFilter.includes(p.category));
+    if (categoryFilter.length > 0) {
+      filtered = filtered.filter(p => categoryFilter.includes(p.category));
+    }
     if (selectedWeight !== "All") {
       filtered = filtered.filter(p => p.type === 'single' ? safeParse(p.variants).some(v => v.weight === selectedWeight) : selectedWeight === "Combo Pack");
+    }
+    if (selectedRating > 0) {
+      filtered = filtered.filter(p => (Number(p.rating) || 0) >= selectedRating);
+    }
+    if (selectedTag !== "All") {
+      filtered = filtered.filter(p => (p.tags || []).includes(selectedTag));
     }
     filtered = filtered.filter(p => {
       const details = p.type === 'single' ? safeParse(p.variants)[0] : (typeof p.comboDetails === 'string' ? JSON.parse(p.comboDetails || '{}') : p.comboDetails);
@@ -84,7 +96,16 @@ const Allproduct = () => {
     });
     setFilteredItems(filtered);
     setCurrentPage(1);
-  }, [search, categoryFilter, selectedWeight, priceRange, items]);
+  }, [search, categoryFilter, selectedWeight, selectedRating, selectedTag, priceRange, items]);
+
+  const clearFilters = () => {
+    setCategoryFilter([]);
+    setSelectedWeight("All");
+    setSelectedRating(0);
+    setSelectedTag("All");
+    setPriceRange([0, maxPrice]);
+    setSearch("");
+  };
 
   const handleDelete = async (item) => {
     if (!window.confirm(`Delete ${item.name}?`)) return;
@@ -100,49 +121,156 @@ const Allproduct = () => {
 
   return (
     <div className="p-4 md:p-6 mt-15 min-h-screen bg-white">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-6">
-        <div>
-          <h1 className="text-xl font-black text-gray-900 uppercase tracking-tight">Master Inventory</h1>
-          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
-            <span className="w-6 h-1 bg-emerald-500 rounded-full"></span>
-            Real-time Asset Control
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="bg-gray-50 p-1 rounded-lg flex border">
-            <button onClick={() => setViewMode("card")} className={`p-2 rounded-md ${viewMode === "card" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}><FaThLarge size={14}/></button>
-            <button onClick={() => setViewMode("table")} className={`p-2 rounded-md ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}><FaListUl size={14}/></button>
+      <div className="flex flex-col md:flex-row justify-end items-center mb-6 gap-4 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-gray-50 p-1.5 rounded-xl flex items-center h-11">
+            <button onClick={() => setViewMode("card")} className={`px-3 py-2 h-full rounded-lg transition-all ${viewMode === "card" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}><FaThLarge size={15}/></button>
+            <button onClick={() => setViewMode("table")} className={`px-3 py-2 h-full rounded-lg transition-all ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}><FaListUl size={15}/></button>
           </div>
-          <button onClick={() => setShowFilters(!showFilters)} className={`px-4 py-2 rounded-lg text-xs font-bold border ${showFilters ? 'bg-gray-800 text-white' : 'bg-white text-gray-600'}`}>
+          <button onClick={() => setShowFilters(!showFilters)} className={`px-5 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
             <FaFilter className="inline mr-2"/> Filters
+          </button>
+          <button onClick={() => navigate('/adminpanel/products')} className="px-6 py-2.5 h-11 flex items-center rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg transition-all shadow-sm">
+            <FaPlus className="inline mr-2"/> Add Product
           </button>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
         {showFilters && (
-          <div className="w-full lg:w-64">
-            <div className="bg-gray-50 p-5 rounded-2xl border sticky top-28 space-y-5">
+          <div className="w-full lg:w-64 flex-shrink-0">
+            <div className="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 space-y-6 sticky top-28 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+              {/* Search */}
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Search</label>
-                <div className="relative">
-                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                  <input placeholder="SKU/Name" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-white border rounded-lg pl-9 pr-3 py-2 text-xs outline-none focus:border-emerald-500" />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Search by name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Category</p>
-                <div className="flex flex-wrap gap-1">
-                  {categories.map(cat => (
-                    <button key={cat} onClick={() => categoryFilter.includes(cat) ? setCategoryFilter(categoryFilter.filter(c => c !== cat)) : setCategoryFilter([...categoryFilter, cat])} className={`px-2 py-1 rounded text-[9px] font-bold transition-all ${categoryFilter.includes(cat) ? 'bg-emerald-600 text-white' : 'bg-white border text-gray-500'}`}>{cat}</button>
+
+              {/* Categories */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">Categories:</p>
+                {categories.map((cat) => (
+                  <label key={cat} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      value={cat}
+                      checked={categoryFilter.includes(cat)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        if (checked) setCategoryFilter([...categoryFilter, cat]);
+                        else setCategoryFilter(categoryFilter.filter((c) => c !== cat));
+                      }}
+                      className="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                    />
+                    {cat}
+                  </label>
+                ))}
+              </div>
+
+              {/* Weights */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">Weight:</p>
+                <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="weight"
+                    value="All"
+                    checked={selectedWeight === "All"}
+                    onChange={() => setSelectedWeight("All")}
+                    className="accent-emerald-600 cursor-pointer"
+                  />
+                  All
+                </label>
+                {weights.map((w) => (
+                  <label key={w} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weight"
+                      value={w}
+                      checked={selectedWeight === w}
+                      onChange={() => setSelectedWeight(w)}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    {w}
+                  </label>
+                ))}
+              </div>
+
+              {/* Ratings */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">Ratings:</p>
+                {[4, 3, 0].map((r) => (
+                  <label key={r} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="rating"
+                      value={r}
+                      checked={selectedRating === r}
+                      onChange={() => setSelectedRating(r)}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    {r === 0 ? "All Ratings" : `${r}★ & up`}
+                  </label>
+                ))}
+              </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold text-gray-800">Tags:</p>
+                  <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tag"
+                      value="All"
+                      checked={selectedTag === "All"}
+                      onChange={() => setSelectedTag("All")}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    All
+                  </label>
+                  {tags.map((t) => (
+                    <label key={t} className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="tag"
+                        value={t}
+                        checked={selectedTag === t}
+                        onChange={() => setSelectedTag(t)}
+                        className="accent-emerald-600 cursor-pointer"
+                      />
+                      {t}
+                    </label>
                   ))}
                 </div>
+              )}
+
+              {/* Price */}
+              <div className="space-y-2 text-sm">
+                <p className="font-semibold text-gray-800">
+                  Price: ₹{priceRange[0]} - ₹{priceRange[1]}
+                </p>
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPrice}
+                  value={priceRange[1]}
+                  onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+                  className="w-full accent-emerald-500 cursor-pointer"
+                />
               </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block">Price: ₹{priceRange[1]}</label>
-                <input type="range" min={0} max={maxPrice} value={priceRange[1]} onChange={(e) => setPriceRange([0, Number(e.target.value)])} className="w-full accent-emerald-500" />
-              </div>
-              <button onClick={() => { setCategoryFilter([]); setSearch(""); }} className="w-full py-2 text-[10px] font-bold text-gray-400 underline uppercase">Clear All</button>
+
+              <button
+                onClick={clearFilters}
+                className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl w-full transition-colors shadow-sm"
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
         )}
@@ -151,7 +279,7 @@ const Allproduct = () => {
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-48 bg-gray-50 rounded-2xl animate-pulse border" />)}</div>
           ) : viewMode === "card" ? (            
-           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+           <div className={`grid grid-cols-2 gap-5 ${showFilters ? 'lg:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-3 xl:grid-cols-4'}`}>
               {currentItems.map(item => {
                 const images = safeParse(item.images);
                 const isCombo = item.type === 'combo';
@@ -162,76 +290,119 @@ const Allproduct = () => {
                 const offerPercent = isCombo ? details?.offerPercent : variants[0]?.offerPercent;
 
                 return (
-                  <div key={item.id} className="group bg-white rounded-3xl border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-                    {/* Image Area */}
-                    <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
+                  <div key={`${item.type}-${item.id}`} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                    {/* Image Box */}
+                    <div className="relative h-44 w-full flex items-center justify-center border-2 border-dashed border-emerald-500 rounded-xl overflow-hidden bg-white mb-3 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
                       {images[0]
-                        ? <img src={images[0]} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
+                        ? <img src={images[0]} className="h-full w-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" alt={item.name} />
                         : <FaBoxOpen className="text-gray-200" size={40}/>
                       }
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       {/* Type badge */}
-                      <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[8px] font-black uppercase text-white shadow-lg backdrop-blur-sm ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                        {isCombo ? '🎁 Combo' : '📦 Single'}
+                      <span className={`absolute top-2 left-2 px-2 py-1 rounded font-black text-[9px] uppercase text-white shadow ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                        {isCombo ? 'Combo' : 'Single'}
                       </span>
                       {/* Offer badge */}
-                      {offerPercent && <span className="absolute top-3 right-3 px-2 py-1 rounded-full text-[8px] font-black bg-red-500 text-white shadow-lg">{offerPercent}% OFF</span>}
-                      {/* Action buttons on hover */}
-                      <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                        <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-emerald-600 transition-all"><FaEye size={11}/></button>
-                        <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-blue-600 transition-all"><FaEdit size={11}/></button>
-                        <button onClick={() => handleDelete(item)} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-red-600 transition-all"><FaTrash size={11}/></button>
-                      </div>
+                      {offerPercent && <span className="absolute top-2 right-2 px-2 py-1 rounded text-[9px] font-black bg-red-500 text-white shadow">{offerPercent}% OFF</span>}
                     </div>
-                    {/* Info Area */}
-                    <div className="p-4 flex-1 flex flex-col gap-2">
-                      <div>
-                        <h3 className="text-xs font-black text-gray-900 line-clamp-1 mb-0.5">{item.name}</h3>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-gray-400 font-bold font-mono">{item.productId}</span>
-                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${isCombo ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>{item.category}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-baseline gap-2 mt-auto pt-2 border-t border-gray-50">
-                        <span className="text-base font-black text-gray-900">₹{price || '—'}</span>
-                        {mrp && <span className="text-[10px] text-gray-300 line-through">₹{mrp}</span>}
-                      </div>
+
+                    {/* Title */}
+                    <h3 className="text-[14px] font-black text-gray-900 text-center mb-1.5 line-clamp-1">{item.name}</h3>
+                    
+                    {/* Description */}
+                    <p className="text-[12px] text-gray-500 text-center mb-3 line-clamp-2 leading-[1.4] h-[34px]">
+                      {item.description || `SKU: ${item.productId} • ${item.category}`}
+                    </p>
+
+                    {/* Pricing */}
+                    <div className="text-center mb-3">
+                      {mrp ? (
+                         <span className="text-[12px] font-bold text-gray-400 line-through mr-1">MRP: ₹{mrp}</span>
+                      ) : null}
+                      <span className="text-[14px] font-black text-gray-900">₹{price || '—'}</span>
+                    </div>
+
+                    {/* Dotted separator */}
+                    <div className="w-[80%] mx-auto border-b-2 border-dotted border-gray-200 mb-3" />
+
+                    {/* Rating */}
+                    <div className="flex justify-center items-center gap-1.5 text-[12px] font-bold text-gray-800 mb-4">
+                      <FaStar className="text-yellow-400" /> {item.rating || '5'}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-center items-center gap-3 mt-auto">
+                      <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-emerald-600 hover:border-emerald-600 transition-colors">
+                        <FaEye size={13} />
+                      </button>
+                      <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-blue-600 hover:border-blue-600 transition-colors">
+                        <FaEdit size={13} />
+                      </button>
+                      <button onClick={() => handleDelete(item)} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-red-500 hover:border-red-500 transition-colors">
+                        <FaTrash size={13} />
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="border rounded-2xl overflow-hidden">
-              <table className="w-full text-[11px]">
-                <thead className="bg-gray-50 text-gray-400 uppercase font-bold border-b">
+            <div className="bg-white border border-gray-100 rounded-[24px] shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-emerald-50/40 text-emerald-800 uppercase font-black text-[10px] tracking-widest border-b border-emerald-100">
                   <tr>
-                    <th className="px-4 py-3 text-left">SKU</th>
-                    <th className="px-4 py-3 text-left">Product</th>
-                    <th className="px-4 py-3 text-left">Category</th>
-                    <th className="px-4 py-3 text-center">Price</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-6 py-5">SKU</th>
+                    <th className="px-6 py-5">Product Identity</th>
+                    <th className="px-6 py-5">Category</th>
+                    <th className="px-6 py-5">Pricing Summary</th>
+                    <th className="px-6 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y text-gray-600">
+                <tbody className="divide-y divide-gray-100/60 text-gray-600">
                   {currentItems.map(item => {
                     const isCombo = item.type === 'combo';
                     const variants = isCombo ? [] : safeParse(item.variants);
                     const details = isCombo ? (typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}') : item.comboDetails) : null;
                     const price = isCombo ? details?.offerPrice : variants[0]?.offerPrice;
+                    const mrp = isCombo ? details?.mrp : variants[0]?.mrp;
+                    const images = safeParse(item.images);
+                    
                     return (
-                      <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-gray-400 font-bold">{item.productId}</td>
-                        <td className="px-4 py-3 font-bold text-gray-800">{item.name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase ${isCombo ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>{item.category}</span>
+                      <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/20 transition-colors group">
+                        <td className="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-gray-400 font-mono">{item.productId}</td>
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 flex-shrink-0 border border-dashed border-emerald-400 rounded-lg p-1 bg-white flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 transition-transform" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
+                                 {images[0] ? <img src={images[0]} alt="" className="w-full h-full object-contain" /> : <FaBoxOpen className="text-gray-300" />}
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                 <p className="text-[13px] font-black text-gray-900 group-hover:text-emerald-700 transition-colors line-clamp-1">{item.name}</p>
+                                 <span className={`self-start px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white shadow-sm ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                                    {isCombo ? 'Combo' : 'Single'}
+                                 </span>
+                              </div>
+                           </div>
                         </td>
-                        <td className="px-4 py-3 text-center font-bold text-gray-900">₹{price}</td>
-                        <td className="px-4 py-3 text-right space-x-1">
-                          <button onClick={() => setViewProduct({ ...item, images: safeParse(item.images) })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEye size={12}/></button>
-                          <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEdit size={12}/></button>
-                          <button onClick={() => handleDelete(item)} className="p-1.5 text-gray-300 hover:text-red-500"><FaTrash size={12}/></button>
+                        <td className="px-6 py-4">
+                          <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full">{item.category}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                           <div className="flex flex-col gap-0.5">
+                              {mrp ? <span className="text-[10px] font-bold text-gray-400 line-through">MRP: ₹{mrp}</span> : null}
+                              <span className="text-[13px] font-black text-gray-900">₹{price || '—'}</span>
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex justify-end gap-2">
+                             <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-emerald-600 hover:border-emerald-600 hover:bg-emerald-50 transition-all shadow-sm bg-white">
+                               <FaEye size={13} />
+                             </button>
+                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all shadow-sm bg-white">
+                               <FaEdit size={13} />
+                             </button>
+                             <button onClick={() => handleDelete(item)} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all shadow-sm bg-white">
+                               <FaTrash size={13} />
+                             </button>
+                          </div>
                         </td>
                       </tr>
                     );

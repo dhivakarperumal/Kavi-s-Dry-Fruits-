@@ -16,7 +16,7 @@ import {
   MdPreview, 
   MdPrint 
 } from "react-icons/md";
-import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
+import { IoIosArrowDown, IoIosArrowUp, IoIosArrowBack } from "react-icons/io";
 
 const Sidebar = ({
   isOpen,
@@ -25,6 +25,8 @@ const Sidebar = ({
   collectionCounts = {},
   lowStockCount = 0,
   setIsOpen,
+  isCollapsed,
+  setIsCollapsed,
 }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -39,7 +41,7 @@ const Sidebar = ({
         { label: "All Products", icon: <MdOutlineInventory2 /> },
         { label: "Add Category", icon: <MdCategory /> },
         { label: "Stock Details", collection: "products", icon: <AiOutlineStock /> },
-        { label: "Migrate Pricing", icon: <MdOutlineAddBox /> },
+        
       ],
     },
 
@@ -70,6 +72,14 @@ const Sidebar = ({
     { label: "SEO Keywords", icon: <FaSearch /> },
     { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
+    {
+      label: "Health Benefits",
+      icon: <MdPreview />,
+      dropdown: [
+        { label: "Add Health Benefit", icon: <MdOutlineAddBox /> },
+        { label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
+      ],
+    },
   ];
 
   const handleClick = (item) => {
@@ -93,13 +103,32 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] w-72 transform shadow lg:shadow-md bg-white text-black transition-transform duration-300 md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-[60] transform shadow lg:shadow-md bg-white text-black transition-all duration-300 md:translate-x-0 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      } ${isCollapsed ? "w-20" : "w-72"}`}
     >
+      {/* ========== COLLAPSE BUTTON ========== */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="
+          hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2
+          w-9 h-9 rounded-full
+          bg-emerald-600
+          shadow-xl shadow-emerald-500/40
+          items-center justify-center
+          text-white hover:scale-110 transition-all z-50
+        "
+      >
+        <IoIosArrowBack
+          className={`w-4 h-4 transition-transform duration-300 ${
+            isCollapsed ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
       {/* Logo and Mobile Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white">
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity overflow-hidden">
           <img
             src="/images/Kavi_logo.png"
             alt="Kavi's Dry Fruits Logo"
@@ -108,7 +137,7 @@ const Sidebar = ({
               e.target.style.display = 'none';
             }}
           />
-          <span className="text-lg md:text-xl font-bold text-gray-800 truncate">Kavi's Dry Fruits</span>
+          {!isCollapsed && <span className="text-lg md:text-xl font-bold text-gray-800 truncate">Kavi's Dry Fruits</span>}
         </Link>
         <button onClick={() => setIsOpen(false)} className="md:hidden text-gray-500 hover:text-black">
           ✕
@@ -116,7 +145,7 @@ const Sidebar = ({
       </div>
 
       {/* Sidebar Menu */}
-      <nav className="flex flex-col px-2 py-5 h-full overflow-y-auto max-h-[calc(100vh-80px)]">
+      <nav className="flex flex-col px-2 py-5 h-full overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {SideBarmenu.map((item) => {
           const count =
             item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
@@ -127,34 +156,37 @@ const Sidebar = ({
             <div key={item.label} className="mb-1">
               <button
                 onClick={() => handleClick(item)}
-                className={`flex justify-between items-center w-full text-left px-4 py-4 rounded font-semibold cursor-pointer transition-all capitalize ${
-                  isActiveParent
-                    ? "bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white"
-                    : "hover:bg-gradient-to-r hover:from-green-400 hover:via-green-500 hover:to-green-600 hover:text-white"
+                className={`flex justify-between items-center w-full text-left px-4 py-3.5 rounded-xl font-bold cursor-pointer transition-all capitalize ${
+                  activeSection === item.label
+                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                    : isActiveParent
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"
                 }`}
               >
-                <span className="flex items-center gap-2 ">
-                  {item.icon} {item.label}
+                <span className="flex items-center gap-3">
+                  <span className="text-[1.25rem] flex-shrink-0">{item.icon}</span> 
+                  {!isCollapsed && <span>{item.label}</span>}
                 </span>
 
-                {item.dropdown ? (
+                {!isCollapsed && (item.dropdown ? (
                   <span className="text-lg">
                     {openDropdown === item.label ? <IoIosArrowUp /> : <IoIosArrowDown />}
                   </span>
                 ) : (
                   showBadge && (
-                    <span className="text-xs px-2 rounded-full bg-white text-green-600 font-semibold">
+                    <span className="text-xs px-2 rounded-full bg-emerald-100 text-emerald-700 font-bold shadow-sm">
                       {count}
                     </span>
                   )
-                )}
+                ))}
               </button>
 
               {/* Dropdown */}
               {item.dropdown && (
                 <div
-                  className={`flex flex-col ml-6 mt-1 overflow-hidden transition-all cursor-pointer duration-300 ${
-                    openDropdown === item.label ? "max-h-60" : "max-h-0"
+                  className={`flex flex-col ml-6 mt-1 overflow-hidden transition-all cursor-pointer duration-500 ${
+                    openDropdown === item.label ? "max-h-[500px]" : "max-h-0"
                   }`}
                 >
                   {item.dropdown.map((subItem) => (
@@ -164,15 +196,16 @@ const Sidebar = ({
                         setActiveSection(subItem.label);
                         if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
-                      className={`flex items-center gap-2 text-left px-4 py-2.5 font-semibold rounded text-sm transition-all cursor-pointer capitalize ${
+                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold rounded-lg text-sm transition-all cursor-pointer capitalize ${
                         activeSection === subItem.label
-                          ? "bg-green-600 text-white"
-                          : "hover:bg-green-500 hover:text-white"
+                          ? "bg-emerald-600 text-white shadow-sm mb-1"
+                          : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-700 mb-1"
                       }`}
                     >
-                      {subItem.icon} {subItem.label}
-                      {subItem.collection && collectionCounts[subItem.label] > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white text-green-600 cursor-pointer font-semibold ml-2">
+                      <span className="text-[1.1rem] flex-shrink-0">{subItem.icon}</span> 
+                      {!isCollapsed && <span className="truncate">{subItem.label}</span>}
+                      {!isCollapsed && subItem.collection && collectionCounts[subItem.label] > 0 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer font-bold ml-2 shadow-sm">
                           {collectionCounts[subItem.label]}
                         </span>
                       )}
@@ -187,9 +220,10 @@ const Sidebar = ({
         {/* Back to Site */}
         <Link
           to="/"
-          className="flex items-center gap-2 px-4 py-2 mt-1 text-sm font-semibold rounded hover:bg-green-600 hover:text-white transition-colors"
+          className="flex items-center gap-3 px-4 py-3 mt-1 text-sm font-bold rounded-xl text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
         >
-          <FaHome /> Back to Site
+          <span className="text-[1.25rem] flex-shrink-0"><FaHome /></span> 
+          {!isCollapsed && <span>Back to Site</span>}
         </Link>
       </nav>
     </aside>

@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
-import { db } from "../../firebase";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  Timestamp,
-  onSnapshot,
-} from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 
@@ -47,16 +38,17 @@ const StockDetail = () => {
   };
 
   useEffect(() => {
-    const unsubInvoice = onSnapshot(collection(db, "invoices"), (snap) => {
-      const invoices = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setInvoiceNumbers(invoices);
-    });
-
-    fetchStocks();
-
-    return () => {
-      unsubInvoice();
+    const fetchInvoices = async () => {
+      try {
+        const res = await api.get("/invoices");
+        setInvoiceNumbers(res.data);
+      } catch (error) {
+        console.error("Error fetching invoices:", error);
+      }
     };
+
+    fetchInvoices();
+    fetchStocks();
   }, []);
 
   // Handle product ID selection
@@ -118,11 +110,11 @@ const StockDetail = () => {
 
       await api.put(endpoint, updatedProduct);
 
-      await addDoc(collection(db, "stockRecords"), {
+      await api.post("/stock-history", {
         ...form,
         addedQuantity,
         finalStock: newStock,
-        timestamp: Timestamp.now(),
+        type: matched.type
       });
 
       toast.success("Stock updated and invoice saved!");

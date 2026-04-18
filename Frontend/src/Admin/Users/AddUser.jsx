@@ -1,18 +1,14 @@
 import React, { useState } from "react";
-import { db } from "../../firebase";
-import { setDoc, doc, updateDoc, collection } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import api from "../../services/api";
 import { toast } from "react-hot-toast";
 
 const AddUsers = () => {
-  const auth = getAuth();
-
   const [editUserId, setEditUserId] = useState(null);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
-    role: "",
+    role: "User",
   });
 
   const handleChange = (e) => {
@@ -28,118 +24,96 @@ const AddUsers = () => {
 
     try {
       if (editUserId) {
-        // Update Firestore only
-        const { password, ...dataWithoutPassword } = formData;
-        await updateDoc(doc(db, "users", editUserId), dataWithoutPassword);
+        await api.put(`/users/${editUserId}`, formData);
         toast.success("User updated successfully");
         setEditUserId(null);
       } else {
-        // Auto-generate password if empty
-        const password = formData.password || formData.username;
-
-        // Create Firebase Auth user
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          formData.email,
-          password
-        );
-
-        const uid = userCredential.user.uid;
-
-        // Save user in Firestore
-        await setDoc(doc(db, "users", uid), {
-          ...formData,
-          uid,
-          password, // stored for reference only
-          createdAt: new Date(),
+        const password = formData.password || "user123";
+        await api.post("/auth/register", {
+          firstName: formData.username,
+          email: formData.email,
+          password: password,
+          role: formData.role || "User"
         });
 
-        toast.success(
-          `User created successfully. Password: "${password}" (for reference only)`
-        );
+        toast.success(`User registered successfully.`);
       }
 
-      // Reset form
       setFormData({
         username: "",
         email: "",
         password: "",
-        role: "",
+        role: "User",
       });
     } catch (err) {
       console.error(err);
-      toast.error("Error saving user: " + err.message);
+      toast.error("Error saving user: " + (err.response?.data?.message || err.message));
     }
   };
 
   return (
     <div className="p-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Username */}
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-black text-gray-800 mb-6">{editUserId ? "Update Identity" : "New User Registration"}</h2>
+        
         <div>
-          <label className="block text-sm font-medium mb-1">Username</label>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Username / Full Name</label>
           <input
             type="text"
             name="username"
-            placeholder="Username"
+            placeholder="e.g. John Doe"
             value={formData.username}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full border-2 border-transparent bg-gray-50 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 font-bold"
           />
         </div>
 
-        {/* Email */}
         <div>
-          <label className="block text-sm font-medium mb-1">Email Address</label>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
           <input
             type="email"
             name="email"
-            placeholder="Email Address"
+            placeholder="e.g. john@domain.com"
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            disabled={!!editUserId} // disable editing email
+            className="w-full border-2 border-transparent bg-gray-50 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 font-bold"
+            disabled={!!editUserId}
           />
         </div>
 
-        {/* Password */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Password (for reference only)
-          </label>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Password</label>
           <input
             type="text"
             name="password"
-            placeholder="Password"
+            placeholder="Enter password or leave for default"
             value={formData.password}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full border-2 border-transparent bg-gray-50 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 font-bold"
           />
         </div>
 
-        {/* Role */}
         <div>
-          <label className="block text-sm font-medium mb-1">Role</label>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Authorization Role</label>
           <select
             name="role"
             value={formData.role}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full border-2 border-transparent bg-gray-50 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 font-bold appearance-none cursor-pointer"
           >
-            <option value="">Select Role</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option value="User">Standard User</option>
+            <option value="Admin">Administrator</option>
           </select>
         </div>
 
         <button
           type="submit"
-          className="bg-green-500 text-white font-bold px-6 py-2 rounded hover:bg-green-900"
+          className="w-full bg-green-600 text-white font-black py-4 rounded-2xl hover:bg-green-700 transition-all shadow-lg shadow-green-100 active:scale-95 text-sm uppercase tracking-widest mt-4"
         >
-          {editUserId ? "Update User" : "Add User"}
+          {editUserId ? "Apply Updates" : "Confirm Registration"}
         </button>
       </form>
     </div>

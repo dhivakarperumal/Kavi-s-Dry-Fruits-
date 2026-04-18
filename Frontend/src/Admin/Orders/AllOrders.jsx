@@ -1,12 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  collection,
-  addDoc,
-  doc,
-  updateDoc,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../services/api";
 import { FaPrint } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import logo from "/images/Kavi_logo.png";
@@ -26,30 +19,17 @@ const AllOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Fetch all orders from all users
+  const fetchOrders = async () => {
+    try {
+      const res = await api.get("/orders");
+      setOrders(res.data);
+    } catch (error) {
+      console.error("fetchOrders error:", error);
+    }
+  };
+
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, "users"), (usersSnap) => {
-      usersSnap.docs.forEach((userDoc) => {
-        const uid = userDoc.id;
-
-        onSnapshot(collection(db, "users", uid, "orders"), (ordersSnap) => {
-          const userOrders = [];
-          ordersSnap.forEach((docSnap) => {
-            userOrders.push({
-              id: docSnap.id,
-              uid,
-              ...docSnap.data(),
-            });
-          });
-
-          setOrders((prev) => {
-            const filtered = prev.filter((o) => o.uid !== uid);
-            return [...filtered, ...userOrders];
-          });
-        });
-      });
-    });
-
-    return () => unsubUsers();
+    fetchOrders();
   }, []);
 
   // Apply filters
@@ -59,10 +39,9 @@ const AllOrders = () => {
     if (searchText.trim()) {
       temp = temp.filter(
         (o) =>
-          o.orderId?.toLowerCase().includes(searchText.toLowerCase()) ||
-          o.shippingAddress?.fullname
-            ?.toLowerCase()
-            .includes(searchText.toLowerCase())
+          (o.orderId || "").toLowerCase().includes(searchText.toLowerCase()) ||
+          (o.clientName || "").toLowerCase().includes(searchText.toLowerCase()) ||
+          (o.clientPhone || "").toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
@@ -93,46 +72,13 @@ const AllOrders = () => {
   const currentOrders = filteredOrders.slice(0, itemsPerPage);
 
   // Status Update Logic
-  const handleStatusUpdate = async (uid, orderId, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus) => {
     try {
-      const orderRef = doc(db, "users", uid, "orders", orderId);
-      const updatedOrder = orders.find(
-        (o) => o.id === orderId && o.uid === uid
-      );
-
-      if (newStatus === "Delivered") {
-        await addDoc(collection(db, "delivery"), {
-          ...updatedOrder,
-          orderStatus: "Delivered",
-          deliveryDate: new Date().toISOString(),
-        });
-
-        await updateDoc(orderRef, { orderStatus: "Delivered" });
-        toast.success("Delivered and moved to delivery DB!");
-      } else if (newStatus === "Cancelled") {
-        if (!cancelReason.trim())
-          return toast.error("Enter cancel reason");
-
-        await addDoc(collection(db, "cancelOrders"), {
-          ...updatedOrder,
-          orderStatus: "Cancelled",
-          cancelReason,
-          cancelledAt: new Date().toISOString(),
-        });
-
-        await updateDoc(orderRef, {
-          orderStatus: "Cancelled",
-          cancelReason,
-        });
-
-        setCancelReason("");
-        setShowCancelInput(null);
-
-        toast.success("Order cancelled!");
-      } else {
-        await updateDoc(orderRef, { orderStatus: newStatus });
-        toast.success("Status updated!");
-      }
+      await api.put(`/orders/${id}`, { orderStatus: newStatus });
+      toast.success("Status updated!");
+      fetchOrders();
+      setCancelReason("");
+      setShowCancelInput(null);
     } catch (err) {
       console.error(err);
       toast.error("Status update failed!");
@@ -358,7 +304,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                     onChange={(e) => {
                       const v = e.target.value;
                       if (v === "Cancelled") setShowCancelInput(order.id);
-                      else handleStatusUpdate(order.uid, order.id, v);
+                      else handleStatusUpdate(order.id, v);
                     }}
                     className="border p-1 rounded"
                   >
@@ -378,7 +324,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                       />
                       <button
                         onClick={() =>
-                          handleStatusUpdate(order.uid, order.id, "Cancelled")
+                          handleStatusUpdate(order.id, "Cancelled")
                         }
                         className="mt-1 bg-red-600 text-white px-3 py-1 text-xs rounded"
                       >
