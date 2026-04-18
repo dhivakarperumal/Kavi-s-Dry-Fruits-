@@ -63,41 +63,46 @@ const CreateBilling = () => {
   }, []);
 
   // ---------------- Barcode Scanner Logic ----------------
+  const barcodeBufferRef = useRef("");
   const lastKeyTimeRef = useRef(0);
+
   useEffect(() => {
-    const handleKeyPress = (e) => {
+    const handleKeyDown = (e) => {
       const currentTime = Date.now();
       const timeDiff = currentTime - lastKeyTimeRef.current;
       lastKeyTimeRef.current = currentTime;
 
       // Most hardware scanners hit 'Enter' at the end
       if (e.key === "Enter") {
-        if (barcodeBuffer.length > 2) {
-          handleBarcodeScan(barcodeBuffer);
-          setBarcodeBuffer("");
+        const finalCode = barcodeBufferRef.current.trim();
+        if (finalCode.length > 2) {
+          handleBarcodeScan(finalCode);
         }
+        barcodeBufferRef.current = "";
         return;
       }
 
-      // If delay between keys is too long, it's likely manual typing (ignore unless focused on search)
-      // Hardware scanners are extremely fast (< 30ms usually)
-      if (timeDiff > 50 && barcodeBuffer.length > 0) {
-        setBarcodeBuffer(""); 
+      // If delay between keys is too long, it's likely manual typing
+      // hardware scanners are usually < 50ms, let's use 100ms for safety
+      if (timeDiff > 100) {
+        barcodeBufferRef.current = ""; 
       }
 
-      // Ignore if typing in a standard input field (unless we want global scanning)
+      // Ignore if typing in a standard input field
       const target = e.target;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
-          // If manually typing in an input, don't accumulate in global buffer
           return;
       }
 
-      setBarcodeBuffer((prev) => prev + e.key);
+      // Avoid capturing control keys
+      if (e.key.length === 1) {
+        barcodeBufferRef.current += e.key;
+      }
     };
 
-    window.addEventListener("keypress", handleKeyPress);
-    return () => window.removeEventListener("keypress", handleKeyPress);
-  }, [barcodeBuffer, productList]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [productList]);
 
   const handleBarcodeScan = (code) => {
     const product = productList.find((p) => String(p.productId) === code || String(p.barcode) === code);
