@@ -31,7 +31,7 @@ const CreateBilling = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
-  const [barcodeBuffer, setBarcodeBuffer] = useState("");
+
   const [manualBarcode, setManualBarcode] = useState("");
 
   const voiceSearchRef = useRef(null);

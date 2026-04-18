@@ -31,7 +31,7 @@ import AllOrders from "./Orders/AllOrders";
 import AddHealthBenefit from "./HealthBenefits/AddHealthBenefit";
 import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
 
-import MigrateProducts from "./MigrateProducts";
+
 import SEOKeywords from "./SEOKeywords";
 
 const AdminPanel = () => {
