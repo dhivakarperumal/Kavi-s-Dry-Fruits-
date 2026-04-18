@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Block admin paths (if you have admin pages)
+Disallow: /admin
+Disallow: /dashboard
+
+# Allow JS, CSS, Images
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# Crawl delay for bots that overload server
+Crawl-delay: 5
+
+# Sitemap location
+Sitemap: https://kavisdryfruits.com/sitemap.xml
+
+# Business Info for SEO (not required but helpful)
+# Contact: +91 94895 93504
+# Location: Tirupattur, Tamil Nadu - 635653
