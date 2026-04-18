@@ -133,23 +133,79 @@ const Sidebar = ({
       </button>
 
       {/* Logo and Mobile Header */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-emerald-700/50"
-        style={{ background: "rgba(0,0,0,0.15)" }}
+      <div
+        className="relative flex items-center justify-between border-b border-white/10"
+        style={{
+          background: "rgba(0,0,0,0.25)",
+          padding: isCollapsed ? "14px 12px" : "14px 16px",
+        }}
       >
-        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity overflow-hidden">
-          <img
-            src="/images/Kavi_logo.png"
-            alt="Kavi's Dry Fruits Logo"
-            className="w-8 h-8 md:w-10 md:h-10 object-contain flex-shrink-0"
-            onError={(e) => {
-              e.target.style.display = 'none';
+        <Link
+          to="/"
+          className={`flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity ${isCollapsed ? "w-full justify-center" : ""}`}
+        >
+          {/* Logo avatar — white bg so the PNG shows clearly */}
+          <div
+            className="flex-shrink-0 flex items-center justify-center rounded-2xl bg-white"
+            style={{
+              width: isCollapsed ? "40px" : "46px",
+              height: isCollapsed ? "40px" : "46px",
+              boxShadow: "0 0 0 2px #34d399, 0 0 16px rgba(52,211,153,0.45)",
+              padding: "4px",
             }}
-          />
-          {!isCollapsed && <span className="text-lg md:text-xl font-bold text-white truncate drop-shadow">Kavi's Dry Fruits</span>}
+          >
+            <img
+              src="/images/Kavi_logo.png"
+              alt="Kavi's Dry Fruits"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              onError={(e) => {
+                e.target.style.display = "none";
+                e.target.parentElement.innerHTML =
+                  `<span style="font-size:1.5rem;font-weight:900;color:#065f46;font-family:Georgia,serif;line-height:1;">K</span>`;
+              }}
+            />
+          </div>
+
+          {/* Brand text */}
+          {!isCollapsed && (
+            <div className="flex flex-col min-w-0">
+              <span
+                style={{
+                  color: "#ffffff",
+                  fontWeight: 800,
+                  fontSize: "14px",
+                  letterSpacing: "0.02em",
+                  lineHeight: 1.3,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                Kavi's Dry Fruits
+              </span>
+              <span
+                className="inline-block mt-[3px] text-[9px] font-bold tracking-[0.18em] uppercase rounded-full px-2 py-[1px] w-fit"
+                style={{
+                  background: "rgba(52,211,153,0.18)",
+                  color: "#6ee7b7",
+                  border: "1px solid rgba(52,211,153,0.3)",
+                }}
+              >
+                Admin Panel
+              </span>
+            </div>
+          )}
         </Link>
-        <button onClick={() => setIsOpen(false)} className="md:hidden text-emerald-200 hover:text-white">
-          ✕
-        </button>
+
+        {/* Mobile close button */}
+        {!isCollapsed && (
+          <button
+            onClick={() => setIsOpen(false)}
+            className="md:hidden ml-2 flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-emerald-300 hover:text-white hover:bg-white/10 transition-all text-base"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Sidebar Menu */}
