@@ -71,6 +71,14 @@ const Sidebar = ({
     { label: "Reviews", icon: <MdPreview /> },
     { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
+    {
+      label: "Health Benefits",
+      icon: <MdPreview />,
+      dropdown: [
+        { label: "Add Health Benefit", icon: <MdOutlineAddBox /> },
+        { label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
+      ],
+    },
   ];
 
   const handleClick = (item) => {

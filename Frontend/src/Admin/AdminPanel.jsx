@@ -28,6 +28,8 @@ import Category from "./Products/Category";
 import Allproduct from "./Products/Allproduct";
 import NewOrders from "./Orders/NewOrders";
 import AllOrders from "./Orders/AllOrders";
+import AddHealthBenefit from "./HealthBenefits/AddHealthBenefit";
+import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
 
 
 const AdminPanel = () => {
@@ -71,6 +73,8 @@ const AdminPanel = () => {
       "invoice": "Invoice",
       "billing": "Billing",
       "billing/create": "Create Billing",
+      "add-health-benefit": "Add Health Benefit",
+      "view-health-benefits": "View Health Benefits",
     };
 
     const mappedSection = routeMap[path];
@@ -90,7 +94,6 @@ const AdminPanel = () => {
       "All Products": "all-products",
       "Add Category": "add-category",
       "Stock Details": "stock-details",
-      "Migrate Pricing": "migrate-pricing",
       "Orders": "orders",
       "New Orders": "new-orders",
       "All Orders": "all-orders",
@@ -103,6 +106,8 @@ const AdminPanel = () => {
       "Invoice": "invoice",
       "Billing": "billing",
       "Create Billing": "billing/create",
+      "Add Health Benefit": "add-health-benefit",
+      "View Health Benefits": "view-health-benefits",
     };
     
     const urlPath = reverseMap[newSection] || "dashboard";
@@ -175,9 +180,12 @@ const AdminPanel = () => {
       case "Stickers":           return <Stickers />;
       case "Dealer":             return <AddDealer />;
       case "Reviews":            return <Reviews />;
+      case "SEO Keywords":       return <SEOKeywords />;
       case "Invoice":            return <Invoice />;
       case "Billing":            return <Billing />;
       case "Create Billing":     return <CreateBilling />;
+      case "Add Health Benefit":  return <AddHealthBenefit />;
+      case "View Health Benefits": return <ViewHealthBenefits />;
 
       default:
         return (
