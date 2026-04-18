@@ -14,7 +14,7 @@ const AddDealer = () => {
 
   const [loading, setLoading] = useState(false);
   const [dealerId, setDealerId] = useState("");
-  const [viewMode, setViewMode] = useState("add");
+  const [viewMode, setViewMode] = useState("view");
   const [dealers, setDealers] = useState([]);
 
   // --- Generate Next Dealer ID ---
@@ -120,16 +120,16 @@ const AddDealer = () => {
 
         <div className="flex bg-gray-200/50 p-1.5 rounded-2xl shadow-inner backdrop-blur-sm border border-white/50">
           <button
-            onClick={() => setViewMode("add")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-500 font-black uppercase tracking-widest text-[11px] ${viewMode === "add" ? "bg-white text-green-700 shadow-xl scale-105 border border-green-100" : "text-gray-500 hover:text-green-600"}`}
-          >
-            <FaPlus className={viewMode === "add" ? "animate-bounce" : ""} size={14} /> Add Dealer
-          </button>
-          <button
             onClick={() => setViewMode("view")}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-500 font-black uppercase tracking-widest text-[11px] ${viewMode === "view" ? "bg-white text-green-700 shadow-xl scale-105 border border-green-100" : "text-gray-500 hover:text-green-600"}`}
           >
             <FaStore className={viewMode === "view" ? "animate-bounce" : ""} size={14} /> View Dealers
+          </button>
+          <button
+            onClick={() => setViewMode("add")}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-500 font-black uppercase tracking-widest text-[11px] ${viewMode === "add" ? "bg-white text-green-700 shadow-xl scale-105 border border-green-100" : "text-gray-500 hover:text-green-600"}`}
+          >
+            <FaPlus className={viewMode === "add" ? "animate-bounce" : ""} size={14} /> Add Dealer
           </button>
         </div>
       </div>
