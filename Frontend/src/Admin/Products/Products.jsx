@@ -174,7 +174,8 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       setForm((prev) => ({
         ...prev,
         productId: `PR${String(maxId + 1).padStart(3, "0")}`,
-        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }], totalStock: "0"
+        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }], totalStock: "0",
+        barcodeValue: "", barcode: ""
       }));
     }
   }, [editItem, products]);
@@ -244,7 +245,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-400 p-10 text-white relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
         <div className="relative z-10 flex items-center justify-between">
-          <div><h2 className="text-3xl font-black uppercase tracking-tight">Product Studio</h2><p className="opacity-90 font-medium mt-1 text-emerald-50 uppercase tracking-[0.2em] text-xs"> Fresh Inventory Entry</p></div>
+          <div><h2 className="text-xl font-black uppercase tracking-tight">Product Studio</h2><p className="opacity-90 font-medium mt-1 text-emerald-50 uppercase tracking-[0.2em] text-xs"> Fresh Inventory Entry</p></div>
           <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/30"><span className="font-black tracking-widest text-sm">{form.productId}</span></div>
         </div>
       </div>
@@ -261,7 +262,6 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Weight (Auto-Summed)</label><div className="w-full bg-emerald-50 rounded-2xl px-6 py-4 font-black text-emerald-700 border-2 border-emerald-100 flex items-center justify-between shadow-sm"><span>{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) : form.totalWeight}</span><span className="text-[10px] text-emerald-400">{form.totalWeight >= 1000 ? "KG" : "G"}</span></div></div>
                   <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
                       Total Weight
@@ -293,13 +293,13 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                     <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">{manualWeight ? 'Type to override · click ↺ to sync from variants' : 'Auto-summed from variant weights'}</p>
                   </div>
                 </div>
-                <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
+                {/* <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
                   <div className="flex items-center gap-4">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 w-[60%] animate-pulse"></div></div>
                     <span className="text-[10px] font-black text-emerald-700">60% COMPLETE</span>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -407,6 +407,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     rating: 5,
   });
   const [loading, setLoading] = useState(false);
+  const [manualWeight, setManualWeight] = useState(false);
   const barcodeRef = useRef();
 
   const safeParse = (data) => {
@@ -440,6 +441,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   }, [editItem, combos]);
 
   useEffect(() => {
+    if (manualWeight) return;
     const totalW = form.comboItems.reduce((sum, item) => {
       const wStr = String(item.weight || "").toLowerCase();
       const val = parseFloat(wStr) || 0;
@@ -450,7 +452,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     if (totalW !== form.totalWeight) {
       setForm(prev => ({ ...prev, totalWeight: totalW }));
     }
-  }, [form.comboItems]);
+  }, [form.comboItems, manualWeight]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -525,9 +527,39 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 </div>
                 <div className="bg-amber-50/30 p-6 rounded-[2rem] border border-amber-100">
                   <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Combo Strategy Registry</h4>
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 mb-4">
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
-                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Weight</p><p className="text-xl font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p></div>
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Auto Weight</p><p className="text-sm font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p></div>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      Total Weight
+                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-amber-100 text-amber-600'}`}>
+                        {manualWeight ? 'Manual' : 'Auto'}
+                      </span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        value={form.totalWeight}
+                        onChange={(e) => { setManualWeight(true); setForm({ ...form, totalWeight: Number(e.target.value) }); }}
+                        className={`w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm ${
+                          manualWeight
+                            ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400'
+                            : 'bg-white border-amber-100 text-amber-700 focus:border-amber-400'
+                        }`}
+                        placeholder="Enter grams"
+                      />
+                      {manualWeight && (
+                        <button
+                          type="button"
+                          title="Reset to Auto"
+                          onClick={() => setManualWeight(false)}
+                          className="flex-shrink-0 w-9 h-9 bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center justify-center shadow-md transition-all text-sm"
+                        >↺</button>
+                      )}
+                    </div>
+                    <p className="text-[8px] text-gray-400 font-medium mt-1">{manualWeight ? 'Overriding · click ↺ to sync from items' : 'Auto-summed from combo items'}</p>
                   </div>
                 </div>
               </div>
