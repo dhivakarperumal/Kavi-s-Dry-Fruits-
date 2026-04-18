@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaTimes } from "react-icons/fa";
+import api from "../../services/api";
 
 const CancelOrders = () => {
   const [cancelledOrders, setCancelledOrders] = useState([]);
@@ -11,6 +10,7 @@ const CancelOrders = () => {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const ordersPerPage = 10;
 
   useEffect(() => {
@@ -18,12 +18,22 @@ const CancelOrders = () => {
   }, []);
 
   const fetchCancelledOrders = async () => {
+    setLoading(true);
     try {
-      const snapshot = await getDocs(collection(db, "cancelOrders"));
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const res = await api.get("/orders");
+      const data = (res.data || [])
+        .filter(o => o.orderStatus === "Cancelled")
+        .map(o => ({
+          ...o,
+          cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+          shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+          date: o.created_at || o.date
+        }));
       setCancelledOrders(data);
     } catch (error) {
       console.error("Error fetching cancelled orders:", error);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -274,6 +274,7 @@ const Checkout = () => {
       id: item.id,
       productId: item.productId || item.id,
       name: item.name,
+      image: item.images?.[0] || item.image || "",
       selectedWeight: item.selectedWeight || "",
       price: parsePrice(item.price || 0),
       qty: parseInt(item.qty || item.quantity || 1, 10),

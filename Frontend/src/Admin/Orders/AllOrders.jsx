@@ -22,9 +22,17 @@ const AllOrders = () => {
   const fetchOrders = async () => {
     try {
       const res = await api.get("/orders");
-      setOrders(res.data);
+      const parsedOrders = (res.data || []).map(o => ({
+        ...o,
+        // Parse JSON strings from MySQL
+        items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        date: o.created_at || o.date
+      }));
+      setOrders(parsedOrders);
     } catch (error) {
       console.error("fetchOrders error:", error);
+      toast.error("Failed to load all orders.");
     }
   };
 
@@ -164,13 +172,13 @@ const AllOrders = () => {
           
            <h2>Kavi's Dry Fruits</h2>
            <div class="info">
-             <p><strong>Order ID:</strong> ${order.orderId || order.id}</p>
-             <p><strong>Client Name:</strong> ${address.fullname || order.client?.name || "-"}</p>
-             <p><strong>Phone:</strong> ${address.contact || order.client?.phone || "-"}</p>
-             <p><strong>Email:</strong> ${address.email || order.client?.email || "-"}</p>
-             <p><strong>Payment Mode:</strong> ${order.paymentMethod || "-"}</p>
-             <p><strong>Address:</strong> ${address.street || ""} ${address.city || ""} ${address.state || ""} ${address.zip || ""}</p>
-           </div>
+              <p><strong>Order ID:</strong> ${order.orderId}</p>
+              <p><strong>Client Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
+              <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+              <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+              <p><strong>Payment Mode:</strong> ${order.paymentMethod || order.paymentMode || "-"}</p>
+              <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+            </div>
            <table style="margin-top:20px;">
              <thead>
                <tr>
@@ -274,6 +282,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
           <thead className="bg-green-500 text-white">
             <tr>
               <th className="px-3 py-3">Order ID</th>
+              <th className="px-3 py-3">Client Name</th>
               <th className="px-3 py-3">Payment</th>
               <th className="px-3 py-3">Total</th>
               <th className="px-3 py-3">Status</th>
@@ -290,6 +299,10 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                   onClick={() => setSelectedOrder(order)}
                 >
                   {order.orderId}
+                </td>
+
+                <td className="px-3 py-4 font-semibold text-green-700">
+                  {order.clientName || order.fullname || order.client?.name || order.shippingAddress?.fullname || order.shippingAddress?.contact || "—"}
                 </td>
 
                 <td className="px-3 py-4">{order.paymentMethod}</td>

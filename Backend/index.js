@@ -110,6 +110,15 @@ app.put('/api/orders/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM orders WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Order deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health Benefits Routes
 app.get('/api/health-benefits', async (req, res) => {
   try {

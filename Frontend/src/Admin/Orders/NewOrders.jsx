@@ -1,17 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  collection,
-  doc,
-  updateDoc,
-  addDoc,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaPrint } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
+import api from "../../services/api";
 
 const NewOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -22,6 +15,7 @@ const NewOrders = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [loading, setLoading] = useState(false);
 
   // modal state
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -29,31 +23,31 @@ const NewOrders = () => {
   const navigate = useNavigate();
 
   // Fetch Orders
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders");
+      const parsed = (res.data || []).filter(o => 
+        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled"
+      ).map(o => ({
+        ...o,
+        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        date: o.created_at || o.date
+      }));
+      setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    } catch (error) {
+      console.error("fetchOrders error:", error);
+      toast.error("Failed to load new orders.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, "users"), (usersSnap) => {
-      usersSnap.docs.forEach((userDoc) => {
-        const uid = userDoc.id;
-
-        onSnapshot(collection(db, "users", uid, "orders"), (ordersSnap) => {
-          const userOrders = [];
-          ordersSnap.forEach((docSnap) => {
-            const data = docSnap.data();
-            if (data.orderStatus !== "Delivered" && data.orderStatus !== "Cancelled") {
-              userOrders.push({ id: docSnap.id, uid, ...data });
-            }
-          });
-
-          setOrders((prev) => {
-            const filtered = prev.filter((o) => o.uid !== uid);
-            return [...filtered, ...userOrders].sort(
-              (a, b) => new Date(b.date) - new Date(a.date)
-            );
-          });
-        });
-      });
-    });
-
-    return () => unsubUsers();
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // Apply Filters
@@ -63,7 +57,7 @@ const NewOrders = () => {
     if (searchText.trim()) {
       temp = temp.filter(
         (o) =>
-          o.orderId.toLowerCase().includes(searchText.toLowerCase()) ||
+          (o.orderId || "").toLowerCase().includes(searchText.toLowerCase()) ||
           (o.shippingAddress?.fullname || "")
             .toLowerCase()
             .includes(searchText.toLowerCase())
@@ -97,43 +91,22 @@ const NewOrders = () => {
   const currentOrders = filteredOrders.slice(0, itemsPerPage);
 
   // Update Status Logic
-  const handleStatusUpdate = async (uid, orderId, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus) => {
     if (!newStatus) return;
 
     try {
-      const orderRef = doc(db, "users", uid, "orders", orderId);
-      const updatedOrder = orders.find((o) => o.id === orderId && o.uid === uid);
-      if (!updatedOrder) return;
-
-      if (newStatus === "Delivered") {
-        await addDoc(collection(db, "delivery"), {
-          ...updatedOrder,
-          orderStatus: "Delivered",
-          deliveryDate: new Date().toISOString(),
-        });
-
-        await updateDoc(orderRef, { orderStatus: "Delivered" });
-        toast.success("Delivered and moved to Delivery DB!");
-      } else if (newStatus === "Cancelled") {
-        if (!cancelReason.trim())
-          return toast.error("Please enter cancel reason");
-
-        await addDoc(collection(db, "cancelOrders"), {
-          ...updatedOrder,
-          orderStatus: "Cancelled",
-          cancelReason,
-          cancelledAt: new Date().toISOString(),
-        });
-
-        await updateDoc(orderRef, { orderStatus: "Cancelled", cancelReason });
-
-        setCancelReason("");
-        setShowCancelInput(null);
-        toast.success("Order Cancelled!");
-      } else {
-        await updateDoc(orderRef, { orderStatus: newStatus });
-        toast.success("Status updated!");
+      const data = { orderStatus: newStatus };
+      if (newStatus === "Cancelled") {
+        if (!cancelReason.trim()) return toast.error("Please enter cancel reason");
+        data.cancelReason = cancelReason;
       }
+
+      await api.put(`/orders/${id}`, data);
+      toast.success(`Order ${newStatus} successfully!`);
+      
+      setCancelReason("");
+      setShowCancelInput(null);
+      fetchOrders();
     } catch (err) {
       console.error("Update failed:", err);
       toast.error("Failed to update status!");
@@ -197,10 +170,12 @@ const NewOrders = () => {
             <div class="top-header">${deliveryDate}</div>
             <h2>Kavi's Dry Fruits</h2>
             <div class="info">
-              <p><strong>Order ID:</strong> ${order.orderId || order.id}</p>
-              <p><strong>Client Name:</strong> ${address.fullname || order.client?.name || "-"}</p>
-              <p><strong>Phone:</strong> ${address.contact || order.client?.phone || "-"}</p>
-              <p><strong>Address:</strong> ${address.street || ""} ${address.city || ""} ${address.state || ""} ${address.zip || ""}</p>
+              <p><strong>Order ID:</strong> ${order.orderId}</p>
+              <p><strong>Client Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
+              <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+              <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+              <p><strong>Payment Mode:</strong> ${order.paymentMethod || order.paymentMode || "-"}</p>
+              <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
             </div>
             <table>
               <thead>
@@ -352,7 +327,6 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                         setShowCancelInput(order.id);
                       } else {
                         handleStatusUpdate(
-                          order.uid,
                           order.id,
                           e.target.value
                         );
@@ -376,7 +350,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                       />
                       <button
                         onClick={() =>
-                          handleStatusUpdate(order.uid, order.id, "Cancelled")
+                          handleStatusUpdate(order.id, "Cancelled")
                         }
                         className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded cursor-pointer"
                       >

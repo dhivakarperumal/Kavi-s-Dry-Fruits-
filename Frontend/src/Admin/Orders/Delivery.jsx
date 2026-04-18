@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaPrint, FaTrash } from "react-icons/fa";
 import logo from "/images/Kavi_logo.png";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 const Delivery = () => {
   const [deliveredOrders, setDeliveredOrders] = useState([]);
@@ -14,29 +13,41 @@ const Delivery = () => {
   const [searchText, setSearchText] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [ordersPerPage, setOrdersPerPage] = useState(25);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  // ========== Fetch once, attach orderDateMs to each order ==========
-  useEffect(() => {
-    const fetchDeliveredOrders = async () => {
-      const snapshot = await getDocs(collection(db, "delivery"));
-      const deliveries = snapshot.docs.map((doc) => {
-        const data = doc.data() || {};
-        const dateStr = data.deliveryDate || data.date;
-        const orderDateMs = dateStr ? new Date(dateStr).getTime() : 0;
-        return {
-          id: doc.id,
-          orderDateMs,
-          ...data,
-        };
-      });
+  // ========== Fetch Delivered Orders From MySQL ==========
+  const fetchDeliveredOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders");
+      const deliveries = (res.data || [])
+        .filter(o => o.orderStatus === "Delivered")
+        .map((order) => {
+          const dateStr = order.created_at || order.date;
+          const orderDateMs = dateStr ? new Date(dateStr).getTime() : 0;
+          return {
+            ...order,
+            id: order.id,
+            orderDateMs,
+            cartItems: typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []),
+            shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress) : (order.shippingAddress || {}),
+            date: dateStr
+          };
+        });
 
-      // sort once by timestamp (descending)
+      // sort by timestamp (descending)
       deliveries.sort((a, b) => (b.orderDateMs || 0) - (a.orderDateMs || 0));
       setDeliveredOrders(deliveries);
-    };
+    } catch (error) {
+      console.error("fetchDeliveredOrders error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDeliveredOrders();
   }, []);
 
@@ -220,7 +231,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
   const handleDelete = useCallback(async (order) => {
     if (window.confirm(`Are you sure you want to delete order ${order.orderId}?`)) {
       try {
-        await deleteDoc(doc(db, "delivery", order.id));
+        await api.delete(`/orders/${order.id}`);
         setDeliveredOrders((prev) => prev.filter((o) => o.id !== order.id));
         alert("Order deleted successfully!");
       } catch (error) {
@@ -333,7 +344,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 return (
                   <tr key={order.id} className="text-center hover:bg-gray-50 cursor-pointer" onClick={() => handleRowClick(order)}>
                     <td className="px-3 py-4 text-blue-600 underline cursor-pointer">{order.orderId}</td>
-                    <td className="px-3 py-4 text-green-600 font-semibold">{order.client?.name || (order.shippingAddress && (order.shippingAddress.fullname || order.shippingAddress.contact)) || "—"}</td>
+                    <td className="px-3 py-4 text-green-600 font-semibold">{order.clientName || order.fullname || order.client?.name || order.shippingAddress?.fullname || order.shippingAddress?.contact || "—"}</td>
                     <td className="px-3 py-4">{formatDate(order.date)}</td>
                     <td className="px-3 py-4">₹{order.totalAmount}</td>
                     <td className="px-3 py-4">{order.customerType || "Online Customer"}</td>

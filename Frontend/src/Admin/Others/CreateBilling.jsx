@@ -280,6 +280,7 @@ const CreateBilling = () => {
       dbId: product.id,
       name: product.name,
       category: product.category || "",
+      image: images[0] || product.image || "",
       primaryImage: images[0] || product.image || "",
       weights: variants.map(v => v.weight),
       comboProducts: typeof product.comboItems === 'string' ? JSON.parse(product.comboItems) : (product.comboItems || []),
