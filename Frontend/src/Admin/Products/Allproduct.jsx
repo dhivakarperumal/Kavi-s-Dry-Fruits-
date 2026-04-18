@@ -162,41 +162,52 @@ const Allproduct = () => {
                 const offerPercent = isCombo ? details?.offerPercent : variants[0]?.offerPercent;
 
                 return (
-                  <div key={item.id} className="group bg-white rounded-3xl border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
-                    {/* Image Area */}
-                    <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
+                  <div key={item.id} className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                    {/* Image Box */}
+                    <div className="relative h-56 w-full flex items-center justify-center border-2 border-dashed border-emerald-500 rounded-xl overflow-hidden bg-white mb-5 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
                       {images[0]
-                        ? <img src={images[0]} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" alt={item.name} />
+                        ? <img src={images[0]} className="h-full w-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" alt={item.name} />
                         : <FaBoxOpen className="text-gray-200" size={40}/>
                       }
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      {/* Type badge */}
-                      <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[8px] font-black uppercase text-white shadow-lg backdrop-blur-sm ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                        {isCombo ? '🎁 Combo' : '📦 Single'}
-                      </span>
                       {/* Offer badge */}
-                      {offerPercent && <span className="absolute top-3 right-3 px-2 py-1 rounded-full text-[8px] font-black bg-red-500 text-white shadow-lg">{offerPercent}% OFF</span>}
-                      {/* Action buttons on hover */}
-                      <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                        <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-emerald-600 transition-all"><FaEye size={11}/></button>
-                        <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-blue-600 transition-all"><FaEdit size={11}/></button>
-                        <button onClick={() => handleDelete(item)} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-red-600 transition-all"><FaTrash size={11}/></button>
-                      </div>
+                      {offerPercent && <span className="absolute top-2 right-2 px-2 py-1 rounded text-[9px] font-black bg-red-500 text-white shadow">{offerPercent}% OFF</span>}
                     </div>
-                    {/* Info Area */}
-                    <div className="p-4 flex-1 flex flex-col gap-2">
-                      <div>
-                        <h3 className="text-xs font-black text-gray-900 line-clamp-1 mb-0.5">{item.name}</h3>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-gray-400 font-bold font-mono">{item.productId}</span>
-                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${isCombo ? 'bg-amber-50 text-amber-600' : 'bg-gray-100 text-gray-500'}`}>{item.category}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-baseline gap-2 mt-auto pt-2 border-t border-gray-50">
-                        <span className="text-base font-black text-gray-900">₹{price || '—'}</span>
-                        {mrp && <span className="text-[10px] text-gray-300 line-through">₹{mrp}</span>}
-                      </div>
+
+                    {/* Title */}
+                    <h3 className="text-[15px] font-black text-gray-900 text-center mb-2 line-clamp-1">{item.name}</h3>
+                    
+                    {/* Description */}
+                    <p className="text-[13px] text-gray-500 text-center mb-3 line-clamp-2 leading-relaxed h-[40px]">
+                      {item.description || `SKU: ${item.productId} • ${item.category}`}
+                    </p>
+
+                    {/* Pricing */}
+                    <div className="text-center mb-3">
+                      {mrp ? (
+                         <span className="text-[13px] font-bold text-gray-400 line-through mr-1">MRP: ₹{mrp}</span>
+                      ) : null}
+                      <span className="text-[15px] font-black text-gray-900">₹{price || '—'}</span>
+                    </div>
+
+                    {/* Dotted separator */}
+                    <div className="w-[80%] mx-auto border-b-2 border-dotted border-gray-200 mb-3" />
+
+                    {/* Rating */}
+                    <div className="flex justify-center items-center gap-1.5 text-[13px] font-bold text-gray-800 mb-5">
+                      <FaStar className="text-yellow-400" /> {item.rating || '5'}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-center items-center gap-4 mt-auto">
+                      <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-emerald-600 hover:border-emerald-600 transition-colors">
+                        <FaEye size={13} />
+                      </button>
+                      <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-blue-600 hover:border-blue-600 transition-colors">
+                        <FaEdit size={13} />
+                      </button>
+                      <button onClick={() => handleDelete(item)} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-red-500 hover:border-red-500 transition-colors">
+                        <FaTrash size={13} />
+                      </button>
                     </div>
                   </div>
                 );
