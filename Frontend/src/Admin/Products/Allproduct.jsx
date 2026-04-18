@@ -180,7 +180,7 @@ const Allproduct = () => {
                       {/* Action buttons on hover */}
                       <div className="absolute bottom-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                         <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-emerald-600 transition-all"><FaEye size={11}/></button>
-                        <button onClick={() => navigate('/admin/products', { state: { editItem: item } })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-blue-600 transition-all"><FaEdit size={11}/></button>
+                        <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-blue-600 transition-all"><FaEdit size={11}/></button>
                         <button onClick={() => handleDelete(item)} className="w-8 h-8 bg-white/90 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:text-red-600 transition-all"><FaTrash size={11}/></button>
                       </div>
                     </div>
@@ -230,7 +230,7 @@ const Allproduct = () => {
                         <td className="px-4 py-3 text-center font-bold text-gray-900">₹{price}</td>
                         <td className="px-4 py-3 text-right space-x-1">
                           <button onClick={() => setViewProduct({ ...item, images: safeParse(item.images) })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEye size={12}/></button>
-                          <button onClick={() => navigate('/admin/products', { state: { editItem: item } })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEdit size={12}/></button>
+                          <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-1.5 text-gray-300 hover:text-emerald-600"><FaEdit size={12}/></button>
                           <button onClick={() => handleDelete(item)} className="p-1.5 text-gray-300 hover:text-red-500"><FaTrash size={12}/></button>
                         </td>
                       </tr>
@@ -284,7 +284,7 @@ const Allproduct = () => {
               </div>
               <div className="pt-5 border-t flex items-center justify-between">
                  <div className="flex items-center gap-1 text-amber-500 text-[10px] font-bold">★ {viewProduct.rating || 5}</div>
-                 <button onClick={() => navigate('/admin/products', { state: { editItem: viewProduct } })} className="bg-gray-800 text-white px-6 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all flex items-center gap-2">Edit Product</button>
+                 <button onClick={() => navigate('/adminpanel/products', { state: { editItem: viewProduct } })} className="bg-gray-800 text-white px-6 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-emerald-600 transition-all flex items-center gap-2">Edit Product</button>
               </div>
             </div>
           </div>
