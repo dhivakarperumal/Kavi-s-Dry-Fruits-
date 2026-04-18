@@ -32,6 +32,7 @@ import MigrateProducts from "./MigrateProducts";
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [collectionCounts, setCollectionCounts] = useState({});
 
   const navigate = useNavigate();
@@ -189,13 +190,15 @@ const AdminPanel = () => {
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
         setActiveSection={handleSectionChange}
         activeSection={activeSection}
         collectionCounts={collectionCounts}
         handleLogout={handleLogout}
       />
 
-      <div className="flex-1 flex flex-col ml-0 md:ml-72 overflow-hidden">
+      <div className={`flex-1 flex flex-col ml-0 overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? "md:ml-20" : "md:ml-72"}`}>
         <Topbar
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
