@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  runTransaction,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import { ImSpinner8 } from "react-icons/im";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
@@ -38,27 +31,19 @@ const Billing = () => {
   // ---------------- Order ID generation ----------------
   const generateOrderId = async () => {
     try {
-      const counterRef = doc(db, "metadata", "orderCounter");
-      return await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(counterRef);
-        let orderNumber = 1;
-        if (snap.exists()) {
-          orderNumber = (snap.data().lastOrderNumber || 0) + 1;
-        }
-        transaction.set(counterRef, { lastOrderNumber: orderNumber }, { merge: true });
-        return `KDF00${String(orderNumber).padStart(3, "0")}`;
-      });
+      // Fetch latest orders to get the next number
+      const res = await api.get("/orders");
+      const orderNumber = res.data.length + 1;
+      return `KDF00${String(orderNumber).padStart(3, "0")}`;
     } catch (err) {
       console.error("generateOrderId error:", err);
-      // fallback to timestamp based id to avoid breaking flow
       return `KDF${Date.now()}`;
     }
   };
 
   useEffect(() => {
-    getDocs(collection(db, "products")).then((snap) => {
-      const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setProductList(items);
+    api.get("/products").then((res) => {
+      setProductList(res.data);
     });
   }, []);
 
@@ -66,29 +51,23 @@ const Billing = () => {
     const delayDebounce = setTimeout(async () => {
       if (!client.phone || client.phone.length < 5) return;
 
-      const snap = await getDocs(collection(db, "delivery"));
-      const deliveries = snap.docs
-        .map((doc) => doc.data())
-        .filter((entry) => entry.client?.phone === client.phone);
+      try {
+        const res = await api.get("/orders");
+        const deliveries = res.data.filter((entry) => entry.clientPhone === client.phone);
 
-      if (deliveries.length > 0) {
-        const latest = deliveries[deliveries.length - 1];
-        setClient((prev) => ({
-          ...prev,
-          name: latest.client?.name || latest.shippingAddress?.name || "",
-          gst: latest.client?.gst || "",
-          customerType: latest.customerType || latest.client?.customerType || "Online Customer",
-          paymentMode: latest.paymentMode || latest.client?.paymentMode || "Cash",
-          shippingAddress: latest.shippingAddress || {
-            street: latest.client?.shippingAddress?.street || "",
-            city: latest.client?.shippingAddress?.city || "",
-            state: latest.client?.shippingAddress?.state || "Tamil Nadu",
-            zip: latest.client?.shippingAddress?.zip || "",
-            country: latest.client?.shippingAddress?.country || "India",
-          },
-        }));
-        toast.success("Client details auto-filled.");
-      }
+        if (deliveries.length > 0) {
+          const latest = deliveries[0]; // descending order assumed
+          setClient((prev) => ({
+            ...prev,
+            name: latest.clientName || "",
+            gst: latest.clientGST || "",
+            customerType: latest.customerType || "Online Customer",
+            paymentMode: latest.paymentMode || "Cash",
+            shippingAddress: typeof latest.shippingAddress === 'string' ? JSON.parse(latest.shippingAddress) : latest.shippingAddress,
+          }));
+          toast.success("Client details auto-filled.");
+        }
+      } catch (e) {}
     }, 700);
 
     return () => clearTimeout(delayDebounce);
@@ -135,10 +114,10 @@ const Billing = () => {
 
     setSelectedProduct({
       id: product.productId,
-      firebaseId: product.id,
+      dbId: product.id,
       name: product.name,
       category: product.category || "",
-      weights: product.weights || [],
+      weights: typeof product.variants === 'string' ? JSON.parse(product.variants).map(v => v.weight) : (product.variants || []).map(v => v.weight),
       quantity: 1,
       weight: defaultWeight,
       priceMap,
@@ -310,9 +289,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
         (acc, i) => acc + i.total + i.gst,
         0
       ) + shippingCharge;
-      const data = {
+      await api.post("/orders", {
         orderId: newOrderId,
-        client,
+        clientName: client.name,
+        clientPhone: client.phone,
+        clientGST: client.gst,
         shippingAddress: client.shippingAddress,
         customerType: client.customerType,
         paymentMode: client.paymentMode,
@@ -321,21 +302,20 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
         items: invoiceItems,
         gstAmount,
         totalAmount,
-        date: new Date().toISOString(),
-      };
-      await addDoc(collection(db, "delivery"), data);
+      });
 
       await Promise.all(
         invoiceItems.map(async (item) => {
-          const ref = doc(db, "products", item.firebaseId);
-          await runTransaction(db, async (transaction) => {
-            const snap = await transaction.get(ref);
-            const currentStock = snap.data().stock || 0;
+          const matched = productList.find(p => p.productId === item.id);
+          if (matched) {
+            const currentStock = Number(matched.totalStock) || 0;
             const isCombo = item.category === "Combo";
             const reduceAmount = isCombo ? item.quantity : item.quantity * 1000;
             const newStock = currentStock - reduceAmount;
-            transaction.update(ref, { stock: newStock });
-          });
+            
+            const endpoint = matched.comboItems ? `/combos/${matched.id}` : `/products/${matched.id}`;
+            await api.put(endpoint, { ...matched, totalStock: String(newStock) });
+          }
         })
       );
 

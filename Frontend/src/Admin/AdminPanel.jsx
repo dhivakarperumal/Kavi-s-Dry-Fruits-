@@ -27,7 +27,7 @@ import Category from "./Products/Category";
 import Allproduct from "./Products/Allproduct";
 import NewOrders from "./Orders/NewOrders";
 import AllOrders from "./Orders/AllOrders";
-import MigrateProducts from "./MigrateProducts";
+
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -58,7 +58,6 @@ const AdminPanel = () => {
       "all-products": "All Products",
       "add-category": "Add Category",
       "stock-details": "Stock Details",
-      "migrate-pricing": "Migrate Pricing",
       "orders": "Orders",
       "new-orders": "New Orders",
       "all-orders": "All Orders",
@@ -159,7 +158,7 @@ const AdminPanel = () => {
       case "All Products":       return <Allproduct />;
       case "Add Category":       return <Category />;
       case "Stock Details":      return <StockDetails />;
-      case "Migrate Pricing":    return <MigrateProducts />;
+      
 
       // Orders
       case "Orders":             return <Orders />;

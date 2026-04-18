@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-import { db } from "../../firebase";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import api from "../../services/api";
 import { Link } from "react-router-dom";
 
 const Invoice = () => {
@@ -47,12 +46,12 @@ const Invoice = () => {
   };
 
   const fetchInvoices = async () => {
-    const querySnapshot = await getDocs(collection(db, "invoices"));
-    const data = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setInvoices(data);
+    try {
+      const response = await api.get("/invoices");
+      setInvoices(response.data);
+    } catch (error) {
+      toast.error("Failed to fetch invoices");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -66,7 +65,7 @@ const Invoice = () => {
     setLoading(true);
 
     try {
-      await addDoc(collection(db, "invoices"), {
+      await api.post("/invoices", {
         ...invoiceData,
         createdAt: new Date().toISOString(),
       });

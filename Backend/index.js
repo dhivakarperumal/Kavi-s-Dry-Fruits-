@@ -36,6 +36,77 @@ app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/stickers', stickerRoutes);
+app.use('/api/users', userRoutes);
+
+// Invoices Routes
+app.get('/api/invoices', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM invoices ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/invoices', async (req, res) => {
+  try {
+    const { invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO invoices (invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName]
+    );
+    res.json({ id: result.insertId, message: 'Invoice created' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stock History Routes
+app.post('/api/stock-history', async (req, res) => {
+  try {
+    const { productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO stock_history (productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type]
+    );
+    res.json({ id: result.insertId, message: 'Stock history logged' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Orders Routes
+app.get('/api/orders', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { orderId, clientName, clientPhone, clientGST, shippingAddress, customerType, paymentMode, orderStatus, shippingCharge, items, gstAmount, totalAmount } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO orders (orderId, clientName, clientPhone, clientGST, shippingAddress, customerType, paymentMode, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [orderId, clientName, clientPhone, clientGST, JSON.stringify(shippingAddress), customerType, paymentMode, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
+    );
+    res.json({ id: result.insertId, message: 'Order created' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/orders/:id', async (req, res) => {
+  try {
+    const { orderStatus } = req.body;
+    await db.query('UPDATE orders SET orderStatus = ? WHERE id = ?', [orderStatus, req.params.id]);
+    res.json({ message: 'Order updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 
@@ -129,6 +200,25 @@ const initializeDatabase = async () => {
   `);
 
   await db.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      orderId VARCHAR(50) NOT NULL UNIQUE,
+      clientName VARCHAR(255),
+      clientPhone VARCHAR(50),
+      clientGST VARCHAR(100),
+      shippingAddress TEXT,
+      customerType VARCHAR(100),
+      paymentMode VARCHAR(100),
+      orderStatus VARCHAR(100) DEFAULT 'Pending',
+      shippingCharge DECIMAL(15,2),
+      items LONGTEXT,
+      gstAmount DECIMAL(15,2),
+      totalAmount DECIMAL(15,2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS dealers (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       dealerId VARCHAR(50) NOT NULL UNIQUE,
@@ -138,6 +228,35 @@ const initializeDatabase = async () => {
       dealerMail VARCHAR(255),
       dealerAddress TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      invoiceNo VARCHAR(100) NOT NULL UNIQUE,
+      invoiceDate DATE,
+      invoiceValue DECIMAL(15,2),
+      invoiceGSTValue DECIMAL(15,2),
+      invoiceTotalValue DECIMAL(15,2),
+      transportAmount DECIMAL(15,2),
+      billPdfBase64 LONGTEXT,
+      billPdfName VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS stock_history (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50) NOT NULL,
+      productName VARCHAR(255),
+      productCategory VARCHAR(255),
+      addedQuantity INT,
+      finalStock INT,
+      invoiceNumber VARCHAR(100),
+      type VARCHAR(50),
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 

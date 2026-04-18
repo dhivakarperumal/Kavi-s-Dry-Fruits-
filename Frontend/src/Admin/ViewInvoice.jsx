@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import api from "../services/api";
 
 const ViewInvoice = () => {
   const [searchParams] = useSearchParams();
@@ -14,12 +13,12 @@ const ViewInvoice = () => {
     const fetchInvoice = async () => {
       setLoading(true);
       try {
-        const snapshot = await getDocs(collection(db, "invoices"));
-        const matched = snapshot.docs.find(
-          (doc) => doc.data().invoiceNo === invoiceNo
+        const response = await api.get("/invoices");
+        const matched = response.data.find(
+          (inv) => inv.invoiceNo === invoiceNo
         );
         if (matched) {
-          setInvoiceData(matched.data());
+          setInvoiceData(matched);
         }
       } catch (error) {
         console.error("Error fetching invoice:", error);

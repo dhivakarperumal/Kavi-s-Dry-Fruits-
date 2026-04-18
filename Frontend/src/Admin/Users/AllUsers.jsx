@@ -85,8 +85,8 @@ const Users = () => {
   const handleUpdate = async () => {
     try {
       if (addMode) {
-        if (!selectedUser.email || !selectedUser.fullName) {
-          toast.error("Name and Email are required");
+        if (!selectedUser.email || !selectedUser.fullName || !selectedUser.role) {
+          toast.error("Name, Email and Role are required");
           return;
         }
         await api.post("/auth/register", {
@@ -135,7 +135,7 @@ const Users = () => {
   };
 
   const handleAddUser = () => {
-    setSelectedUser({ fullName: "", email: "", phone: "", role: "User", password: "" });
+    setSelectedUser({ fullName: "", email: "", phone: "", role: "", password: "" });
     setAddMode(true);
     setEditMode(true);
   };
@@ -350,22 +350,23 @@ const Users = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Full Legal Name</label>
-                <input value={selectedUser.fullName} onChange={(e) => setSelectedUser(p => ({ ...p, fullName: e.target.value }))} readOnly={!editMode} className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`} />
+                <input value={selectedUser.fullName || ""} onChange={(e) => setSelectedUser(p => ({ ...p, fullName: e.target.value }))} readOnly={!editMode} placeholder="e.g. John Doe" className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`} />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email Identifier</label>
-                <input type="email" value={selectedUser.email} onChange={(e) => setSelectedUser(p => ({ ...p, email: e.target.value }))} readOnly={!editMode || !addMode} className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all ${(!editMode || !addMode) ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`} />
+                <input type="email" value={selectedUser.email || ""} onChange={(e) => setSelectedUser(p => ({ ...p, email: e.target.value }))} readOnly={!editMode || !addMode} placeholder="e.g. john@domain.com" className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all ${(!editMode || !addMode) ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`} />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Authorization Role</label>
-                <select value={selectedUser.role} onChange={(e) => setSelectedUser(p => ({ ...p, role: e.target.value }))} disabled={!editMode} className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none appearance-none transition-all ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`}>
+                <select value={selectedUser.role || ""} onChange={(e) => setSelectedUser(p => ({ ...p, role: e.target.value }))} disabled={!editMode} className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none appearance-none transition-all cursor-pointer ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"} ${!selectedUser.role ? "text-gray-400 font-normal" : "text-gray-800 font-bold"}`}>
+                  <option value="" disabled>Select Role (Admin / User)</option>
                   <option value="User">Standard User</option>
                   <option value="Admin">System Administrator</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Verification</label>
-                <input value={selectedUser.phone} onChange={(e) => setSelectedUser(p => ({ ...p, phone: e.target.value }))} readOnly={!editMode} className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`} />
+                <input value={selectedUser.phone || ""} onChange={(e) => setSelectedUser(p => ({ ...p, phone: e.target.value }))} readOnly={!editMode} placeholder="e.g. +91 98765 43210" className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"}`} />
               </div>
               
               {addMode && (
