@@ -130,7 +130,7 @@ const Allproduct = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="bg-gray-50 p-1 rounded-lg flex border">
+          <div className="bg-gray-50 p-1 rounded-lg flex">
             <button onClick={() => setViewMode("card")} className={`p-2 rounded-md ${viewMode === "card" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}><FaThLarge size={14}/></button>
             <button onClick={() => setViewMode("table")} className={`p-2 rounded-md ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-400"}`}><FaListUl size={14}/></button>
           </div>
@@ -294,9 +294,9 @@ const Allproduct = () => {
                 const offerPercent = isCombo ? details?.offerPercent : variants[0]?.offerPercent;
 
                 return (
-                  <div key={`${item.type}-${item.id}`} className="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
+                  <div key={`${item.type}-${item.id}`} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col">
                     {/* Image Box */}
-                    <div className="relative h-56 w-full flex items-center justify-center border-2 border-dashed border-emerald-500 rounded-xl overflow-hidden bg-white mb-5 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
+                    <div className="relative h-44 w-full flex items-center justify-center border-2 border-dashed border-emerald-500 rounded-xl overflow-hidden bg-white mb-3 cursor-pointer group" onClick={() => setViewProduct({ ...item, images, price, mrp })}>
                       {images[0]
                         ? <img src={images[0]} className="h-full w-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" alt={item.name} />
                         : <FaBoxOpen className="text-gray-200" size={40}/>
@@ -310,31 +310,31 @@ const Allproduct = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-[15px] font-black text-gray-900 text-center mb-2 line-clamp-1">{item.name}</h3>
+                    <h3 className="text-[14px] font-black text-gray-900 text-center mb-1.5 line-clamp-1">{item.name}</h3>
                     
                     {/* Description */}
-                    <p className="text-[13px] text-gray-500 text-center mb-3 line-clamp-2 leading-relaxed h-[40px]">
+                    <p className="text-[12px] text-gray-500 text-center mb-3 line-clamp-2 leading-[1.4] h-[34px]">
                       {item.description || `SKU: ${item.productId} • ${item.category}`}
                     </p>
 
                     {/* Pricing */}
                     <div className="text-center mb-3">
                       {mrp ? (
-                         <span className="text-[13px] font-bold text-gray-400 line-through mr-1">MRP: ₹{mrp}</span>
+                         <span className="text-[12px] font-bold text-gray-400 line-through mr-1">MRP: ₹{mrp}</span>
                       ) : null}
-                      <span className="text-[15px] font-black text-gray-900">₹{price || '—'}</span>
+                      <span className="text-[14px] font-black text-gray-900">₹{price || '—'}</span>
                     </div>
 
                     {/* Dotted separator */}
                     <div className="w-[80%] mx-auto border-b-2 border-dotted border-gray-200 mb-3" />
 
                     {/* Rating */}
-                    <div className="flex justify-center items-center gap-1.5 text-[13px] font-bold text-gray-800 mb-5">
+                    <div className="flex justify-center items-center gap-1.5 text-[12px] font-bold text-gray-800 mb-4">
                       <FaStar className="text-yellow-400" /> {item.rating || '5'}
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex justify-center items-center gap-4 mt-auto">
+                    <div className="flex justify-center items-center gap-3 mt-auto">
                       <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-9 h-9 flex items-center justify-center border border-gray-400 rounded-md text-gray-600 hover:text-emerald-600 hover:border-emerald-600 transition-colors">
                         <FaEye size={13} />
                       </button>
