@@ -4,7 +4,7 @@ import {
   AiOutlineStock, 
   AiOutlineLogout 
 } from "react-icons/ai";
-import { FaHome, FaUsersCog, FaDropbox, FaUsers, FaStickyNote, FaFileInvoice } from "react-icons/fa";
+import { FaHome, FaUsersCog, FaDropbox, FaUsers, FaStickyNote, FaFileInvoice, FaSearch } from "react-icons/fa";
 import { 
   MdDashboard, 
   MdOutlineProductionQuantityLimits, 
@@ -67,6 +67,7 @@ const Sidebar = ({
     { label: "Stickers", icon: <FaStickyNote /> },
     { label: "Dealer", icon: <FaUsers /> },
     { label: "Reviews", icon: <MdPreview /> },
+    { label: "SEO Keywords", icon: <FaSearch /> },
     { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
   ];

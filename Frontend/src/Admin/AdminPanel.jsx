@@ -28,6 +28,7 @@ import Allproduct from "./Products/Allproduct";
 import NewOrders from "./Orders/NewOrders";
 import AllOrders from "./Orders/AllOrders";
 import MigrateProducts from "./MigrateProducts";
+import SEOKeywords from "./SEOKeywords";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -67,6 +68,7 @@ const AdminPanel = () => {
       "stickers": "Stickers",
       "dealer": "Dealer",
       "reviews": "Reviews",
+      "seo-keywords": "SEO Keywords",
       "invoice": "Invoice",
       "billing": "Billing",
     };
@@ -98,6 +100,7 @@ const AdminPanel = () => {
       "Stickers": "stickers",
       "Dealer": "dealer",
       "Reviews": "reviews",
+      "SEO Keywords": "seo-keywords",
       "Invoice": "invoice",
       "Billing": "billing",
     };
@@ -172,6 +175,7 @@ const AdminPanel = () => {
       case "Stickers":           return <Stickers />;
       case "Dealer":             return <AddDealer />;
       case "Reviews":            return <Reviews />;
+      case "SEO Keywords":       return <SEOKeywords />;
       case "Invoice":            return <Invoice />;
       case "Billing":            return <Billing />;
 
