@@ -327,6 +327,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Name</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Date</th>
@@ -337,8 +338,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
             </thead>
             <tbody className="divide-y divide-slate-50">
               {currentOrders.length > 0 ? (
-                currentOrders.map((order) => (
+                currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                    <td className="px-8 py-6 font-black text-slate-800 text-xs">
+                       {index + 1}
+                    </td>
                     <td className="px-8 py-6">
                        <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline">#{order.orderId}</button>
                     </td>
@@ -367,7 +371,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <td colSpan="7" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
                     <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                        <FaPrint className="text-3xl opacity-20" />
                     </div>

@@ -130,7 +130,8 @@ const CancelOrders = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
@@ -140,8 +141,9 @@ const CancelOrders = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {currentOrders.length > 0 ? (
-                currentOrders.map((order) => (
+                currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                    <td className="px-8 py-6 font-black text-slate-800 text-xs">{(currentPage - 1) * ordersPerPage + index + 1}</td>
                     <td className="px-8 py-6">
                        <p className="font-black text-slate-400 text-xs italic mb-1">#{order.orderId}</p>
                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
@@ -170,7 +172,7 @@ const CancelOrders = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
                     <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                        <FaTimes className="text-3xl opacity-20" />
                     </div>

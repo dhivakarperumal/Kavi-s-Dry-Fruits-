@@ -368,6 +368,7 @@ const Allproduct = () => {
                         <table className="w-full text-left">
                            <thead className="bg-[#009669] border-b border-emerald-700">
                               <tr>
+                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
                                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Asset Index</th>
                                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity & Type</th>
                                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Pricing Strategy</th>
@@ -375,11 +376,14 @@ const Allproduct = () => {
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-slate-50">
-                              {currentItems.map(item => {
+                              {currentItems.map((item, index) => {
                                  const isCombo = item.type === 'combo';
                                  const price = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails))?.offerPrice : safeParse(item.variants)[0]?.offerPrice;
                                  return (
                                     <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
+                                       <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
+                                          {(currentPage - 1) * itemsPerPage + index + 1}
+                                       </td>
                                        <td className="px-8 py-6">
                                           <div className="w-14 h-14 rounded-2xl bg-slate-50 p-2 flex items-center justify-center overflow-hidden">
                                              {safeParse(item.images)[0] ? <img src={safeParse(item.images)[0]} className="h-full w-full object-contain" alt="" /> : <FaImage size={20} className="text-slate-200" />}

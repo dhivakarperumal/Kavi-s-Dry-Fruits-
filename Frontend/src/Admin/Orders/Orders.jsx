@@ -217,6 +217,7 @@ const Orders = () => {
         <table className="w-full table-auto border text-sm">
           <thead className="bg-[#009669] border-b border-emerald-700">
             <tr className="text-white">
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">S.No</th>
               <th className="p-3 text-[10px] font-black uppercase tracking-widest">Order ID</th>
               <th className="p-3 text-[10px] font-black uppercase tracking-widest">Client Name</th>
               <th className="p-3 text-[10px] font-black uppercase tracking-widest">Payment</th>
@@ -227,8 +228,11 @@ const Orders = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
+            {orders.map((order, index) => (
               <tr key={order.id} className="hover:bg-gray-50">
+                <td className="p-3 border font-black text-xs text-center border-gray-200">
+                  {index + 1}
+                </td>
                 <td
                   className="p-3 border text-blue-600 underline cursor-pointer"
                   onClick={() => setSelectedOrder(order)}

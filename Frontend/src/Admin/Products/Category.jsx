@@ -268,6 +268,7 @@ const Category = () => {
              <table className="w-full text-left">
                 <thead className="bg-[#009669] border-b border-emerald-700">
                    <tr>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Description</th>
@@ -276,8 +277,11 @@ const Category = () => {
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                   {currentItems.map((cat) => (
+                   {currentItems.map((cat, index) => (
                       <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
+                         <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                         </td>
                          <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
                          <td className="px-8 py-6">
                             <div className="flex items-center gap-4">

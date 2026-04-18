@@ -110,7 +110,7 @@ const Billing = () => {
                     </button>
                     <Link
                         to="/adminpanel/billing/create"
-                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#009669] hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-emerald-100 uppercase tracking-widest"
                     >
                         <FiPlus /> New Bill
                     </Link>
@@ -147,23 +147,23 @@ const Billing = () => {
                 </div>
             </div>
 
+            {/* Advanced Filters / Search Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm">
+                <h3 className="text-lg font-[900] text-slate-800 uppercase tracking-tight pl-2">Financial Ledger</h3>
+                <div className="relative w-full md:w-80">
+                    <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Ref ID, Client or Contact..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-12 pr-6 py-3 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 shadow-sm transition-all text-xs w-full font-bold"
+                    />
+                </div>
+            </div>
+
             {/* Orders Table */}
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-2xl hover:shadow-gray-100/50">
-                <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/20">
-                    <h3 className="text-lg font-[900] text-slate-800 uppercase tracking-tight">Financial Ledger</h3>
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Ref ID, Client or Contact..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-12 pr-6 py-2.5 bg-white border-2 border-transparent rounded-xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 shadow-sm transition-all text-xs w-full md:w-72 font-bold"
-                            />
-                        </div>
-                    </div>
-                </div>
 
                 <div className="overflow-x-auto">
                     {loading ? (
@@ -180,6 +180,7 @@ const Billing = () => {
                         <table className="w-full text-left">
                             <thead className="bg-[#009669] border-b border-emerald-700">
                                 <tr>
+                                    <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">S.No</th>
                                     <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Descriptor</th>
                                     <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Timestamp</th>
                                     <th className="px-6 py-4 text-[9px] font-black text-white uppercase tracking-widest">Identity</th>
@@ -189,7 +190,7 @@ const Billing = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filteredOrders.map((order) => {
+                                {filteredOrders.map((order, index) => {
                                     let items = [];
                                     try { 
                                         const rawItems = order.items || order.cartItems;
@@ -200,6 +201,9 @@ const Billing = () => {
 
                                     return (
                                         <tr key={order.id} className="hover:bg-indigo-50/30 transition-all group">
+                                            <td className="px-6 py-4 font-black text-slate-800 text-xs">
+                                                {index + 1}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <span className="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                                     #{order.orderId || order.id}

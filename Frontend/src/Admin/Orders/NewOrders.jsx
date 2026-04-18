@@ -248,6 +248,7 @@ const NewOrders = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Amount</th>
@@ -257,8 +258,11 @@ const NewOrders = () => {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {currentOrders.length > 0 ? (
-                currentOrders.map(order => (
+                currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                    <td className="px-8 py-6 font-black text-slate-800 text-xs">
+                       {index + 1}
+                    </td>
                     <td className="px-8 py-6">
                       <button onClick={() => setSelectedOrder(order)} className="text-indigo-600 font-black text-sm hover:underline block mb-1">#{order.orderId}</button>
                       <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
@@ -300,7 +304,7 @@ const NewOrders = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
                     <FaBox className="text-5xl mx-auto mb-4 opacity-10" />
                     No orders awaiting fulfillment
                   </td>
