@@ -94,23 +94,23 @@ const Billing = () => {
     }).length;
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-2 md:p-6">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 p-2 md:p-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800">Billing Console</h1>
-                    <p className="text-sm text-gray-500 font-medium mt-1">Real-time financial tracking and POS management</p>
+                    <h1 className="text-2xl font-[900] text-slate-800 tracking-tight">Billing Console</h1>
+                    <p className="text-xs text-gray-500 font-bold mt-0.5">Real-time financial tracking and POS management</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchOrders}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm cursor-pointer"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm cursor-pointer"
                     >
-                        <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
+                        <FiRefreshCw size={13} className={loading ? "animate-spin" : ""} /> Refresh
                     </button>
                     <Link
                         to="/adminpanel/billing/create"
-                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm font-black transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-100 uppercase tracking-widest"
                     >
                         <FiPlus /> New Bill
                     </Link>
@@ -118,30 +118,30 @@ const Billing = () => {
             </div>
 
             {/* Billing Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-between group transition-all hover:shadow-xl hover:shadow-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between group transition-all hover:shadow-xl hover:shadow-gray-100">
                     <div>
-                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4">Gross Revenue</p>
-                        <h2 className="text-4xl font-black text-slate-800 tracking-tighter">₹{totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h2>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Gross Revenue</p>
+                        <h2 className="text-3xl font-[900] text-slate-800 tracking-tighter">₹{totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h2>
                     </div>
-                    <div className="mt-6 flex items-center gap-2 text-emerald-500 font-black text-xs uppercase tracking-widest">
+                    <div className="mt-4 flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-widest">
                         <FiTrendingUp /> {orders.length} transactions
                     </div>
                 </div>
-                <div className="bg-indigo-600 p-8 rounded-[2.5rem] shadow-xl shadow-indigo-200 flex flex-col justify-between text-white relative overflow-hidden group">
+                <div className="bg-indigo-600 p-6 rounded-[2rem] shadow-xl shadow-indigo-100 flex flex-col justify-between text-white relative overflow-hidden group">
                     <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
                     <div>
-                        <p className="text-[10px] font-black opacity-70 uppercase tracking-widest mb-4">Terminal Traffic</p>
-                        <h2 className="text-4xl font-black tracking-tighter">{todayOrders}</h2>
+                        <p className="text-[9px] font-black opacity-70 uppercase tracking-[0.2em] mb-3">Terminal Traffic</p>
+                        <h2 className="text-3xl font-[900] tracking-tighter">{todayOrders}</h2>
                     </div>
-                    <p className="mt-6 text-[10px] font-black opacity-90 uppercase tracking-widest flex items-center gap-1.5"><FiCalendar size={12} /> Today's performance</p>
+                    <p className="mt-4 text-[9px] font-black opacity-80 uppercase tracking-widest flex items-center gap-1.5 font-mono"><FiCalendar size={12} /> Today's performance</p>
                 </div>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-between group transition-all hover:shadow-xl hover:shadow-gray-100">
+                <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col justify-between group transition-all hover:shadow-xl hover:shadow-gray-100">
                     <div>
-                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4">Stock Displacement</p>
-                        <h2 className="text-4xl font-black text-slate-800 tracking-tighter">{totalItemsCount}</h2>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Stock Displacement</p>
+                        <h2 className="text-3xl font-[900] text-slate-800 tracking-tighter">{totalItemsCount}</h2>
                     </div>
-                    <div className="mt-6 flex items-center gap-2 text-indigo-500 font-black text-xs uppercase tracking-widest">
+                    <div className="mt-4 flex items-center gap-2 text-indigo-500 font-black text-[10px] uppercase tracking-widest">
                         <FiPackage size={14} /> Units moved
                     </div>
                 </div>
@@ -149,17 +149,17 @@ const Billing = () => {
 
             {/* Orders Table */}
             <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-2xl hover:shadow-gray-100/50">
-                <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/30">
-                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">Financial Ledger</h3>
+                <div className="p-6 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/20">
+                    <h3 className="text-lg font-[900] text-slate-800 uppercase tracking-tight">Financial Ledger</h3>
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Ref ID, Client or Contact..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-14 pr-6 py-3.5 bg-white border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 shadow-sm transition-all text-sm w-full md:w-80 font-bold"
+                                className="pl-12 pr-6 py-2.5 bg-white border-2 border-transparent rounded-xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 shadow-sm transition-all text-xs w-full md:w-72 font-bold"
                             />
                         </div>
                     </div>
@@ -180,12 +180,12 @@ const Billing = () => {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-gray-50/50">
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Descriptor</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Identity</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Volume</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Classification</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Settlement</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Descriptor</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Identity</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Volume</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Classification</th>
+                                    <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Settlement</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -200,35 +200,35 @@ const Billing = () => {
 
                                     return (
                                         <tr key={order.id} className="hover:bg-indigo-50/30 transition-all group">
-                                            <td className="px-8 py-6">
-                                                <span className="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tight group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                            <td className="px-6 py-4">
+                                                <span className="bg-gray-100 text-gray-500 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight group-hover:bg-indigo-600 group-hover:text-white transition-all">
                                                     #{order.orderId || order.id}
                                                 </span>
                                             </td>
-                                            <td className="px-8 py-6 text-sm text-gray-400 font-bold">
+                                            <td className="px-6 py-4 text-[11px] text-gray-400 font-bold">
                                                 <div className="flex items-center gap-2">
-                                                    <FiCalendar size={14} className="opacity-40" />
+                                                    <FiCalendar size={12} className="opacity-40" />
                                                     {formatDateTime(order.created_at || order.date)}
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-6">
-                                                <p className="font-black text-slate-700 text-sm flex items-center gap-2">
-                                                    <FiUser size={14} className="text-indigo-400" />
+                                            <td className="px-6 py-4">
+                                                <p className="font-black text-slate-700 text-xs flex items-center gap-1.5">
+                                                    <FiUser size={12} className="text-indigo-400" />
                                                     {order.clientName || order.customer_name || "Guest Trace"}
                                                 </p>
-                                                <p className="text-[10px] font-bold text-gray-300 mt-0.5 ml-5">{order.clientPhone || order.customer_phone}</p>
+                                                <p className="text-[9px] font-bold text-gray-300 mt-0.5 ml-4">{order.clientPhone || order.customer_phone}</p>
                                             </td>
-                                            <td className="px-8 py-6 text-center">
-                                                <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-xl uppercase tracking-tighter">
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-lg uppercase tracking-tighter">
                                                     {itemCount} Unit{itemCount !== 1 ? "s" : ""}
                                                 </span>
                                             </td>
-                                            <td className="px-8 py-6">
-                                                <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] ${getStatusStyle(status)}`}>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${getStatusStyle(status)}`}>
                                                     {status}
                                                 </span>
                                             </td>
-                                            <td className="px-8 py-6 font-black text-slate-800 text-lg text-right tracking-tighter">
+                                            <td className="px-6 py-4 font-black text-slate-800 text-sm text-right tracking-tight">
                                                 ₹{parseFloat(order.totalAmount || order.total_amount || 0).toFixed(2)}
                                             </td>
                                         </tr>

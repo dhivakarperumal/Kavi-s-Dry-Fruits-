@@ -37,7 +37,7 @@ const Sidebar = ({
       label: "products",
       icon: <MdOutlineProductionQuantityLimits />,
       dropdown: [
-        { label: "Add Products", icon: <MdOutlineAddBox /> },
+        // { label: "Add Products", icon: <MdOutlineAddBox /> },
         { label: "All Products", icon: <MdOutlineInventory2 /> },
         { label: "Add Category", icon: <MdCategory /> },
         { label: "Stock Details", collection: "products", icon: <AiOutlineStock /> },
@@ -62,7 +62,7 @@ const Sidebar = ({
         { label: "All Orders", icon: <FaDropbox /> },
         { label: "Delivered Orders", icon: <MdDeliveryDining /> },
         { label: "Cancel Orders", icon: <MdOutlineCancelPresentation /> },
-        { label: "Returned Orders", icon: <MdOutlineCancelPresentation /> },
+        // { label: "Returned Orders", icon: <MdOutlineCancelPresentation /> },
       ],
     },
 
@@ -72,6 +72,8 @@ const Sidebar = ({
     { label: "SEO Keywords", icon: <FaSearch /> },
     { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
+
+    
     {
       label: "Health Benefits",
       icon: <MdPreview />,

@@ -378,12 +378,12 @@ const CreateBilling = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-                <h1 className="text-2xl font-[900] text-slate-950 tracking-tight">Checkout Terminal</h1>
-                <p className="text-xs text-slate-500 font-bold mt-1">Generate premium POS invoices & dynamic stock management</p>
+                <h1 className="text-xl font-[900] text-slate-950 tracking-tight">Checkout Terminal</h1>
+                <p className="text-[10px] text-slate-500 font-bold mt-0.5">Generate POS invoices & manual stock management</p>
             </div>
             <div className="flex items-center gap-3">
                 <button 
@@ -663,10 +663,10 @@ const CreateBilling = () => {
                             <tbody className="divide-y divide-gray-50">
                                 {invoiceItems.length > 0 ? invoiceItems.map((item, index) => (
                                     <tr key={index} className="group hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-4 py-5 font-bold text-gray-400 text-xs">#{item.id}</td>
+                                        <td className="px-4 py-5 font-bold text-gray-400 text-[10px]">#{item.id}</td>
                                         <td className="px-4 py-5">
-                                            <p className="font-black text-slate-700 text-sm">{item.name}</p>
-                                            <p className="text-[10px] font-black text-primary bg-primary/5 inline-block px-1.5 py-0.5 rounded mt-1 uppercase tracking-tighter">{item.weight}</p>
+                                            <p className="font-black text-slate-700 text-xs">{item.name}</p>
+                                            <p className="text-[9px] font-black text-primary bg-primary/5 inline-block px-1.5 py-0.5 rounded mt-1 uppercase tracking-tighter">{item.weight}</p>
                                         </td>
                                         <td className="px-4 py-5 text-center font-black text-slate-600">{item.quantity}</td>
                                         <td className="px-4 py-5 text-right font-black text-slate-800">₹{item.total.toFixed(2)}</td>
@@ -688,25 +688,25 @@ const CreateBilling = () => {
                     </div>
                 </div>
 
-                <div className="mt-10 border-t border-gray-100 pt-8 pb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between text-sm font-bold text-gray-400">
+                <div className="mt-8 border-t border-gray-100 pt-6 pb-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-400">
                                 <span>GST Subtotal</span>
                                 <span>₹{gstAmount.toFixed(2)}</span>
                             </div>
                             <div className="flex items-center justify-between group">
-                                <span className="text-sm font-bold text-gray-400">Shipping Charge</span>
+                                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Shipping Charge</span>
                                 <input 
                                   type="number" 
-                                  className="w-24 bg-gray-50 border-none rounded-xl px-3 py-1.5 text-right font-black text-slate-800 outline-none focus:ring-2 focus:ring-primary/20"
+                                  className="w-20 bg-gray-50 border-none rounded-lg px-2 py-1 text-right font-black text-slate-800 outline-none focus:ring-2 focus:ring-primary/20 text-xs"
                                   value={shippingCharge}
                                   onChange={(e)=>setShippingCharge(parseFloat(e.target.value) || 0)}
                                 />
                             </div>
-                            <div className="pt-4 flex items-center justify-between">
-                                <span className="text-xl font-black text-slate-800 uppercase tracking-tighter">Total Amount</span>
-                                <span className="text-3xl font-black text-primary tracking-tighter">
+                            <div className="pt-2 flex items-center justify-between">
+                                <span className="text-sm font-black text-slate-800 uppercase tracking-tighter">Net Total Amount</span>
+                                <span className="text-xl font-black text-primary tracking-tighter">
                                   ₹{(invoiceItems.reduce((a, b) => a + b.total + b.gst, 0) + shippingCharge).toFixed(2)}
                                 </span>
                             </div>

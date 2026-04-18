@@ -506,23 +506,23 @@ const Allproduct = () => {
                            </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full">{item.category}</span>
+                          <span className="text-[10px] font-bold bg-gray-100 text-slate-700 px-3 py-1.5 rounded-full">{item.category}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                            <div className="flex flex-col gap-0.5">
-                              {mrp ? <span className="text-[10px] font-bold text-gray-400 line-through">MRP: ₹{mrp}</span> : null}
-                              <span className="text-[13px] font-black text-gray-900">₹{price || '—'}</span>
+                              {mrp ? <span className="text-[10px] font-bold text-slate-400 line-through">MRP: ₹{mrp}</span> : null}
+                              <span className="text-[13px] font-black text-black">₹{price || '—'}</span>
                            </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex justify-end gap-2">
-                             <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-emerald-600 hover:border-emerald-600 hover:bg-emerald-50 transition-all shadow-sm bg-white">
+                             <button onClick={() => setViewProduct({ ...item, images, price, mrp })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-slate-600 hover:text-emerald-600 hover:border-emerald-600 hover:bg-emerald-50 transition-all shadow-sm bg-white">
                                <FaEye size={13} />
                              </button>
-                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all shadow-sm bg-white">
+                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-slate-600 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all shadow-sm bg-white">
                                <FaEdit size={13} />
                              </button>
-                             <button onClick={() => handleDelete(item)} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-gray-600 hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all shadow-sm bg-white">
+                             <button onClick={() => handleDelete(item)} className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md text-slate-600 hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-all shadow-sm bg-white">
                                <FaTrash size={13} />
                              </button>
                           </div>
@@ -537,11 +537,11 @@ const Allproduct = () => {
 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-6 pb-6">
-              <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="p-2 text-gray-400">←</button>
+              <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} className="p-2 text-slate-400">←</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button key={page} onClick={() => setCurrentPage(page)} className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all ${currentPage === page ? 'bg-emerald-600 text-white' : 'bg-gray-50 text-gray-500'}`}>{page}</button>
+                <button key={page} onClick={() => setCurrentPage(page)} className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all ${currentPage === page ? 'bg-emerald-600 text-white' : 'bg-gray-50 text-slate-500'}`}>{page}</button>
               ))}
-              <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="p-2 text-gray-400">→</button>
+              <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} className="p-2 text-slate-400">→</button>
             </div>
           )}
         </div>
@@ -550,20 +550,20 @@ const Allproduct = () => {
       {viewProduct && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
           <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden shadow-xl relative flex flex-col md:flex-row max-h-[85vh]">
-            <button onClick={() => setViewProduct(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-500 z-50">✕</button>
+            <button onClick={() => setViewProduct(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-slate-400 hover:text-red-500 z-50">✕</button>
             <div className="flex-1 bg-gray-50 p-6 flex items-center justify-center">
                 {viewProduct.images?.[0] ? <img src={viewProduct.images[0]} className="max-h-64 object-contain" alt="d" /> : <FaBoxOpen className="text-gray-100" size={80} />}
             </div>
             <div className="flex-1 p-8 flex flex-col justify-center space-y-5 bg-white">
               <div>
                  <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">{viewProduct.category}</span>
-                 <h2 className="text-xl font-bold text-gray-800 mt-1">{viewProduct.name}</h2>
-                 <p className="text-[9px] text-gray-300 font-bold uppercase mt-0.5">ID: {viewProduct.productId}</p>
+                 <h2 className="text-xl font-bold text-slate-900 mt-1">{viewProduct.name}</h2>
+                 <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">ID: {viewProduct.productId}</p>
               </div>
               <div className="flex gap-4">
                 <div className="bg-gray-50 px-4 py-3 rounded-xl border flex-1">
-                  <p className="text-[8px] font-bold text-gray-300 uppercase">Price</p>
-                  <p className="text-xl font-bold text-gray-800">₹{viewProduct.price}</p>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase">Price</p>
+                  <p className="text-xl font-bold text-slate-900">₹{viewProduct.price}</p>
                 </div>
                 <div className="bg-emerald-600 px-4 py-3 rounded-xl flex-1 text-white">
                     <p className="text-[8px] font-bold opacity-60 uppercase">Stock</p>
