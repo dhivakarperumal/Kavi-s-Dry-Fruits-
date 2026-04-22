@@ -135,7 +135,7 @@ const StockDetail = () => {
   const paginatedStocks = filteredStocks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-700">
+    <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto mt-0">
         
         {/* Header Section */}

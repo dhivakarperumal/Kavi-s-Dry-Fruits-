@@ -28,6 +28,7 @@ import Category from "./Products/Category";
 import Allproduct from "./Products/Allproduct";
 import NewOrders from "./Orders/NewOrders";
 import AllOrders from "./Orders/AllOrders";
+import OffersAndCoupons from "./Offers/OffersAndCoupons";
 
 import AddHealthBenefit from "./HealthBenefits/AddHealthBenefit";
 import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
@@ -82,6 +83,7 @@ const AdminPanel = () => {
       "add-health-benefit": "Add Health Benefit",
       "view-health-benefits": "View Health Benefits",
       "settings": "Settings",
+      "coupons": "Offers & Coupons",
       "profile": "Profile",
     };
 
@@ -118,6 +120,7 @@ const AdminPanel = () => {
       "Add Health Benefit": "add-health-benefit",
       "View Health Benefits": "view-health-benefits",
       "Settings": "settings",
+      "Offers & Coupons": "coupons",
       "Profile": "profile",
     };
     
@@ -198,6 +201,7 @@ const AdminPanel = () => {
       case "Add Health Benefit":  return <AddHealthBenefit />;
       case "View Health Benefits": return <ViewHealthBenefits />;
       case "Settings":           return <Settings />;
+      case "Offers & Coupons":   return <OffersAndCoupons />;
       case "Profile":            return <Profile />;
 
       default:

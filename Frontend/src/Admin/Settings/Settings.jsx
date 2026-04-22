@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUsers, FaStar, FaStore, FaFileInvoiceDollar } from "react-icons/fa";
+import { FaUsers, FaStar, FaStore, FaFileInvoiceDollar, FaTicketAlt } from "react-icons/fa";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -37,6 +37,14 @@ const Settings = () => {
       path: "/adminpanel/invoice",
       bgColor: "bg-indigo-50",
       borderColor: "border-indigo-100",
+    },
+    {
+      title: "Offers & Coupons",
+      description: "Create and manage promotional discount codes and vouchers.",
+      icon: <FaTicketAlt size={28} className="text-rose-500" />,
+      path: "/adminpanel/coupons",
+      bgColor: "bg-rose-50",
+      borderColor: "border-rose-100",
     },
   ];
 

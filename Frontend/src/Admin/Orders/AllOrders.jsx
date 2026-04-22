@@ -216,7 +216,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
    }, []);
 
   return (
-    <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 sm:p-8  min-h-screen">
       <div className="mb-8">
        
 

@@ -39,6 +39,40 @@ app.use('/api/dealers', dealerRoutes);
 app.use('/api/stickers', stickerRoutes);
 app.use('/api/seo', seoRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/coupons', async (req, res, next) => {
+  // Inline router for coupons
+  const method = req.method;
+  if (method === 'GET') {
+    try {
+      const [rows] = await db.query('SELECT * FROM coupons ORDER BY created_at DESC');
+      res.json(rows);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  } else if (method === 'POST') {
+    try {
+      const { code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status } = req.body;
+      const [result] = await db.query(
+        'INSERT INTO coupons (code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status || 'active']
+      );
+      res.json({ id: result.insertId, message: 'Coupon created' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  } else {
+    next();
+  }
+});
+
+app.delete('/api/coupons/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM coupons WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Coupon deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Invoices Routes
 app.get('/api/invoices', async (req, res) => {
@@ -401,6 +435,21 @@ const initializeDatabase = async () => {
       state VARCHAR(100),
       street TEXT,
       country VARCHAR(100) DEFAULT 'India',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS coupons (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      code VARCHAR(50) NOT NULL UNIQUE,
+      discountType VARCHAR(20) DEFAULT 'percentage',
+      discountValue DECIMAL(10,2) NOT NULL,
+      minPurchase DECIMAL(10,2) DEFAULT 0,
+      expiryDate DATE,
+      usageLimit INT DEFAULT 0,
+      usedCount INT DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
