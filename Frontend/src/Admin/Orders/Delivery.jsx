@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FaPrint, FaTrash } from "react-icons/fa";
+import { FaPrint, FaTrash, FaSearch } from "react-icons/fa";
 import logo from "/images/Kavi_logo.png";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -257,43 +257,45 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Delivery Archive</h1>
-          <p className="text-sm font-bold text-slate-400 mt-1">Found {filteredOrders.length} successful deliveries</p>
-        </div>
+      <div className="mb-8">
+      
 
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-80">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 uppercase">
+          {/* Left: Search */}
+          <div className="relative w-full lg:max-w-sm flex-1">
+             <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               type="text"
               placeholder="Search by ID or Client..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-6 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/20 focus:ring-4 focus:ring-emerald-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
+              className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/20 focus:ring-4 focus:ring-emerald-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
           </div>
           
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
-          >
-            <option value="all">Full Record</option>
-            <option value="today">Today's Batch</option>
-            <option value="week">Weekly Review</option>
-            <option value="month">Monthly Audit</option>
-            <option value="custom">Selection Range</option>
-          </select>
+          {/* Right: Controls */}
+          <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
+            >
+              <option value="all">Full Record</option>
+              <option value="today">Today's Batch</option>
+              <option value="week">Weekly Review</option>
+              <option value="month">Monthly Audit</option>
+              <option value="custom">Selection Range</option>
+            </select>
 
-          <select
-            value={ordersPerPage}
-            onChange={(e) => setOrdersPerPage(Number(e.target.value))}
-            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
-          >
-            <option value={25}>Show 25</option>
-            <option value={100}>Show 100</option>
-          </select>
+            <select
+              value={ordersPerPage}
+              onChange={(e) => setOrdersPerPage(Number(e.target.value))}
+              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
+            >
+              <option value={25}>Show 25</option>
+              <option value={100}>Show 100</option>
+            </select>
+          </div>
         </div>
       </div>
 

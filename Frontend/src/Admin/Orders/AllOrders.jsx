@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../services/api";
-import { FaPrint, FaEye } from "react-icons/fa";
+import { FaPrint, FaEye, FaSearch } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
@@ -217,44 +217,46 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Order Archives</h1>
-          <p className="text-sm font-bold text-slate-400 mt-1">Showing {filteredOrders.length} processed transactions</p>
-        </div>
+      <div className="mb-8">
+       
 
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-80">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          {/* Left: Search */}
+          <div className="relative w-full lg:max-w-sm flex-1">
+            <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               type="text"
               placeholder="Search by Order ID or Client..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-6 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
+              className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
           </div>
           
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-          >
-            <option value="All">Full History</option>
-            <option value="Today">Today's Log</option>
-            <option value="This Week">Weekly View</option>
-            <option value="This Month">Monthly View</option>
-            <option value="Custom">Custom Range</option>
-          </select>
+          {/* Right: Controls */}
+          <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+            >
+              <option value="All">Full History</option>
+              <option value="Today">Today's Log</option>
+              <option value="This Week">Weekly View</option>
+              <option value="This Month">Monthly View</option>
+              <option value="Custom">Custom Range</option>
+            </select>
 
-          <select
-            value={itemsPerPage}
-            onChange={(e) => setItemsPerPage(Number(e.target.value))}
-            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-          >
-            <option value={25}>Show 25</option>
-            <option value={100}>Show 100</option>
-            <option value={500}>Show 500</option>
-          </select>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+            >
+              <option value={25}>Show 25</option>
+              <option value={100}>Show 100</option>
+              <option value={500}>Show 500</option>
+            </select>
+          </div>
         </div>
       </div>
 

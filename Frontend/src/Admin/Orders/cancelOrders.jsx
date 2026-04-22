@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaSearch } from "react-icons/fa";
 import api from "../../services/api";
 
 const CancelOrders = () => {
@@ -88,34 +88,39 @@ const CancelOrders = () => {
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-        <div>
+      <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Voided Orders</h1>
           <p className="text-sm font-bold text-slate-400 mt-1">Reviewing {filteredOrders.length} cancelled transactions</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="relative flex-1 lg:w-80">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 uppercase">
+          {/* Left: Search */}
+          <div className="relative w-full lg:max-w-sm flex-1">
+             <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               type="text"
               placeholder="Search by ID or Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-6 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
+              className="w-full pl-12 pr-6 py-5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
           </div>
           
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-          >
-            <option value="all">Full Log</option>
-            <option value="today">Today's Voids</option>
-            <option value="week">Weekly Review</option>
-            <option value="month">Monthly Audit</option>
-            <option value="custom">Custom Filter</option>
-          </select>
+          {/* Right: Controls */}
+          <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+            >
+              <option value="all">Full Log</option>
+              <option value="today">Today's Voids</option>
+              <option value="week">Weekly Review</option>
+              <option value="month">Monthly Audit</option>
+              <option value="custom">Custom Filter</option>
+            </select>
+          </div>
         </div>
       </div>
 

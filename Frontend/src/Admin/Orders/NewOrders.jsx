@@ -169,38 +169,39 @@ const NewOrders = () => {
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
       {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">New Orders</h1>
-          <p className="text-sm font-bold text-slate-400 mt-1">Found {filteredOrders.length} orders pending fulfillment</p>
-        </div>
+      <div className="mb-8">
+      
 
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          {/* View Toggle */}
-          <div className="bg-white p-1 rounded-2xl border border-slate-200 flex items-center shadow-sm">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
-            >
-              <FaTable /> Table
-            </button>
-            <button
-              onClick={() => setViewMode("card")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
-            >
-              <FaThLarge /> Cards
-            </button>
-          </div>
-
-          <div className="relative flex-1 lg:w-64">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          {/* Left: Search */}
+          <div className="relative w-full lg:max-w-sm flex-1">
             <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
             <input
               type="text"
               placeholder="Search ID, Name..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-12 pr-6 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
+              className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm shadow-sm"
             />
+          </div>
+
+          {/* Right: Controls */}
+          <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+            {/* View Toggle */}
+            <div className="bg-white p-1 rounded-2xl border border-slate-200 flex items-center shadow-sm">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                <FaTable /> Table
+              </button>
+              <button
+                onClick={() => setViewMode("card")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                <FaThLarge /> Cards
+              </button>
+            </div>
           </div>
         </div>
       </div>
