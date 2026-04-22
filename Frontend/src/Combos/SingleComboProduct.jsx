@@ -237,7 +237,9 @@ const handleMouseMove = (e) => {
                   <p className="font-bold text-green-800">Combo Includes:</p>
                   <ul className="list-disc list-inside text-gray-700 mt-1">
                     {product.combos.map((item, idx) => (
-                      <li key={idx}>{item}</li>
+                      <li key={idx}>
+                        {typeof item === 'object' ? `${item.name} (${item.weight || 'N/A'})` : item}
+                      </li>
                     ))}
                   </ul>
                 </div>
