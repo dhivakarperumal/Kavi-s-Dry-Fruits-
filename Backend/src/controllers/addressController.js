@@ -33,4 +33,18 @@ const deleteAddress = async (req, res) => {
   }
 };
 
-module.exports = { getAddresses, createAddress, deleteAddress };
+const updateAddress = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fullname, email, contact, zip, city, state, street, country } = req.body;
+    await db.query(
+      'UPDATE user_addresses SET fullname = ?, email = ?, contact = ?, zip = ?, city = ?, state = ?, street = ?, country = ? WHERE id = ?',
+      [fullname, email, contact, zip, city, state, street, country, id]
+    );
+    res.json({ message: 'Address updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getAddresses, createAddress, deleteAddress, updateAddress };

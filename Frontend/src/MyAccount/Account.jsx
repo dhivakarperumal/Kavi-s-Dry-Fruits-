@@ -132,54 +132,56 @@ const Account = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleAddOrUpdateAddress = () => {
-    const updated = { ...newAddress };
+  const validateFields = () => {
     const newErrors = {};
+    const updated = { ...newAddress };
 
-    // validation rules
-    if (!updated.fullname || !updated.fullname.trim()) {
-      newErrors.fullname = "Full Name is required.";
-    }
-    if (!updated.contact || !updated.contact.trim()) {
-      newErrors.contact = "Phone Number is required.";
-    }
-    if (!updated.email || !updated.email.trim()) {
-      newErrors.email = "Email is required.";
-    }
+    if (!updated.fullname || !updated.fullname.trim()) newErrors.fullname = "Full Name is required.";
+    if (!updated.contact || !updated.contact.trim()) newErrors.contact = "Phone Number is required.";
+    if (!updated.email || !updated.email.trim()) newErrors.email = "Email is required.";
+    if (!updated.street || !updated.street.trim()) newErrors.street = "Street is required.";
+    if (!updated.city || !updated.city.trim()) newErrors.city = "City is required.";
+    if (!updated.state || !updated.state.trim()) newErrors.state = "State is required.";
+    if (!updated.country || !updated.country.trim()) newErrors.country = "Country is required.";
+    if (!/^\d{6}$/.test((updated.zip || "").toString())) newErrors.zip = "Pin Code must be a 6-digit number.";
+    
+    return newErrors;
+  };
 
-    if (!updated.street || !updated.street.trim()) {
-      newErrors.street = "Street is required.";
-    }
-    if (!updated.city || !updated.city.trim()) {
-      newErrors.city = "City is required.";
-    }
-    if (!updated.state || !updated.state.trim()) {
-      newErrors.state = "State is required.";
-    }
-    if (!updated.country || !updated.country.trim()) {
-      newErrors.country = "Country is required.";
-    }
-    if (!/^\d{6}$/.test((updated.zip || "").toString())) {
-      newErrors.zip = "Pin Code must be a 6-digit number.";
-    }
-
-    setErrors(newErrors);
-
-    // if any errors, stop here (errors now shown inline)
-    if (Object.keys(newErrors).length > 0) {
+  const handleAddOrUpdateAddress = () => {
+    const errorMap = validateFields();
+    if (Object.keys(errorMap).length > 0) {
+      setErrors(errorMap);
       return;
     }
 
-    let currentAddresses = Array.isArray(addresses) ? addresses : [];
-    if (editingIndex !== null) {
-      currentAddresses[editingIndex] = updated;
-      toast.success("Address updated successfully!");
-    } else {
-      currentAddresses = [...currentAddresses, updated];
-      toast.success("Address added successfully!");
-    }
+    const updated = {
+      ...newAddress,
+    };
 
-    saveAddresses(currentAddresses);
+    const isUpdate = editingIndex !== null;
+    
+    const saveOp = async () => {
+      try {
+        if (isUpdate) {
+          const originalId = addresses[editingIndex].id;
+          await api.put(`/addresses/${originalId}`, updated);
+          toast.success("Address updated successfully!");
+        } else {
+          await api.post(`/addresses/${userIdToUse}`, updated);
+          toast.success("Address added successfully!");
+        }
+        
+        // Refresh list
+        const addressRes = await api.get(`/addresses/${userIdToUse}`);
+        setAddresses(addressRes.data || []);
+      } catch (err) {
+        console.error("Address save error:", err);
+        toast.error("Failed to save address.");
+      }
+    };
+
+    saveOp();
 
     setNewAddress({
       fullname: "",
@@ -192,7 +194,7 @@ const Account = () => {
       country: "India",
     });
     setEditingIndex(null);
-    setErrors({}); // clear errors on success
+    setErrors({});
   };
 
   const handleEdit = (idx) => {
