@@ -181,7 +181,7 @@ const StockDetail = () => {
                   <FaList size={18} />
                 </button>
              </div>
-              <button
+              {/* <button
                 onClick={() => {
                   const data = liveStocks.map(s => ({
                     'Product ID': s.productId,
@@ -199,7 +199,7 @@ const StockDetail = () => {
                 className="flex items-center gap-2 px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-sm transition-all shadow-sm uppercase tracking-widest"
               >
                 <FaHistory /> Export Template
-              </button>
+              </button> */}
               <button
                 onClick={() => setShowImportModal(true)}
                 className="flex items-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest"

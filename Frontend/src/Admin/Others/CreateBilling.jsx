@@ -319,7 +319,16 @@ const CreateBilling = () => {
       setInvoiceItems(updatedItems);
       setGstAmount((prev) => prev + gst);
     } else {
-      setInvoiceItems([...invoiceItems, { ...selectedProduct, price, total, gst, weight: isCombo ? "Combo" : selectedProduct.weight }]);
+      setInvoiceItems([...invoiceItems, { 
+        ...selectedProduct, 
+        id: selectedProduct.dbId, // Use database ID for stock reduction
+        productId: selectedProduct.id, // Keep the SKU separately
+        selectedWeight: selectedProduct.weight, // Used by backend for grams calculation
+        price, 
+        total, 
+        gst, 
+        weight: isCombo ? "Combo" : selectedProduct.weight 
+      }]);
       setGstAmount((prev) => prev + gst);
     }
 
@@ -334,6 +343,7 @@ const CreateBilling = () => {
       const newOrderId = await generateOrderId();
       const totalAmount = invoiceItems.reduce((acc, i) => acc + i.total + i.gst, 0) + shippingCharge;
       
+      // The backend /orders endpoint now handles stock reduction transactionally
       await api.post("/orders", {
         orderId: newOrderId,
         userId: "POS-GUEST",
@@ -352,19 +362,6 @@ const CreateBilling = () => {
         gstAmount,
         totalAmount,
       });
-
-      await Promise.all(
-        invoiceItems.map(async (item) => {
-          const matched = productList.find(p => p.productId === item.id);
-          if (matched) {
-            const currentStock = Number(matched.totalStock) || 0;
-            const reduceAmount = item.category === "Combo" ? item.quantity : item.quantity * 1000;
-            const newStock = currentStock - reduceAmount;
-            const endpoint = matched.comboItems ? `/combos/${matched.id}` : `/products/${matched.id}`;
-            await api.put(endpoint, { ...matched, totalStock: String(newStock) });
-          }
-        })
-      );
 
       toast.success("Bill saved successfully!");
       setInvoiceItems([]);
