@@ -66,6 +66,10 @@ const maintenanceChecks = async () => {
         }
     };
     
+    // Add lastInvoice column if missing
+    await ensureTableColumnExists('products', 'lastInvoice', 'VARCHAR(100)', 'AFTER totalStock');
+    await ensureTableColumnExists('combos', 'lastInvoice', 'VARCHAR(100)', 'AFTER totalStock');
+
     // UUID maintenance for existing users
     const [blankRows] = await db.query("SELECT id FROM users WHERE user_id IS NULL OR user_id = ''");
     for (const row of blankRows) {

@@ -38,6 +38,7 @@ const tables = {
       images LONGTEXT,
       variants LONGTEXT,
       totalStock INT DEFAULT 0,
+      lastInvoice VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -56,6 +57,7 @@ const tables = {
       comboItems LONGTEXT,
       comboDetails LONGTEXT,
       totalStock INT DEFAULT 0,
+      lastInvoice VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,

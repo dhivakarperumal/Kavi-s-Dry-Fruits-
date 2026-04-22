@@ -129,7 +129,10 @@ const OrderDetailsModal = ({ order, onClose = () => {}, onPrint = () => {} }) =>
                 {items.map((it, idx) => {
                   const qty = Number(it.qty ?? it.quantity ?? 1);
                   const unitPrice = Number(it.price ?? it.unitPrice ?? 0) || 0;
-                  const weight = it.weight || it.selectedWeight || it.weightDisplay || "-";
+                  let weight = it.selectedWeight || it.weight || it.totalWeight || it.comboDetails?.totalWeight || "-";
+                  if (weight !== "-" && !isNaN(weight)) {
+                    weight = weight >= 1000 ? (weight / 1000).toFixed(2) + "kg" : weight + "g";
+                  }
                   const lineTotal = (unitPrice * qty).toFixed(2);
                   return (
                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">

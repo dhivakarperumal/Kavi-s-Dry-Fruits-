@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { 
   FaPlus, 
   FaSearch, 
@@ -13,7 +16,9 @@ import {
   FaArrowLeft,
   FaArrowRight,
   FaThLarge,
-  FaList
+  FaList,
+  FaUpload,
+  FaFilePdf
 } from "react-icons/fa";
 
 const StockDetail = () => {
@@ -32,6 +37,9 @@ const StockDetail = () => {
     currentQuantity: "",
     invoiceNumber: "",
   });
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importData, setImportData] = useState([]);
+  const [importInvoice, setImportInvoice] = useState("");
   const [isCombo, setIsCombo] = useState(false);
   const [invoiceNumbers, setInvoiceNumbers] = useState([]);
   const [liveStocks, setLiveStocks] = useState([]);
@@ -168,12 +176,37 @@ const StockDetail = () => {
                   <FaList size={18} />
                 </button>
              </div>
-             <button
-               onClick={() => setShowAddModal(true)}
-               className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
-             >
-               <FaPlus /> Add New Stock
-             </button>
+              <button
+                onClick={() => {
+                  const data = liveStocks.map(s => ({
+                    'Product ID': s.productId,
+                    'Product Name': s.name,
+                    'Category': s.category,
+                    'Current Stock (KG)': (Number(s.totalStock) / 1000).toFixed(2),
+                    'Added Stock (KG)': 0
+                  }));
+                  const ws = XLSX.utils.json_to_sheet(data);
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+                  XLSX.writeFile(wb, "Kavis_Inventory_Template.xlsx");
+                  toast.success("Template exported!");
+                }}
+                className="flex items-center gap-2 px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-sm transition-all shadow-sm uppercase tracking-widest"
+              >
+                <FaHistory /> Export Template
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center gap-2 px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest"
+              >
+                <FaUpload /> Bulk Import (Excel/PDF)
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
+              >
+                <FaPlus /> Add New Stock
+              </button>
           </div>
         </div>
 
@@ -510,6 +543,158 @@ const StockDetail = () => {
                       </button>
                    </div>
                 </form>
+             </div>
+          </div>
+        )}
+
+        {/* Bulk Import Modal */}
+        {showImportModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowImportModal(false)} />
+             <div className="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="bg-indigo-600 p-8 text-white flex justify-between items-center">
+                   <div>
+                      <h3 className="text-2xl font-black uppercase tracking-tight">Bulk Inventory Import</h3>
+                      <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1">Excel / CSV Stock Synchronization</p>
+                   </div>
+                   <button onClick={() => setShowImportModal(false)} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all">
+                      <FaTimes size={18} />
+                   </button>
+                </div>
+
+                <div className="p-8 space-y-6 overflow-y-auto">
+                   {!importData.length ? (
+                     <div className="space-y-6">
+                        <div className="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-[2.5rem] p-12 text-center">
+                           <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-100 text-indigo-600">
+                              <FaFileInvoice size={32} />
+                           </div>
+                           <h4 className="text-xl font-black text-slate-900 mb-2">Drop your Stock Sheet</h4>
+                           <p className="text-sm text-slate-500 font-medium mb-8">Upload .xlsx, .csv or .pdf with columns: Product ID, Added Stock (KG)</p>
+                           
+                           <label className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black text-sm cursor-pointer shadow-xl transition-all inline-block uppercase tracking-widest">
+                              Select File
+                              <input 
+                                type="file" 
+                                className="hidden" 
+                                accept=".xlsx, .xls, .csv, .pdf" 
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if(!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = (evt) => {
+                                    const bstr = evt.target.result;
+                                    const wb = XLSX.read(bstr, { type: 'binary' });
+                                    const wsname = wb.SheetNames[0];
+                                    const ws = wb.Sheets[wsname];
+                                    const data = XLSX.utils.sheet_to_json(ws);
+                                    
+                                    // Map and validate
+                                    const mapped = data.map(row => {
+                                      const pId = row['Product ID'] || row['ID'] || row['productId'];
+                                      const qty = row['Added Stock (KG)'] || row['Stock'] || row['Quantity'];
+                                      const matched = liveStocks.find(s => s.productId === String(pId).trim());
+                                      return {
+                                        productId: String(pId).trim(),
+                                        addedQuantity: Number(qty) || 0,
+                                        name: matched?.name || "Not Found",
+                                        category: matched?.category || "-",
+                                        type: matched?.type || "unknown",
+                                        isValid: !!matched
+                                      };
+                                    });
+                                    setImportData(mapped);
+                                  };
+                                  reader.readAsBinaryString(file);
+                                }}
+                              />
+                           </label>
+                        </div>
+                        <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
+                           <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Required Excel Format</h5>
+                           <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                                 <p className="text-[10px] font-black text-slate-400 mb-1">Column A</p>
+                                 <p className="font-black text-slate-900 text-xs">Product ID</p>
+                              </div>
+                              <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                                 <p className="text-[10px] font-black text-slate-400 mb-1">Column B</p>
+                                 <p className="font-black text-slate-900 text-xs">Added Stock (KG)</p>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                   ) : (
+                     <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                           <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Reviewing {importData.length} Entries</p>
+                           <button onClick={() => setImportData([])} className="text-red-500 font-black text-[10px] uppercase tracking-widest">Discard & Clear</button>
+                        </div>
+
+                        <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden max-h-[300px] overflow-y-auto">
+                           <table className="w-full text-left">
+                              <thead className="bg-slate-50 sticky top-0">
+                                 <tr>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Added (KG)</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-50">
+                                 {importData.map((row, i) => (
+                                    <tr key={i} className={!row.isValid ? "bg-red-50" : ""}>
+                                       <td className="px-6 py-3 font-black text-slate-700 text-xs">{row.productId}</td>
+                                       <td className="px-6 py-3 font-black text-slate-900 text-xs">{row.name}</td>
+                                       <td className="px-6 py-3 font-black text-blue-600 text-xs">{row.addedQuantity} KG</td>
+                                       <td className="px-6 py-3 text-[10px]">
+                                          {row.isValid ? (
+                                            <span className="text-emerald-500 font-black uppercase">Ready</span>
+                                          ) : (
+                                            <span className="text-red-500 font-black uppercase">Unknown SKU</span>
+                                          )}
+                                       </td>
+                                    </tr>
+                                 ))}
+                              </tbody>
+                           </table>
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Reference Invoice for this Batch *</label>
+                           <select
+                             value={importInvoice}
+                             onChange={(e) => setImportInvoice(e.target.value)}
+                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-indigo-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
+                             required
+                           >
+                             <option value="">Select Invoice</option>
+                             {invoiceNumbers.map((inv) => (
+                               <option key={inv.id} value={inv.invoiceNo}>{inv.invoiceNo}</option>
+                             ))}
+                           </select>
+                        </div>
+
+                        <button
+                          disabled={!importInvoice || loading || importData.some(r => !r.isValid)}
+                          onClick={async () => {
+                            setLoading(true);
+                            try {
+                              await api.post('/stock-history/bulk', { items: importData, invoiceNumber: importInvoice });
+                              toast.success("Batch stock updated successfully!");
+                              setShowImportModal(false);
+                              setImportData([]);
+                              fetchStocks();
+                            } catch { toast.error("Batch update failed."); }
+                            finally { setLoading(false); }
+                          }}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-indigo-100 transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50"
+                        >
+                          Execute Batch Update
+                        </button>
+                     </div>
+                   )}
+                </div>
              </div>
           </div>
         )}
