@@ -65,25 +65,21 @@ const NewArrived = () => {
           const activeWeight = product.weights?.[0] || "100g"; // fallback
           const priceObj = product.prices?.[activeWeight];
           const offer = product.offer || 0;
-          const isOutOfStock = product.stock <= 0;
+          const avgRating = product.rating || 4.5;
 
           let price = 0;
           let mrp = 0;
-          
+
           if (typeof priceObj === "object" && priceObj !== null) {
             price = Number(priceObj.offerPrice) || Number(priceObj.mrp) || 0;
             mrp = Number(priceObj.mrp) || price;
           } else if (typeof priceObj === "number") {
-            // Fallback for old format
             price = Number(priceObj);
             mrp = offer > 0 ? Math.round(price + (price * offer) / 100) : price;
           }
 
-          // Ensure they are valid numbers
           if (isNaN(price)) price = 0;
           if (isNaN(mrp)) mrp = 0;
-
-          const avgRating = product.rating || 4.5;
 
           return (
             <div
@@ -127,7 +123,7 @@ const NewArrived = () => {
                 <span className="line-through text-gray-400">₹{mrp}</span> ₹
                 {price}
               </p>
-              {isOutOfStock && (
+              {product.isOutOfStock && (
                 <p className="text-center text-red-500 text-sm mb-3 font-medium">
                   Out of Stock
                 </p>
@@ -137,7 +133,7 @@ const NewArrived = () => {
 
               <div className="flex justify-between items-center mt-auto px-1">
                 <button
-                  disabled={isOutOfStock}
+                  disabled={product.isOutOfStock}
                   onClick={() => {
                     addToCart({
                       id: product.id,
@@ -152,7 +148,7 @@ const NewArrived = () => {
                     });
                   }}
                   className={`${
-                    isOutOfStock
+                    product.isOutOfStock
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-green1 hover:bg-green2"
                   } text-white w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer`}

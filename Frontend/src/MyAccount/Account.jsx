@@ -610,7 +610,7 @@ const Account = () => {
             {allOrders.length === 0 ? (
               <p className="text-center text-gray-500">No Orders Found</p>
             ) : (
-              allOrders.map((order) => {
+              allOrders.map((order, index) => {
                 const isOpen = selectedOrderId === order.orderId;
                 const statusSteps = [
                   "Placed",
@@ -820,7 +820,7 @@ const Account = () => {
                               <AddReviewForm
                                 order={order}
                                 userInfo={userInfo}
-                                userId={userId}
+                                userId={userIdToUse}
                                 onReviewSubmitted={() => {
                                   const updated = [...allOrders];
                                   updated[index].showReviewForm = false;

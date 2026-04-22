@@ -94,7 +94,7 @@ const SingleProductView = () => {
 
   const averageRating =
     typeof product.rating === "number" ? product.rating.toFixed(1) : "4.5";
-  const isOutOfStock = product.stock <= 0;
+  const isOutOfStock = product.isOutOfStock;
 
   const increaseQty = () => setQuantity((q) => q + 1);
   const decreaseQty = () => setQuantity((q) => (q > 1 ? q - 1 : 1));

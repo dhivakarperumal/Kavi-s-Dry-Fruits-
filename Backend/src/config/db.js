@@ -61,6 +61,7 @@ const initializeDatabase = async () => {
   await syncColumns('products', tableDefinitions.products);
   await syncColumns('combos', tableDefinitions.combos);
   await syncColumns('categories', tableDefinitions.categories);
+  await syncColumns('reviews', tableDefinitions.reviews);
 
   // UUID Maintenance
   try {

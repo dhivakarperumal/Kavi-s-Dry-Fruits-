@@ -11,10 +11,7 @@ const StoreContext = createContext();
 export const StoreProvider = ({ children }) => {
   const { user } = useAuth();
   const [userData, setUserData] = useState(null);
-  const [allProducts, setAllProducts] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
-  const [favItems, setFavItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [allCategories, setAllCategories] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   // ============================
@@ -56,18 +53,27 @@ export const StoreProvider = ({ children }) => {
   // ⚡ SUPER FAST PRODUCT LOADING (WITH CACHING & PRELOADING)
   // ============================
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         // Try to get from cache first
-        let products = await dataPreloadService.preloadProducts(async () => {
-          const [prodRes, comboRes] = await Promise.all([
+        let data = await dataPreloadService.preloadProducts(async () => {
+          const [prodRes, comboRes, catRes] = await Promise.all([
             api.get("/products"),
             api.get("/combos"),
+            api.get("/categories"),
           ]);
 
           const rawProducts = prodRes.data || [];
           const rawCombos = comboRes.data || [];
+          const rawCategories = catRes.data || [];
           
+          // Map MySQL categories
+          const mappedCategories = rawCategories.map(c => ({
+            ...c,
+            name: c.cname,
+            images: typeof c.cimgs === 'string' ? JSON.parse(c.cimgs || '{}') : (c.cimgs || {})
+          }));
+
           // Map MySQL products to Frontend schema
           const mappedProducts = rawProducts.map(p => {
             const variants = typeof p.variants === 'string' ? JSON.parse(p.variants || '[]') : (p.variants || []);
@@ -93,7 +99,9 @@ export const StoreProvider = ({ children }) => {
               images: typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []),
               health_benefits: typeof p.healthBenefits === 'string' ? JSON.parse(p.healthBenefits || '[]') : (p.healthBenefits || []),
               tags: typeof p.tags === 'string' ? JSON.parse(p.tags || '[]') : (p.tags || []),
-              rating: Number(p.rating || 4.5)
+              rating: Number(p.rating || 4.5),
+              stock: Number(p.totalStock || 0),
+              isOutOfStock: Number(p.totalStock || 0) <= 3000
             };
           });
 
@@ -127,6 +135,7 @@ export const StoreProvider = ({ children }) => {
               offerPrice,
               mrp,
               stock,
+              isOutOfStock: stock <= 3,
               image: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
               imageUrl: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
               combos: items, // Rename for frontend compatibility
@@ -141,27 +150,28 @@ export const StoreProvider = ({ children }) => {
             };
           });
 
-          return [...mappedProducts, ...mappedCombos];
+          return { products: [...mappedProducts, ...mappedCombos], categories: mappedCategories };
         });
 
-        setAllProducts(products);
+        setAllProducts(data.products || []);
+        setAllCategories(data.categories || []);
 
         // Preload critical images for homepage
-        if (products && products.length > 0) {
-          const topProducts = products.slice(0, 12);
+        if (data.products && data.products.length > 0) {
+          const topProducts = data.products.slice(0, 12);
           imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
             console.warn('Image preload error:', err)
           );
         }
       } catch (err) {
-        console.error("Product fetch error:", err.message);
-        toast.error("Cannot load products.");
+        console.error("Data load error:", err.message);
+        toast.error("Cannot load products or categories.");
       } finally {
         setLoadingProducts(false);
       }
     };
 
-    loadProducts();
+    loadData();
   }, []);
 
   // ============================
@@ -435,6 +445,7 @@ export const StoreProvider = ({ children }) => {
         loading,
         loadingProducts,
         allProducts,
+        allCategories,
         cartItems,
         favItems,
         addToCart,
@@ -446,7 +457,7 @@ export const StoreProvider = ({ children }) => {
         clearCart,
         clearFav,
         updateWeight,
-      }), [user, userData, loading, loadingProducts, allProducts, cartItems, favItems, addToCart, addToFav, increaseQuantity, decreaseQuantity, removeItem, removeFavItem, clearCart, clearFav, updateWeight])}
+      }), [user, userData, loading, loadingProducts, allProducts, allCategories, cartItems, favItems, addToCart, addToFav, increaseQuantity, decreaseQuantity, removeItem, removeFavItem, clearCart, clearFav, updateWeight])}
     >
       {children}
     </StoreContext.Provider>

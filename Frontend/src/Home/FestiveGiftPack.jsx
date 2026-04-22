@@ -108,14 +108,16 @@ const FestiveGiftPack = () => {
             const offer = product.offer || 0;
             let price = 0;
             let mrp = 0;
+            let activeWeight = "";
             
-            if (product.category === "Combo") {
+            if (product.category === "Combo" || product.type === "combo") {
               // For combo products
-              price = Number(product.offerPrice) || 0;
+              price = Number(product.offerPrice || product.price) || 0;
               mrp = Number(product.mrp) || price;
+              activeWeight = product.weights?.[0] || "Combo";
             } else {
               // For regular products (fallback)
-              const activeWeight = product.weights?.[0] || "";
+              activeWeight = product.weights?.[0] || "100g";
               const priceObj = product.prices?.[activeWeight];
               if (typeof priceObj === "object" && priceObj !== null) {
                 price = Number(priceObj.offerPrice) || Number(priceObj.mrp) || 0;
@@ -131,7 +133,7 @@ const FestiveGiftPack = () => {
             if (isNaN(mrp)) mrp = 0;
 
             const avgRating = product.rating || 4.5;
-            const isOutOfStock = product.stock <= 0;
+            const isOutOfStock = product.isOutOfStock;
 
             return (
               <div key={product.id} className="px-3">
@@ -139,7 +141,7 @@ const FestiveGiftPack = () => {
                   <div className="relative h-60 flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden">
                     <Link to={`/combos/${product.id}`}>
                       <img
-                        src={product.images?.[0] || ""}
+                        src={product.images?.[0] || null}
                         alt={product.name}
                         className="w-full h-full p-5 object-contain transition-transform duration-500 transform hover:scale-110"
                       />

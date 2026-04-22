@@ -175,6 +175,20 @@ const tables = {
       setting_value TEXT,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  reviews: `
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      reviewId VARCHAR(50) NOT NULL UNIQUE,
+      userId VARCHAR(36),
+      orderId VARCHAR(100),
+      userName VARCHAR(255) NOT NULL,
+      comment TEXT NOT NULL,
+      rating DECIMAL(3,1) DEFAULT 0,
+      image LONGTEXT,
+      selected TINYINT(1) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };
 
