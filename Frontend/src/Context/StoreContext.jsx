@@ -111,7 +111,7 @@ export const StoreProvider = ({ children }) => {
 
             return {
               ...c,
-              id: c.id,  // Keep as MySQL integer but ensure it's set
+              id: c.id,  
               type: 'combo',
               category: 'Combo',
               price: offerPrice,
