@@ -1,16 +1,6 @@
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { db } from "../firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  runTransaction,
-} from "firebase/firestore";
+import { useAuth } from "../PrivateRouter/AuthContext";
+
 import { toast } from "react-hot-toast";
 import dataPreloadService from "../services/dataPreloadService";
 import imagePreloadManager from "../services/imagePreloadManager";
@@ -19,7 +9,7 @@ import api from "../services/api";
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [userData, setUserData] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
@@ -31,31 +21,25 @@ export const StoreProvider = ({ children }) => {
   // 🔥 AUTH + CART/FAV FETCHING
   // ============================
   useEffect(() => {
-    const storedUserStr = localStorage.getItem("user");
-    const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
-    setUser(storedUser);
-
     const fetchData = async () => {
-      // Prioritize the UUID-based user_id/userUuid shown in the DB image
-      const userIdToUse = String(storedUser?.user_id || storedUser?.userUuid || storedUser?.userId || storedUser?.uid || "");
+      // Prioritize the UUID-based user_id/userUuid
+      const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
       
-      if (userIdToUse) {
+      if (userIdToUse && userIdToUse !== "undefined") {
         try {
-          // Address/User Data logic could also go here if needed
-          
           // Fetch CART from MySQL API
           const cartRes = await api.get(`/cart/${userIdToUse}`);
           setCartItems(cartRes.data || []);
+          console.log(`✓ Cart synced for user: ${userIdToUse}`);
 
           // Fetch FAVORITES from MySQL API
           const favRes = await api.get(`/favorites/${userIdToUse}`);
           setFavItems(favRes.data || []);
         } catch (err) {
           console.error("API Data Fetch Error:", err.message);
-          toast.error("Unable to sync your cart/wishlist.");
+          // toast.error("Unable to sync your cart/wishlist.");
         }
       } else {
-        setUserData(null);
         setCartItems([]);
         setFavItems([]);
       }
@@ -63,8 +47,10 @@ export const StoreProvider = ({ children }) => {
       setLoading(false);
     };
 
-    fetchData();
-  }, []);
+    if (user !== undefined) {
+       fetchData();
+    }
+  }, [user]);
 
   // ============================
   // ⚡ SUPER FAST PRODUCT LOADING (WITH CACHING & PRELOADING)
@@ -324,16 +310,31 @@ export const StoreProvider = ({ children }) => {
   // ============================
   // 🔥 CLEAR SYSTEMS
   // ============================
-  const clearCart = async () => {
+  const removeCartItem = async (docId) => {
     if (!user) return;
+    try {
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      await api.delete(`/cart/${userIdToUse}/${docId}`);
+      setCartItems((prev) => prev.filter((i) => i.docId !== docId));
+      toast.success("Item removed");
+    } catch {
+      toast.error("Failed to remove item.");
+    }
+  };
+
+  const clearCart = async () => {
+    if (!user) {
+      setCartItems([]);
+      return;
+    }
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
       await api.delete(`/cart/${userIdToUse}`);
       setCartItems([]);
-      toast.success("Cart cleared");
-    } catch (err) {
-      console.error("clearCart error:", err);
-      toast.error("Failed to clear cart.");
+      // toast.success("Cart cleared");
+    } catch {
+      console.warn("Failed to clear cart on server");
+      setCartItems([]); // Clear local anyway
     }
   };
 
