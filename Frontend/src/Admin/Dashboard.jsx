@@ -381,7 +381,7 @@ const Dashboard = () => {
             <thead className="bg-green-500 text-white">
               <tr>
                 <th className="px-4 py-4 ">Order ID</th>
-                <th className="px-4 py-4 ">User ID</th>
+                <th className="px-4 py-4 ">Customer Name</th>
                 <th className="px-4 py-4 ">Amount</th>
                 <th className="px-4 py-4 ">Status</th>
               </tr>
@@ -391,7 +391,7 @@ const Dashboard = () => {
                 todayOrders.map((order) => (
                   <tr key={order.id} className="text-center hover:bg-gray-50">
                     <td className="px-4 py-4 ">{order.orderId}</td>
-                    <td className="px-4 py-4 ">{order.shippingAddress?.fullname || order.userId}</td>
+                    <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
                     <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
                     <td className="px-4 py-4 ">
                       <span
