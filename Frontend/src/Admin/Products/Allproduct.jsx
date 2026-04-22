@@ -52,16 +52,40 @@ const Allproduct = () => {
         api.get("/products"),
         api.get("/combos"),
       ]);
+
+      const mappedCombos = comboRes.data.map(c => {
+        const details = typeof c.comboDetails === 'object' ? c.comboDetails : safeParse(c.comboDetails);
+        const items = typeof c.comboItems === 'object' ? c.comboItems : safeParse(c.comboItems);
+        
+        let weight = String(details?.totalWeight || c.totalWeight || '');
+        if (!weight || weight === '0' || weight === 'Combo') {
+          const calculatedWeight = (items || []).reduce((sum, item) => {
+            const wStr = String(item.weight || "").replace(/[()]/g, "").toLowerCase();
+            let w = parseFloat(wStr) || 0;
+            if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+            return sum + w;
+          }, 0);
+          weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo Pack';
+        } else if (!isNaN(weight)) {
+           // Standardize numeric weights to string with 'g' if it's just a number
+           weight = weight.toLowerCase().includes('g') || weight.toLowerCase().includes('k') ? weight : weight + 'g';
+        }
+        
+        return { ...c, type: 'combo', displayWeight: weight };
+      });
+
       const unified = [
         ...prodRes.data.map(p => ({ ...p, type: 'single' })),
-        ...comboRes.data.map(c => ({ ...c, type: 'combo' }))
+        ...mappedCombos
       ];
+      
       setItems(unified);
       setFilteredItems(unified);
       setCategories([...new Set(unified.map(p => p.category).filter(Boolean))]);
+      
       const allWeights = unified.flatMap(item => {
         if (item.type === 'single') return safeParse(item.variants).map(v => v.weight);
-        return ['Combo Pack'];
+        return [item.displayWeight];
       });
       setWeights([...new Set(allWeights.filter(Boolean))]);
       setTags([...new Set(unified.flatMap(item => item.tags || []).filter(Boolean))]);
@@ -88,7 +112,11 @@ const Allproduct = () => {
       filtered = filtered.filter(p => categoryFilter.includes(p.category));
     }
     if (selectedWeight !== "All") {
-      filtered = filtered.filter(p => p.type === 'single' ? safeParse(p.variants).some(v => v.weight === selectedWeight) : selectedWeight === "Combo Pack");
+      filtered = filtered.filter(p => 
+        p.type === 'single' 
+          ? safeParse(p.variants).some(v => v.weight === selectedWeight) 
+          : p.displayWeight === selectedWeight
+      );
     }
     if (selectedRating > 0) {
       filtered = filtered.filter(p => (Number(p.rating) || 0) >= selectedRating);
@@ -446,10 +474,22 @@ const Allproduct = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
-                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock Control</p>
-                     <p className="text-xl font-black text-slate-950">{viewProduct.totalStock || '—'} units</p>
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Inventory Level</p>
+                     <p className="text-xl font-black text-slate-950">
+                        {Number(viewProduct.totalStock || 0) >= 1000 
+                          ? (Number(viewProduct.totalStock) / 1000).toFixed(2) + " kg" 
+                          : (viewProduct.totalStock || 0) + " g"}
+                     </p>
                   </div>
-                  <div className="bg-emerald-50 p-4 rounded-3xl border border-emerald-100">
+                  <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Asset Weight</p>
+                     <p className="text-xl font-black text-slate-950">
+                        {viewProduct.type === 'combo' 
+                          ? (viewProduct.displayWeight) 
+                          : (safeParse(viewProduct.variants)[0]?.weight || '—')}
+                     </p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-3xl border border-emerald-100 col-span-2">
                      <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1">Pricing Strategy</p>
                      <p className="text-xl font-black text-emerald-700">₹{(viewProduct.type === 'single' ? safeParse(viewProduct.variants)[0]?.offerPrice : (typeof viewProduct.comboDetails === 'object' ? viewProduct.comboDetails : safeParse(viewProduct.comboDetails))?.offerPrice) || '—'}</p>
                   </div>

@@ -49,21 +49,19 @@ exports.addCombo = async (req, res) => {
 
       for (const item of comboItems) {
         if (item.name && item.weight) {
-          const itemWeightStr = String(item.weight).toLowerCase();
+          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
           let itemWeight = parseFloat(itemWeightStr) || 0;
           if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
           
           // Calculate how much to reduce from bulk product
-          // Logic: (added combo grams / total combo pack weight) * item weight in one pack
-          // Or simpler: If combo stock is in grams, we use the ratio
           const reductionAmount = (addedStock / totalWeight) * itemWeight;
 
-          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE name = ?`, [item.name]);
+          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE TRIM(name) = TRIM(?)`, [item.name]);
           if (prodRows.length > 0) {
             const subProd = prodRows[0];
             const newSubStock = Math.max(Number(subProd.totalStock || 0) - reductionAmount, 0);
             await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(newSubStock), subProd.id]);
-            console.log(`[Admin-AddCombo] Reduced bulk '${item.name}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
+            console.log(`[Admin-AddCombo] Reduced bulk '${item.name.trim()}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
           }
         }
       }
@@ -120,18 +118,18 @@ exports.updateCombo = async (req, res) => {
 
       for (const item of comboItems) {
         if (item.name && item.weight) {
-          const itemWeightStr = String(item.weight).toLowerCase();
+          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
           let itemWeight = parseFloat(itemWeightStr) || 0;
           if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
           
           const reductionAmount = (delta / totalWeight) * itemWeight;
 
-          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE name = ?`, [item.name]);
+          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE TRIM(name) = TRIM(?)`, [item.name]);
           if (prodRows.length > 0) {
             const subProd = prodRows[0];
             const newSubStock = Math.max(Number(subProd.totalStock || 0) - reductionAmount, 0);
             await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(newSubStock), subProd.id]);
-            console.log(`[Admin-UpdateCombo] Reduced bulk '${item.name}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
+            console.log(`[Admin-UpdateCombo] Reduced bulk '${item.name.trim()}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
           }
         }
       }

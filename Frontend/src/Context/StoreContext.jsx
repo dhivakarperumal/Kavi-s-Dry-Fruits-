@@ -105,7 +105,17 @@ export const StoreProvider = ({ children }) => {
             // Price fallback chain: direct DB columns → comboDetails → 0
             const offerPrice = Number(c.offerPrice || c.price || details.offerPrice || details.mrp || 0);
             const mrp = Number(c.mrp || details.mrp || offerPrice || 0);
-            const weight = String(details.totalWeight || c.totalWeight || 'Combo');
+            // Weight fallback: direct field → sum of items → 'Combo'
+            let weight = String(details.totalWeight || c.totalWeight || '');
+            if (!weight || weight === '0' || weight === 'Combo') {
+              const calculatedWeight = items.reduce((sum, item) => {
+                const wStr = String(item.weight || "").toLowerCase();
+                let w = parseFloat(wStr) || 0;
+                if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+                return sum + w;
+              }, 0);
+              weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo';
+            }
             const stock = Number(c.totalStock ?? c.stock ?? 1); // Default to 1 if not set
 
             return {

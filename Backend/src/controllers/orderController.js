@@ -58,21 +58,21 @@ const createOrder = async (req, res) => {
           const comboItems = typeof productData.comboItems === 'string' ? JSON.parse(productData.comboItems || '[]') : (productData.comboItems || []);
           for (const subItem of comboItems) {
             if (subItem.name) {
-              // Parse weight of sub-item
-              const subWeightStr = String(subItem.weight || "").toLowerCase();
+              // Parse weight of sub-item (handle formats like "500g" or "(500g)")
+              const subWeightStr = String(subItem.weight || "").replace(/[()]/g, "").toLowerCase();
               let subWeightPerUnit = parseFloat(subWeightStr) || 0;
               if (subWeightStr.includes("kg") || subWeightStr.includes("k")) {
                 subWeightPerUnit *= 1000;
               }
               const subTotalToSubtract = qty * subWeightPerUnit;
 
-              // Find and update product by name (as per Products.jsx storage logic)
-              const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE name = ?`, [subItem.name]);
+              // Find and update product by name (Trimmed search for resilience)
+              const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE TRIM(name) = TRIM(?)`, [subItem.name]);
               if (prodRows.length > 0) {
                 const subProd = prodRows[0];
                 const subNewStock = Math.max(Number(subProd.totalStock || 0) - subTotalToSubtract, 0);
                 await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(subNewStock), subProd.id]);
-                console.log(`[Stock-ComboItem] Reduced product '${subItem.name}' by ${subTotalToSubtract}g (Part of Combo ID ${item.id}). New stock: ${subNewStock}g`);
+                console.log(`[Stock-ComboItem] Reduced product '${subItem.name.trim()}' by ${subTotalToSubtract}g. New stock: ${subNewStock}g`);
               }
             }
           }

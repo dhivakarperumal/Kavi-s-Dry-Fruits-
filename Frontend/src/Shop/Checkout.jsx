@@ -761,21 +761,33 @@ const Checkout = () => {
               <div className="flex justify-between text-xs text-slate-500 font-bold">
                 <span>Estimated Weight</span>
                 <span>
-                  {itemsToCheckout
-                    .filter(i => i.category !== "Combo")
-                    .reduce((total, item) => {
-                      const weight = parseInt((item.selectedWeight || "").replace("g", "")) || 0;
-                      const qty = parseInt(item.qty || item.quantity || 1) || 1;
-                      return total + weight * qty;
-                    }, 0)} g
+                  {itemsToCheckout.reduce((total, item) => {
+                    const weightStr = String(item.selectedWeight || "").toLowerCase();
+                    let weight = parseFloat(weightStr.replace(/[()]/g, ""));
+                    
+                    if (isNaN(weight) || weight === 0) {
+                      // Fallback 1: Combo-specific fields
+                      weight = Number(item.totalWeight || item.comboDetails?.totalWeight || 0);
+                      
+                      // Fallback 2: Sum individual items if still 0
+                      if (weight === 0) {
+                        const items = item.combos || item.comboItems || [];
+                        weight = items.reduce((sum, sub) => {
+                          const wStr = String(sub.weight || "").replace(/[()]/g, "").toLowerCase();
+                          let w = parseFloat(wStr) || 0;
+                          if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+                          return sum + w;
+                        }, 0);
+                      }
+                    } else if (weightStr.includes("kg") || weightStr.includes("k")) {
+                      weight *= 1000;
+                    }
+                    
+                    const qty = parseInt(item.qty || item.quantity || 1, 10) || 1;
+                    return total + (weight * qty);
+                  }, 0).toLocaleString()} g
                 </span>
               </div>
-              {itemsToCheckout.some(i => i.category === "Combo") && (
-                <div className="flex justify-between text-xs text-slate-500 font-bold">
-                  <span>Combo Packs</span>
-                  <span>{itemsToCheckout.filter(i => i.category === "Combo").length} packs</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
