@@ -753,7 +753,45 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         <option value="custom">-- Custom Item --</option>
                       </select>
                     </div>
-                    <div className="w-24 border-l pl-5 flex flex-col"><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label><input placeholder="100g" value={item.weight} onChange={(e) => { const u = [...form.comboItems]; u[i].weight = e.target.value; setForm({ ...form, comboItems: u }); }} className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0" /></div>
+                    <div className="w-32 border-l pl-5 flex flex-col">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
+                      {(() => {
+                        const matchedProd = products.find(p => p.name === item.name);
+                        const variants = matchedProd ? (typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : (matchedProd.variants || [])) : [];
+                        
+                        if (variants.length > 0) {
+                          return (
+                            <select 
+                              value={item.weight}
+                              onChange={(e) => {
+                                const u = [...form.comboItems];
+                                u[i].weight = e.target.value;
+                                setForm({ ...form, comboItems: u });
+                              }}
+                              className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                            >
+                              {!item.weight && <option value="">Select Weight</option>}
+                              {variants.map((v, idx) => (
+                                <option key={idx} value={v.weight}>{v.weight}</option>
+                              ))}
+                            </select>
+                          );
+                        }
+                        
+                        return (
+                          <input 
+                            placeholder="e.g. 100g" 
+                            value={item.weight} 
+                            onChange={(e) => { 
+                              const u = [...form.comboItems]; 
+                              u[i].weight = e.target.value; 
+                              setForm({ ...form, comboItems: u }); 
+                            }} 
+                            className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0 text-xs" 
+                          />
+                        );
+                      })()}
+                    </div>
                     {form.comboItems.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} className="text-red-300 hover:text-red-600 p-2"><FaTrash size={16} /></button>)}
                   </div>
                 ))}

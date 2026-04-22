@@ -23,7 +23,7 @@ const updateUser = async (req, res) => {
     let params = [fullName, email, phone, role];
 
     if (password) {
-      const passwordHash = await require('bcrypt').hash(password, 10);
+      const passwordHash = await require('bcryptjs').hash(password, 10);
       query += ', password = ?, password_hash = ?';
       params.push(password, passwordHash);
     }
