@@ -44,10 +44,25 @@ const Category = () => {
     return `CAT${String(maxId + 1).padStart(3, "0")}`;
   };
 
+  const safeParse = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
   const fetchCategories = async () => {
     try {
       const response = await api.get("/categories");
-      setCategories(response.data);
+      const sanitized = (response.data || []).map(cat => ({
+        ...cat,
+        cimgs: safeParse(cat.cimgs)
+      }));
+      setCategories(sanitized);
     } catch (err) {
       console.error("Error fetching categories:", err);
       toast.error("Failed to fetch categories.");
