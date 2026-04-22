@@ -28,7 +28,7 @@ const Account = () => {
     country: "India",
   });
   const [editingIndex, setEditingIndex] = useState(null);
-  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [passwordFields, setPasswordFields] = useState({
     currentPassword: "",
     newPassword: "",
@@ -261,8 +261,15 @@ const Account = () => {
   };
 
   const handlePrint = (order) => {
-    const address = order.shippingAddress || {};
-    const itemsList = (order.cartItems || [])
+    if (!order) return;
+    
+    // Safety check for shippingAddress (might be string or object)
+    let address = order.shippingAddress || {};
+    if (typeof address === 'string') {
+      try { address = JSON.parse(address); } catch(e) { address = {}; }
+    }
+
+    const itemsList = (order.items || order.cartItems || [])
       .map(
         (item) => `
     <tr>
@@ -270,16 +277,17 @@ const Account = () => {
       <td>${item.qty || item.quantity || 1}</td>
       <td>${item.weight || item.selectedWeight || "-"}</td>
       <td>₹0.00</td>
-      <td>₹${((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(
-        2
-      )}</td>
+      <td>₹${(Number(item.price || 0) * Number(item.qty || item.quantity || 1)).toFixed(2)}</td>
     </tr>`
       )
       .join("");
 
     const gstTotal = 0;
-    const shipping = order.shippingCharge || 0;
-    const finalAmount = order.totalAmount || 0;
+    const shipping = Number(order.shippingCharge || 0);
+    const finalAmount = Number(order.totalAmount || 0);
+    
+    const orderDate = (order.created_at || order.date);
+    const displayDate = orderDate ? new Date(orderDate).toLocaleString() : new Date().toLocaleString();
 
     const printWindow = window.open("", "", "width=800,height=700");
     if (!printWindow) {
@@ -354,7 +362,7 @@ const Account = () => {
         </style>
       </head>
       <body>
-        <div class="date-header">${new Date(order.created_at || order.date).toLocaleString()}</div>
+        <div class="date-header">${displayDate}</div>
         <div class="logo-container">
           <img src="/images/Kavi_logo.png" alt="Kavi's Logo" />
         </div>
@@ -398,15 +406,16 @@ const Account = () => {
       </body>
     </html>
   `;
-
     printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
 
-    printWindow.onload = () => {
+    // Use a small timeout instead of onload for better cross-browser reliability
+    setTimeout(() => {
       printWindow.focus();
       printWindow.print();
-    };
+      // Optional: printWindow.close(); 
+    }, 500);
   };
 
   const cancelOrder = async (orderId, reason, index) => {
@@ -601,8 +610,8 @@ const Account = () => {
             {allOrders.length === 0 ? (
               <p className="text-center text-gray-500">No Orders Found</p>
             ) : (
-              allOrders.map((order, index) => {
-                const isOpen = selectedIndex === index;
+              allOrders.map((order) => {
+                const isOpen = selectedOrderId === order.orderId;
                 const statusSteps = [
                   "Placed",
                   "Packing",
@@ -615,14 +624,14 @@ const Account = () => {
 
                 return (
                   <div
-                    key={index}
+                    key={order.orderId}
                     className="w-full mx-auto shadow-md mb-6 rounded-lg border border-yellow-300"
                   >
                     <div
                       className={`${
                         isOpen ? "bg-yellow-100" : "bg-yellow-400"
                       } flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer`}
-                      onClick={() => setSelectedIndex(isOpen ? null : index)}
+                      onClick={() => setSelectedOrderId(isOpen ? null : order.orderId)}
                     >
                       <div className="flex-1">
                         <h2 className="font-bold text-base md:text-lg text-black">
@@ -769,8 +778,8 @@ const Account = () => {
                             <span>Shipping</span>
                             <span>
                               ₹
-                              {order.shippingCharge
-                                ? order.shippingCharge.toFixed(2)
+                              {order.shippingCharge !== undefined
+                                ? Number(order.shippingCharge).toFixed(2)
                                 : "0.00"}{" "}
                             </span>
                           </div>
@@ -784,8 +793,8 @@ const Account = () => {
                             <span>Total</span>
                             <span>
                               ₹
-                              {order.totalAmount
-                                ? order.totalAmount.toFixed(2)
+                              {order.totalAmount !== undefined
+                                ? Number(order.totalAmount).toFixed(2)
                                 : "0.00"}
                             </span>
                           </div>
