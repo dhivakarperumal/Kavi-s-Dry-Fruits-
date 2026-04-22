@@ -11,7 +11,11 @@ const StoreContext = createContext();
 export const StoreProvider = ({ children }) => {
   const { user } = useAuth();
   const [userData, setUserData] = useState(null);
+  const [allProducts, setAllProducts] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+  const [favItems, setFavItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   // ============================
@@ -68,11 +72,30 @@ export const StoreProvider = ({ children }) => {
           const rawCategories = catRes.data || [];
           
           // Map MySQL categories
-          const mappedCategories = rawCategories.map(c => ({
-            ...c,
-            name: c.cname,
-            images: typeof c.cimgs === 'string' ? JSON.parse(c.cimgs || '{}') : (c.cimgs || {})
-          }));
+          const mappedCategories = rawCategories.map(c => {
+            let images = {};
+            try {
+              const parsed = typeof c.cimgs === 'string' ? JSON.parse(c.cimgs || '{}') : (c.cimgs || {});
+              if (Array.isArray(parsed)) {
+                images = {
+                  default: parsed[0] || "",
+                  hover: parsed[1] || parsed[0] || ""
+                };
+              } else {
+                images = {
+                  default: parsed.default || "",
+                  hover: parsed.hover || parsed.default || ""
+                };
+              }
+            } catch (e) {
+              console.warn(`Failed to parse images for category ${c.cname}:`, e);
+            }
+            return {
+              ...c,
+              name: c.cname,
+              images
+            };
+          });
 
           // Map MySQL products to Frontend schema
           const mappedProducts = rawProducts.map(p => {
