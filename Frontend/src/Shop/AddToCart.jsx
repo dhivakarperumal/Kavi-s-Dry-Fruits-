@@ -41,16 +41,27 @@ const CartRow = React.memo(
           </div>
         </td>
 
-        {/* WEIGHT: display only (no select) */}
+        {/* WEIGHT: Selectable for single products */}
         <td className="p-4 text-sm font-medium">
           {item.category === "Combo" ? (
-            <span className="font-semibold italic text-primary text-xl">
+            <span className="font-semibold italic text-primary text-lg">
               COMBO
             </span>
           ) : (
-            <span className="px-2 py-1 rounded border bg-white">
-              {item.selectedWeight ?? (item.weights && item.weights[0]) ?? "—"}
-            </span>
+            <select
+              disabled={isUpdating}
+              value={item.selectedWeight}
+              onChange={(e) => handleWeightChange(item, e.target.value)}
+              className={`px-2 py-1 rounded border bg-white focus:ring-1 focus:ring-green-500 cursor-pointer ${
+                isUpdating ? "opacity-50 grayscale" : ""
+              }`}
+            >
+              {item.weights && item.weights.map((w) => (
+                <option key={w} value={w}>
+                  {w}
+                </option>
+              ))}
+            </select>
           )}
         </td>
 

@@ -100,17 +100,14 @@ const SingleProductView = () => {
   const decreaseQty = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   const handleAddToCart = () => {
-    if (isOutOfStock) return toast.error("Out of Stock");
+    if (isOutOfStock) return toast.error("This product is out of stock.");
+    const weight = activeWeight || 'Combo';
     addToCart({
-      id: product.id,
-      productId: product.productId,
-      name: product.name,
-      price,
+      ...product,
+      price: price,
       qty: quantity,
       image: product.images?.[0],
-      selectedWeight: activeWeight,
-      weights: product.weights,
-      category: product.category,
+      selectedWeight: weight,
     });
   };
 

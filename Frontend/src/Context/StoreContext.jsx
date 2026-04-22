@@ -389,57 +389,20 @@ export const StoreProvider = ({ children }) => {
       });
 
       // Update on server
-      const userIdToUse = user.userId || user.uid;
-      const oldRef = doc(db, "users", userIdToUse, "cart", cartItemId);
-      const newRef = doc(db, "users", userIdToUse, "cart", newDocId);
-
-      await runTransaction(db, async (transaction) => {
-        const oldSnap = await transaction.get(oldRef);
-        
-        if (!oldSnap.exists()) {
-          throw new Error("Item not found on server");
-        }
-
-        const oldData = oldSnap.data();
-
-        // If IDs are the same, just update price and weight
-        if (newDocId === cartItemId) {
-          transaction.update(oldRef, {
-            selectedWeight: newWeight,
-            price: newPrice,
-          });
-        } else {
-          // Different ID — need to rename the document
-          const newSnap = await transaction.get(newRef);
-
-          if (newSnap.exists()) {
-            // Merge with existing entry
-            const existingData = newSnap.data();
-            transaction.update(newRef, {
-              quantity: (existingData.quantity || 0) + (oldData.quantity || 0),
-              selectedWeight: newWeight,
-              price: newPrice,
-            });
-          } else {
-            // Create new document with updated weight/price
-            transaction.set(newRef, {
-              ...oldData,
-              id: newDocId,
-              selectedWeight: newWeight,
-              price: newPrice,
-            });
-          }
-
-          // Delete old document
-          transaction.delete(oldRef);
-        }
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      
+      await api.post(`/cart/${userIdToUse}/update-weight`, {
+        oldDocId: cartItemId,
+        newDocId,
+        newWeight,
+        newPrice
       });
 
       toast.success("Weight updated!");
     } catch (err) {
       console.error("updateWeight error:", err);
       setCartItems(prevCart);
-      toast.error("Failed to update weight: " + err.message);
+      toast.error("Failed to update weight");
     }
   };
 

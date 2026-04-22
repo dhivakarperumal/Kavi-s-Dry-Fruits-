@@ -37,6 +37,37 @@ const addToCart = async (req, res) => {
   }
 };
 
+const updateWeight = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { oldDocId, newDocId, newWeight, newPrice } = req.body;
+    
+    if (oldDocId === newDocId) {
+      await db.query('UPDATE cart SET selectedWeight = ?, price = ? WHERE docId = ? AND userId = ?', [newWeight, newPrice, oldDocId, userId]);
+      return res.json({ message: 'Weight updated' });
+    }
+
+    // Check if new item already exists
+    const [existing] = await db.query('SELECT id, quantity FROM cart WHERE docId = ? AND userId = ?', [newDocId, userId]);
+    
+    if (existing.length > 0) {
+      // Merge
+      const [oldItem] = await db.query('SELECT quantity FROM cart WHERE docId = ? AND userId = ?', [oldDocId, userId]);
+      const totalQty = (existing[0].quantity || 0) + (oldItem[0].quantity || 0);
+      
+      await db.query('UPDATE cart SET quantity = ?, selectedWeight = ?, price = ? WHERE docId = ? AND userId = ?', [totalQty, newWeight, newPrice, newDocId, userId]);
+      await db.query('DELETE FROM cart WHERE docId = ? AND userId = ?', [oldDocId, userId]);
+    } else {
+      // Rename/Update the docId too
+      await db.query('UPDATE cart SET docId = ?, selectedWeight = ?, price = ? WHERE docId = ? AND userId = ?', [newDocId, newWeight, newPrice, oldDocId, userId]);
+    }
+    
+    res.json({ message: 'Weight updated and merged' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const updateQuantity = async (req, res) => {
   try {
     const { docId, quantity } = req.body;
@@ -70,6 +101,7 @@ module.exports = {
   getCart,
   addToCart,
   updateQuantity,
+  updateWeight,
   removeCartItem,
   clearCart
 };

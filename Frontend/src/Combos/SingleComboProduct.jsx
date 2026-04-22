@@ -69,15 +69,14 @@ const handleMouseMove = (e) => {
   // --- Cart & Favorite Handlers ---
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
+    const weight = product.weights?.[0] || 'Combo';
     addToCart({
-      id: product.id,
-      name: product.name,
+      ...product,
       price: offerPrice,
       qty: quantity,
       image: product.images?.[0],
-      category: product.category,
+      selectedWeight: weight,
     });
-   
   };
 
   const handleAddToFav = () => {

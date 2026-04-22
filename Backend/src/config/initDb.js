@@ -45,8 +45,7 @@ const maintenanceChecks = async () => {
       const [cartCols] = await db.query("SHOW COLUMNS FROM cart LIKE 'imageUrl'");
       if (cartCols.length > 0) {
         console.log('🔄 Migrating cart table: Renaming imageUrl to image...');
-        await db.query("ALTER TABLE cart RENAME COLUMN imageUrl TO image");
-        await db.query("ALTER TABLE cart MODIFY image LONGTEXT");
+        await db.query("ALTER TABLE cart CHANGE imageUrl image LONGTEXT");
       }
     } catch (err) { console.warn('Cart migration skip:', err.message); }
 
@@ -55,8 +54,7 @@ const maintenanceChecks = async () => {
       const [favCols] = await db.query("SHOW COLUMNS FROM favorites LIKE 'imageUrl'");
       if (favCols.length > 0) {
         console.log('🔄 Migrating favorites table: Renaming imageUrl to image...');
-        await db.query("ALTER TABLE favorites RENAME COLUMN imageUrl TO image");
-        await db.query("ALTER TABLE favorites MODIFY image LONGTEXT");
+        await db.query("ALTER TABLE favorites CHANGE imageUrl image LONGTEXT");
       }
     } catch (err) { console.warn('Favorites migration skip:', err.message); }
 
