@@ -4,29 +4,16 @@ import { RiDeleteBinLine } from "react-icons/ri";
 import PageHeader from "../Component/PageHeader";
 import Services from "../Home/Services";
 import { useLocation } from "react-router-dom";
-import { auth, db } from "../firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  setDoc,
-  deleteDoc,
-  addDoc,
-  serverTimestamp,
-  onSnapshot,
-} from "firebase/firestore";
-import { toast } from "react-hot-toast";
-import logo from "/images/Kavi_logo.png";
-import { Helmet } from "react-helmet";
+import { useAuth } from "../PrivateRouter/AuthContext";
+import api from "../services/api";
 
 const Account = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("personal");
   const [userInfo, setUserInfo] = useState({
     username: "",
     email: "",
-    password: "",
+    phone: "",
   });
   const [allOrders, setAllOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
@@ -47,105 +34,87 @@ const Account = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const [errors, setErrors] = useState({}); // <-- inline errors
+  const [errors, setErrors] = useState({});
   const location = useLocation();
-  const userId = auth.currentUser?.uid;
 
-  // add lists for countries and Indian states
-  const countries = [
-    "India",
-   
-  ];
+  const countries = ["India"];
 
   const statesIndia = [
-    "Andhra Pradesh",
-    "Arunachal Pradesh",
-    "Assam",
-    "Bihar",
-    "Chhattisgarh",
-    "Goa",
-    "Gujarat",
-    "Haryana",
-    "Himachal Pradesh",
-    "Jharkhand",
-    "Karnataka",
-    "Kerala",
-    "Madhya Pradesh",
-    "Maharashtra",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Odisha",
-    "Punjab",
-    "Rajasthan",
-    "Sikkim",
-    "Tamil Nadu",
-    "Telangana",
-    "Tripura",
-    "Uttar Pradesh",
-    "Uttarakhand",
-    "West Bengal",
-    "Delhi",
-    "Puducherry",
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
+    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+    "Uttarakhand", "West Bengal", "Delhi", "Puducherry"
   ];
 
-  // ensure default country if not already set
-  useEffect(() => {
-    setNewAddress((prev) => ({
-      ...prev,
-      country: prev.country || "India",
-      state: prev.state || "",
-    }));
-  }, []);
+  const userIdToUse = String(
+    user?.user_id || 
+    user?.userUuid || 
+    user?.userId || 
+    user?.uid || 
+    user?.email || 
+    ""
+  );
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userIdToUse || userIdToUse === "undefined") return;
 
     const fetchData = async () => {
-      const userDoc = await getDoc(doc(db, "users", userId));
-      setUserInfo(userDoc.data() || {});
+      // 1. Fetch Profile
+      try {
+        const profileRes = await api.get(`/users/profile/${userIdToUse}`);
+        if (profileRes.data) {
+          setUserInfo({
+            username: profileRes.data.username || user?.displayName || user?.username || "",
+            email: profileRes.data.email || user?.email || "",
+            phone: profileRes.data.phone || user?.phone || "",
+          });
+        }
+      } catch (error) {
+        console.error("Profile sync error:", error);
+        setUserInfo({
+          username: user?.displayName || user?.username || "",
+          email: user?.email || "",
+          phone: user?.phone || "",
+        });
+      }
 
-      // Live orders
-      const ordersRef = collection(db, "users", userId, "orders");
-      const unsubscribeOrders = onSnapshot(ordersRef, (snapshot) => {
-        const orders = snapshot.docs.map((doc) => ({
-          ...doc.data(),
-          showReviewForm: false,
-        }));
-        setAllOrders(orders.reverse());
-      });
+      // 2. Fetch Orders
+      try {
+        const ordersRes = await api.get(`/orders/user/${userIdToUse}`);
+        setAllOrders(ordersRes.data || []);
+      } catch (err) {
+        console.error("Orders fetch error:", err);
+        setAllOrders([]);
+      }
 
-      // Addresses (optional to make live too)
-      const addressSnap = await getDocs(
-        collection(db, "users", userId, "addresses")
-      );
-      const addrs = addressSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAddresses(addrs);
-
-      // Cleanup on unmount
-      return () => unsubscribeOrders();
+      // 3. Fetch Addresses
+      try {
+        const addressRes = await api.get(`/addresses/${userIdToUse}`);
+        setAddresses(addressRes.data || []);
+      } catch (err) {
+        console.error("Address fetch error:", err);
+        setAddresses([]);
+      }
     };
 
     fetchData();
-  }, [userId]);
+  }, [userIdToUse, user]);
 
   useEffect(() => {
     if (location.state?.goToOrders) setActiveTab("orders");
-  }, [location]);
+  }, [location.state]);
 
-  const saveAddresses = async (list) => {
-    if (!userId) return;
-    const addressCol = collection(db, "users", userId, "addresses");
-    const docsSnap = await getDocs(addressCol);
-    await Promise.all(docsSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
-    await Promise.all(
-      list.map((addr, idx) => setDoc(doc(addressCol, `addr-${idx}`), addr))
-    );
-    setAddresses(list);
+  const saveAddresses = async (addressData) => {
+    if (!userIdToUse) return;
+    try {
+      await api.post(`/users/${userIdToUse}/addresses`, addressData);
+      const addressRes = await api.get(`/users/${userIdToUse}/addresses`);
+      setAddresses(addressRes.data);
+    } catch (err) {
+      toast.error("Failed to save address");
+    }
   };
 
   const handleNewAddressChange = (e) => {
@@ -232,10 +201,30 @@ const Account = () => {
     setErrors({});
   };
 
-  const handleDelete = (idx) => {
-    const updated = addresses.filter((_, i) => i !== idx);
-    saveAddresses(updated);
-    if (editingIndex === idx) setEditingIndex(null);
+  const handleDelete = async (idx) => {
+    const addressToDelete = addresses[idx];
+    if (!addressToDelete || !addressToDelete.id) return;
+    try {
+      await api.delete(`/users/addresses/${addressToDelete.id}`);
+      setAddresses(prev => prev.filter((_, i) => i !== idx));
+      toast.success("Address deleted");
+    } catch (err) {
+      toast.error("Delete failed");
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!userIdToUse) return;
+    try {
+      await api.put(`/users/profile/${userIdToUse}`, {
+        username: userInfo.username,
+        phone: userInfo.phone,
+        email: userInfo.email
+      });
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update profile");
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -363,9 +352,9 @@ const Account = () => {
         </style>
       </head>
       <body>
-        <div class="date-header">${new Date(order.date).toLocaleString()}</div>
+        <div class="date-header">${new Date(order.created_at || order.date).toLocaleString()}</div>
         <div class="logo-container">
-          <img src="${logo}" alt="Kavi's Logo" />
+          <img src="/images/Kavi_logo.png" alt="Kavi's Logo" />
         </div>
         <h2>Kavi's Dry Fruits</h2>
 
@@ -420,36 +409,20 @@ const Account = () => {
 
   const cancelOrder = async (orderId, reason, index) => {
     try {
-      const ordersRef = collection(db, "users", userId, "orders");
-      const snap = await getDocs(ordersRef);
-      const docRef = snap.docs.find((d) => d.data().orderId === orderId);
+      // Find the DB internal ID for this orderId string
+      const orderToCancel = allOrders[index];
+      if (!orderToCancel || !orderToCancel.id) return;
 
-      if (docRef) {
-        const cancelledOrder = {
-          ...docRef.data(),
-          orderStatus: "Cancelled",
-          cancelReason: reason,
-          cancelledAt: new Date().toISOString(),
-          userId,
-        };
+      await api.put(`/orders/${orderToCancel.id}`, {
+        orderStatus: "Cancelled"
+      });
 
-        // Step 1: Update order status in user's orders
-        await updateDoc(docRef.ref, {
-          orderStatus: "Cancelled",
-          cancelReason: reason,
-        });
+      // Update local state
+      const updated = [...allOrders];
+      updated[index].orderStatus = "Cancelled";
+      setAllOrders(updated);
 
-        // Step 2: Add the cancelled order to the cancelOrders DB
-        await addDoc(collection(db, "cancelOrders"), cancelledOrder);
-
-        // Step 3: Update local state
-        const updated = [...allOrders];
-        updated[index].orderStatus = "Cancelled";
-        updated[index].cancelReason = reason;
-        setAllOrders(updated);
-
-        toast.success("Order cancelled and moved to cancelOrders!");
-      }
+      toast.success("Order cancelled!");
     } catch (err) {
       console.error("Cancel order failed:", err);
       toast.error("Failed to cancel order.");
@@ -468,12 +441,11 @@ const Account = () => {
 
       setLoading(true);
       try {
-        await addDoc(collection(db, "reviews"), {
+        await api.post("/reviews", {
           userName: userInfo?.username || "Anonymous",
           userId: userId,
           orderId: order.orderId,
           comment: message.trim(),
-          createdAt: serverTimestamp(),
           selected: false,
         });
 
@@ -579,22 +551,12 @@ const Account = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <label className="text-sm font-bold mb-1">First Name *</label>
+              <div className="flex flex-col col-span-2">
+                <label className="text-sm font-bold mb-1">Full Name *</label>
                 <input
                   type="text"
-                  defaultValue={firstName}
-                  readOnly
-                  className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-sm font-bold mb-1">Last Name *</label>
-                <input
-                  type="text"
-                  defaultValue={lastName}
-                  readOnly
+                  value={userInfo.username || ""}
+                  onChange={(e) => setUserInfo(prev => ({ ...prev, username: e.target.value }))}
                   className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
               </div>
@@ -603,9 +565,9 @@ const Account = () => {
                 <label className="text-sm font-bold mb-1">Email ID *</label>
                 <input
                   type="email"
-                  defaultValue={userInfo.email}
+                  value={userInfo.email || ""}
                   readOnly
-                  className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="border border-green-300 rounded px-3 py-2 bg-gray-50 focus:outline-none"
                 />
               </div>
 
@@ -613,7 +575,8 @@ const Account = () => {
                 <label className="text-sm font-bold mb-1">Phone No * </label>
                 <input
                   type="text"
-                  defaultValue={userInfo.phone}
+                  value={userInfo.phone || ""}
+                  onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="12345-67890"
                   className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
@@ -621,7 +584,10 @@ const Account = () => {
             </div>
 
             <div className="mt-6">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 cursor-pointer rounded-md font-semibold">
+              <button 
+                onClick={handleUpdateProfile}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 cursor-pointer rounded-md font-semibold"
+              >
                 Update Changes
               </button>
             </div>
@@ -642,7 +608,8 @@ const Account = () => {
                   "Out for Delivery",
                   "Delivered",
                 ];
-                const statusIndex = statusSteps.indexOf(order.orderStatus);
+                const currentStatus = order.orderStatus || "Placed";
+                const statusIndex = statusSteps.indexOf(currentStatus);
 
                 return (
                   <div
@@ -661,8 +628,8 @@ const Account = () => {
                         </h2>
                         <p className="text-sm text-black">
                           Placed on:{" "}
-                          {order.date
-                            ? new Date(order.date).toLocaleString()
+                          {order.created_at || order.date
+                            ? new Date(order.created_at || order.date).toLocaleString()
                             : "N/A"}
                         </p>
                       </div>

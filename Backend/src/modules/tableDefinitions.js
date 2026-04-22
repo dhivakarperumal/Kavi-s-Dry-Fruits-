@@ -66,6 +66,8 @@ const tables = {
       userName VARCHAR(255) NOT NULL,
       comment TEXT NOT NULL,
       image LONGTEXT,
+      userId VARCHAR(50),
+      orderId VARCHAR(50),
       selected BOOLEAN DEFAULT FALSE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

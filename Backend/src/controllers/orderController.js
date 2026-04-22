@@ -3,7 +3,13 @@ const db = require('../config/db');
 const getOrders = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
-    res.json(rows);
+    const parsedRows = rows.map(row => ({
+      ...row,
+      shippingAddress: JSON.parse(row.shippingAddress || '{}'),
+      items: JSON.parse(row.items || '[]'),
+      cartItems: JSON.parse(row.items || '[]') // compatibility fallback
+    }));
+    res.json(parsedRows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -41,4 +47,20 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-module.exports = { getOrders, createOrder, updateOrder, deleteOrder };
+const getUserOrders = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [rows] = await db.query('SELECT * FROM orders WHERE userId = ? ORDER BY created_at DESC', [userId]);
+    res.json(rows.map(row => ({
+      ...row,
+      shippingAddress: JSON.parse(row.shippingAddress || '{}'),
+      items: JSON.parse(row.items || '[]'),
+      cartItems: JSON.parse(row.items || '[]'),
+      date: row.created_at
+    })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getOrders, createOrder, updateOrder, deleteOrder, getUserOrders };

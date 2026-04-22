@@ -23,4 +23,14 @@ const createAddress = async (req, res) => {
   }
 };
 
-module.exports = { getAddresses, createAddress };
+const deleteAddress = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM user_addresses WHERE id = ?', [id]);
+    res.json({ message: 'Address deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getAddresses, createAddress, deleteAddress };

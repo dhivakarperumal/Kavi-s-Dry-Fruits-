@@ -17,12 +17,12 @@ exports.getReviews = async (req, res) => {
 
 exports.addReview = async (req, res) => {
     try {
-        const { userName, comment, image, selected } = req.body;
+        const { userName, comment, image, selected, userId, orderId } = req.body;
         const reviewId = createReviewId();
         
         const [result] = await db.query(
-            'INSERT INTO reviews (reviewId, userName, comment, image, selected) VALUES (?, ?, ?, ?, ?)',
-            [reviewId, userName, comment, image || null, selected || false]
+            'INSERT INTO reviews (reviewId, userName, comment, image, selected, userId, orderId) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [reviewId, userName, comment, image || null, selected || false, userId || null, orderId || null]
         );
 
         res.status(201).json({ id: result.insertId, reviewId, message: 'Review added' });
