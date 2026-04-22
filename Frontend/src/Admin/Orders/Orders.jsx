@@ -1,86 +1,62 @@
 import React, { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  addDoc,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaPrint, FaTimes } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import logo from "/images/Kavi_logo.png";
+import api from "../../services/api";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders");
+      // Filter for non-delivered and non-cancelled orders for management
+      const filtered = (res.data || []).filter(o => 
+        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled"
+      ).map(o => ({
+        ...o,
+        // Parse JSON strings from MySQL
+        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        date: o.created_at
+      }));
+      setOrders(filtered);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
+      toast.error("Failed to load orders.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, "users"), (usersSnap) => {
-      usersSnap.docs.forEach((userDoc) => {
-        const uid = userDoc.id;
-        const unsubOrders = onSnapshot(
-          collection(db, "users", uid, "orders"),
-          (ordersSnap) => {
-            let tempOrders = [];
-            ordersSnap.forEach((doc) => {
-              const data = doc.data();
-              if (
-                data.orderStatus !== "Delivered" &&
-                data.orderStatus !== "Cancelled"
-              ) {
-                tempOrders.push({ id: doc.id, uid, ...data });
-              }
-            });
-            setOrders((prevOrders) => {
-              const filtered = prevOrders.filter((o) => o.uid !== uid);
-              return [...filtered, ...tempOrders];
-            });
-          }
-        );
-      });
-    });
-
-    return () => unsubUsers();
+    fetchOrders();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchOrders, 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleStatusUpdate = async (uid, orderId, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus) => {
     if (!newStatus) return;
 
     try {
-      const orderRef = doc(db, "users", uid, "orders", orderId);
-      const updatedOrder = orders.find(
-        (order) => order.id === orderId && order.uid === uid
-      );
-
-      if (newStatus === "Delivered") {
-        await addDoc(collection(db, "delivery"), {
-          ...updatedOrder,
-          orderStatus: "Delivered",
-          deliveryDate: new Date().toISOString(),
-        });
-        await updateDoc(orderRef, { orderStatus: "Delivered" });
-        toast.success("Delivered and moved to Delivery DB!");
-      } else if (newStatus === "Cancelled") {
-        if (!cancelReason.trim())
-          return toast.error("Please enter cancel reason");
-        await addDoc(collection(db, "cancelOrders"), {
-          ...updatedOrder,
-          orderStatus: "Cancelled",
-          cancelReason,
-          cancelledAt: new Date().toISOString(),
-        });
-        await updateDoc(orderRef, { orderStatus: "Cancelled", cancelReason });
-        setCancelReason("");
-        setShowCancelInput(null);
-        toast.success("Order Cancelled and moved to CancelOrders DB!");
-      } else {
-        await updateDoc(orderRef, { orderStatus: newStatus });
-        toast.success("Status updated!");
+      const data = { orderStatus: newStatus };
+      if (newStatus === "Cancelled") {
+        if (!cancelReason.trim()) return toast.error("Please enter cancel reason");
+        data.cancelReason = cancelReason;
       }
+
+      await api.put(`/orders/${id}`, data);
+      toast.success(`Order ${newStatus} successfully!`);
+      
+      setCancelReason("");
+      setShowCancelInput(null);
+      fetchOrders(); // Refresh list
     } catch (err) {
       console.error("Update failed:", err);
       toast.error("Failed to update status!");
@@ -187,14 +163,12 @@ const Orders = () => {
         <h2>Kavi's Dry Fruits</h2>
 
         <div class="info">
-          <p><strong>Invoice ID:</strong> ${order.orderId}</p>
-          <p><strong>Client Name:</strong> ${address.fullname || "-"}</p>
-          <p><strong>Phone:</strong> ${address.contact || "-"}</p>
-          <p><strong>Address:</strong> ${address.street || ""}, ${
-      address.city || ""
-    }, ${address.state || ""} - ${address.zip || ""}, ${
-      address.country || ""
-    }</p>
+          <p><strong>Order ID:</strong> ${order.orderId}</p>
+          <p><strong>Client Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
+          <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+          <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+          <p><strong>Payment Mode:</strong> ${order.paymentMethod || order.paymentMode || "-"}</p>
+          <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
         </div>
 
         <table>
@@ -241,24 +215,32 @@ const Orders = () => {
       <h1 className="text-2xl font-bold mb-6">Order Management</h1>
       <div className="overflow-x-auto">
         <table className="w-full table-auto border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 border">Order ID</th>
-              <th className="p-3 border">Payment</th>
-              <th className="p-3 border">Payment ID</th>
-              <th className="p-3 border">Total</th>
-              <th className="p-3 border">Status</th>
-              <th className="p-3 border">Action</th>
+          <thead className="bg-[#009669] border-b border-emerald-700">
+            <tr className="text-white">
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">S.No</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Order ID</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Client Name</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Payment</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Payment ID</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Total</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Status</th>
+              <th className="p-3 text-[10px] font-black uppercase tracking-widest">Action</th>
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
+            {orders.map((order, index) => (
               <tr key={order.id} className="hover:bg-gray-50">
+                <td className="p-3 border font-black text-xs text-center border-gray-200">
+                  {index + 1}
+                </td>
                 <td
                   className="p-3 border text-blue-600 underline cursor-pointer"
                   onClick={() => setSelectedOrder(order)}
                 >
                   {order.orderId}
+                </td>
+                <td className="p-3 border font-semibold text-green-700">
+                  {order.clientName || order.fullname || order.client?.name || order.shippingAddress?.fullname || order.shippingAddress?.contact || "—"}
                 </td>
                 <td className="p-3 border">{order.paymentMethod || "-"}</td>
                 <td className="p-3 border">
@@ -277,7 +259,7 @@ const Orders = () => {
                       if (value === "Cancelled") {
                         setShowCancelInput(order.id);
                       } else {
-                        handleStatusUpdate(order.uid, order.id, value);
+                        handleStatusUpdate(order.id, value);
                       }
                     }}
                     className="border p-1 rounded cursor-pointer"
@@ -298,7 +280,7 @@ const Orders = () => {
                       />
                       <button
                         onClick={() =>
-                          handleStatusUpdate(order.uid, order.id, "Cancelled")
+                          handleStatusUpdate(order.id, "Cancelled")
                         }
                         className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded cursor-pointer"
                       >
@@ -335,7 +317,7 @@ const Orders = () => {
             </h2>
             <div className="space-y-2 text-sm">
               <p>
-                <strong>User ID:</strong> {selectedOrder.uid}
+                <strong>User ID:</strong> {selectedOrder.userId || selectedOrder.uid || "N/A"}
               </p>
               <p>
                 <strong>Payment:</strong> {selectedOrder.paymentMethod}

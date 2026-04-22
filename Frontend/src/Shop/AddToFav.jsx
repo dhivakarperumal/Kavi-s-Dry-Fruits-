@@ -12,38 +12,35 @@ const AddToFav = () => {
     favItems,
     removeFavItem,
     addToCart,
-    setFavItems,
+    clearFav,
   } = useStore();
 
   const navigate = useNavigate();
 
   const addAllToCart = async () => {
     for (const item of favItems) {
-      const activeWeight = item.selectedWeight || item.weights?.[0] || "100g";
-      const price = item.prices?.[activeWeight] || item.price || 0;
+      const isCombo = item.category === "Combo" || 
+                     item.type === "combo" || 
+                     (item.weights && item.weights.includes("Combo")) || 
+                     (!item.weights || item.weights.length === 0);
+
+      const activeWeight = isCombo ? "Combo" : (item.selectedWeight || item.weights?.[0] || "100g");
+      const price = item.price || 0;
 
       await addToCart({
+        ...item,
         id: item.productId,
-        name: item.name,
         price,
-        image: item.imageUrl,
         selectedWeight: activeWeight,
+        category: isCombo ? "Combo" : (item.category || "General"),
         qty: 1,
-        weights: item.weights,
-        prices: item.prices,
       });
     }
     toast.success("All wishlist products added to cart!");
     navigate("/addtocart");
   };
 
-  const clearFavorites = async () => {
-    for (const item of favItems) {
-      await removeFavItem(item.productId);
-    }
-    setFavItems([]);
-    toast.info("Wishlist cleared!");
-  };
+
 
   return (
     <>
@@ -100,8 +97,14 @@ const AddToFav = () => {
                 </thead>
                 <tbody>
                   {favItems.map((item, index) => {
-                    const activeWeight = item.selectedWeight || item.weights?.[0] || "100g";
-                    const price = item.prices?.[activeWeight] || item.price || 0;
+                    // Robust combo detection that works for both new and old favorite data
+                    const isCombo = item.category === "Combo" || 
+                                   item.type === "combo" || 
+                                   (item.weights && item.weights.includes("Combo")) || 
+                                   (!item.weights || item.weights.length === 0);
+
+                    const activeWeight = isCombo ? "Combo" : (item.selectedWeight || item.weights?.[0] || "default");
+                    const price = item.price || 0;
 
                     return (
                       <tr
@@ -110,7 +113,7 @@ const AddToFav = () => {
                       >
                         <td className="p-4 flex items-center gap-4 max-w-[300px]">
                           <img
-                            src={item.imageUrl}
+                            src={item.image || item.imageUrl}
                             alt={`${item.name} - Kavi's Dry Fruits`}
                             className="w-14 h-14 object-cover border border-green-400 rounded-md flex-shrink-0"
                           />
@@ -126,14 +129,12 @@ const AddToFav = () => {
                           <button
                             onClick={() => {
                               addToCart({
+                                ...item,
                                 id: item.productId,
-                                name: item.name,
                                 price,
-                                image: item.imageUrl,
                                 selectedWeight: activeWeight,
+                                category: isCombo ? "Combo" : (item.category || "General"),
                                 qty: 1,
-                                weights: item.weights,
-                                prices: item.prices,
                               });
                               navigate("/addtocart");
                             }}
@@ -162,7 +163,7 @@ const AddToFav = () => {
             {/* Wishlist Bottom Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-end">
               <button
-                onClick={clearFavorites}
+                onClick={clearFav}
                 className="text-green-700 font-semibold cursor-pointer hover:underline"
               >
                 Clear Wishlist

@@ -20,6 +20,7 @@ import AddDealer from "./Others/AddDealer";
 import Reviews from "./Reviews/Reviews";
 import Invoice from "./Others/Invoice";
 import Billing from "./Others/Billing";
+import CreateBilling from "./Others/CreateBilling";
 import Stickers from "./PrintStickers/Stikers";
 import NewUsers from "./Users/NewUsers";
 import AddUsers from "./Users/AddUser";
@@ -27,12 +28,21 @@ import Category from "./Products/Category";
 import Allproduct from "./Products/Allproduct";
 import NewOrders from "./Orders/NewOrders";
 import AllOrders from "./Orders/AllOrders";
-import MigrateProducts from "./MigrateProducts";
+import OffersAndCoupons from "./Offers/OffersAndCoupons";
+
+import AddHealthBenefit from "./HealthBenefits/AddHealthBenefit";
+import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
+
+
 import SEOKeywords from "./SEOKeywords";
+import Settings from "./Settings/Settings";
+import Profile from "./Settings/Profile";
+import DeliverySettings from "./Settings/DeliverySettings";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [collectionCounts, setCollectionCounts] = useState({});
 
   const navigate = useNavigate();
@@ -58,7 +68,6 @@ const AdminPanel = () => {
       "all-products": "All Products",
       "add-category": "Add Category",
       "stock-details": "Stock Details",
-      "migrate-pricing": "Migrate Pricing",
       "orders": "Orders",
       "new-orders": "New Orders",
       "all-orders": "All Orders",
@@ -71,6 +80,13 @@ const AdminPanel = () => {
       "seo-keywords": "SEO Keywords",
       "invoice": "Invoice",
       "billing": "Billing",
+      "billing/create": "Create Billing",
+      "add-health-benefit": "Add Health Benefit",
+      "view-health-benefits": "View Health Benefits",
+      "settings": "Settings",
+      "coupons": "Offers & Coupons",
+      "profile": "Profile",
+      "delivery-settings": "Delivery Settings",
     };
 
     const mappedSection = routeMap[path];
@@ -90,7 +106,6 @@ const AdminPanel = () => {
       "All Products": "all-products",
       "Add Category": "add-category",
       "Stock Details": "stock-details",
-      "Migrate Pricing": "migrate-pricing",
       "Orders": "orders",
       "New Orders": "new-orders",
       "All Orders": "all-orders",
@@ -103,6 +118,13 @@ const AdminPanel = () => {
       "SEO Keywords": "seo-keywords",
       "Invoice": "invoice",
       "Billing": "billing",
+      "Create Billing": "billing/create",
+      "Add Health Benefit": "add-health-benefit",
+      "View Health Benefits": "view-health-benefits",
+      "Settings": "settings",
+      "Offers & Coupons": "coupons",
+      "Profile": "profile",
+      "Delivery Settings": "delivery-settings",
     };
     
     const urlPath = reverseMap[newSection] || "dashboard";
@@ -161,7 +183,7 @@ const AdminPanel = () => {
       case "All Products":       return <Allproduct />;
       case "Add Category":       return <Category />;
       case "Stock Details":      return <StockDetails />;
-      case "Migrate Pricing":    return <MigrateProducts />;
+      
 
       // Orders
       case "Orders":             return <Orders />;
@@ -178,6 +200,13 @@ const AdminPanel = () => {
       case "SEO Keywords":       return <SEOKeywords />;
       case "Invoice":            return <Invoice />;
       case "Billing":            return <Billing />;
+      case "Create Billing":     return <CreateBilling />;
+      case "Add Health Benefit":  return <AddHealthBenefit />;
+      case "View Health Benefits": return <ViewHealthBenefits />;
+      case "Settings":           return <Settings />;
+      case "Offers & Coupons":   return <OffersAndCoupons />;
+      case "Profile":            return <Profile />;
+      case "Delivery Settings":  return <DeliverySettings />;
 
       default:
         return (
@@ -193,13 +222,15 @@ const AdminPanel = () => {
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
         setActiveSection={handleSectionChange}
         activeSection={activeSection}
         collectionCounts={collectionCounts}
         handleLogout={handleLogout}
       />
 
-      <div className="flex-1 flex flex-col ml-0 md:ml-72 overflow-hidden">
+      <div className={`flex-1 flex flex-col ml-0 overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? "md:ml-20" : "md:ml-72"}`}>
         <Topbar
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}

@@ -4,18 +4,9 @@ import { useStore } from "../Context/StoreContext";
 import PageHeader from "../Component/PageHeader";
 import { useNavigate, useLocation } from "react-router-dom";
 import emailjs from "@emailjs/browser";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  runTransaction,
-  doc,
-  updateDoc,
-  getDoc,
-} from "firebase/firestore";
-import { db } from "../firebase";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
+import api from "../services/api";
 
 const Checkout = () => {
   const { cartItems, clearCart, user } = useStore();
@@ -47,37 +38,49 @@ const Checkout = () => {
   // ---------------- Order ID generation ----------------
   const generateOrderId = async () => {
     try {
-      const counterRef = doc(db, "metadata", "orderCounter");
-      return await runTransaction(db, async (transaction) => {
-        const snap = await transaction.get(counterRef);
-        let orderNumber = 1;
-        if (snap.exists()) {
-          orderNumber = (snap.data().lastOrderNumber || 0) + 1;
-        }
-        transaction.set(counterRef, { lastOrderNumber: orderNumber }, { merge: true });
-        return `KDF00${String(orderNumber).padStart(3, "0")}`;
-      });
+      const res = await api.get("/orders");
+      const orderNumber = (res.data?.length || 0) + 1;
+      return `KDF00${String(orderNumber).padStart(3, "0")}`;
     } catch (err) {
       console.error("generateOrderId error:", err);
-      // fallback to timestamp based id to avoid breaking flow
       return `KDF${Date.now()}`;
     }
   };
 
+  const userIdToUse = String(
+    user?.user_id || 
+    user?.userUuid || 
+    user?.userId || 
+    user?.uid || 
+    user?.email || 
+    ""
+  );
+
   // ---------------- Fetch saved addresses ----------------
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (user) {
+      if (userIdToUse && userIdToUse !== "undefined") {
         try {
-          const snap = await getDocs(collection(db, "users", user.uid, "addresses"));
-          setSavedAddresses(snap.docs.map((d) => d.data()));
+          const res = await api.get(`/addresses/${userIdToUse}`);
+          const rawAddresses = res.data || [];
+          
+          // Deduplicate based on street, city, zip to avoid UI clutter
+          const uniqueMap = new Map();
+          rawAddresses.forEach(addr => {
+            const signature = `${addr.street}-${addr.city}-${addr.zip}`.toLowerCase().replace(/\s+/g, '');
+            if (!uniqueMap.has(signature)) {
+              uniqueMap.set(signature, addr);
+            }
+          });
+          
+          setSavedAddresses(Array.from(uniqueMap.values()));
         } catch (err) {
           console.error("Fetch addresses error:", err);
         }
       }
     };
     fetchAddresses();
-  }, [user]);
+  }, [userIdToUse]);
 
   // populate itemsToCheckout when cartItems or checkoutProduct changes
   useEffect(() => {
@@ -119,50 +122,140 @@ const Checkout = () => {
     return price * qty;
   };
 
-  const calculateShippingFromItems = (items) => {
-    let totalWeight = 0;
-    let comboCount = 0;
+  const [shippingSettings, setShippingSettings] = useState({ 
+    shipping_enabled: "false", 
+    shipping_amount: "0" 
+  });
 
-    items.forEach((item) => {
-      const qty = parseInt(item.qty || item.quantity || 1, 10) || 0;
-      if (item.category === "Combo") {
-        comboCount += qty;
-      } else {
-        const weightInG = parseInt(String(item.selectedWeight || "").replace("g", ""), 10) || 0;
-        totalWeight += weightInG * qty;
+  // --- Coupon States ---
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+
+  useEffect(() => {
+    const fetchShippingSettings = async () => {
+      try {
+        const res = await api.get("/settings");
+        if (res.data) setShippingSettings(res.data);
+      } catch (err) {
+        console.error("Fetch shipping settings error:", err);
       }
-    });
-
-    let shipping = 0;
-
-    if (totalWeight > 0) {
-      shipping = 50;
-      if (totalWeight > 1000) {
-        const extra = totalWeight - 1000;
-        const chunks = Math.ceil(extra / 200);
-        shipping += chunks * 10;
-      }
-    }
-
-    if (comboCount > 0) {
-      shipping += comboCount * 50;
-    }
-
-    return shipping;
-  };
+    };
+    fetchShippingSettings();
+  }, []);
 
   // ---------------- Derived values (useMemo to avoid stale computations) ----------------
-  const shippingCost = useMemo(() => calculateShippingFromItems(itemsToCheckout), [itemsToCheckout]);
+  const subtotal = useMemo(() => {
+    return itemsToCheckout.reduce((acc, item) => acc + calculateItemTotal(item), 0);
+  }, [itemsToCheckout]);
 
-  const totalAmount = useMemo(
-    () =>
-      itemsToCheckout.reduce((total, item) => {
-        return total + calculateItemTotal(item);
-      }, 0),
-    [itemsToCheckout]
-  );
+  // Recalculate discount whenever subtotal or appliedCoupon changes
+  useEffect(() => {
+    if (appliedCoupon) {
+      if (appliedCoupon.discountType === "percentage") {
+        const disc = (subtotal * Number(appliedCoupon.discountValue)) / 100;
+        setCouponDiscount(disc);
+      } else {
+        setCouponDiscount(Number(appliedCoupon.discountValue));
+      }
+    } else {
+      setCouponDiscount(0);
+    }
+  }, [subtotal, appliedCoupon]);
 
-  const finalAmount = useMemo(() => totalAmount + shippingCost, [totalAmount, shippingCost]);
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+    try {
+      const res = await api.post("/coupons/validate", { 
+        code: couponCode.trim(), 
+        subtotal 
+      });
+      setAppliedCoupon(res.data);
+      toast.success("Coupon applied successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid coupon code");
+      setAppliedCoupon(null);
+      setCouponCode("");
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponDiscount(0);
+    toast.success("Coupon removed");
+  };
+
+  const shippingCost = useMemo(() => {
+    if (shippingSettings.shipping_enabled !== "true") return 0;
+
+    const baseRate = Number(shippingSettings.shipping_amount || 0);
+    let totalWeightGrams = 0;
+
+    itemsToCheckout.forEach((item) => {
+      const qty = Number(item.qty || item.quantity || 1);
+      const weightStr = String(item.selectedWeight || "").toLowerCase();
+      
+      let weight = parseFloat(weightStr.replace(/[()]/g, ""));
+      
+      if (isNaN(weight) || weight === 0) {
+        // Fallback 1: Combo or Direct total weight fields
+        weight = Number(item.totalWeight || item.comboDetails?.totalWeight || 0);
+        
+        // Fallback 2: Item's own weight field
+        if (weight === 0) {
+          weight = Number(item.weight || 0);
+        }
+
+        // Fallback 3: Sum individual combo items if still 0
+        if (weight === 0) {
+          const items = item.combos || item.comboItems || [];
+          weight = items.reduce((sum, sub) => {
+            const wStr = String(sub.weight || "").replace(/[()]/g, "").toLowerCase();
+            let w = parseFloat(wStr) || 0;
+            if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+            return sum + w;
+          }, 0);
+        }
+      } else if (weightStr.includes("kg") || weightStr.includes("k")) {
+        weight *= 1000;
+      }
+      
+      totalWeightGrams += (weight * qty);
+    });
+
+    if (totalWeightGrams === 0) return 0;
+
+    let cost = baseRate;
+    
+    // Tiered pricing for the first 1kg
+    if (totalWeightGrams <= 500) {
+      // Light order: ₹20 discount from base
+      cost = Math.max(0, baseRate - 20);
+    } else if (totalWeightGrams <= 1000) {
+      // Standard 1kg order: Full base rate
+      cost = baseRate;
+    } else {
+      // Heavy order: Base + extras
+      const extraWeight = totalWeightGrams - 1000;
+      const extraChunks = Math.ceil(extraWeight / 200);
+      cost = baseRate + (extraChunks * 10);
+    }
+
+    return cost;
+  }, [itemsToCheckout, shippingSettings]);
+
+  const MIN_PURCHASE = 300;
+
+  const finalAmount = useMemo(() => {
+    return Math.max(0, subtotal + shippingCost - couponDiscount);
+  }, [subtotal, shippingCost, couponDiscount]);
+
+  const isMinimumMet = useMemo(() => subtotal >= MIN_PURCHASE, [subtotal]);
+  const remainingToMin = useMemo(() => Math.max(0, MIN_PURCHASE - subtotal), [subtotal]);
 
   // ---------------- Validation ----------------
   const validateField = (name, value) => {
@@ -228,11 +321,12 @@ const Checkout = () => {
     );
 
   const saveAddressAfterPayment = async () => {
-    if (!user) return;
+    const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+    if (!userIdToUse || userIdToUse === "undefined") return;
     if (isDuplicateAddress(form)) return;
     try {
-      await addDoc(collection(db, "users", user.uid, "addresses"), form);
-      toast.success("Address saved!");
+      await api.post(`/addresses/${userIdToUse}`, form);
+      toast.success("Address saved to your profile!");
     } catch (err) {
       console.error("Save address error:", err);
     }
@@ -277,7 +371,8 @@ const Checkout = () => {
 
   // ---------------- Place order (save to Firestore + update stock) ----------------
   const placeOrder = async (paymentId = "") => {
-    if (!user || !user.uid) {
+    const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+    if (!userIdToUse) {
       throw new Error("User must be logged in to place an order.");
     }
 
@@ -291,60 +386,44 @@ const Checkout = () => {
       id: item.id,
       productId: item.productId || item.id,
       name: item.name,
+      image: item.images?.[0] || item.image || "",
       selectedWeight: item.selectedWeight || "",
       price: parsePrice(item.price || 0),
       qty: parseInt(item.qty || item.quantity || 1, 10),
       category: item.category || "",
+      type: item.type || (item.category === "Combo" ? "combo" : "single"),
     }));
 
     const orderData = {
       orderId,
-      userId: user.uid,
-      cartItems: trimmedCartItems,
-      totalAmount: finalAmount,
-      shippingCharge: shippingCost,
-      paymentMethod,
-      paymentStatus: paymentMethod === "Online Payment" ? "Paid" : "Pending",
-      shippingAddress: form,
-      date: new Date().toISOString(),
-      orderStatus: "Placed",
-      paymentId,
+      userId: userIdToUse,
+      clientName: form.fullname,
+      clientPhone: form.contact,
       email: form.email,
-      fullname: form.fullname,
+      shippingAddress: form,
+      customerType: "Online Customer",
+      paymentMode: "Online Payment",
+      paymentStatus: "Paid",
+      paymentId: paymentId,
+      orderStatus: "Placed",
+      shippingCharge: shippingCost,
+      items: trimmedCartItems,
+      gstAmount: 0, // Simplified or calculated if needed
+      couponCode: appliedCoupon?.code || null,
+      discountAmount: couponDiscount,
+      totalAmount: finalAmount,
     };
 
     try {
-      // Save order under user's orders
-      await addDoc(collection(db, "users", user.uid, "orders"), orderData);
-
-      // Update product stocks
-      for (const item of itemsToCheckout) {
-        try {
-          const qty = parseInt(item.qty || item.quantity || 1, 10);
-          const productRef = doc(db, "products", item.id);
-          const productSnap = await getDoc(productRef);
-
-          if (productSnap.exists()) {
-            const productData = productSnap.data();
-            let updatedStock = productData.stock || 0;
-
-            if (item.category === "Combo") {
-              updatedStock = Math.max(updatedStock - qty, 0);
-            } else {
-              const weightInGrams = parseInt(String(item.selectedWeight || "").replace("g", ""), 10) || 0;
-              // If product stock is stored as grams (original logic)
-              updatedStock = Math.max(updatedStock - qty * weightInGrams, 0);
-            }
-
-            await updateDoc(productRef, { stock: updatedStock });
-          }
-        } catch (err) {
-          console.error("Stock update error for item", item.id, err);
-        }
-      }
+      // Save order to MySQL (Backend now handles stock reduction in a transaction)
+      await api.post("/orders", orderData);
 
       // Post-order actions
-      sendInvoiceEmail(orderData);
+      sendInvoiceEmail({
+        ...orderData,
+        fullname: form.fullname,
+        cartItems: trimmedCartItems
+      });
       await saveAddressAfterPayment();
       if (!checkoutProduct) clearCart();
     } catch (err) {
@@ -387,8 +466,8 @@ const Checkout = () => {
 
       script.onload = () => {
         const options = {
-          key: "rzp_live_AemM2AyOody9mU",
-          amount: Math.round(finalAmount * 100), // paise
+          key: "rzp_test_SGj8n5SyKSE10b",
+          amount: Math.round(finalAmount * 100), 
           currency: "INR",
           name: "Kavi DryFruits",
           description: "Order Payment",
@@ -488,9 +567,7 @@ const Checkout = () => {
   ];
 
   // ---------------- Minimum purchase rule ----------------
-  const MIN_PURCHASE = 400;
-  const isMinimumMet = finalAmount >= MIN_PURCHASE;
-  const remainingToMin = Math.max(0, MIN_PURCHASE - finalAmount);
+  // (Using the values calculated in useMemo above)
 
   return (
     <>
@@ -625,47 +702,112 @@ const Checkout = () => {
           {/* Order Summary */}
           <h3 className="text-xl font-bold mb-4">Order Summary</h3>
 
-          <div className="space-y-2 text-sm font-medium">
-            <div className="flex justify-between">
-              <span>Items</span>
-              <span>{itemsToCheckout.length}</span>
-            </div>
-
-            <div className="flex justify-between">
+          <div className="space-y-3 font-medium">
+            {/* 1. Subtotal */}
+            <div className="flex justify-between text-slate-600">
               <span>Sub Total</span>
-              <span>₹{totalAmount.toFixed(2)}</span>
+              <span>₹{subtotal.toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-between">
-              <span>Combo Items</span>
-              <span>{itemsToCheckout.filter(i => i.category === "Combo").length}</span>
+            {/* 2. Coupon Section */}
+            <div className="my-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm">
+              <label className="block text-[10px] font-black text-emerald-700 mb-2 uppercase tracking-[0.15em]">
+                Apply Coupon
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="CODE"
+                  disabled={appliedCoupon}
+                  className="flex-1 px-3 py-2 text-sm border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 bg-white font-bold"
+                />
+                {appliedCoupon ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="px-4 py-2 text-xs font-black bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all shadow-md shadow-rose-200"
+                  >
+                    REMOVE
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="px-4 py-2 text-xs font-black bg-emerald-900 text-white rounded-xl hover:bg-emerald-800 transition-all shadow-md shadow-emerald-200"
+                  >
+                    APPLY
+                  </button>
+                )}
+              </div>
+              {appliedCoupon && (
+                <p className="mt-2 text-[10px] text-emerald-600 font-black flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  {appliedCoupon.code} APPLIED SUCCESSFULLY!
+                </p>
+              )}
             </div>
 
-            <div className="flex justify-between">
-              <span>Total Weight</span>
-              <span>
-                {
-                  itemsToCheckout
-                    .filter(i => i.category !== "Combo")
-                    .reduce((total, item) => {
-                      const weight = parseInt((item.selectedWeight || "").replace("g", "")) || 0;
-                      const qty = parseInt(item.qty || item.quantity || 1) || 1;
-                      return total + weight * qty;
-                    }, 0)
-                } g
-              </span>
-            </div>
+            {/* 3. Discount (Conditional) */}
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600 italic">
+                <span>Discount Applied</span>
+                <span>- ₹{couponDiscount.toFixed(2)}</span>
+              </div>
+            )}
 
-            <div className="flex justify-between">
-              <span>Shipping</span>
+            {/* 4. Shipping */}
+            <div className="flex justify-between text-slate-600">
+              <span>Delivery Charges</span>
               <span>₹{shippingCost.toFixed(2)}</span>
             </div>
 
-            <hr className="border-dashed border-green-400 my-4" />
+            <div className="pt-2 border-t border-dashed border-slate-200" />
 
-            <div className="flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span>₹{finalAmount.toFixed(2)}</span>
+            {/* 5. Final Total */}
+            <div className="flex justify-between text-xl font-black text-slate-900 pt-1">
+              <span>Total Amount</span>
+              <span className="text-emerald-700">₹{finalAmount.toFixed(2)}</span>
+            </div>
+
+            {/* 6. Extra Info (Separated) */}
+            <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Order Details</p>
+              <div className="flex justify-between text-xs text-slate-500 font-bold">
+                <span>Total Items</span>
+                <span>{itemsToCheckout.length} items</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-500 font-bold">
+                <span>Estimated Weight</span>
+                <span>
+                  {itemsToCheckout.reduce((total, item) => {
+                    const weightStr = String(item.selectedWeight || "").toLowerCase();
+                    let weight = parseFloat(weightStr.replace(/[()]/g, ""));
+                    
+                    if (isNaN(weight) || weight === 0) {
+                      // Fallback 1: Combo-specific fields
+                      weight = Number(item.totalWeight || item.comboDetails?.totalWeight || 0);
+                      
+                      // Fallback 2: Sum individual items if still 0
+                      if (weight === 0) {
+                        const items = item.combos || item.comboItems || [];
+                        weight = items.reduce((sum, sub) => {
+                          const wStr = String(sub.weight || "").replace(/[()]/g, "").toLowerCase();
+                          let w = parseFloat(wStr) || 0;
+                          if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+                          return sum + w;
+                        }, 0);
+                      }
+                    } else if (weightStr.includes("kg") || weightStr.includes("k")) {
+                      weight *= 1000;
+                    }
+                    
+                    const qty = parseInt(item.qty || item.quantity || 1, 10) || 1;
+                    return total + (weight * qty);
+                  }, 0).toLocaleString()} g
+                </span>
+              </div>
             </div>
           </div>
         </div>

@@ -18,9 +18,9 @@ const CartRow = React.memo(
     removeItem,
     updatingWeightId,
   }) => {
-    const imageUrl = Array.isArray(item.imageUrl)
-      ? item.imageUrl[0]
-      : item.imageUrl || "";
+    const imgSource = Array.isArray(item.image)
+      ? item.image[0]
+      : item.image || "";
 
     const subtotal =
       parseFloat(item?.price || 0) * parseInt(item?.quantity || 1);
@@ -32,7 +32,7 @@ const CartRow = React.memo(
       <tr key={item.id} className="border-b bg-green4">
         <td className="p-4 flex items-center gap-4 max-w-[300px]">
           <img
-            src={imageUrl}
+            src={imgSource}
             alt={`${item.name} - Kavi's Dry Fruits`}
             className="w-14 h-14 object-cover border border-green-400 rounded-md"
           />
@@ -41,16 +41,27 @@ const CartRow = React.memo(
           </div>
         </td>
 
-        {/* WEIGHT: display only (no select) */}
+        {/* WEIGHT: Selectable for single products */}
         <td className="p-4 text-sm font-medium">
           {item.category === "Combo" ? (
-            <span className="font-semibold italic text-primary text-xl">
+            <span className="font-semibold italic text-primary text-lg">
               COMBO
             </span>
           ) : (
-            <span className="px-2 py-1 rounded border bg-white">
-              {item.selectedWeight ?? (item.weights && item.weights[0]) ?? "—"}
-            </span>
+            <select
+              disabled={isUpdating}
+              value={item.selectedWeight}
+              onChange={(e) => handleWeightChange(item, e.target.value)}
+              className={`px-2 py-1 rounded border bg-white focus:ring-1 focus:ring-green-500 cursor-pointer ${
+                isUpdating ? "opacity-50 grayscale" : ""
+              }`}
+            >
+              {item.weights && item.weights.map((w) => (
+                <option key={w} value={w}>
+                  {w}
+                </option>
+              ))}
+            </select>
           )}
         </td>
 
@@ -84,7 +95,7 @@ const CartRow = React.memo(
 
         <td className="p-4 text-center font-semibold">
           <button
-            onClick={() => removeItem(item.id)}
+            onClick={() => removeItem(item.docId)}
             className="text-red-600 hover:text-red-800 text-xl cursor-pointer"
           >
             ×
@@ -291,7 +302,7 @@ const AddToCart = () => {
                 <tbody>
                   {cartItems.map((item) => (
                     <CartRow
-                      key={item.id}
+                      key={item.docId}
                       item={item}
                       increaseQuantity={incQty}
                       decreaseQuantity={decQty}

@@ -7,11 +7,20 @@ import { FiMic, FiMaximize, FiTrash2, FiPlus, FiPrinter, FiSearch, FiPackage, Fi
 import { Html5QrcodeScanner } from "html5-qrcode";
 import logo from "/images/Kavi_logo.png";
 
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa", "Gujarat", "Haryana",
+  "Himachal Pradesh", "Jammu & Kashmir", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+  "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttarakhand", "Uttar Pradesh", "West Bengal", "Andaman & Nicobar", "Chandigarh",
+  "Dadra & Nagar Haveli", "Daman & Diu", "Lakshadweep", "Puducherry",
+];
+
 const CreateBilling = () => {
   const [expandAddress, setExpandAddress] = useState(false);
   const [client, setClient] = useState({
     name: "",
     phone: "",
+    email: "",
     gst: "",
     shippingAddress: {
       street: "",
@@ -182,13 +191,21 @@ const CreateBilling = () => {
 
         if (deliveries.length > 0) {
           const latest = deliveries[0]; 
+          const addr = typeof latest.shippingAddress === 'string' ? JSON.parse(latest.shippingAddress) : (latest.shippingAddress || {});
           setClient((prev) => ({
             ...prev,
             name: latest.clientName || "",
+            email: latest.email || "",
             gst: latest.clientGST || "",
             customerType: latest.customerType || "Online Customer",
             paymentMode: latest.paymentMode || "Cash",
-            shippingAddress: typeof latest.shippingAddress === 'string' ? JSON.parse(latest.shippingAddress) : latest.shippingAddress,
+            shippingAddress: {
+              street: addr.street || "",
+              city: addr.city || "",
+              state: addr.state || "Tamil Nadu",
+              zip: addr.zip || "",
+              country: addr.country || "India",
+            },
           }));
           toast.success("Client details auto-filled.");
         }
@@ -263,6 +280,7 @@ const CreateBilling = () => {
       dbId: product.id,
       name: product.name,
       category: product.category || "",
+      image: images[0] || product.image || "",
       primaryImage: images[0] || product.image || "",
       weights: variants.map(v => v.weight),
       comboProducts: typeof product.comboItems === 'string' ? JSON.parse(product.comboItems) : (product.comboItems || []),
@@ -301,7 +319,16 @@ const CreateBilling = () => {
       setInvoiceItems(updatedItems);
       setGstAmount((prev) => prev + gst);
     } else {
-      setInvoiceItems([...invoiceItems, { ...selectedProduct, price, total, gst, weight: isCombo ? "Combo" : selectedProduct.weight }]);
+      setInvoiceItems([...invoiceItems, { 
+        ...selectedProduct, 
+        id: selectedProduct.dbId, // Use database ID for stock reduction
+        productId: selectedProduct.id, // Keep the SKU separately
+        selectedWeight: selectedProduct.weight, // Used by backend for grams calculation
+        price, 
+        total, 
+        gst, 
+        weight: isCombo ? "Combo" : selectedProduct.weight 
+      }]);
       setGstAmount((prev) => prev + gst);
     }
 
@@ -316,33 +343,25 @@ const CreateBilling = () => {
       const newOrderId = await generateOrderId();
       const totalAmount = invoiceItems.reduce((acc, i) => acc + i.total + i.gst, 0) + shippingCharge;
       
+      // The backend /orders endpoint now handles stock reduction transactionally
       await api.post("/orders", {
         orderId: newOrderId,
+        userId: "POS-GUEST",
         clientName: client.name,
         clientPhone: client.phone,
         clientGST: client.gst,
+        email: client.email || "",
         shippingAddress: client.shippingAddress,
         customerType: client.customerType,
         paymentMode: client.paymentMode,
+        paymentStatus: "Paid",
+        paymentId: "POS-OFFLINE",
         orderStatus: "Delivered",
         shippingCharge,
         items: invoiceItems,
         gstAmount,
         totalAmount,
       });
-
-      await Promise.all(
-        invoiceItems.map(async (item) => {
-          const matched = productList.find(p => p.productId === item.id);
-          if (matched) {
-            const currentStock = Number(matched.totalStock) || 0;
-            const reduceAmount = item.category === "Combo" ? item.quantity : item.quantity * 1000;
-            const newStock = currentStock - reduceAmount;
-            const endpoint = matched.comboItems ? `/combos/${matched.id}` : `/products/${matched.id}`;
-            await api.put(endpoint, { ...matched, totalStock: String(newStock) });
-          }
-        })
-      );
 
       toast.success("Bill saved successfully!");
       setInvoiceItems([]);
@@ -356,12 +375,12 @@ const CreateBilling = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-                <h1 className="text-2xl font-[900] text-slate-950 tracking-tight">Checkout Terminal</h1>
-                <p className="text-xs text-slate-500 font-bold mt-1">Generate premium POS invoices & dynamic stock management</p>
+                <h1 className="text-xl font-[900] text-slate-950 tracking-tight">Checkout Terminal</h1>
+                <p className="text-[10px] text-slate-500 font-bold mt-0.5">Generate POS invoices & manual stock management</p>
             </div>
             <div className="flex items-center gap-3">
                 <button 
@@ -422,6 +441,16 @@ const CreateBilling = () => {
                   />
                 </div>
 
+                <div className="group">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block group-focus-within:text-indigo-600 transition-colors">Email Address</label>
+                  <input
+                    placeholder="Enter email..."
+                    className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 outline-none focus:bg-white focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/5 transition-all font-black text-slate-900 text-sm placeholder:text-slate-300"
+                    value={client.email}
+                    onChange={(e) => setClient({ ...client, email: e.target.value })}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] mb-1.5 ml-1 block">Type</label>
@@ -461,7 +490,16 @@ const CreateBilling = () => {
                       <input placeholder="Street / Door No." className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.street} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, street:e.target.value}})} />
                       <div className="grid grid-cols-2 gap-3">
                         <input placeholder="City" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.city} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, city:e.target.value}})} />
+                        <select 
+                          className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 appearance-none cursor-pointer" 
+                          value={client.shippingAddress.state} 
+                          onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, state:e.target.value}})}
+                        >
+                          <option value="">Select State</option>
+                          {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
                         <input placeholder="Zip Code" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.zip} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, zip:e.target.value}})} />
+                        <input placeholder="Country" className="w-full bg-slate-50 rounded-xl px-5 py-3 text-sm font-bold border-none outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100" value={client.shippingAddress.country} onChange={(e) => setClient({...client, shippingAddress:{...client.shippingAddress, country:e.target.value}})} />
                       </div>
                     </div>
                   )}
@@ -610,22 +648,22 @@ const CreateBilling = () => {
 
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead>
-                                <tr className="text-left border-b border-gray-50">
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">ID</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">Product</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-center">Qty</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-right">Amount</th>
-                                    <th className="px-4 py-4 text-[10px] font-black text-gray-300 uppercase tracking-widest text-center">Action</th>
+                            <thead className="bg-[#009669] border-b border-emerald-700">
+                                <tr className="text-left">
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">Product</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Qty</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Amount</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {invoiceItems.length > 0 ? invoiceItems.map((item, index) => (
                                     <tr key={index} className="group hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-4 py-5 font-bold text-gray-400 text-xs">#{item.id}</td>
+                                        <td className="px-4 py-5 font-bold text-gray-400 text-[10px]">#{item.id}</td>
                                         <td className="px-4 py-5">
-                                            <p className="font-black text-slate-700 text-sm">{item.name}</p>
-                                            <p className="text-[10px] font-black text-primary bg-primary/5 inline-block px-1.5 py-0.5 rounded mt-1 uppercase tracking-tighter">{item.weight}</p>
+                                            <p className="font-black text-slate-700 text-xs">{item.name}</p>
+                                            <p className="text-[9px] font-black text-primary bg-primary/5 inline-block px-1.5 py-0.5 rounded mt-1 uppercase tracking-tighter">{item.weight}</p>
                                         </td>
                                         <td className="px-4 py-5 text-center font-black text-slate-600">{item.quantity}</td>
                                         <td className="px-4 py-5 text-right font-black text-slate-800">₹{item.total.toFixed(2)}</td>
@@ -647,25 +685,25 @@ const CreateBilling = () => {
                     </div>
                 </div>
 
-                <div className="mt-10 border-t border-gray-100 pt-8 pb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between text-sm font-bold text-gray-400">
+                <div className="mt-8 border-t border-gray-100 pt-6 pb-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-400">
                                 <span>GST Subtotal</span>
                                 <span>₹{gstAmount.toFixed(2)}</span>
                             </div>
                             <div className="flex items-center justify-between group">
-                                <span className="text-sm font-bold text-gray-400">Shipping Charge</span>
+                                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Shipping Charge</span>
                                 <input 
                                   type="number" 
-                                  className="w-24 bg-gray-50 border-none rounded-xl px-3 py-1.5 text-right font-black text-slate-800 outline-none focus:ring-2 focus:ring-primary/20"
+                                  className="w-20 bg-gray-50 border-none rounded-lg px-2 py-1 text-right font-black text-slate-800 outline-none focus:ring-2 focus:ring-primary/20 text-xs"
                                   value={shippingCharge}
                                   onChange={(e)=>setShippingCharge(parseFloat(e.target.value) || 0)}
                                 />
                             </div>
-                            <div className="pt-4 flex items-center justify-between">
-                                <span className="text-xl font-black text-slate-800 uppercase tracking-tighter">Total Amount</span>
-                                <span className="text-3xl font-black text-primary tracking-tighter">
+                            <div className="pt-2 flex items-center justify-between">
+                                <span className="text-sm font-black text-slate-800 uppercase tracking-tighter">Net Total Amount</span>
+                                <span className="text-xl font-black text-primary tracking-tighter">
                                   ₹{(invoiceItems.reduce((a, b) => a + b.total + b.gst, 0) + shippingCharge).toFixed(2)}
                                 </span>
                             </div>

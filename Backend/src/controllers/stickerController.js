@@ -1,9 +1,19 @@
 const db = require('../config/db');
 
-// Get all products for sticker printing
+// Get all products (single and combo) for sticker printing
 exports.getProducts = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id, productId, name, barcode, barcodeValue FROM products ORDER BY name ASC');
+    const query = `
+      SELECT id, productId, name, barcode, barcodeValue, 
+             'Single Product' as type, 'Single Product' as productType 
+      FROM products
+      UNION ALL
+      SELECT id, productId, name, barcode, barcodeValue, 
+             'Combo Pack' as type, 'Combo Pack' as productType 
+      FROM combos
+      ORDER BY name ASC
+    `;
+    const [rows] = await db.query(query);
     res.json(rows);
   } catch (error) {
     console.error(error);

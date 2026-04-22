@@ -154,7 +154,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     healthBenefits: [""],
     category: "",
     images: [],
-    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }],
+    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
     totalStock: "0",
     totalWeight: 0,
     barcode: "",
@@ -189,7 +189,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       setForm((prev) => ({
         ...prev,
         productId: `PR${String(maxId + 1).padStart(3, "0")}`,
-        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }], totalStock: "0",
+        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0",
         barcodeValue: "", barcode: ""
       }));
     }
@@ -237,6 +237,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
       toast.success("Ready!", { id: "up-p" });
     } catch { toast.error("Fail", { id: "up-p" }); }
+    finally { e.target.value = ""; }
   };
 
   const handleSubmit = async (e) => {
@@ -330,7 +331,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
             </div>
 
             <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
-              <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
+              <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
               <div className="space-y-6">
                 {form.variants.map((v, i) => (
                   <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-100 items-end">
@@ -398,7 +399,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
           </div>
         </div>
         <div className="pt-10 flex justify-end border-t border-gray-100">
-          <button disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-20 py-5 rounded-3xl text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? "Saving Master Registry..." : "Save Product Details"}</button>
+          <button type="submit" disabled={loading} className="bg-gradient-to-tr from-emerald-600 to-green-400 px-20 py-5 rounded-3xl text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? (editItem ? "Updating Master Registry..." : "Saving Master Registry...") : (editItem ? "Update Product Details" : "Save Product Details")}</button>
         </div>
       </form>
     </div>
@@ -414,7 +415,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     category: "Combo Packs",
     images: [],
     comboItems: [{ name: "", weight: "", image: "" }],
-    comboDetails: { mrp: "", offerPercent: "", offerPrice: "" },
+    comboDetails: { mrp: "", offerPercent: "", offerPrice: "", totalWeight: 0 },
     totalStock: "0",
     totalWeight: 0,
     barcode: "",
@@ -423,6 +424,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
+  const [manualStock, setManualStock] = useState(false);
   const barcodeRef = useRef();
 
   const safeParse = (data) => {
@@ -433,12 +435,17 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
 
   useEffect(() => {
     if (editItem) {
+      const parsedDetails = typeof editItem.comboDetails === 'string' 
+        ? JSON.parse(editItem.comboDetails || '{}') 
+        : editItem.comboDetails;
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
         images: safeParse(editItem.images),
         comboItems: safeParse(editItem.comboItems),
-        comboDetails: typeof editItem.comboDetails === 'string' ? JSON.parse(editItem.comboDetails || '{}') : editItem.comboDetails,
+        comboDetails: parsedDetails,
+        // Restore totalWeight from comboDetails if available
+        totalWeight: Number(parsedDetails?.totalWeight || editItem.totalWeight || 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
     } else {
@@ -457,16 +464,24 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
 
   useEffect(() => {
     if (manualWeight) return;
+
     const totalW = form.comboItems.reduce((sum, item) => {
-      const wStr = String(item.weight || "").toLowerCase();
+      const wStr = String(item.weight || "").toLowerCase().trim();
       const val = parseFloat(wStr) || 0;
       const factor = wStr.includes("kg") ? 1000 : 1;
       return sum + (val * factor);
     }, 0);
 
-    if (totalW !== form.totalWeight) {
-      setForm(prev => ({ ...prev, totalWeight: totalW }));
-    }
+    // Always update via functional updater — avoids stale closure of form.totalWeight
+    setForm(prev => {
+      if (prev.totalWeight === totalW && (manualStock || prev.totalStock === String(totalW))) return prev; 
+      return {
+        ...prev,
+        totalWeight: totalW,
+        comboDetails: { ...prev.comboDetails, totalWeight: totalW },
+        totalStock: manualStock ? prev.totalStock : String(totalW),
+      };
+    });
   }, [form.comboItems, manualWeight]);
 
   useEffect(() => {
@@ -497,17 +512,31 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
       toast.success("Ready!", { id: "up-c" });
     } catch { toast.error("Fail", { id: "up-c" }); }
+    finally { e.target.value = ""; }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Force-merge totalWeight into comboDetails at submit time.
+      // This is necessary because the useEffect that writes it into comboDetails
+      // is async and may not have flushed before the user clicks submit.
+      const submitData = {
+        ...form,
+        comboDetails: {
+          ...form.comboDetails,
+          totalWeight: form.totalWeight,   // always include the correct value
+          offerPrice: form.comboDetails.offerPrice || 0,
+          mrp: form.comboDetails.mrp || 0,
+        },
+      };
+
       if (editItem) {
-        await api.put(`/combos/${editItem.id}`, form);
+        await api.put(`/combos/${editItem.id}`, submitData);
         toast.success("Combo Registry Updated");
       } else {
-        await api.post("/combos", form);
+        await api.post("/combos", submitData);
         toast.success("Pack Registered");
       }
       onSuccess();
@@ -544,8 +573,35 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-4">Combo Strategy Registry</h4>
                   <div className="flex gap-4 mb-4">
                     <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Items</p><p className="text-xl font-black text-amber-600">{form.comboItems.length}</p></div>
-                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm"><p className="text-[9px] font-black text-gray-400 uppercase">Auto Weight</p><p className="text-sm font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p></div>
+                    <div className="flex-1 bg-white p-3 rounded-xl border border-amber-100 text-center shadow-sm">
+                      <p className="text-[9px] font-black text-gray-400 uppercase">Total Weight</p>
+                      <p className="text-sm font-black text-amber-600">{form.totalWeight >= 1000 ? (form.totalWeight / 1000).toFixed(2) + "kg" : form.totalWeight + "g"}</p>
+                    </div>
                   </div>
+                  {/* Weight breakdown per item */}
+                  {form.comboItems.some(item => item.weight) && (
+                    <div className="bg-white rounded-xl border border-amber-100 p-3 mb-3">
+                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">Weight Breakdown</p>
+                      <div className="space-y-1">
+                        {form.comboItems.map((item, idx) => {
+                          if (!item.weight) return null;
+                          const wStr = String(item.weight).toLowerCase();
+                          const val = parseFloat(wStr) || 0;
+                          const inGrams = wStr.includes("kg") ? val * 1000 : val;
+                          return (
+                            <div key={idx} className="flex justify-between text-[10px]">
+                              <span className="text-gray-500 truncate max-w-[120px]">{item.name || `Item ${idx+1}`}</span>
+                              <span className="font-black text-amber-700">{item.weight} = {inGrams}g</span>
+                            </div>
+                          );
+                        })}
+                        <div className="border-t border-dashed border-amber-200 mt-1 pt-1 flex justify-between text-[10px]">
+                          <span className="font-black text-amber-900">Total</span>
+                          <span className="font-black text-amber-900">{form.totalWeight}g {form.totalWeight >= 1000 ? `(${(form.totalWeight/1000).toFixed(2)}kg)` : ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                       Total Weight
@@ -557,7 +613,16 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                       <input
                         type="number"
                         value={form.totalWeight}
-                        onChange={(e) => { setManualWeight(true); setForm({ ...form, totalWeight: Number(e.target.value) }); }}
+                        onChange={(e) => { 
+                          const val = Number(e.target.value);
+                          setManualWeight(true); 
+                          setForm({ 
+                            ...form, 
+                            totalWeight: val,
+                            // Keep comboDetails in sync so DB receives the override
+                            comboDetails: { ...form.comboDetails, totalWeight: val },
+                          }); 
+                        }}
                         className={`w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm ${
                           manualWeight
                             ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400'
@@ -654,6 +719,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                               };
                               reader.readAsDataURL(compressed);
                             } catch (err) { toast.error("Upload failed"); }
+                            finally { e.target.value = ""; }
                           }}
                         />
                         <FaEdit className="text-white text-xs" />
@@ -689,7 +755,45 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         <option value="custom">-- Custom Item --</option>
                       </select>
                     </div>
-                    <div className="w-24 border-l pl-5 flex flex-col"><label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label><input placeholder="100g" value={item.weight} onChange={(e) => { const u = [...form.comboItems]; u[i].weight = e.target.value; setForm({ ...form, comboItems: u }); }} className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0" /></div>
+                    <div className="w-32 border-l pl-5 flex flex-col">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
+                      {(() => {
+                        const matchedProd = products.find(p => p.name === item.name);
+                        const variants = matchedProd ? (typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : (matchedProd.variants || [])) : [];
+                        
+                        if (variants.length > 0) {
+                          return (
+                            <select 
+                              value={item.weight}
+                              onChange={(e) => {
+                                const u = [...form.comboItems];
+                                u[i].weight = e.target.value;
+                                setForm({ ...form, comboItems: u });
+                              }}
+                              className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                            >
+                              {!item.weight && <option value="">Select Weight</option>}
+                              {variants.map((v, idx) => (
+                                <option key={idx} value={v.weight}>{v.weight}</option>
+                              ))}
+                            </select>
+                          );
+                        }
+                        
+                        return (
+                          <input 
+                            placeholder="e.g. 100g" 
+                            value={item.weight} 
+                            onChange={(e) => { 
+                              const u = [...form.comboItems]; 
+                              u[i].weight = e.target.value; 
+                              setForm({ ...form, comboItems: u }); 
+                            }} 
+                            className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0 text-xs" 
+                          />
+                        );
+                      })()}
+                    </div>
                     {form.comboItems.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} className="text-red-300 hover:text-red-600 p-2"><FaTrash size={16} /></button>)}
                   </div>
                 ))}
@@ -700,6 +804,31 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
               <div className="relative z-10">
                 <div className="mb-10"><h3 className="text-xl font-black text-amber-900 uppercase tracking-tight">Financial Summary</h3><div className="w-12 h-1.5 bg-amber-500 mt-1 rounded-full"></div></div>
                 <div className="space-y-8">
+                  {/* Total Stock Field (Grams -> KG) */}
+                  <div>
+                    <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
+                      Inventory Level (Grams) *
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 1000"
+                        value={form.totalStock}
+                        onChange={(e) => {
+                          setManualStock(true);
+                          setForm({ ...form, totalStock: e.target.value });
+                        }}
+                        className={`w-full border-2 rounded-2xl px-6 py-4 font-black shadow-sm transition-all ${
+                          manualStock ? 'bg-orange-50 border-orange-300 text-orange-900' : 'bg-white border-transparent text-amber-900 focus:border-amber-500'
+                        }`}
+                        required
+                      />
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
+                      {manualStock ? "Manual weight entry" : "Auto-calculated from combo items"}
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Market MRP (₹)</label><input type="number" placeholder="e.g. 1500" value={form.comboDetails.mrp} onChange={(e) => { const u = { ...form.comboDetails }; u.mrp = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
                     <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Special Discount %</label><input type="number" placeholder="e.g. 15" value={form.comboDetails.offerPercent} onChange={(e) => { const u = { ...form.comboDetails }; u.offerPercent = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
@@ -714,7 +843,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
           </div>
         </div>
         <div className="pt-10 flex justify-end">
-          <button disabled={loading} className="bg-gradient-to-tr from-amber-600 to-orange-400 px-24 py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? "Executing Entry..." : "Finalize Premium Combo"}</button>
+          <button type="submit" disabled={loading} className="bg-gradient-to-tr from-amber-600 to-orange-400 px-24 py-5 rounded-[2rem] text-white font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-all"> {loading ? (editItem ? "Updating Entry..." : "Executing Entry...") : (editItem ? "Update Premium Combo" : "Finalize Premium Combo")}</button>
         </div>
       </form>
     </div>

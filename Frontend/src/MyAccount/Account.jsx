@@ -4,29 +4,16 @@ import { RiDeleteBinLine } from "react-icons/ri";
 import PageHeader from "../Component/PageHeader";
 import Services from "../Home/Services";
 import { useLocation } from "react-router-dom";
-import { auth, db } from "../firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  updateDoc,
-  setDoc,
-  deleteDoc,
-  addDoc,
-  serverTimestamp,
-  onSnapshot,
-} from "firebase/firestore";
-import { toast } from "react-hot-toast";
-import logo from "/images/Kavi_logo.png";
-import { Helmet } from "react-helmet";
+import { useAuth } from "../PrivateRouter/AuthContext";
+import api from "../services/api";
 
 const Account = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("personal");
   const [userInfo, setUserInfo] = useState({
     username: "",
     email: "",
-    password: "",
+    phone: "",
   });
   const [allOrders, setAllOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
@@ -41,111 +28,93 @@ const Account = () => {
     country: "India",
   });
   const [editingIndex, setEditingIndex] = useState(null);
-  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [passwordFields, setPasswordFields] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const [errors, setErrors] = useState({}); // <-- inline errors
+  const [errors, setErrors] = useState({});
   const location = useLocation();
-  const userId = auth.currentUser?.uid;
 
-  // add lists for countries and Indian states
-  const countries = [
-    "India",
-   
-  ];
+  const countries = ["India"];
 
   const statesIndia = [
-    "Andhra Pradesh",
-    "Arunachal Pradesh",
-    "Assam",
-    "Bihar",
-    "Chhattisgarh",
-    "Goa",
-    "Gujarat",
-    "Haryana",
-    "Himachal Pradesh",
-    "Jharkhand",
-    "Karnataka",
-    "Kerala",
-    "Madhya Pradesh",
-    "Maharashtra",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Odisha",
-    "Punjab",
-    "Rajasthan",
-    "Sikkim",
-    "Tamil Nadu",
-    "Telangana",
-    "Tripura",
-    "Uttar Pradesh",
-    "Uttarakhand",
-    "West Bengal",
-    "Delhi",
-    "Puducherry",
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
+    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+    "Uttarakhand", "West Bengal", "Delhi", "Puducherry"
   ];
 
-  // ensure default country if not already set
-  useEffect(() => {
-    setNewAddress((prev) => ({
-      ...prev,
-      country: prev.country || "India",
-      state: prev.state || "",
-    }));
-  }, []);
+  const userIdToUse = String(
+    user?.user_id || 
+    user?.userUuid || 
+    user?.userId || 
+    user?.uid || 
+    user?.email || 
+    ""
+  );
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userIdToUse || userIdToUse === "undefined") return;
 
     const fetchData = async () => {
-      const userDoc = await getDoc(doc(db, "users", userId));
-      setUserInfo(userDoc.data() || {});
+      // 1. Fetch Profile
+      try {
+        const profileRes = await api.get(`/users/profile/${userIdToUse}`);
+        if (profileRes.data) {
+          setUserInfo({
+            username: profileRes.data.username || user?.displayName || user?.username || "",
+            email: profileRes.data.email || user?.email || "",
+            phone: profileRes.data.phone || user?.phone || "",
+          });
+        }
+      } catch (error) {
+        console.error("Profile sync error:", error);
+        setUserInfo({
+          username: user?.displayName || user?.username || "",
+          email: user?.email || "",
+          phone: user?.phone || "",
+        });
+      }
 
-      // Live orders
-      const ordersRef = collection(db, "users", userId, "orders");
-      const unsubscribeOrders = onSnapshot(ordersRef, (snapshot) => {
-        const orders = snapshot.docs.map((doc) => ({
-          ...doc.data(),
-          showReviewForm: false,
-        }));
-        setAllOrders(orders.reverse());
-      });
+      // 2. Fetch Orders
+      try {
+        const ordersRes = await api.get(`/orders/user/${userIdToUse}`);
+        setAllOrders(ordersRes.data || []);
+      } catch (err) {
+        console.error("Orders fetch error:", err);
+        setAllOrders([]);
+      }
 
-      // Addresses (optional to make live too)
-      const addressSnap = await getDocs(
-        collection(db, "users", userId, "addresses")
-      );
-      const addrs = addressSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAddresses(addrs);
-
-      // Cleanup on unmount
-      return () => unsubscribeOrders();
+      // 3. Fetch Addresses
+      try {
+        const addressRes = await api.get(`/addresses/${userIdToUse}`);
+        setAddresses(addressRes.data || []);
+      } catch (err) {
+        console.error("Address fetch error:", err);
+        setAddresses([]);
+      }
     };
 
     fetchData();
-  }, [userId]);
+  }, [userIdToUse, user]);
 
   useEffect(() => {
     if (location.state?.goToOrders) setActiveTab("orders");
-  }, [location]);
+  }, [location.state]);
 
-  const saveAddresses = async (list) => {
-    if (!userId) return;
-    const addressCol = collection(db, "users", userId, "addresses");
-    const docsSnap = await getDocs(addressCol);
-    await Promise.all(docsSnap.docs.map((docSnap) => deleteDoc(docSnap.ref)));
-    await Promise.all(
-      list.map((addr, idx) => setDoc(doc(addressCol, `addr-${idx}`), addr))
-    );
-    setAddresses(list);
+  const saveAddresses = async (addressData) => {
+    if (!userIdToUse) return;
+    try {
+      await api.post(`/users/${userIdToUse}/addresses`, addressData);
+      const addressRes = await api.get(`/users/${userIdToUse}/addresses`);
+      setAddresses(addressRes.data);
+    } catch (err) {
+      toast.error("Failed to save address");
+    }
   };
 
   const handleNewAddressChange = (e) => {
@@ -163,54 +132,56 @@ const Account = () => {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleAddOrUpdateAddress = () => {
-    const updated = { ...newAddress };
+  const validateFields = () => {
     const newErrors = {};
+    const updated = { ...newAddress };
 
-    // validation rules
-    if (!updated.fullname || !updated.fullname.trim()) {
-      newErrors.fullname = "Full Name is required.";
-    }
-    if (!updated.contact || !updated.contact.trim()) {
-      newErrors.contact = "Phone Number is required.";
-    }
-    if (!updated.email || !updated.email.trim()) {
-      newErrors.email = "Email is required.";
-    }
+    if (!updated.fullname || !updated.fullname.trim()) newErrors.fullname = "Full Name is required.";
+    if (!updated.contact || !updated.contact.trim()) newErrors.contact = "Phone Number is required.";
+    if (!updated.email || !updated.email.trim()) newErrors.email = "Email is required.";
+    if (!updated.street || !updated.street.trim()) newErrors.street = "Street is required.";
+    if (!updated.city || !updated.city.trim()) newErrors.city = "City is required.";
+    if (!updated.state || !updated.state.trim()) newErrors.state = "State is required.";
+    if (!updated.country || !updated.country.trim()) newErrors.country = "Country is required.";
+    if (!/^\d{6}$/.test((updated.zip || "").toString())) newErrors.zip = "Pin Code must be a 6-digit number.";
+    
+    return newErrors;
+  };
 
-    if (!updated.street || !updated.street.trim()) {
-      newErrors.street = "Street is required.";
-    }
-    if (!updated.city || !updated.city.trim()) {
-      newErrors.city = "City is required.";
-    }
-    if (!updated.state || !updated.state.trim()) {
-      newErrors.state = "State is required.";
-    }
-    if (!updated.country || !updated.country.trim()) {
-      newErrors.country = "Country is required.";
-    }
-    if (!/^\d{6}$/.test((updated.zip || "").toString())) {
-      newErrors.zip = "Pin Code must be a 6-digit number.";
-    }
-
-    setErrors(newErrors);
-
-    // if any errors, stop here (errors now shown inline)
-    if (Object.keys(newErrors).length > 0) {
+  const handleAddOrUpdateAddress = () => {
+    const errorMap = validateFields();
+    if (Object.keys(errorMap).length > 0) {
+      setErrors(errorMap);
       return;
     }
 
-    let currentAddresses = Array.isArray(addresses) ? addresses : [];
-    if (editingIndex !== null) {
-      currentAddresses[editingIndex] = updated;
-      toast.success("Address updated successfully!");
-    } else {
-      currentAddresses = [...currentAddresses, updated];
-      toast.success("Address added successfully!");
-    }
+    const updated = {
+      ...newAddress,
+    };
 
-    saveAddresses(currentAddresses);
+    const isUpdate = editingIndex !== null;
+    
+    const saveOp = async () => {
+      try {
+        if (isUpdate) {
+          const originalId = addresses[editingIndex].id;
+          await api.put(`/addresses/${originalId}`, updated);
+          toast.success("Address updated successfully!");
+        } else {
+          await api.post(`/addresses/${userIdToUse}`, updated);
+          toast.success("Address added successfully!");
+        }
+        
+        // Refresh list
+        const addressRes = await api.get(`/addresses/${userIdToUse}`);
+        setAddresses(addressRes.data || []);
+      } catch (err) {
+        console.error("Address save error:", err);
+        toast.error("Failed to save address.");
+      }
+    };
+
+    saveOp();
 
     setNewAddress({
       fullname: "",
@@ -223,7 +194,7 @@ const Account = () => {
       country: "India",
     });
     setEditingIndex(null);
-    setErrors({}); // clear errors on success
+    setErrors({});
   };
 
   const handleEdit = (idx) => {
@@ -232,10 +203,30 @@ const Account = () => {
     setErrors({});
   };
 
-  const handleDelete = (idx) => {
-    const updated = addresses.filter((_, i) => i !== idx);
-    saveAddresses(updated);
-    if (editingIndex === idx) setEditingIndex(null);
+  const handleDelete = async (idx) => {
+    const addressToDelete = addresses[idx];
+    if (!addressToDelete || !addressToDelete.id) return;
+    try {
+      await api.delete(`/users/addresses/${addressToDelete.id}`);
+      setAddresses(prev => prev.filter((_, i) => i !== idx));
+      toast.success("Address deleted");
+    } catch (err) {
+      toast.error("Delete failed");
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!userIdToUse) return;
+    try {
+      await api.put(`/users/profile/${userIdToUse}`, {
+        username: userInfo.username,
+        phone: userInfo.phone,
+        email: userInfo.email
+      });
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      toast.error("Failed to update profile");
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -270,8 +261,15 @@ const Account = () => {
   };
 
   const handlePrint = (order) => {
-    const address = order.shippingAddress || {};
-    const itemsList = (order.cartItems || [])
+    if (!order) return;
+    
+    // Safety check for shippingAddress (might be string or object)
+    let address = order.shippingAddress || {};
+    if (typeof address === 'string') {
+      try { address = JSON.parse(address); } catch(e) { address = {}; }
+    }
+
+    const itemsList = (order.items || order.cartItems || [])
       .map(
         (item) => `
     <tr>
@@ -279,16 +277,17 @@ const Account = () => {
       <td>${item.qty || item.quantity || 1}</td>
       <td>${item.weight || item.selectedWeight || "-"}</td>
       <td>₹0.00</td>
-      <td>₹${((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(
-        2
-      )}</td>
+      <td>₹${(Number(item.price || 0) * Number(item.qty || item.quantity || 1)).toFixed(2)}</td>
     </tr>`
       )
       .join("");
 
     const gstTotal = 0;
-    const shipping = order.shippingCharge || 0;
-    const finalAmount = order.totalAmount || 0;
+    const shipping = Number(order.shippingCharge || 0);
+    const finalAmount = Number(order.totalAmount || 0);
+    
+    const orderDate = (order.created_at || order.date);
+    const displayDate = orderDate ? new Date(orderDate).toLocaleString() : new Date().toLocaleString();
 
     const printWindow = window.open("", "", "width=800,height=700");
     if (!printWindow) {
@@ -363,9 +362,9 @@ const Account = () => {
         </style>
       </head>
       <body>
-        <div class="date-header">${new Date(order.date).toLocaleString()}</div>
+        <div class="date-header">${displayDate}</div>
         <div class="logo-container">
-          <img src="${logo}" alt="Kavi's Logo" />
+          <img src="/images/Kavi_logo.png" alt="Kavi's Logo" />
         </div>
         <h2>Kavi's Dry Fruits</h2>
 
@@ -407,49 +406,34 @@ const Account = () => {
       </body>
     </html>
   `;
-
     printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
 
-    printWindow.onload = () => {
+    // Use a small timeout instead of onload for better cross-browser reliability
+    setTimeout(() => {
       printWindow.focus();
       printWindow.print();
-    };
+      // Optional: printWindow.close(); 
+    }, 500);
   };
 
   const cancelOrder = async (orderId, reason, index) => {
     try {
-      const ordersRef = collection(db, "users", userId, "orders");
-      const snap = await getDocs(ordersRef);
-      const docRef = snap.docs.find((d) => d.data().orderId === orderId);
+      // Find the DB internal ID for this orderId string
+      const orderToCancel = allOrders[index];
+      if (!orderToCancel || !orderToCancel.id) return;
 
-      if (docRef) {
-        const cancelledOrder = {
-          ...docRef.data(),
-          orderStatus: "Cancelled",
-          cancelReason: reason,
-          cancelledAt: new Date().toISOString(),
-          userId,
-        };
+      await api.put(`/orders/${orderToCancel.id}`, {
+        orderStatus: "Cancelled"
+      });
 
-        // Step 1: Update order status in user's orders
-        await updateDoc(docRef.ref, {
-          orderStatus: "Cancelled",
-          cancelReason: reason,
-        });
+      // Update local state
+      const updated = [...allOrders];
+      updated[index].orderStatus = "Cancelled";
+      setAllOrders(updated);
 
-        // Step 2: Add the cancelled order to the cancelOrders DB
-        await addDoc(collection(db, "cancelOrders"), cancelledOrder);
-
-        // Step 3: Update local state
-        const updated = [...allOrders];
-        updated[index].orderStatus = "Cancelled";
-        updated[index].cancelReason = reason;
-        setAllOrders(updated);
-
-        toast.success("Order cancelled and moved to cancelOrders!");
-      }
+      toast.success("Order cancelled!");
     } catch (err) {
       console.error("Cancel order failed:", err);
       toast.error("Failed to cancel order.");
@@ -468,12 +452,11 @@ const Account = () => {
 
       setLoading(true);
       try {
-        await addDoc(collection(db, "reviews"), {
+        await api.post("/reviews", {
           userName: userInfo?.username || "Anonymous",
           userId: userId,
           orderId: order.orderId,
           comment: message.trim(),
-          createdAt: serverTimestamp(),
           selected: false,
         });
 
@@ -579,22 +562,12 @@ const Account = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <label className="text-sm font-bold mb-1">First Name *</label>
+              <div className="flex flex-col col-span-2">
+                <label className="text-sm font-bold mb-1">Full Name *</label>
                 <input
                   type="text"
-                  defaultValue={firstName}
-                  readOnly
-                  className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-sm font-bold mb-1">Last Name *</label>
-                <input
-                  type="text"
-                  defaultValue={lastName}
-                  readOnly
+                  value={userInfo.username || ""}
+                  onChange={(e) => setUserInfo(prev => ({ ...prev, username: e.target.value }))}
                   className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
               </div>
@@ -603,9 +576,9 @@ const Account = () => {
                 <label className="text-sm font-bold mb-1">Email ID *</label>
                 <input
                   type="email"
-                  defaultValue={userInfo.email}
+                  value={userInfo.email || ""}
                   readOnly
-                  className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="border border-green-300 rounded px-3 py-2 bg-gray-50 focus:outline-none"
                 />
               </div>
 
@@ -613,7 +586,8 @@ const Account = () => {
                 <label className="text-sm font-bold mb-1">Phone No * </label>
                 <input
                   type="text"
-                  defaultValue={userInfo.phone}
+                  value={userInfo.phone || ""}
+                  onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="12345-67890"
                   className="border border-green-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
                 />
@@ -621,7 +595,10 @@ const Account = () => {
             </div>
 
             <div className="mt-6">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 cursor-pointer rounded-md font-semibold">
+              <button 
+                onClick={handleUpdateProfile}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 cursor-pointer rounded-md font-semibold"
+              >
                 Update Changes
               </button>
             </div>
@@ -633,8 +610,8 @@ const Account = () => {
             {allOrders.length === 0 ? (
               <p className="text-center text-gray-500">No Orders Found</p>
             ) : (
-              allOrders.map((order, index) => {
-                const isOpen = selectedIndex === index;
+              allOrders.map((order) => {
+                const isOpen = selectedOrderId === order.orderId;
                 const statusSteps = [
                   "Placed",
                   "Packing",
@@ -642,18 +619,19 @@ const Account = () => {
                   "Out for Delivery",
                   "Delivered",
                 ];
-                const statusIndex = statusSteps.indexOf(order.orderStatus);
+                const currentStatus = order.orderStatus || "Placed";
+                const statusIndex = statusSteps.indexOf(currentStatus);
 
                 return (
                   <div
-                    key={index}
+                    key={order.orderId}
                     className="w-full mx-auto shadow-md mb-6 rounded-lg border border-yellow-300"
                   >
                     <div
                       className={`${
                         isOpen ? "bg-yellow-100" : "bg-yellow-400"
                       } flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer`}
-                      onClick={() => setSelectedIndex(isOpen ? null : index)}
+                      onClick={() => setSelectedOrderId(isOpen ? null : order.orderId)}
                     >
                       <div className="flex-1">
                         <h2 className="font-bold text-base md:text-lg text-black">
@@ -661,8 +639,8 @@ const Account = () => {
                         </h2>
                         <p className="text-sm text-black">
                           Placed on:{" "}
-                          {order.date
-                            ? new Date(order.date).toLocaleString()
+                          {order.created_at || order.date
+                            ? new Date(order.created_at || order.date).toLocaleString()
                             : "N/A"}
                         </p>
                       </div>
@@ -800,8 +778,8 @@ const Account = () => {
                             <span>Shipping</span>
                             <span>
                               ₹
-                              {order.shippingCharge
-                                ? order.shippingCharge.toFixed(2)
+                              {order.shippingCharge !== undefined
+                                ? Number(order.shippingCharge).toFixed(2)
                                 : "0.00"}{" "}
                             </span>
                           </div>
@@ -815,8 +793,8 @@ const Account = () => {
                             <span>Total</span>
                             <span>
                               ₹
-                              {order.totalAmount
-                                ? order.totalAmount.toFixed(2)
+                              {order.totalAmount !== undefined
+                                ? Number(order.totalAmount).toFixed(2)
                                 : "0.00"}
                             </span>
                           </div>

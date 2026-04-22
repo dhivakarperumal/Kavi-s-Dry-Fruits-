@@ -316,7 +316,7 @@ const Reviews = () => {
           <div className="overflow-hidden">
             <div className="overflow-x-auto rounded-[2.5rem] border border-gray-100 shadow-xl bg-white">
               <table className="min-w-full text-sm">
-                <thead className="bg-gradient-to-r from-green-600 to-green-700 text-white">
+                <thead className="bg-[#009669] border-b border-emerald-700 text-white">
                   <tr>
                     <th className="p-6 text-left font-black uppercase tracking-widest text-[10px]">Pos.</th>
                     <th className="p-6 text-left font-black uppercase tracking-widest text-[10px]">Contributor</th>

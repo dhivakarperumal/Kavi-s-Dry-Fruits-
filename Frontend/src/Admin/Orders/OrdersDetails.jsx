@@ -43,7 +43,7 @@ const OrderDetail = () => {
        
         <div className="overflow-x-auto shadow rounded-lg">
           <table className="min-w-full rounded-lg">
-            <thead className="bg-green-500 text-white">
+            <thead className="bg-[#009669] border-b border-emerald-700 text-white">
               <tr className="text-center">
                 <th className="px-4 py-4 ">Name</th>
                 <th className="px-4 py-4 ">Weight</th>

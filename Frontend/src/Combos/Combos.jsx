@@ -292,8 +292,8 @@ const Combos = () => {
                           i < (product.rating || 0) ? "★" : "☆"
                         )}
                       </div>
-                      <p className="text-sm text-center text-gray-600 mt-1">
-                        {product.combos?.join(" | ")}
+                      <p className="text-sm text-center text-gray-600 mt-1 truncate px-2">
+                        {product.combos?.map(item => (typeof item === 'object' ? item.name : item)).join(" | ")}
                       </p>
                       
 

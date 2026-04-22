@@ -1,4 +1,3 @@
-// Shop.jsx
 import { useState, useEffect, useRef, useMemo } from "react";
 import { FaStar } from "react-icons/fa";
 import { FiHeart } from "react-icons/fi";
@@ -38,7 +37,7 @@ const tags = [
 const productsPerPage = 30;
 
 const Shop = () => {
-  const { allProducts, addToCart, addToFav } = useStore();
+  const { allProducts, addToCart, addToFav, favItems } = useStore();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedWeight, setSelectedWeight] = useState("All");
   const [selectedRating, setSelectedRating] = useState(0);
@@ -330,6 +329,7 @@ const Shop = () => {
                         selectedWeight={selectedWeight}
                         addToCart={addToCart}
                         addToFav={addToFav}
+                        favItems={favItems}
                       />
                     );
                   })

@@ -1,7 +1,6 @@
 // Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../services/api";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -84,146 +83,116 @@ const Dashboard = () => {
   const [todayOrders, setTodayOrders] = useState([]);
 
   useEffect(() => {
-    // Create local "today" start & end based on browser's local timezone (works for IST too)
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const fetchData = async () => {
+      try {
+        const [usersRes, productsRes, combosRes, ordersRes] = await Promise.all([
+          api.get("/users"),
+          api.get("/products"),
+          api.get("/combos"),
+          api.get("/orders")
+        ]);
 
-    // keep track of inner order listeners so we can unsubscribe on cleanup
-    const innerUnsubs = [];
+        const users = usersRes.data.users || usersRes.data || [];
+        const products = productsRes.data || [];
+        const combos = combosRes.data || [];
+        const orders = ordersRes.data || [];
 
-    const unsubscribeUsers = onSnapshot(collection(db, "users"), (usersSnap) => {
-      let usersCount = usersSnap.size;
-      let deliveryOrders = 0;
-      let cancelledOrders = 0;
-      let returnedOrders = 0;
-      let revenue = 0;
+        const unifiedProducts = [
+          ...products.map(p => ({ ...p, type: 'single' })),
+          ...combos.map(c => ({ ...c, type: 'combo' }))
+        ];
 
-      const revenueByMonth = {};
-      const ordersByMonth = {};
-      const topProductOrdersMap = {};
+        let deliveryCount = 0;
+        let cancelledCount = 0;
+        let returnedCount = 0;
+        let totalRevenue = 0;
 
-      // We'll collect today's orders from all users here, then set state
-      const allTodayOrders = [];
+        const revenueByMonth = {};
+        const ordersByMonth = {};
+        const topProductOrdersMap = {};
+        const todayOrdersList = [];
 
-      usersSnap.docs.forEach((userDoc) => {
-        const ordersRef = collection(db, "users", userDoc.id, "orders");
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
 
-        // subscribe to each user's orders (kept like your original approach but tracked)
-        const unsubOrders = onSnapshot(ordersRef, (ordersSnap) => {
-          // For each user's orders snapshot we update aggregates and collect today's orders
-          ordersSnap.forEach((orderDoc) => {
-            const data = orderDoc.data();
-            const total = data.totalAmount || 0;
+        orders.forEach(order => {
+          const total = Number(order.totalAmount) || 0;
+          const orderDate = new Date(order.created_at || order.date);
+          const month = orderDate.toLocaleString("default", { month: "short" });
+          const status = (order.orderStatus || "").toLowerCase();
 
-            // Normalize order date to millis — supports Firestore Timestamp and plain dates
-            const orderTime =
-              data.date?.toMillis
-                ? data.date.toMillis()
-                : data.date?.seconds
-                ? data.date.seconds * 1000
-                : new Date(data.date || Date.now()).getTime();
+          totalRevenue += total;
+          if (status === "delivered") deliveryCount++;
+          if (status === "cancelled") cancelledCount++;
+          if (status === "returned") returnedCount++;
 
-            const orderDate = new Date(orderTime);
-            const month = orderDate.toLocaleString("default", { month: "short" });
+          revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
+          ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
 
-            revenue += total;
-            deliveryOrders += data.status === "delivered" ? 1 : 0;
-            cancelledOrders += data.status === "cancelled" ? 1 : 0;
-            returnedOrders += data.status === "returned" ? 1 : 0;
-
-            revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
-            ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
-
-            (data.cartItems || []).forEach((item) => {
+          // Process items for top products
+          const items = typeof order.items === 'string' ? JSON.parse(order.items || '[]') : (order.items || []);
+          if (Array.isArray(items)) {
+            items.forEach(item => {
               const key = item.name;
-              if (!topProductOrdersMap[key]) topProductOrdersMap[key] = {};
-              topProductOrdersMap[key][month] =
-                (topProductOrdersMap[key][month] || 0) + (item.qty || 1);
+              if (key) {
+                if (!topProductOrdersMap[key]) topProductOrdersMap[key] = {};
+                topProductOrdersMap[key][month] = (topProductOrdersMap[key][month] || 0) + (Number(item.quantity) || 1);
+              }
             });
+          }
 
-            // === TODAY check: only include orders within local 00:00 - 23:59 ===
-            if (orderTime >= todayStart.getTime() && orderTime <= todayEnd.getTime()) {
-              // normalize fields for display so table doesn't break
-              const normalizedOrder = {
-                id: orderDoc.id,
-                userId: userDoc.id,
-                orderId: data.orderId || orderDoc.id,
-                totalAmount: total,
-                shippingAddress: data.shippingAddress || {},
-                orderStatus: data.status || data.orderStatus || "unknown",
-                raw: data,
-              };
-              // collect into per-user list
-              allTodayOrders.push(normalizedOrder);
-            }
-          });
-
-          // After processing this user's orders snapshot, update state values that can be partially updated.
-          const months = Object.keys(revenueByMonth);
-
-          const topProductChartData = Object.entries(topProductOrdersMap)
-            .map(([name, monthlyData]) => ({
-              label: name,
-              data: months.map((m) => monthlyData[m] || 0),
-            }))
-            .slice(0, 3);
-
-          setStats((prev) => ({
-            ...prev,
-            users: usersCount,
-            deliveryOrders,
-            cancelledOrders,
-            returnedOrders,
-            revenue,
-          }));
-
-          setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
-          setMonthlyOrders(months.map((m) => ({ month: m, count: ordersByMonth[m] })));
-          setTopProducts(topProductChartData);
-
-          // set today's orders from the aggregated array (this will be called for each user's snapshot update;
-          // to avoid duplicates across multiple nested snapshots we replace whole array each time)
-          setTodayOrders([...allTodayOrders]);
+          // Today's orders
+          const dt = (order.created_at || order.date || "");
+          if (dt.includes(todayStr)) {
+            todayOrdersList.push({
+              id: order.id,
+              orderId: order.orderId,
+              clientName: order.clientName,
+              clientPhone: order.clientPhone,
+              totalAmount: total,
+              orderStatus: order.orderStatus,
+              shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress || '{}') : order.shippingAddress
+            });
+          }
         });
 
-        // track the inner unsubscribe
-        innerUnsubs.push(unsubOrders);
-      });
-    });
+        const months = Object.keys(revenueByMonth);
+        const topProductChartData = Object.entries(topProductOrdersMap)
+          .map(([name, monthlyData]) => ({
+            label: name,
+            data: months.map((m) => monthlyData[m] || 0),
+          }))
+          .slice(0, 3);
 
-    const unsubscribeProducts = onSnapshot(collection(db, "products"), (productsSnap) => {
-      const cats = {};
-      const sorted = productsSnap.docs
-        .map((doc) => {
-          const data = doc.data();
-          cats[data.category || "Other"] = (cats[data.category || "Other"] || 0) + 1;
-          return { id: doc.id, ...data };
-        })
-        .sort((a, b) =>
-          (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })
-        );
+        const cats = {};
+        unifiedProducts.forEach(p => {
+          const cat = p.category || "Other";
+          cats[cat] = (cats[cat] || 0) + 1;
+        });
 
-      setStats((prev) => ({ ...prev, products: productsSnap.size }));
-      setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
-      setLiveStocks(sorted);
-      setProductsData(sorted);
-    });
+        setStats({
+          users: users.length,
+          products: unifiedProducts.length,
+          deliveryOrders: deliveryCount,
+          cancelledOrders: cancelledCount,
+          returnedOrders: returnedCount,
+          revenue: totalRevenue
+        });
 
-    return () => {
-      // unsubscribe outer snapshot(s)
-      unsubscribeUsers();
-      unsubscribeProducts();
+        setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
+        setLiveStocks(unifiedProducts.sort((a,b) => (a.productId||"").localeCompare(b.productId||"", "en", {numeric:true})));
+        setProductsData(unifiedProducts);
+        setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
+        setMonthlyOrders(months.map((m) => ({ month: m, count: ordersByMonth[m] })));
+        setTopProducts(topProductChartData);
+        setTodayOrders(todayOrdersList);
 
-      // unsubscribe all inner order listeners
-      innerUnsubs.forEach((u) => {
-        try {
-          u();
-        } catch (e) {
-          // ignore if already unsubscribed
-        }
-      });
+      } catch (error) {
+        console.error("Dashboard data fetch error:", error);
+      }
     };
+
+    fetchData();
   }, []);
 
   const lowStockCount = productsData.filter(
@@ -412,7 +381,7 @@ const Dashboard = () => {
             <thead className="bg-green-500 text-white">
               <tr>
                 <th className="px-4 py-4 ">Order ID</th>
-                <th className="px-4 py-4 ">User ID</th>
+                <th className="px-4 py-4 ">Customer Name</th>
                 <th className="px-4 py-4 ">Amount</th>
                 <th className="px-4 py-4 ">Status</th>
               </tr>
@@ -422,7 +391,7 @@ const Dashboard = () => {
                 todayOrders.map((order) => (
                   <tr key={order.id} className="text-center hover:bg-gray-50">
                     <td className="px-4 py-4 ">{order.orderId}</td>
-                    <td className="px-4 py-4 ">{order.shippingAddress?.fullname || order.userId}</td>
+                    <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
                     <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
                     <td className="px-4 py-4 ">
                       <span
