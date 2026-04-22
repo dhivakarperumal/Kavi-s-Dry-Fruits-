@@ -371,6 +371,7 @@ const Checkout = () => {
       price: parsePrice(item.price || 0),
       qty: parseInt(item.qty || item.quantity || 1, 10),
       category: item.category || "",
+      type: item.type || (item.category === "Combo" ? "combo" : "single"),
     }));
 
     const orderData = {
@@ -394,40 +395,8 @@ const Checkout = () => {
     };
 
     try {
-      // Save order to MySQL
+      // Save order to MySQL (Backend now handles stock reduction in a transaction)
       await api.post("/orders", orderData);
-
-      // Update product stocks in MySQL
-      for (const item of itemsToCheckout) {
-        try {
-          const qty = parseInt(item.qty || item.quantity || 1, 10);
-          const endpoint = item.category === "Combo" ? `/combos/${item.id}` : `/products/${item.id}`;
-          
-          // Get current stock
-          const res = await api.get(endpoint);
-          const productData = res.data;
-          
-          if (productData) {
-            let currentStock = Number(productData.totalStock || productData.stock || 0);
-            let updatedStock = currentStock;
-
-            if (item.category === "Combo") {
-              updatedStock = Math.max(currentStock - qty, 0);
-            } else {
-              // Standard logic: grams
-              const weightInGrams = parseInt(String(item.selectedWeight || "").replace("g", ""), 10) || 0;
-              updatedStock = Math.max(currentStock - (qty * weightInGrams), 0);
-            }
-
-            await api.put(endpoint, { 
-               ...productData, 
-               totalStock: String(updatedStock) 
-            });
-          }
-        } catch (err) {
-          console.error("Stock update error for item", item.id, err);
-        }
-      }
 
       // Post-order actions
       sendInvoiceEmail({

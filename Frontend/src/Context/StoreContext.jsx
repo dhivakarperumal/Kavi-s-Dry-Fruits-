@@ -88,7 +88,6 @@ export const StoreProvider = ({ children }) => {
               prices,
               weights,
               category: p.category || "General",
-              category: p.category || "General",
               image: (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []))[0] || "",
               imageUrl: (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []))[0] || "",
               images: typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []),
@@ -181,6 +180,8 @@ export const StoreProvider = ({ children }) => {
         selectedWeight: weight,
         weights: product.weights || [],
         prices: product.prices || {},
+        id: product.id,
+        type: product.type || 'single',
         docId,
       });
 
@@ -194,6 +195,8 @@ export const StoreProvider = ({ children }) => {
         return [
           ...prev,
           {
+            id: product.id,
+            type: product.type || 'single',
             docId,
             productId,
             name: product.name,

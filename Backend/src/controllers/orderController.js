@@ -16,15 +16,67 @@ const getOrders = async (req, res) => {
 };
 
 const createOrder = async (req, res) => {
+  const connection = await db.getConnection();
   try {
-    const { orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount } = req.body;
-    const [result] = await db.query(
+    await connection.beginTransaction();
+
+    const { 
+      orderId, userId, clientName, clientPhone, clientGST, email, 
+      shippingAddress, customerType, paymentMode, paymentStatus, 
+      paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount 
+    } = req.body;
+
+    // 1. Insert Order
+    const [result] = await connection.query(
       'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
     );
-    res.json({ id: result.insertId, message: 'Order created' });
+
+    // 2. Reduce Stock
+    const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
+    
+    for (const item of parsedItems) {
+      const qty = parseInt(item.qty || item.quantity || 1, 10);
+      const isCombo = item.category === "Combo" || item.type === "combo";
+      const table = isCombo ? 'combos' : 'products';
+      
+      // Get current stock and details
+      const [rows] = await connection.query(`SELECT id, totalStock, comboDetails FROM ${table} WHERE id = ?`, [item.id]);
+      
+      if (rows.length > 0) {
+        const productData = rows[0];
+        let currentStock = Number(productData.totalStock || 0);
+        let weightToSubtract = 0;
+
+        if (isCombo) {
+          // For combos, we subtract the total weight of the combo pack * quantity
+          const details = typeof productData.comboDetails === 'string' ? JSON.parse(productData.comboDetails || '{}') : (productData.comboDetails || {});
+          const comboWeight = Number(details.totalWeight || 0);
+          weightToSubtract = qty * comboWeight;
+        } else {
+          // For single products, we parse the selected weight (e.g. "500g" or "1kg")
+          const weightStr = String(item.selectedWeight || "").toLowerCase();
+          let weightPerUnit = parseFloat(weightStr) || 0;
+          if (weightStr.includes("kg") || weightStr.includes("k")) {
+            weightPerUnit *= 1000;
+          }
+          weightToSubtract = qty * weightPerUnit;
+        }
+
+        const newStock = Math.max(currentStock - weightToSubtract, 0);
+        await connection.query(`UPDATE ${table} SET totalStock = ? WHERE id = ?`, [String(newStock), item.id]);
+        console.log(`[Stock] Reduced ${table} ID ${item.id} by ${weightToSubtract}g. New stock: ${newStock}g`);
+      }
+    }
+
+    await connection.commit();
+    res.json({ id: result.insertId, message: 'Order created and stock updated' });
   } catch (error) {
+    await connection.rollback();
+    console.error('Order creation failed:', error);
     res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 };
 
