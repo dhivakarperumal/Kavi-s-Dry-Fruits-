@@ -211,10 +211,11 @@ const Checkout = () => {
     );
 
   const saveAddressAfterPayment = async () => {
-    if (!user || !user.uid) return;
+    const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+    if (!userIdToUse) return;
     if (isDuplicateAddress(form)) return;
     try {
-      await api.post(`/users/${user.uid}/addresses`, form);
+      await api.post(`/users/${userIdToUse}/addresses`, form);
       toast.success("Address saved!");
     } catch (err) {
       console.error("Save address error:", err);
@@ -260,7 +261,8 @@ const Checkout = () => {
 
   // ---------------- Place order (save to Firestore + update stock) ----------------
   const placeOrder = async (paymentId = "") => {
-    if (!user || !user.uid) {
+    const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+    if (!userIdToUse) {
       throw new Error("User must be logged in to place an order.");
     }
 
@@ -283,7 +285,7 @@ const Checkout = () => {
 
     const orderData = {
       orderId,
-      userId: user.uid,
+      userId: userIdToUse,
       clientName: form.fullname,
       clientPhone: form.contact,
       email: form.email,
@@ -383,8 +385,8 @@ const Checkout = () => {
 
       script.onload = () => {
         const options = {
-          key: "rzp_live_AemM2AyOody9mU",
-          amount: Math.round(finalAmount * 100), // paise
+          key: "rzp_test_SGj8n5SyKSE10b",
+          amount: Math.round(finalAmount * 100), 
           currency: "INR",
           name: "Kavi DryFruits",
           description: "Order Payment",
