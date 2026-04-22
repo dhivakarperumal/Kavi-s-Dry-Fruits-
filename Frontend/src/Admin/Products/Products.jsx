@@ -424,6 +424,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
+  const [manualStock, setManualStock] = useState(false);
   const barcodeRef = useRef();
 
   const safeParse = (data) => {
@@ -473,11 +474,12 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
 
     // Always update via functional updater — avoids stale closure of form.totalWeight
     setForm(prev => {
-      if (prev.totalWeight === totalW) return prev; // skip if unchanged (referential equality)
+      if (prev.totalWeight === totalW && (manualStock || prev.totalStock === String(totalW))) return prev; 
       return {
         ...prev,
         totalWeight: totalW,
         comboDetails: { ...prev.comboDetails, totalWeight: totalW },
+        totalStock: manualStock ? prev.totalStock : String(totalW),
       };
     });
   }, [form.comboItems, manualWeight]);
@@ -805,7 +807,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   {/* Total Stock Field (Grams -> KG) */}
                   <div>
                     <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
-                      Total Stock (Grams) *
+                      Inventory Level (Grams) *
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
@@ -813,13 +815,18 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         min="0"
                         placeholder="e.g. 1000"
                         value={form.totalStock}
-                        onChange={(e) => setForm({ ...form, totalStock: e.target.value })}
-                        className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm text-amber-900"
+                        onChange={(e) => {
+                          setManualStock(true);
+                          setForm({ ...form, totalStock: e.target.value });
+                        }}
+                        className={`w-full border-2 rounded-2xl px-6 py-4 font-black shadow-sm transition-all ${
+                          manualStock ? 'bg-orange-50 border-orange-300 text-orange-900' : 'bg-white border-transparent text-amber-900 focus:border-amber-500'
+                        }`}
                         required
                       />
                     </div>
                     <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
-                      Enter total combo inventory in grams (e.g. 1000 for 1KG)
+                      {manualStock ? "Manual weight entry" : "Auto-calculated from combo items"}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-8">
