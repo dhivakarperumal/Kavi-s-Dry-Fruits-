@@ -274,6 +274,7 @@ export const StoreProvider = ({ children }) => {
         selectedWeight: product.selectedWeight || "",
         weights: product.weights || [],
         prices: product.prices || {},
+        category: product.category || "General",
       });
 
       setFavItems(prev => {
@@ -286,6 +287,7 @@ export const StoreProvider = ({ children }) => {
           selectedWeight: product.selectedWeight,
           weights: product.weights,
           prices: product.prices,
+          category: product.category || "General",
         }];
       });
 

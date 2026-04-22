@@ -19,8 +19,9 @@ const AddToFav = () => {
 
   const addAllToCart = async () => {
     for (const item of favItems) {
-      const activeWeight = item.selectedWeight || item.weights?.[0] || "100g";
-      const price = item.prices?.[activeWeight] || item.price || 0;
+      const isCombo = item.category === "Combo";
+      const activeWeight = isCombo ? (item.selectedWeight || "Combo") : (item.selectedWeight || item.weights?.[0] || "100g");
+      const price = item.price || 0;
 
       await addToCart({
         ...item,
@@ -119,9 +120,9 @@ const AddToFav = () => {
                             onClick={() => {
                               addToCart({
                                 ...item,
-                                id: item.productId, // Ensure compatibility with ID-based lookup
+                                id: item.productId,
                                 price,
-                                selectedWeight: activeWeight,
+                                selectedWeight: item.category === "Combo" ? (item.selectedWeight || "Combo") : activeWeight,
                                 qty: 1,
                               });
                               navigate("/addtocart");

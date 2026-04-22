@@ -46,22 +46,21 @@ const Offers = () => {
 
   const offerProducts = useMemo(
     () => allProducts.filter((p) => {
-      if (p.category === "Combo") return false; // Exclude combos
-      
       let mrp = 0;
       let offerPrice = 0;
       
-      // Check if product has direct mrp/offerPrice fields (for simple products)
+      const isCombo = p.category === "Combo" || p.type === "combo";
+
+      // Check if product has direct mrp/offerPrice fields (for simple or combo products)
       if (p.mrp !== undefined && p.offerPrice !== undefined) {
         mrp = Number(p.mrp) || 0;
         offerPrice = Number(p.offerPrice) || mrp;
       } else if (typeof p.prices === "number") {
-        // Old format: single price
         mrp = Number(p.prices);
         offerPrice = mrp;
-      } else {
+      } else if (p.prices && p.weights && p.weights.length > 0) {
         // New format: prices per weight
-        const priceObj = p.prices?.[p.weights?.[0]];
+        const priceObj = p.prices[p.weights[0]];
         if (typeof priceObj === "object" && priceObj !== null) {
           mrp = Number(priceObj.mrp) || 0;
           offerPrice = Number(priceObj.offerPrice) || mrp;
@@ -70,8 +69,10 @@ const Offers = () => {
           offerPrice = mrp;
         }
       }
-      
-      return offerPrice < mrp; // Only include products with actual discounts
+
+      // Special case: Always show combos in Offers if they have any savings, 
+      // or if you want to highlight them as value packs.
+      return (offerPrice < mrp && offerPrice > 0) || (isCombo && offerPrice > 0);
     }),
     [allProducts]
   );
