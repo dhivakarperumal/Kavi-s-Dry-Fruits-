@@ -44,11 +44,11 @@ export const StoreProvider = ({ children }) => {
           // Address/User Data logic could also go here if needed
           
           // Fetch CART from MySQL API
-          const cartRes = await api.get(`/users/${userIdToUse}/cart`);
+          const cartRes = await api.get(`/cart/${userIdToUse}`);
           setCartItems(cartRes.data || []);
 
           // Fetch FAVORITES from MySQL API
-          const favRes = await api.get(`/users/${userIdToUse}/favorites`);
+          const favRes = await api.get(`/favorites/${userIdToUse}`);
           setFavItems(favRes.data || []);
         } catch (err) {
           console.error("API Data Fetch Error:", err.message);
@@ -165,7 +165,7 @@ export const StoreProvider = ({ children }) => {
       const existing = cartItems.find((c) => c.docId === docId);
       const newQty = (existing?.quantity || 0) + (product.qty || 1);
 
-      await api.post(`/users/${userIdToUse}/cart`, {
+      await api.post(`/cart/${userIdToUse}`, {
         productId,
         name: product.name || "Unknown Product",
         category: product.category || "General",
@@ -214,7 +214,7 @@ export const StoreProvider = ({ children }) => {
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
       const newQty = (item.quantity || 0) + 1;
-      await api.post(`/users/${userIdToUse}/cart/update-quantity`, {
+      await api.post(`/cart/${userIdToUse}/update-quantity`, {
         docId: item.docId,
         quantity: newQty,
       });
@@ -231,7 +231,7 @@ export const StoreProvider = ({ children }) => {
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
       const newQty = (item.quantity || 0) - 1;
-      await api.post(`/users/${userIdToUse}/cart/update-quantity`, {
+      await api.post(`/cart/${userIdToUse}/update-quantity`, {
         docId: item.docId,
         quantity: newQty,
       });
@@ -247,7 +247,7 @@ export const StoreProvider = ({ children }) => {
     if (!user || !docId) return;
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
-      await api.delete(`/users/${userIdToUse}/cart/${docId}`);
+      await api.delete(`/cart/${userIdToUse}/${docId}`);
       setCartItems((prev) => prev.filter((i) => i.docId !== docId));
       toast.success("Item removed");
     } catch {
@@ -265,7 +265,7 @@ export const StoreProvider = ({ children }) => {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
       const productId = String(product.id || product.productId || "unknown");
       
-      await api.post(`/users/${userIdToUse}/favorites`, {
+      await api.post(`/favorites/${userIdToUse}`, {
         productId,
         name: product.name || "Unknown Product",
         price: product.price || 0,
@@ -298,7 +298,7 @@ export const StoreProvider = ({ children }) => {
     if (!user || !productId) return;
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
-      await api.delete(`/users/${userIdToUse}/favorites/${productId}`);
+      await api.delete(`/favorites/${userIdToUse}/${productId}`);
       setFavItems(prev => prev.filter(i => String(i.productId) !== String(productId)));
       toast.success("Removed from Favorites");
     } catch {
@@ -313,7 +313,7 @@ export const StoreProvider = ({ children }) => {
     if (!user) return;
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
-      await api.delete(`/users/${userIdToUse}/cart`);
+      await api.delete(`/cart/${userIdToUse}`);
       setCartItems([]);
       toast.success("Cart cleared");
     } catch (err) {
@@ -326,7 +326,7 @@ export const StoreProvider = ({ children }) => {
     if (!user) return;
     try {
       const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
-      await api.delete(`/users/${userIdToUse}/favorites`);
+      await api.delete(`/favorites/${userIdToUse}`);
       setFavItems([]);
       toast.success("Wishlist cleared");
     } catch (err) {

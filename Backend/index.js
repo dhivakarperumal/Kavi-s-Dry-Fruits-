@@ -1,349 +1,57 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
+const bodyParser = require('body-parser');
+const db = require('./src/config/db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const db = require('./src/config/db');
+
+// Auth Routers
 const authRoutes = require('./src/routers/authRoutes');
-const categoryRoutes = require('./src/routers/categoryRoutes');
-const productRoutes = require('./src/routers/productRoutes');
-const comboRoutes = require('./src/routers/comboRoutes');
 const userRoutes = require('./src/routers/userRoutes');
-const reviewRoutes = require('./src/routers/reviewRoutes');
+const productRoutes = require('./src/routers/productRoutes');
+const categoryRoutes = require('./src/routers/categoryRoutes');
+const comboRoutes = require('./src/routers/comboRoutes');
+const cartRoutes = require('./src/routers/cartRoutes');
+const favoriteRoutes = require('./src/routers/favoriteRoutes');
+const couponRoutes = require('./src/routers/couponRoutes');
+const invoiceRoutes = require('./src/routers/invoiceRoutes');
+const stockRoutes = require('./src/routers/stockRoutes');
+const orderRoutes = require('./src/routers/orderRoutes');
+const healthRoutes = require('./src/routers/healthRoutes');
+const addressRoutes = require('./src/routers/addressRoutes');
 const dealerRoutes = require('./src/routers/dealerRoutes');
 const stickerRoutes = require('./src/routers/stickerRoutes');
 const seoRoutes = require('./src/routers/seoRoutes');
 
-
-
-// Load environment variables
-dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
-
-// Routes
+// Route Registration
 app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/combos', comboRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/reviews', reviewRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/combos', comboRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/stock-history', stockRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/health-benefits', healthRoutes);
+app.use('/api/addresses', addressRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/stickers', stickerRoutes);
 app.use('/api/seo', seoRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/coupons', async (req, res, next) => {
-  // Inline router for coupons
-  const method = req.method;
-  if (method === 'GET') {
-    try {
-      const [rows] = await db.query('SELECT * FROM coupons ORDER BY created_at DESC');
-      res.json(rows);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  } else if (method === 'POST') {
-    try {
-      const { code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status } = req.body;
-      const [result] = await db.query(
-        'INSERT INTO coupons (code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status || 'active']
-      );
-      res.json({ id: result.insertId, message: 'Coupon created' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  } else {
-    next();
-  }
-});
-
-app.delete('/api/coupons/:id', async (req, res) => {
-  try {
-    await db.query('DELETE FROM coupons WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Coupon deleted' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Invoices Routes
-app.get('/api/invoices', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM invoices ORDER BY created_at DESC');
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/invoices', async (req, res) => {
-  try {
-    const { invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName } = req.body;
-    const [result] = await db.query(
-      'INSERT INTO invoices (invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName]
-    );
-    res.json({ id: result.insertId, message: 'Invoice created' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Stock History Routes
-app.post('/api/stock-history', async (req, res) => {
-  try {
-    const { productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type } = req.body;
-    const [result] = await db.query(
-      'INSERT INTO stock_history (productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [productId, productName, productCategory, addedQuantity, finalStock, invoiceNumber, type]
-    );
-    res.json({ id: result.insertId, message: 'Stock history logged' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Orders Routes
-app.get('/api/orders', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/orders', async (req, res) => {
-  try {
-    const { orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount } = req.body;
-    const [result] = await db.query(
-      'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
-    );
-    res.json({ id: result.insertId, message: 'Order created' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/orders/:id', async (req, res) => {
-  try {
-    const { orderStatus } = req.body;
-    await db.query('UPDATE orders SET orderStatus = ? WHERE id = ?', [orderStatus, req.params.id]);
-    res.json({ message: 'Order updated' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/orders/:id', async (req, res) => {
-  try {
-    await db.query('DELETE FROM orders WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Order deleted' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Health Benefits Routes
-app.get('/api/health-benefits', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM health_benefits ORDER BY createdAt DESC');
-    res.json(rows.map(row => ({
-      ...row,
-      benefits: JSON.parse(row.benefits || '[]'),
-      images: JSON.parse(row.images || '[]'),
-      videos: JSON.parse(row.videos || '[]')
-    })));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/health-benefits', async (req, res) => {
-  try {
-    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
-    const [result] = await db.query(
-      'INSERT INTO health_benefits (productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore]
-    );
-    res.json({ id: result.insertId, message: 'Health benefit created' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.put('/api/health-benefits/:id', async (req, res) => {
-  try {
-    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
-    await db.query(
-      'UPDATE health_benefits SET productId=?, productName=?, category=?, shortDescription=?, detailedDescription=?, benefits=?, images=?, videos=?, howToEat=?, howToStore=? WHERE id=?',
-      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore, req.params.id]
-    );
-    res.json({ message: 'Health benefit updated' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// User Addresses Routes
-app.get('/api/users/:userId/addresses', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM user_addresses WHERE user_id = ? ORDER BY created_at DESC', [req.params.userId]);
-    res.json(rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/users/:userId/addresses', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { fullname, email, contact, zip, city, state, street, country } = req.body;
-    const [result] = await db.query(
-      'INSERT INTO user_addresses (user_id, fullname, email, contact, zip, city, state, street, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [userId, fullname, email, contact, zip, city, state, street, country]
-    );
-    res.json({ id: result.insertId, message: 'Address saved' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/health-benefits/:id', async (req, res) => {
-  try {
-    await db.query('DELETE FROM health_benefits WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Health benefit deleted' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-// Cart Routes
-app.get('/api/users/:userId/cart', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM cart WHERE userId = ?', [req.params.userId]);
-    res.json(rows.map(row => ({
-      ...row,
-      weights: JSON.parse(row.weights || '[]'),
-      prices: JSON.parse(row.prices || '{}')
-    })));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/users/:userId/cart', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { productId, name, category, price, quantity, imageUrl, selectedWeight, weights, prices, docId } = req.body;
-    
-    // Check if exists
-    const [existing] = await db.query('SELECT id, quantity FROM cart WHERE docId = ?', [docId]);
-    
-    if (existing.length > 0) {
-      await db.query('UPDATE cart SET quantity = ? WHERE docId = ?', [quantity, docId]);
-      res.json({ message: 'Cart updated' });
-    } else {
-      await db.query(
-        'INSERT INTO cart (userId, productId, name, category, price, quantity, imageUrl, selectedWeight, weights, prices, docId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, productId, name, category, price, quantity, imageUrl, selectedWeight, JSON.stringify(weights), JSON.stringify(prices), docId]
-      );
-      res.json({ message: 'Added to cart' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/users/:userId/cart/update-quantity', async (req, res) => {
-  try {
-    const { docId, quantity } = req.body;
-    await db.query('UPDATE cart SET quantity = ? WHERE docId = ?', [quantity, docId]);
-    res.json({ message: 'Quantity updated' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/users/:userId/cart/:docId', async (req, res) => {
-  try {
-    await db.query('DELETE FROM cart WHERE docId = ? AND userId = ?', [req.params.docId, req.params.userId]);
-    res.json({ message: 'Item removed' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/users/:userId/cart', async (req, res) => {
-  try {
-    await db.query('DELETE FROM cart WHERE userId = ?', [req.params.userId]);
-    res.json({ message: 'Cart cleared' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Favorites Routes
-app.get('/api/users/:userId/favorites', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM favorites WHERE userId = ?', [req.params.userId]);
-    res.json(rows.map(row => ({
-      ...row,
-      weights: JSON.parse(row.weights || '[]'),
-      prices: JSON.parse(row.prices || '{}')
-    })));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/users/:userId/favorites', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { productId, name, price, imageUrl, selectedWeight, weights, prices } = req.body;
-    await db.query(
-      'INSERT INTO favorites (userId, productId, name, price, imageUrl, selectedWeight, weights, prices) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=name',
-      [userId, productId, name, price, imageUrl, selectedWeight, JSON.stringify(weights), JSON.stringify(prices)]
-    );
-    res.json({ message: 'Added to favorites' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/users/:userId/favorites/:productId', async (req, res) => {
-  try {
-    await db.query('DELETE FROM favorites WHERE userId = ? AND productId = ?', [req.params.userId, req.params.productId]);
-    res.json({ message: 'Removed from favorites' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/users/:userId/favorites', async (req, res) => {
-  try {
-    await db.query('DELETE FROM favorites WHERE userId = ?', [req.params.userId]);
-    res.json({ message: 'Wishlist cleared' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.use('/api/seo', seoRoutes);
-
-
 
 // Basic Route
 app.get('/', (req, res) => {
-  res.send('Welcome to Car Booking API');
+  res.send('Welcome to KAVI\'S Dry Fruits API');
 });
 
 const createUuid = () => {
@@ -428,7 +136,6 @@ const initializeDatabase = async () => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
-
 
   await db.query(`
     CREATE TABLE IF NOT EXISTS reviews (
@@ -602,7 +309,6 @@ const initializeDatabase = async () => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
-
   const ensureTableColumnExists = async (table, name, definition, positionAfter) => {
     const [cols] = await db.query(`SHOW COLUMNS FROM ${table} LIKE ?`, [name]);
     if (cols.length === 0) {
@@ -653,7 +359,6 @@ const initializeDatabase = async () => {
   await ensureTableColumnExists('orders', 'paymentStatus', 'VARCHAR(100) NULL', 'AFTER paymentMode');
   await ensureTableColumnExists('orders', 'paymentId', 'VARCHAR(255) NULL', 'AFTER paymentStatus');
 };
-
 
 const ensureAdminUser = async () => {
   const [admins] = await db.query('SELECT id FROM users WHERE email = ?', ['admin@gmail.com']);
