@@ -49,30 +49,45 @@ const Settings = () => {
   ];
 
   return (
-    <div className="p-6  min-h-[500px]">
-     
+    <div className="p-4 sm:p-10 bg-slate-50 min-h-screen">
+    
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-8">
         {settingsCards.map((card, index) => (
           <div
             key={index}
             onClick={() => navigate(card.path)}
-            className={`p-4 md:p-6 rounded-2xl border border-gray-200 ${card.bgColor} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 w-full flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6 group`}
+            className={`group relative overflow-hidden p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-xl shadow-slate-200/50 cursor-pointer hover:-translate-x-2 transition-all duration-500`}
           >
-            <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 border border-gray-200">
-              {card.icon}
+            {/* Bright Gradient Background on Hover */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${card.path.includes('users') ? 'from-emerald-500 to-teal-600' : card.path.includes('reviews') ? 'from-amber-400 to-orange-500' : card.path.includes('dealer') ? 'from-blue-500 to-indigo-600' : card.path.includes('invoice') ? 'from-indigo-500 to-purple-600' : 'from-rose-500 to-pink-600'}`}></div>
+
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
+              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:bg-white group-hover:shadow-white/20 ${card.bgColor} border border-white/50 backdrop-blur-sm`}>
+                {React.cloneElement(card.icon, { 
+                  size: 32, 
+                  className: `transition-colors duration-500 group-hover:text-slate-900 ${card.icon.props.className}` 
+                })}
+              </div>
+              
+              <div className="flex-grow">
+                <h3 className="text-2xl font-black text-slate-900 mb-2 transition-colors duration-500 group-hover:text-white tracking-tighter">
+                  {card.title}
+                </h3>
+                <p className="text-sm font-medium text-slate-500 leading-relaxed transition-colors duration-500 group-hover:text-white/80 max-w-sm">
+                  {card.description}
+                </p>
+              </div>
+              
+              <div className="absolute top-8 right-8 transition-transform duration-500 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white text-xl border border-white/30 shadow-lg">
+                  →
+                </div>
+              </div>
             </div>
-            
-            <div className="flex-grow">
-              <h3 className="text-lg font-bold text-gray-800 mb-1">{card.title}</h3>
-              <p className="text-sm text-gray-600">{card.description}</p>
-            </div>
-            
-            <div className="flex-shrink-0 flex items-center">
-              <span className="text-sm font-bold text-gray-700 flex items-center gap-2 group-hover:text-emerald-600 transition-colors bg-white px-4 py-2 rounded-lg shadow-sm border border-black/5">
-                Manage <span>→</span>
-              </span>
-            </div>
+
+            {/* Decorative Elements */}
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-slate-50 rounded-full group-hover:hidden transition-all duration-500"></div>
           </div>
         ))}
       </div>
