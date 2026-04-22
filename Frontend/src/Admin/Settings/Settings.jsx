@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUsers, FaStar, FaStore, FaFileInvoiceDollar, FaTicketAlt } from "react-icons/fa";
+import { FaUsers, FaStar, FaStore, FaFileInvoiceDollar, FaTicketAlt, FaTruck } from "react-icons/fa";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -46,7 +46,17 @@ const Settings = () => {
       bgColor: "bg-rose-50",
       borderColor: "border-rose-100",
     },
+    {
+      title: "Delivery Settings",
+      description: "Enable/Disable shipping charges and set global delivery amounts.",
+      icon: <FaTruck size={28} className="text-orange-500" />,
+      path: "/adminpanel/delivery-settings",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-100",
+    },
   ];
+
+  /* Add FaTruck to imports if not there */
 
   return (
     <div className="p-4 sm:p-10 bg-slate-50 min-h-screen">

@@ -21,6 +21,7 @@ const addressRoutes = require('./src/routers/addressRoutes');
 const dealerRoutes = require('./src/routers/dealerRoutes');
 const stickerRoutes = require('./src/routers/stickerRoutes');
 const seoRoutes = require('./src/routers/seoRoutes');
+const settingsRoutes = require('./src/routers/settingsRoutes');
 
 const app = express();
 const PORT = 5000;
@@ -47,6 +48,7 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/stickers', stickerRoutes);
 app.use('/api/seo', seoRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {

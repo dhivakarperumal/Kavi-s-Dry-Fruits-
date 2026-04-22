@@ -14,7 +14,8 @@ import {
   MdDeliveryDining,
   MdOutlineCancelPresentation,
   MdPreview,
-  MdPrint
+  MdPrint,
+  MdSettings
 } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowUp, IoIosArrowBack } from "react-icons/io";
 
@@ -80,6 +81,16 @@ const Sidebar = ({
       dropdown: [
         { label: "Add Health Benefit", icon: <MdOutlineAddBox /> },
         { label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
+      ],
+    },
+
+    {
+      label: "Settings",
+      icon: <MdSettings />,
+      dropdown: [
+        { label: "Settings", icon: <MdSettings /> },
+        { label: "Delivery Settings", icon: <MdDeliveryDining /> },
+        { label: "Profile", icon: <FaUsersCog /> },
       ],
     },
   ];

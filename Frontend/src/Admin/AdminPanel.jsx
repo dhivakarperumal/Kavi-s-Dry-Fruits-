@@ -37,6 +37,7 @@ import ViewHealthBenefits from "./HealthBenefits/ViewHealthBenefits";
 import SEOKeywords from "./SEOKeywords";
 import Settings from "./Settings/Settings";
 import Profile from "./Settings/Profile";
+import DeliverySettings from "./Settings/DeliverySettings";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -85,6 +86,7 @@ const AdminPanel = () => {
       "settings": "Settings",
       "coupons": "Offers & Coupons",
       "profile": "Profile",
+      "delivery-settings": "Delivery Settings",
     };
 
     const mappedSection = routeMap[path];
@@ -122,6 +124,7 @@ const AdminPanel = () => {
       "Settings": "settings",
       "Offers & Coupons": "coupons",
       "Profile": "profile",
+      "Delivery Settings": "delivery-settings",
     };
     
     const urlPath = reverseMap[newSection] || "dashboard";
@@ -203,6 +206,7 @@ const AdminPanel = () => {
       case "Settings":           return <Settings />;
       case "Offers & Coupons":   return <OffersAndCoupons />;
       case "Profile":            return <Profile />;
+      case "Delivery Settings":  return <DeliverySettings />;
 
       default:
         return (

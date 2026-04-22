@@ -122,50 +122,73 @@ const Checkout = () => {
     return price * qty;
   };
 
-  const calculateShippingFromItems = (items) => {
-    let totalWeight = 0;
-    let comboCount = 0;
+  const [shippingSettings, setShippingSettings] = useState({ 
+    shipping_enabled: "false", 
+    shipping_amount: "0" 
+  });
 
-    items.forEach((item) => {
-      const qty = parseInt(item.qty || item.quantity || 1, 10) || 0;
-      if (item.category === "Combo") {
-        comboCount += qty;
-      } else {
-        const weightInG = parseInt(String(item.selectedWeight || "").replace("g", ""), 10) || 0;
-        totalWeight += weightInG * qty;
+  useEffect(() => {
+    const fetchShippingSettings = async () => {
+      try {
+        const res = await api.get("/settings");
+        if (res.data) setShippingSettings(res.data);
+      } catch (err) {
+        console.error("Fetch shipping settings error:", err);
       }
-    });
-
-    let shipping = 0;
-
-    if (totalWeight > 0) {
-      shipping = 50;
-      if (totalWeight > 1000) {
-        const extra = totalWeight - 1000;
-        const chunks = Math.ceil(extra / 200);
-        shipping += chunks * 10;
-      }
-    }
-
-    if (comboCount > 0) {
-      shipping += comboCount * 50;
-    }
-
-    return shipping;
-  };
+    };
+    fetchShippingSettings();
+  }, []);
 
   // ---------------- Derived values (useMemo to avoid stale computations) ----------------
-  const shippingCost = useMemo(() => calculateShippingFromItems(itemsToCheckout), [itemsToCheckout]);
+  const subtotal = useMemo(() => {
+    return itemsToCheckout.reduce((acc, item) => acc + calculateItemTotal(item), 0);
+  }, [itemsToCheckout]);
 
-  const totalAmount = useMemo(
-    () =>
-      itemsToCheckout.reduce((total, item) => {
-        return total + calculateItemTotal(item);
-      }, 0),
-    [itemsToCheckout]
-  );
+  const shippingCost = useMemo(() => {
+    if (shippingSettings.shipping_enabled !== "true") return 0;
 
-  const finalAmount = useMemo(() => totalAmount + shippingCost, [totalAmount, shippingCost]);
+    const baseRate = Number(shippingSettings.shipping_amount || 0);
+    let totalWeightGrams = 0;
+
+    itemsToCheckout.forEach((item) => {
+      const qty = Number(item.qty || item.quantity || 1);
+      const weightStr = String(item.selectedWeight || "0").toLowerCase();
+      
+      let weightValue = parseInt(weightStr, 10) || 0;
+      if (weightStr.includes("kg") || weightStr.includes("k")) {
+        weightValue = weightValue * 1000;
+      }
+      
+      totalWeightGrams += weightValue * qty;
+    });
+
+    if (totalWeightGrams === 0) return 0;
+
+    let cost = baseRate;
+    
+    // Tiered pricing for the first 1kg
+    if (totalWeightGrams <= 500) {
+      // Light order: ₹20 discount from base
+      cost = Math.max(0, baseRate - 20);
+    } else if (totalWeightGrams <= 1000) {
+      // Standard 1kg order: Full base rate
+      cost = baseRate;
+    } else {
+      // Heavy order: Base + extras
+      const extraWeight = totalWeightGrams - 1000;
+      const extraChunks = Math.ceil(extraWeight / 200);
+      cost = baseRate + (extraChunks * 10);
+    }
+
+    return cost;
+  }, [itemsToCheckout, shippingSettings]);
+
+  const MIN_PURCHASE = 300;
+
+  const finalAmount = useMemo(() => subtotal + shippingCost, [subtotal, shippingCost]);
+
+  const isMinimumMet = useMemo(() => subtotal >= MIN_PURCHASE, [subtotal]);
+  const remainingToMin = useMemo(() => Math.max(0, MIN_PURCHASE - subtotal), [subtotal]);
 
   // ---------------- Validation ----------------
   const validateField = (name, value) => {
@@ -506,9 +529,7 @@ const Checkout = () => {
   ];
 
   // ---------------- Minimum purchase rule ----------------
-  const MIN_PURCHASE = 400;
-  const isMinimumMet = finalAmount >= MIN_PURCHASE;
-  const remainingToMin = Math.max(0, MIN_PURCHASE - finalAmount);
+  // (Using the values calculated in useMemo above)
 
   return (
     <>
@@ -651,7 +672,7 @@ const Checkout = () => {
 
             <div className="flex justify-between">
               <span>Sub Total</span>
-              <span>₹{totalAmount.toFixed(2)}</span>
+              <span>₹{subtotal.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between">
