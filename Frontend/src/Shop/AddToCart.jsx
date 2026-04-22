@@ -84,7 +84,7 @@ const CartRow = React.memo(
 
         <td className="p-4 text-center font-semibold">
           <button
-            onClick={() => removeItem(item.id)}
+            onClick={() => removeItem(item.docId)}
             className="text-red-600 hover:text-red-800 text-xl cursor-pointer"
           >
             ×
@@ -291,7 +291,7 @@ const AddToCart = () => {
                 <tbody>
                   {cartItems.map((item) => (
                     <CartRow
-                      key={item.id}
+                      key={item.docId}
                       item={item}
                       increaseQuantity={incQty}
                       decreaseQuantity={decQty}

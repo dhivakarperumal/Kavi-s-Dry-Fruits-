@@ -12,7 +12,7 @@ const AddToFav = () => {
     favItems,
     removeFavItem,
     addToCart,
-    setFavItems,
+    clearFav,
   } = useStore();
 
   const navigate = useNavigate();
@@ -37,13 +37,7 @@ const AddToFav = () => {
     navigate("/addtocart");
   };
 
-  const clearFavorites = async () => {
-    for (const item of favItems) {
-      await removeFavItem(item.productId);
-    }
-    setFavItems([]);
-    toast.info("Wishlist cleared!");
-  };
+
 
   return (
     <>
@@ -100,8 +94,9 @@ const AddToFav = () => {
                 </thead>
                 <tbody>
                   {favItems.map((item, index) => {
-                    const activeWeight = item.selectedWeight || item.weights?.[0] || "100g";
-                    const price = item.prices?.[activeWeight] || item.price || 0;
+                    const activeWeight = item.selectedWeight || item.weights?.[0] || "default";
+                    const priceObj = item.prices?.[activeWeight];
+                    const price = (typeof priceObj === 'object' ? priceObj.offerPrice : priceObj) || item.price || 0;
 
                     return (
                       <tr
@@ -162,7 +157,7 @@ const AddToFav = () => {
             {/* Wishlist Bottom Buttons */}
             <div className="mt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-end">
               <button
-                onClick={clearFavorites}
+                onClick={clearFav}
                 className="text-green-700 font-semibold cursor-pointer hover:underline"
               >
                 Clear Wishlist

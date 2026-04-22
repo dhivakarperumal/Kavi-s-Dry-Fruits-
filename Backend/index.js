@@ -226,6 +226,117 @@ app.delete('/api/health-benefits/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Cart Routes
+app.get('/api/users/:userId/cart', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM cart WHERE userId = ?', [req.params.userId]);
+    res.json(rows.map(row => ({
+      ...row,
+      weights: JSON.parse(row.weights || '[]'),
+      prices: JSON.parse(row.prices || '{}')
+    })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users/:userId/cart', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { productId, name, category, price, quantity, imageUrl, selectedWeight, weights, prices, docId } = req.body;
+    
+    // Check if exists
+    const [existing] = await db.query('SELECT id, quantity FROM cart WHERE docId = ?', [docId]);
+    
+    if (existing.length > 0) {
+      await db.query('UPDATE cart SET quantity = ? WHERE docId = ?', [quantity, docId]);
+      res.json({ message: 'Cart updated' });
+    } else {
+      await db.query(
+        'INSERT INTO cart (userId, productId, name, category, price, quantity, imageUrl, selectedWeight, weights, prices, docId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, productId, name, category, price, quantity, imageUrl, selectedWeight, JSON.stringify(weights), JSON.stringify(prices), docId]
+      );
+      res.json({ message: 'Added to cart' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users/:userId/cart/update-quantity', async (req, res) => {
+  try {
+    const { docId, quantity } = req.body;
+    await db.query('UPDATE cart SET quantity = ? WHERE docId = ?', [quantity, docId]);
+    res.json({ message: 'Quantity updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:userId/cart/:docId', async (req, res) => {
+  try {
+    await db.query('DELETE FROM cart WHERE docId = ? AND userId = ?', [req.params.docId, req.params.userId]);
+    res.json({ message: 'Item removed' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:userId/cart', async (req, res) => {
+  try {
+    await db.query('DELETE FROM cart WHERE userId = ?', [req.params.userId]);
+    res.json({ message: 'Cart cleared' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Favorites Routes
+app.get('/api/users/:userId/favorites', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM favorites WHERE userId = ?', [req.params.userId]);
+    res.json(rows.map(row => ({
+      ...row,
+      weights: JSON.parse(row.weights || '[]'),
+      prices: JSON.parse(row.prices || '{}')
+    })));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/users/:userId/favorites', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { productId, name, price, imageUrl, selectedWeight, weights, prices } = req.body;
+    await db.query(
+      'INSERT INTO favorites (userId, productId, name, price, imageUrl, selectedWeight, weights, prices) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=name',
+      [userId, productId, name, price, imageUrl, selectedWeight, JSON.stringify(weights), JSON.stringify(prices)]
+    );
+    res.json({ message: 'Added to favorites' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:userId/favorites/:productId', async (req, res) => {
+  try {
+    await db.query('DELETE FROM favorites WHERE userId = ? AND productId = ?', [req.params.userId, req.params.productId]);
+    res.json({ message: 'Removed from favorites' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/users/:userId/favorites', async (req, res) => {
+  try {
+    await db.query('DELETE FROM favorites WHERE userId = ?', [req.params.userId]);
+    res.json({ message: 'Wishlist cleared' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.use('/api/seo', seoRoutes);
 
 
@@ -420,6 +531,43 @@ const initializeDatabase = async () => {
       keywords VARCHAR(255) NOT NULL UNIQUE,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS cart (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      userId VARCHAR(50) NOT NULL,
+      productId VARCHAR(50) NOT NULL,
+      name VARCHAR(255),
+      category VARCHAR(255),
+      price DECIMAL(10,2),
+      quantity INT DEFAULT 1,
+      imageUrl TEXT,
+      selectedWeight VARCHAR(50),
+      weights TEXT,
+      prices TEXT,
+      docId VARCHAR(100) UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX (userId)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS favorites (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      userId VARCHAR(50) NOT NULL,
+      productId VARCHAR(50) NOT NULL,
+      name VARCHAR(255),
+      price DECIMAL(10,2),
+      imageUrl TEXT,
+      selectedWeight VARCHAR(50),
+      weights TEXT,
+      prices TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_fav (userId, productId),
+      INDEX (userId)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 

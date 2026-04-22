@@ -14,6 +14,7 @@ import {
 import { toast } from "react-hot-toast";
 import dataPreloadService from "../services/dataPreloadService";
 import imagePreloadManager from "../services/imagePreloadManager";
+import api from "../services/api";
 
 const StoreContext = createContext();
 
@@ -27,36 +28,31 @@ export const StoreProvider = ({ children }) => {
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   // ============================
-  // 🔥 AUTH + CART/FAV LISTENERS
+  // 🔥 AUTH + CART/FAV FETCHING
   // ============================
   useEffect(() => {
-    let unsubscribeCart = () => {};
-    let unsubscribeFav = () => {};
-
     const storedUserStr = localStorage.getItem("user");
     const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
     setUser(storedUser);
 
-    const setupListeners = async () => {
-      if (storedUser && storedUser.userId) {
+    const fetchData = async () => {
+      // Prioritize the UUID-based user_id/userUuid shown in the DB image
+      const userIdToUse = String(storedUser?.user_id || storedUser?.userUuid || storedUser?.userId || storedUser?.uid || "");
+      
+      if (userIdToUse) {
         try {
-          const userDoc = await getDoc(doc(db, "users", storedUser.userId));
-          setUserData(userDoc.exists() ? userDoc.data() : null);
+          // Address/User Data logic could also go here if needed
+          
+          // Fetch CART from MySQL API
+          const cartRes = await api.get(`/users/${userIdToUse}/cart`);
+          setCartItems(cartRes.data || []);
 
-          // CART LISTENER
-          const cartRef = collection(db, "users", storedUser.userId, "cart");
-          unsubscribeCart = onSnapshot(cartRef, (snap) => {
-            setCartItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-          });
-
-          // FAVORITES LISTENER
-          const favRef = collection(db, "users", storedUser.userId, "favorites");
-          unsubscribeFav = onSnapshot(favRef, (snap) => {
-            setFavItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-          });
+          // Fetch FAVORITES from MySQL API
+          const favRes = await api.get(`/users/${userIdToUse}/favorites`);
+          setFavItems(favRes.data || []);
         } catch (err) {
-          console.error("Firestore Auth Error:", err.message);
-          toast.error("Unable to load user data.");
+          console.error("API Data Fetch Error:", err.message);
+          toast.error("Unable to sync your cart/wishlist.");
         }
       } else {
         setUserData(null);
@@ -67,12 +63,7 @@ export const StoreProvider = ({ children }) => {
       setLoading(false);
     };
 
-    setupListeners();
-
-    return () => {
-      unsubscribeCart();
-      unsubscribeFav();
-    };
+    fetchData();
   }, []);
 
   // ============================
@@ -83,15 +74,65 @@ export const StoreProvider = ({ children }) => {
       try {
         // Try to get from cache first
         let products = await dataPreloadService.preloadProducts(async () => {
-          const snap = await getDocs(collection(db, "products"));
-          return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+          const [prodRes, comboRes] = await Promise.all([
+            api.get("/products"),
+            api.get("/combos"),
+          ]);
+
+          const rawProducts = prodRes.data || [];
+          const rawCombos = comboRes.data || [];
+          
+          // Map MySQL products to Frontend schema
+          const mappedProducts = rawProducts.map(p => {
+            const variants = typeof p.variants === 'string' ? JSON.parse(p.variants || '[]') : (p.variants || []);
+            const prices = {};
+            const weights = [];
+            
+            variants.forEach(v => {
+              prices[v.weight] = {
+                mrp: Number(v.mrp),
+                offerPrice: Number(v.offerPrice)
+              };
+              weights.push(v.weight);
+            });
+
+            return {
+              ...p,
+              type: 'single',
+              prices,
+              weights,
+              images: typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []),
+              tags: typeof p.tags === 'string' ? JSON.parse(p.tags || '[]') : (p.tags || []),
+              rating: Number(p.rating || 4.5)
+            };
+          });
+
+          // Map MySQL combos to Frontend schema
+          const mappedCombos = rawCombos.map(c => {
+            const details = typeof c.comboDetails === 'string' ? JSON.parse(c.comboDetails || '{}') : (c.comboDetails || {});
+            const price = Number(details.offerPrice || details.mrp || 0);
+            const mrp = Number(details.mrp || price || 0);
+            const weight = String(details.totalWeight || 'Combo');
+
+            return {
+              ...c,
+              type: 'combo',
+              category: 'Combo',
+              prices: { [weight]: { mrp, offerPrice: price } },
+              weights: [weight],
+              images: typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []),
+              tags: typeof c.tags === 'string' ? JSON.parse(c.tags || '[]') : (c.tags || []),
+              rating: Number(c.rating || 4.8)
+            };
+          });
+
+          return [...mappedProducts, ...mappedCombos];
         });
 
         setAllProducts(products);
 
         // Preload critical images for homepage
         if (products && products.length > 0) {
-          // Get top 12 products for preloading
           const topProducts = products.slice(0, 12);
           imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
             console.warn('Image preload error:', err)
@@ -115,32 +156,53 @@ export const StoreProvider = ({ children }) => {
     if (!user) return toast.error("Login to add to cart!");
 
     try {
-      const productId = product.id || product.productId;
-      const weight = product.selectedWeight || "default";
-      const docId = `${productId}_${weight}`;
+      const productId = String(product.id || product.productId || "unknown");
+      const weight = String(product.selectedWeight || "default");
+      const docId = `${productId}_${weight}`.replace(/[\/\\.#\s]+/g, "_");
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
 
-      const ref = doc(db, "users", user.uid, "cart", docId);
-      const snap = await getDoc(ref);
+      // Local update check
+      const existing = cartItems.find((c) => c.docId === docId);
+      const newQty = (existing?.quantity || 0) + (product.qty || 1);
 
-      if (snap.exists()) {
-        const existingQty = snap.data().quantity || 1;
-        await updateDoc(ref, { quantity: existingQty + (product.qty || 1) });
-        toast.success("Quantity updated!");
-      } else {
-        await setDoc(ref, {
-          id: docId,
-          productId,
-          name: product.name,
-          category: product.category,
-          price: product.price || 0,
-          quantity: product.qty || 1,
-          imageUrl: product.image || product.img || product.imageUrl || "",
-          selectedWeight: weight,
-          weights: product.weights || [],
-          prices: product.prices || {},
-        });
-        toast.success("Added to cart!");
-      }
+      await api.post(`/users/${userIdToUse}/cart`, {
+        productId,
+        name: product.name || "Unknown Product",
+        category: product.category || "General",
+        price: product.price || 0,
+        quantity: newQty,
+        imageUrl: product.image || product.img || product.imageUrl || "",
+        selectedWeight: weight,
+        weights: product.weights || [],
+        prices: product.prices || {},
+        docId,
+      });
+
+      // Update local state for immediate feedback
+      setCartItems((prev) => {
+        if (existing) {
+          return prev.map((item) =>
+            item.docId === docId ? { ...item, quantity: newQty } : item
+          );
+        }
+        return [
+          ...prev,
+          {
+            docId,
+            productId,
+            name: product.name,
+            category: product.category,
+            price: product.price,
+            quantity: newQty,
+            imageUrl: product.image || product.img || product.imageUrl || "",
+            selectedWeight: weight,
+            weights: product.weights,
+            prices: product.prices,
+          },
+        ];
+      });
+
+      toast.success(existing ? "Quantity updated!" : "Added to cart!");
     } catch (err) {
       console.error("Add to Cart Error:", err.message);
       toast.error("Failed to add to cart.");
@@ -148,31 +210,45 @@ export const StoreProvider = ({ children }) => {
   };
 
   const increaseQuantity = async (item) => {
-    if (!user || !item?.id) return;
+    if (!user || !item?.docId) return;
     try {
-      await updateDoc(doc(db, "users", user.uid, "cart", item.id), {
-        quantity: item.quantity + 1,
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      const newQty = (item.quantity || 0) + 1;
+      await api.post(`/users/${userIdToUse}/cart/update-quantity`, {
+        docId: item.docId,
+        quantity: newQty,
       });
+      setCartItems((prev) =>
+        prev.map((i) => (i.docId === item.docId ? { ...i, quantity: newQty } : i))
+      );
     } catch {
       toast.error("Failed to update quantity.");
     }
   };
 
   const decreaseQuantity = async (item) => {
-    if (!user || !item?.id || item.quantity <= 1) return;
+    if (!user || !item?.docId || item.quantity <= 1) return;
     try {
-      await updateDoc(doc(db, "users", user.uid, "cart", item.id), {
-        quantity: item.quantity - 1,
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      const newQty = (item.quantity || 0) - 1;
+      await api.post(`/users/${userIdToUse}/cart/update-quantity`, {
+        docId: item.docId,
+        quantity: newQty,
       });
+      setCartItems((prev) =>
+        prev.map((i) => (i.docId === item.docId ? { ...i, quantity: newQty } : i))
+      );
     } catch {
       toast.error("Failed to decrease quantity.");
     }
   };
 
-  const removeItem = async (itemId) => {
-    if (!user || !itemId) return;
+  const removeItem = async (docId) => {
+    if (!user || !docId) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "cart", itemId));
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      await api.delete(`/users/${userIdToUse}/cart/${docId}`);
+      setCartItems((prev) => prev.filter((i) => i.docId !== docId));
       toast.success("Item removed");
     } catch {
       toast.error("Remove failed");
@@ -186,27 +262,44 @@ export const StoreProvider = ({ children }) => {
     if (!user) return toast.error("Login to add to favorites!");
 
     try {
-      const docId = product.id || product.productId;
-      await setDoc(doc(db, "users", user.uid, "favorites", docId), {
-        id: docId,
-        productId: docId,
-        name: product.name,
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      const productId = String(product.id || product.productId || "unknown");
+      
+      await api.post(`/users/${userIdToUse}/favorites`, {
+        productId,
+        name: product.name || "Unknown Product",
         price: product.price || 0,
         imageUrl: product.image || product.img || product.imageUrl || "",
         selectedWeight: product.selectedWeight || "",
         weights: product.weights || [],
         prices: product.prices || {},
       });
+
+      setFavItems(prev => {
+        if (prev.some(i => String(i.productId) === productId)) return prev;
+        return [...prev, {
+          productId,
+          name: product.name,
+          price: product.price,
+          imageUrl: product.image || product.img || product.imageUrl || "",
+          selectedWeight: product.selectedWeight,
+          weights: product.weights,
+          prices: product.prices,
+        }];
+      });
+
       toast.success("Added to Favorites!");
     } catch {
       toast.error("Failed to add to favorites.");
     }
   };
 
-  const removeFavItem = async (itemId) => {
-    if (!user || !itemId) return;
+  const removeFavItem = async (productId) => {
+    if (!user || !productId) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "favorites", itemId));
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      await api.delete(`/users/${userIdToUse}/favorites/${productId}`);
+      setFavItems(prev => prev.filter(i => String(i.productId) !== String(productId)));
       toast.success("Removed from Favorites");
     } catch {
       toast.error("Failed to remove.");
@@ -214,16 +307,31 @@ export const StoreProvider = ({ children }) => {
   };
 
   // ============================
-  // 🔥 CLEAR CART
+  // 🔥 CLEAR SYSTEMS
   // ============================
   const clearCart = async () => {
     if (!user) return;
     try {
-      const snap = await getDocs(collection(db, "users", user.uid, "cart"));
-      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      await api.delete(`/users/${userIdToUse}/cart`);
+      setCartItems([]);
       toast.success("Cart cleared");
-    } catch {
+    } catch (err) {
+      console.error("clearCart error:", err);
       toast.error("Failed to clear cart.");
+    }
+  };
+
+  const clearFav = async () => {
+    if (!user) return;
+    try {
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      await api.delete(`/users/${userIdToUse}/favorites`);
+      setFavItems([]);
+      toast.success("Wishlist cleared");
+    } catch (err) {
+      console.error("clearFav error:", err);
+      toast.error("Failed to clear wishlist.");
     }
   };
 
@@ -266,8 +374,9 @@ export const StoreProvider = ({ children }) => {
       });
 
       // Update on server
-      const oldRef = doc(db, "users", user.uid, "cart", cartItemId);
-      const newRef = doc(db, "users", user.uid, "cart", newDocId);
+      const userIdToUse = user.userId || user.uid;
+      const oldRef = doc(db, "users", userIdToUse, "cart", cartItemId);
+      const newRef = doc(db, "users", userIdToUse, "cart", newDocId);
 
       await runTransaction(db, async (transaction) => {
         const oldSnap = await transaction.get(oldRef);
@@ -336,8 +445,9 @@ export const StoreProvider = ({ children }) => {
         removeItem,
         removeFavItem,
         clearCart,
+        clearFav,
         updateWeight,
-      }), [user, userData, loading, loadingProducts, allProducts, cartItems, favItems, addToCart, addToFav, increaseQuantity, decreaseQuantity, removeItem, removeFavItem, clearCart, updateWeight])}
+      }), [user, userData, loading, loadingProducts, allProducts, cartItems, favItems, addToCart, addToFav, increaseQuantity, decreaseQuantity, removeItem, removeFavItem, clearCart, clearFav, updateWeight])}
     >
       {children}
     </StoreContext.Provider>

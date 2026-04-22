@@ -12,7 +12,10 @@ const ProductCard = React.memo(({
   activeWeight,
   addToCart,
   addToFav,
+  favItems = [],
 }) => {
+  const isFavorite = favItems.some(item => String(item.productId) === String(product.id));
+
   // Get price object for the active weight
   const priceObj = product.prices?.[activeWeight];
   let mrp = 0;
@@ -41,7 +44,8 @@ const ProductCard = React.memo(({
 
   const avgRating = product.rating || 4.5;
 
-  const handleAddToFav = () => {
+  const handleAddToFav = (e) => {
+    e.preventDefault();
     addToFav({
       ...product,
       imageUrl: product.images[0],
@@ -51,7 +55,8 @@ const ProductCard = React.memo(({
     });
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e.preventDefault();
     if (product.stock <= 0) {
       toast.error("Out of Stock");
       return;
@@ -83,9 +88,9 @@ const ProductCard = React.memo(({
         </span>
         <button
           onClick={handleAddToFav}
-          className="absolute top-2 right-2 border p-2 rounded-full group-hover:text-white group-hover:bg-primary transition cursor-pointer"
+          className={`absolute top-2 right-2 border p-2 rounded-full transition cursor-pointer ${isFavorite ? "bg-rose-500 text-white border-rose-500" : "bg-white text-slate-400 border-slate-200 hover:bg-primary hover:text-white"}`}
         >
-          <FiHeart />
+          <FiHeart className={isFavorite ? "fill-current" : ""} />
         </button>
       </div>
 
@@ -135,12 +140,12 @@ const ProductCard = React.memo(({
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Custom comparison for performance - only re-render if necessary
   return (
     prevProps.product.id === nextProps.product.id &&
     prevProps.activeWeight === nextProps.activeWeight &&
     prevProps.product.stock === nextProps.product.stock &&
-    prevProps.product.rating === nextProps.product.rating
+    prevProps.product.rating === nextProps.product.rating &&
+    prevProps.favItems?.length === nextProps.favItems?.length
   );
 });
 
