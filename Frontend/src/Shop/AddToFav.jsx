@@ -23,14 +23,11 @@ const AddToFav = () => {
       const price = item.prices?.[activeWeight] || item.price || 0;
 
       await addToCart({
+        ...item,
         id: item.productId,
-        name: item.name,
         price,
-        image: item.image || item.imageUrl,
         selectedWeight: activeWeight,
         qty: 1,
-        weights: item.weights,
-        prices: item.prices,
       });
     }
     toast.success("All wishlist products added to cart!");
@@ -121,14 +118,11 @@ const AddToFav = () => {
                           <button
                             onClick={() => {
                               addToCart({
-                                id: item.productId,
-                                name: item.name,
+                                ...item,
+                                id: item.productId, // Ensure compatibility with ID-based lookup
                                 price,
-                                image: item.image || item.imageUrl,
                                 selectedWeight: activeWeight,
                                 qty: 1,
-                                weights: item.weights,
-                                prices: item.prices,
                               });
                               navigate("/addtocart");
                             }}
