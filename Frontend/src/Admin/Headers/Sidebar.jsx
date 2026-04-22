@@ -4,7 +4,7 @@ import {
   AiOutlineStock,
   AiOutlineLogout
 } from "react-icons/ai";
-import { FaHome, FaUsersCog, FaDropbox, FaUsers, FaStickyNote, FaFileInvoice, FaSearch, FaCog, FaTicketAlt } from "react-icons/fa";
+import { FaHome, FaUsersCog, FaDropbox, FaUsers, FaStickyNote, FaFileInvoice, FaSearch } from "react-icons/fa";
 import {
   MdDashboard,
   MdOutlineProductionQuantityLimits,
@@ -80,14 +80,6 @@ const Sidebar = ({
       dropdown: [
         { label: "Add Health Benefit", icon: <MdOutlineAddBox /> },
         { label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
-      ],
-    },
-    {
-      label: "Settings",
-      icon: <FaCog />,
-      dropdown: [
-        { label: "Profile", icon: <FaUsers /> },
-        { label: "Offers & Coupons", icon: <FaTicketAlt /> },
       ],
     },
   ];
