@@ -47,20 +47,40 @@ const Checkout = () => {
     }
   };
 
+  const userIdToUse = String(
+    user?.user_id || 
+    user?.userUuid || 
+    user?.userId || 
+    user?.uid || 
+    user?.email || 
+    ""
+  );
+
   // ---------------- Fetch saved addresses ----------------
   useEffect(() => {
     const fetchAddresses = async () => {
-      if (user && user.uid) {
+      if (userIdToUse && userIdToUse !== "undefined") {
         try {
-          const res = await api.get(`/users/${user.uid}/addresses`);
-          setSavedAddresses(res.data || []);
+          const res = await api.get(`/addresses/${userIdToUse}`);
+          const rawAddresses = res.data || [];
+          
+          // Deduplicate based on street, city, zip to avoid UI clutter
+          const uniqueMap = new Map();
+          rawAddresses.forEach(addr => {
+            const signature = `${addr.street}-${addr.city}-${addr.zip}`.toLowerCase().replace(/\s+/g, '');
+            if (!uniqueMap.has(signature)) {
+              uniqueMap.set(signature, addr);
+            }
+          });
+          
+          setSavedAddresses(Array.from(uniqueMap.values()));
         } catch (err) {
           console.error("Fetch addresses error:", err);
         }
       }
     };
     fetchAddresses();
-  }, [user]);
+  }, [userIdToUse]);
 
   // populate itemsToCheckout when cartItems or checkoutProduct changes
   useEffect(() => {
@@ -212,11 +232,11 @@ const Checkout = () => {
 
   const saveAddressAfterPayment = async () => {
     const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
-    if (!userIdToUse) return;
+    if (!userIdToUse || userIdToUse === "undefined") return;
     if (isDuplicateAddress(form)) return;
     try {
-      await api.post(`/users/${userIdToUse}/addresses`, form);
-      toast.success("Address saved!");
+      await api.post(`/addresses/${userIdToUse}`, form);
+      toast.success("Address saved to your profile!");
     } catch (err) {
       console.error("Save address error:", err);
     }
