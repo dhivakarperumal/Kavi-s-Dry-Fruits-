@@ -41,7 +41,7 @@ const createOrder = async (req, res) => {
       const table = isCombo ? 'combos' : 'products';
       
       // Get current stock and details
-      const [rows] = await connection.query(`SELECT id, totalStock, comboDetails FROM ${table} WHERE id = ?`, [item.id]);
+      const [rows] = await connection.query(`SELECT id, totalStock, comboDetails, comboItems FROM ${table} WHERE id = ?`, [item.id]);
       
       if (rows.length > 0) {
         const productData = rows[0];
@@ -49,10 +49,33 @@ const createOrder = async (req, res) => {
         let weightToSubtract = 0;
 
         if (isCombo) {
-          // For combos, we subtract the total weight of the combo pack * quantity
+          // A. Reduce Combo Stock itself
           const details = typeof productData.comboDetails === 'string' ? JSON.parse(productData.comboDetails || '{}') : (productData.comboDetails || {});
           const comboWeight = Number(details.totalWeight || 0);
           weightToSubtract = qty * comboWeight;
+
+          // B. Reduce Individual Items stock inside the Combo
+          const comboItems = typeof productData.comboItems === 'string' ? JSON.parse(productData.comboItems || '[]') : (productData.comboItems || []);
+          for (const subItem of comboItems) {
+            if (subItem.name) {
+              // Parse weight of sub-item
+              const subWeightStr = String(subItem.weight || "").toLowerCase();
+              let subWeightPerUnit = parseFloat(subWeightStr) || 0;
+              if (subWeightStr.includes("kg") || subWeightStr.includes("k")) {
+                subWeightPerUnit *= 1000;
+              }
+              const subTotalToSubtract = qty * subWeightPerUnit;
+
+              // Find and update product by name (as per Products.jsx storage logic)
+              const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE name = ?`, [subItem.name]);
+              if (prodRows.length > 0) {
+                const subProd = prodRows[0];
+                const subNewStock = Math.max(Number(subProd.totalStock || 0) - subTotalToSubtract, 0);
+                await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(subNewStock), subProd.id]);
+                console.log(`[Stock-ComboItem] Reduced product '${subItem.name}' by ${subTotalToSubtract}g (Part of Combo ID ${item.id}). New stock: ${subNewStock}g`);
+              }
+            }
+          }
         } else {
           // For single products, we parse the selected weight (e.g. "500g" or "1kg")
           const weightStr = String(item.selectedWeight || "").toLowerCase();

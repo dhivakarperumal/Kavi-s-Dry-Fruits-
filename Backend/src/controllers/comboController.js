@@ -18,13 +18,15 @@ exports.getCombos = async (req, res) => {
 };
 
 exports.addCombo = async (req, res) => {
+  const connection = await db.getConnection();
   try {
+    await connection.beginTransaction();
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
       images, comboItems, comboDetails, totalStock
     } = req.body;
 
-    const [result] = await db.query(
+    const [result] = await connection.query(
       `INSERT INTO combos 
       (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, comboItems, comboDetails, totalStock) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -39,22 +41,62 @@ exports.addCombo = async (req, res) => {
       ]
     );
 
-    res.status(201).json({ id: result.insertId, message: 'Combo pack added successfully' });
+    // Reduce constituent products stock
+    const addedStock = Number(totalStock || 0);
+    if (addedStock > 0 && comboItems && comboItems.length > 0) {
+      const details = typeof comboDetails === 'string' ? JSON.parse(comboDetails || '{}') : (comboDetails || {});
+      const totalWeight = Number(details.totalWeight || 1); // avoid division by zero
+
+      for (const item of comboItems) {
+        if (item.name && item.weight) {
+          const itemWeightStr = String(item.weight).toLowerCase();
+          let itemWeight = parseFloat(itemWeightStr) || 0;
+          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
+          
+          // Calculate how much to reduce from bulk product
+          // Logic: (added combo grams / total combo pack weight) * item weight in one pack
+          // Or simpler: If combo stock is in grams, we use the ratio
+          const reductionAmount = (addedStock / totalWeight) * itemWeight;
+
+          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE name = ?`, [item.name]);
+          if (prodRows.length > 0) {
+            const subProd = prodRows[0];
+            const newSubStock = Math.max(Number(subProd.totalStock || 0) - reductionAmount, 0);
+            await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(newSubStock), subProd.id]);
+            console.log(`[Admin-AddCombo] Reduced bulk '${item.name}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
+          }
+        }
+      }
+    }
+
+    await connection.commit();
+    res.status(201).json({ id: result.insertId, message: 'Combo pack added and component stock reduced' });
   } catch (error) {
+    await connection.rollback();
     console.error(error);
     res.status(500).json({ message: 'Server error: ' + error.message });
+  } finally {
+    connection.release();
   }
 };
 
 exports.updateCombo = async (req, res) => {
+  const connection = await db.getConnection();
   try {
+    await connection.beginTransaction();
     const { id } = req.params;
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
       images, comboItems, comboDetails, totalStock
     } = req.body;
 
-    await db.query(
+    // Get old stock to calculate delta
+    const [oldRows] = await connection.query(`SELECT totalStock FROM combos WHERE id = ?`, [id]);
+    const oldStock = oldRows.length > 0 ? Number(oldRows[0].totalStock || 0) : 0;
+    const newStock = Number(totalStock || 0);
+    const delta = newStock - oldStock;
+
+    await connection.query(
       `UPDATE combos SET 
       productId = ?, name = ?, description = ?, healthBenefits = ?, category = ?, rating = ?, barcode = ?, barcodeValue = ?, 
       images = ?, comboItems = ?, comboDetails = ?, totalStock = ? 
@@ -71,10 +113,38 @@ exports.updateCombo = async (req, res) => {
       ]
     );
 
-    res.json({ message: 'Combo pack updated successfully' });
+    // If stock increased, reduce components
+    if (delta > 0 && comboItems && comboItems.length > 0) {
+      const details = typeof comboDetails === 'string' ? JSON.parse(comboDetails || '{}') : (comboDetails || {});
+      const totalWeight = Number(details.totalWeight || 1);
+
+      for (const item of comboItems) {
+        if (item.name && item.weight) {
+          const itemWeightStr = String(item.weight).toLowerCase();
+          let itemWeight = parseFloat(itemWeightStr) || 0;
+          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
+          
+          const reductionAmount = (delta / totalWeight) * itemWeight;
+
+          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE name = ?`, [item.name]);
+          if (prodRows.length > 0) {
+            const subProd = prodRows[0];
+            const newSubStock = Math.max(Number(subProd.totalStock || 0) - reductionAmount, 0);
+            await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(newSubStock), subProd.id]);
+            console.log(`[Admin-UpdateCombo] Reduced bulk '${item.name}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
+          }
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({ message: 'Combo pack updated and component stock adjusted' });
   } catch (error) {
+    await connection.rollback();
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  } finally {
+    connection.release();
   }
 };
 
