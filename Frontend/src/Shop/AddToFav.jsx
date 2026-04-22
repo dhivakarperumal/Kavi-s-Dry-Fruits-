@@ -19,8 +19,12 @@ const AddToFav = () => {
 
   const addAllToCart = async () => {
     for (const item of favItems) {
-      const isCombo = item.category === "Combo";
-      const activeWeight = isCombo ? (item.selectedWeight || "Combo") : (item.selectedWeight || item.weights?.[0] || "100g");
+      const isCombo = item.category === "Combo" || 
+                     item.type === "combo" || 
+                     (item.weights && item.weights.includes("Combo")) || 
+                     (!item.weights || item.weights.length === 0);
+
+      const activeWeight = isCombo ? "Combo" : (item.selectedWeight || item.weights?.[0] || "100g");
       const price = item.price || 0;
 
       await addToCart({
@@ -28,6 +32,7 @@ const AddToFav = () => {
         id: item.productId,
         price,
         selectedWeight: activeWeight,
+        category: isCombo ? "Combo" : (item.category || "General"),
         qty: 1,
       });
     }
@@ -92,9 +97,14 @@ const AddToFav = () => {
                 </thead>
                 <tbody>
                   {favItems.map((item, index) => {
-                    const activeWeight = item.selectedWeight || item.weights?.[0] || "default";
-                    const priceObj = item.prices?.[activeWeight];
-                    const price = (typeof priceObj === 'object' ? priceObj.offerPrice : priceObj) || item.price || 0;
+                    // Robust combo detection that works for both new and old favorite data
+                    const isCombo = item.category === "Combo" || 
+                                   item.type === "combo" || 
+                                   (item.weights && item.weights.includes("Combo")) || 
+                                   (!item.weights || item.weights.length === 0);
+
+                    const activeWeight = isCombo ? "Combo" : (item.selectedWeight || item.weights?.[0] || "default");
+                    const price = item.price || 0;
 
                     return (
                       <tr
@@ -122,7 +132,8 @@ const AddToFav = () => {
                                 ...item,
                                 id: item.productId,
                                 price,
-                                selectedWeight: item.category === "Combo" ? (item.selectedWeight || "Combo") : activeWeight,
+                                selectedWeight: activeWeight,
+                                category: isCombo ? "Combo" : (item.category || "General"),
                                 qty: 1,
                               });
                               navigate("/addtocart");
