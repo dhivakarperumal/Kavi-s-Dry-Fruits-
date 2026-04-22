@@ -463,22 +463,23 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
 
   useEffect(() => {
     if (manualWeight) return;
+
     const totalW = form.comboItems.reduce((sum, item) => {
-      const wStr = String(item.weight || "").toLowerCase();
+      const wStr = String(item.weight || "").toLowerCase().trim();
       const val = parseFloat(wStr) || 0;
-      // Support: '250g', '500', '1kg', '1.5kg'
       const factor = wStr.includes("kg") ? 1000 : 1;
       return sum + (val * factor);
     }, 0);
 
-    if (totalW !== form.totalWeight) {
-      setForm(prev => ({
+    // Always update via functional updater — avoids stale closure of form.totalWeight
+    setForm(prev => {
+      if (prev.totalWeight === totalW) return prev; // skip if unchanged (referential equality)
+      return {
         ...prev,
         totalWeight: totalW,
-        // Also persist totalWeight inside comboDetails so it's saved to DB
         comboDetails: { ...prev.comboDetails, totalWeight: totalW },
-      }));
-    }
+      };
+    });
   }, [form.comboItems, manualWeight]);
 
   useEffect(() => {
@@ -516,11 +517,24 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     e.preventDefault();
     setLoading(true);
     try {
+      // Force-merge totalWeight into comboDetails at submit time.
+      // This is necessary because the useEffect that writes it into comboDetails
+      // is async and may not have flushed before the user clicks submit.
+      const submitData = {
+        ...form,
+        comboDetails: {
+          ...form.comboDetails,
+          totalWeight: form.totalWeight,   // always include the correct value
+          offerPrice: form.comboDetails.offerPrice || 0,
+          mrp: form.comboDetails.mrp || 0,
+        },
+      };
+
       if (editItem) {
-        await api.put(`/combos/${editItem.id}`, form);
+        await api.put(`/combos/${editItem.id}`, submitData);
         toast.success("Combo Registry Updated");
       } else {
-        await api.post("/combos", form);
+        await api.post("/combos", submitData);
         toast.success("Pack Registered");
       }
       onSuccess();
@@ -750,6 +764,26 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
               <div className="relative z-10">
                 <div className="mb-10"><h3 className="text-xl font-black text-amber-900 uppercase tracking-tight">Financial Summary</h3><div className="w-12 h-1.5 bg-amber-500 mt-1 rounded-full"></div></div>
                 <div className="space-y-8">
+                  {/* Total Stock Field (Grams -> KG) */}
+                  <div>
+                    <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
+                      Total Stock (Grams) *
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 1000"
+                        value={form.totalStock}
+                        onChange={(e) => setForm({ ...form, totalStock: e.target.value })}
+                        className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm text-amber-900"
+                        required
+                      />
+                    </div>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
+                      Enter total combo inventory in grams (e.g. 1000 for 1KG)
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Market MRP (₹)</label><input type="number" placeholder="e.g. 1500" value={form.comboDetails.mrp} onChange={(e) => { const u = { ...form.comboDetails }; u.mrp = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
                     <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Special Discount %</label><input type="number" placeholder="e.g. 15" value={form.comboDetails.offerPercent} onChange={(e) => { const u = { ...form.comboDetails }; u.offerPercent = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
