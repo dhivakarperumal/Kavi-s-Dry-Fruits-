@@ -197,14 +197,34 @@ const Checkout = () => {
 
     itemsToCheckout.forEach((item) => {
       const qty = Number(item.qty || item.quantity || 1);
-      const weightStr = String(item.selectedWeight || "0").toLowerCase();
+      const weightStr = String(item.selectedWeight || "").toLowerCase();
       
-      let weightValue = parseInt(weightStr, 10) || 0;
-      if (weightStr.includes("kg") || weightStr.includes("k")) {
-        weightValue = weightValue * 1000;
+      let weight = parseFloat(weightStr.replace(/[()]/g, ""));
+      
+      if (isNaN(weight) || weight === 0) {
+        // Fallback 1: Combo or Direct total weight fields
+        weight = Number(item.totalWeight || item.comboDetails?.totalWeight || 0);
+        
+        // Fallback 2: Item's own weight field
+        if (weight === 0) {
+          weight = Number(item.weight || 0);
+        }
+
+        // Fallback 3: Sum individual combo items if still 0
+        if (weight === 0) {
+          const items = item.combos || item.comboItems || [];
+          weight = items.reduce((sum, sub) => {
+            const wStr = String(sub.weight || "").replace(/[()]/g, "").toLowerCase();
+            let w = parseFloat(wStr) || 0;
+            if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+            return sum + w;
+          }, 0);
+        }
+      } else if (weightStr.includes("kg") || weightStr.includes("k")) {
+        weight *= 1000;
       }
       
-      totalWeightGrams += weightValue * qty;
+      totalWeightGrams += (weight * qty);
     });
 
     if (totalWeightGrams === 0) return 0;

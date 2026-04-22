@@ -5,6 +5,11 @@ import { Link } from "react-router-dom";
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import * as pdfjs from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+// Set worker for PDF.js using local worker from node_modules (Vite way)
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 import { 
   FaPlus, 
   FaSearch, 
@@ -265,7 +270,7 @@ const StockDetail = () => {
                const displayImg = images[0] || variants[0]?.img || (typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}').img : item.comboDetails?.img);
 
                return (
-                 <div key={item.id} className="group bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100/50 hover:shadow-xl transition-all relative overflow-hidden">
+                 <div key={`${item.type}-${item.id}`} className="group bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100/50 hover:shadow-xl transition-all relative overflow-hidden">
                    <div className="relative h-40 mb-4 overflow-hidden rounded-3xl bg-gray-50 flex items-center justify-center">
                       {displayImg ? (
                          <img src={displayImg} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -331,7 +336,7 @@ const StockDetail = () => {
                         const displayImg = images[0] || variants[0]?.img || (typeof item.comboDetails === 'string' ? JSON.parse(item.comboDetails || '{}').img : item.comboDetails?.img);
 
                         return (
-                          <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors group">
+                          <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
                              <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
                                 {(currentPage - 1) * itemsPerPage + index + 1}
                              </td>
@@ -581,31 +586,110 @@ const StockDetail = () => {
                                 onChange={(e) => {
                                   const file = e.target.files[0];
                                   if(!file) return;
-                                  const reader = new FileReader();
-                                  reader.onload = (evt) => {
-                                    const bstr = evt.target.result;
-                                    const wb = XLSX.read(bstr, { type: 'binary' });
-                                    const wsname = wb.SheetNames[0];
-                                    const ws = wb.Sheets[wsname];
-                                    const data = XLSX.utils.sheet_to_json(ws);
-                                    
-                                    // Map and validate
-                                    const mapped = data.map(row => {
-                                      const pId = row['Product ID'] || row['ID'] || row['productId'];
-                                      const qty = row['Added Stock (KG)'] || row['Stock'] || row['Quantity'];
-                                      const matched = liveStocks.find(s => s.productId === String(pId).trim());
-                                      return {
-                                        productId: String(pId).trim(),
-                                        addedQuantity: Number(qty) || 0,
-                                        name: matched?.name || "Not Found",
-                                        category: matched?.category || "-",
-                                        type: matched?.type || "unknown",
-                                        isValid: !!matched
-                                      };
-                                    });
-                                    setImportData(mapped);
-                                  };
-                                  reader.readAsBinaryString(file);
+
+                                  if (file.type === "application/pdf") {
+                                    const reader = new FileReader();
+                                    reader.onload = async (evt) => {
+                                      try {
+                                        const typedarray = new Uint8Array(evt.target.result);
+                                        const loadingTask = pdfjs.getDocument(typedarray);
+                                        const pdf = await loadingTask.promise;
+                                        let fullText = "";
+                                        
+                                        for (let i = 1; i <= pdf.numPages; i++) {
+                                          const page = await pdf.getPage(i);
+                                          const textContent = await page.getTextContent();
+                                          fullText += textContent.items.map(s => s.str).join(" ") + " ";
+                                        }
+
+                                        // Smarter Scanner: High-tolerance search
+                                        const foundItems = [];
+                                        const normalizedText = fullText.replace(/\s+/g, ' '); // Clean line breaks & extra spaces
+
+                                        liveStocks.forEach(prod => {
+                                          // 1. Try matching by Product ID (e.g. "KPR001 ... 10")
+                                          // Increased limit to 100 to allow for long product names in between
+                                          const idRegex = new RegExp(`${prod.productId}[^\\d]{0,100}(\\d+(\\.\\d+)?)`, 'gi');
+                                          
+                                          // 2. Try matching by Product Name (fallback)
+                                          const escapedName = prod.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                          const nameRegex = new RegExp(`${escapedName}[^\\d]{0,100}(\\d+(\\.\\d+)?)`, 'gi');
+
+                                          let match;
+                                          // Check ID matches
+                                          while ((match = idRegex.exec(normalizedText)) !== null) {
+                                            foundItems.push({
+                                              productId: prod.productId,
+                                              addedQuantity: Number(match[1]),
+                                              name: prod.name,
+                                              category: prod.category,
+                                              type: prod.type,
+                                              isValid: true
+                                            });
+                                          }
+                                          // Check Name matches (if no ID matches found yet for this product)
+                                          if (foundItems.filter(f => f.productId === prod.productId).length === 0) {
+                                            while ((match = nameRegex.exec(normalizedText)) !== null) {
+                                              foundItems.push({
+                                                productId: prod.productId,
+                                                addedQuantity: Number(match[1]),
+                                                name: prod.name,
+                                                category: prod.category,
+                                                type: prod.type,
+                                                isValid: true
+                                              });
+                                            }
+                                          }
+                                        });
+
+                                        if (foundItems.length === 0) {
+                                          toast.error("No recognizable Product IDs found in PDF");
+                                        } else {
+                                          setImportData(foundItems);
+                                          toast.success(`Extracted ${foundItems.length} items from PDF`);
+                                        }
+                                      } catch (err) {
+                                        console.error(err);
+                                        toast.error("Failed to parse PDF content");
+                                      }
+                                    };
+                                    reader.readAsArrayBuffer(file);
+                                  } else {
+                                    // Handle Excel / CSV
+                                    const reader = new FileReader();
+                                    reader.onload = (evt) => {
+                                      const bstr = evt.target.result;
+                                      const wb = XLSX.read(bstr, { type: 'binary' });
+                                      const wsname = wb.SheetNames[0];
+                                      const ws = wb.Sheets[wsname];
+                                      const data = XLSX.utils.sheet_to_json(ws);
+                                      
+                                      const mapped = data.map(row => {
+                                        // Improved Column Matching: Search for keywords in column names
+                                        const findVal = (keywords) => {
+                                          const key = Object.keys(row).find(k => 
+                                            keywords.some(kw => k.toLowerCase().includes(kw.toLowerCase()))
+                                          );
+                                          return key ? String(row[key]).trim() : null;
+                                        };
+
+                                        const pId = findVal(['Product ID', 'ID', 'SKU', 'Code']) || "";
+                                        const qty = findVal(['Added', 'Stock', 'Qty', 'Quantity', 'Weight', 'KG', 'Adjust']) || 0;
+                                        
+                                        const matched = liveStocks.find(s => s.productId === String(pId).trim());
+                                        return {
+                                          productId: String(pId).trim(),
+                                          addedQuantity: Number(qty) || 0,
+                                          name: matched?.name || "Not Found",
+                                          category: matched?.category || "-",
+                                          type: matched?.type || "unknown",
+                                          isValid: !!matched
+                                        };
+                                      });
+                                      setImportData(mapped);
+                                    };
+                                    reader.readAsBinaryString(file);
+                                  }
                                 }}
                               />
                            </label>
@@ -635,27 +719,34 @@ const StockDetail = () => {
                            <table className="w-full text-left">
                               <thead className="bg-slate-50 sticky top-0">
                                  <tr>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Added (KG)</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identify</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Current</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Added</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Resulting</th>
                                  </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-50">
-                                 {importData.map((row, i) => (
-                                    <tr key={i} className={!row.isValid ? "bg-red-50" : ""}>
-                                       <td className="px-6 py-3 font-black text-slate-700 text-xs">{row.productId}</td>
-                                       <td className="px-6 py-3 font-black text-slate-900 text-xs">{row.name}</td>
-                                       <td className="px-6 py-3 font-black text-blue-600 text-xs">{row.addedQuantity} KG</td>
-                                       <td className="px-6 py-3 text-[10px]">
-                                          {row.isValid ? (
-                                            <span className="text-emerald-500 font-black uppercase">Ready</span>
-                                          ) : (
-                                            <span className="text-red-500 font-black uppercase">Unknown SKU</span>
-                                          )}
-                                       </td>
-                                    </tr>
-                                 ))}
+                                 {importData.map((row, i) => {
+                                    const matched = liveStocks.find(s => s.productId === row.productId);
+                                    const currentStockKg = (Number(matched?.totalStock) || 0) / 1000;
+                                    const finalStockKg = currentStockKg + row.addedQuantity;
+
+                                    return (
+                                      <tr key={i} className={!row.isValid ? "bg-red-50" : ""}>
+                                         <td className="px-6 py-3">
+                                            <p className="font-black text-slate-900 text-xs">{row.name}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {row.productId}</p>
+                                         </td>
+                                         <td className="px-6 py-3 text-center font-bold text-slate-500 text-xs">{currentStockKg.toFixed(2)}kg</td>
+                                         <td className="px-6 py-3 text-center font-black text-blue-600 text-xs">+{row.addedQuantity}kg</td>
+                                         <td className="px-6 py-3 text-right">
+                                            <span className={`px-3 py-1 rounded-lg font-black text-xs ${finalStockKg < 5 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                               {finalStockKg.toFixed(2)}kg
+                                            </span>
+                                         </td>
+                                      </tr>
+                                    );
+                                 })}
                               </tbody>
                            </table>
                         </div>
