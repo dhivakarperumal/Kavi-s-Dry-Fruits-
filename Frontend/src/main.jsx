@@ -27,7 +27,7 @@ import Offers from "./Offers/Offers.jsx";
 import SingleComboProduct from "./Combos/SingleComboProduct.jsx";
 import Adminpanel from "./Admin/AdminPanel.jsx";
 import { Toaster } from "react-hot-toast";
-// import ViewInvoice from "./Admin/ViewInvoice.jsx";
+import ViewInvoice from "./Admin/ViewInvoice.jsx";
 import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
 
 
@@ -99,6 +99,26 @@ const router = createBrowserRouter([
     element: (
       <PrivateRouter allowedRoles={["admin"]}>
         <Adminpanel />
+      </PrivateRouter>
+    )
+  },
+
+  // Standalone invoice viewer - accessible via /adminpanel/invoice?no=INV-001
+  {
+    path: "/adminpanel/invoice",
+    element: (
+      <PrivateRouter allowedRoles={["admin"]}>
+        <ViewInvoice />
+      </PrivateRouter>
+    )
+  },
+
+  // Legacy route fallback for /admin/invoice?no=INV-001
+  {
+    path: "/admin/invoice",
+    element: (
+      <PrivateRouter allowedRoles={["admin"]}>
+        <ViewInvoice />
       </PrivateRouter>
     )
   },

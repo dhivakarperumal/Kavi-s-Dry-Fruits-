@@ -102,23 +102,28 @@ export const StoreProvider = ({ children }) => {
           const mappedCombos = rawCombos.map(c => {
             const details = typeof c.comboDetails === 'string' ? JSON.parse(c.comboDetails || '{}') : (c.comboDetails || {});
             const items = typeof c.comboItems === 'string' ? JSON.parse(c.comboItems || '[]') : (c.comboItems || []);
-            const price = Number(details.offerPrice || details.mrp || 0);
-            const mrp = Number(details.mrp || price || 0);
-            const weight = String(details.totalWeight || 'Combo');
+            
+            // Price fallback chain: direct DB columns → comboDetails → 0
+            const offerPrice = Number(c.offerPrice || c.price || details.offerPrice || details.mrp || 0);
+            const mrp = Number(c.mrp || details.mrp || offerPrice || 0);
+            const weight = String(details.totalWeight || c.totalWeight || 'Combo');
+            const stock = Number(c.totalStock ?? c.stock ?? 1); // Default to 1 if not set
 
             return {
               ...c,
+              id: c.id,  // Keep as MySQL integer but ensure it's set
               type: 'combo',
               category: 'Combo',
-              price,
-              offerPrice: price,
+              price: offerPrice,
+              offerPrice,
               mrp,
+              stock,
               image: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
               imageUrl: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
               combos: items, // Rename for frontend compatibility
               comboItems: items,
               comboDetails: details,
-              prices: { [weight]: { mrp, offerPrice: price } },
+              prices: { [weight]: { mrp, offerPrice } },
               weights: [weight],
               images: typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []),
               health_benefits: typeof c.healthBenefits === 'string' ? JSON.parse(c.healthBenefits || '[]') : (c.healthBenefits || []),

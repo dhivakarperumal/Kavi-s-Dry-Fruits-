@@ -154,7 +154,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     healthBenefits: [""],
     category: "",
     images: [],
-    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }],
+    variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
     totalStock: "0",
     totalWeight: 0,
     barcode: "",
@@ -189,7 +189,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       setForm((prev) => ({
         ...prev,
         productId: `PR${String(maxId + 1).padStart(3, "0")}`,
-        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }], totalStock: "0",
+        name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0",
         barcodeValue: "", barcode: ""
       }));
     }
@@ -331,7 +331,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
             </div>
 
             <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50">
-              <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "", stock: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
+              <div className="flex justify-between items-center mb-8"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-orange-400 rounded-full"></div> Sales Variants</h3><button type="button" onClick={() => setForm((p) => ({ ...p, variants: [...p.variants, { weight: "", mrp: "", offerPercent: "", offerPrice: "" }] }))} className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:bg-emerald-700 transition-all flex items-center gap-2">Expand Range</button></div>
               <div className="space-y-6">
                 {form.variants.map((v, i) => (
                   <div key={i} className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 p-5 rounded-3xl border border-gray-100 items-end">
