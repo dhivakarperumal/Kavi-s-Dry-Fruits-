@@ -56,12 +56,12 @@ exports.addCombo = async (req, res) => {
           // Calculate how much to reduce from bulk product
           const reductionAmount = (addedStock / totalWeight) * itemWeight;
 
-          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE TRIM(name) = TRIM(?)`, [item.name]);
-          if (prodRows.length > 0) {
-            const subProd = prodRows[0];
-            const newSubStock = Math.max(Number(subProd.totalStock || 0) - reductionAmount, 0);
-            await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(newSubStock), subProd.id]);
-            console.log(`[Admin-AddCombo] Reduced bulk '${item.name.trim()}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
+          const [res] = await connection.query(
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+            [reductionAmount, item.name]
+          );
+          if (res.affectedRows > 0) {
+            console.log(`[Admin-AddCombo] Atomic reduction for '${item.name.trim()}': -${reductionAmount}g`);
           }
         }
       }
@@ -124,12 +124,12 @@ exports.updateCombo = async (req, res) => {
           
           const reductionAmount = (delta / totalWeight) * itemWeight;
 
-          const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE TRIM(name) = TRIM(?)`, [item.name]);
-          if (prodRows.length > 0) {
-            const subProd = prodRows[0];
-            const newSubStock = Math.max(Number(subProd.totalStock || 0) - reductionAmount, 0);
-            await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(newSubStock), subProd.id]);
-            console.log(`[Admin-UpdateCombo] Reduced bulk '${item.name.trim()}' by ${reductionAmount}g. New stock: ${newSubStock}g`);
+          const [res] = await connection.query(
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+            [reductionAmount, item.name]
+          );
+          if (res.affectedRows > 0) {
+            console.log(`[Admin-UpdateCombo] Atomic reduction for '${item.name.trim()}': -${reductionAmount}g`);
           }
         }
       }

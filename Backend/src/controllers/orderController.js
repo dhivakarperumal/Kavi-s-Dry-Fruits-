@@ -66,13 +66,13 @@ const createOrder = async (req, res) => {
               }
               const subTotalToSubtract = qty * subWeightPerUnit;
 
-              // Find and update product by name (Trimmed search for resilience)
-              const [prodRows] = await connection.query(`SELECT id, totalStock FROM products WHERE TRIM(name) = TRIM(?)`, [subItem.name]);
-              if (prodRows.length > 0) {
-                const subProd = prodRows[0];
-                const subNewStock = Math.max(Number(subProd.totalStock || 0) - subTotalToSubtract, 0);
-                await connection.query(`UPDATE products SET totalStock = ? WHERE id = ?`, [String(subNewStock), subProd.id]);
-                console.log(`[Stock-ComboItem] Reduced product '${subItem.name.trim()}' by ${subTotalToSubtract}g. New stock: ${subNewStock}g`);
+              // Find and update product by name (Atomic relative subtraction)
+              const [res] = await connection.query(
+                `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+                [subTotalToSubtract, subItem.name]
+              );
+              if (res.affectedRows > 0) {
+                console.log(`[Stock-ComboItem] Atomic reduction for '${subItem.name.trim()}': -${subTotalToSubtract}g`);
               }
             }
           }
@@ -86,9 +86,9 @@ const createOrder = async (req, res) => {
           weightToSubtract = qty * weightPerUnit;
         }
 
-        const newStock = Math.max(currentStock - weightToSubtract, 0);
-        await connection.query(`UPDATE ${table} SET totalStock = ? WHERE id = ?`, [String(newStock), item.id]);
-        console.log(`[Stock] Reduced ${table} ID ${item.id} by ${weightToSubtract}g. New stock: ${newStock}g`);
+        // Finalize stock reduction for the main item (Product or Combo)
+        await connection.query(`UPDATE ${table} SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE id = ?`, [weightToSubtract, item.id]);
+        console.log(`[Stock-${isCombo ? 'Combo' : 'Single'}] Reduced '${item.name}' by ${weightToSubtract}g`);
       }
     }
 
