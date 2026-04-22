@@ -6,6 +6,10 @@ import Services from "../Home/Services";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import api from "../services/api";
+import { Helmet } from "react-helmet";
+import toast from "react-hot-toast";
+import { db } from "../firebase";
+import { doc, updateDoc } from "firebase/firestore";
 
 const Account = () => {
   const { user } = useAuth();
@@ -246,7 +250,7 @@ const Account = () => {
       return;
     }
     try {
-      const userRef = doc(db, "users", userId);
+      const userRef = doc(db, "users", userIdToUse);
       await updateDoc(userRef, { password: newPassword });
       setUserInfo((prev) => ({ ...prev, password: newPassword }));
       setPasswordFields({
