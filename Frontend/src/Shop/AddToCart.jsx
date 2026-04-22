@@ -18,9 +18,9 @@ const CartRow = React.memo(
     removeItem,
     updatingWeightId,
   }) => {
-    const imageUrl = Array.isArray(item.imageUrl)
-      ? item.imageUrl[0]
-      : item.imageUrl || "";
+    const imgSource = Array.isArray(item.image)
+      ? item.image[0]
+      : item.image || "";
 
     const subtotal =
       parseFloat(item?.price || 0) * parseInt(item?.quantity || 1);
@@ -32,7 +32,7 @@ const CartRow = React.memo(
       <tr key={item.id} className="border-b bg-green4">
         <td className="p-4 flex items-center gap-4 max-w-[300px]">
           <img
-            src={imageUrl}
+            src={imgSource}
             alt={`${item.name} - Kavi's Dry Fruits`}
             className="w-14 h-14 object-cover border border-green-400 rounded-md"
           />

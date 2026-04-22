@@ -26,7 +26,7 @@ const AddToFav = () => {
         id: item.productId,
         name: item.name,
         price,
-        image: item.imageUrl,
+        image: item.image || item.imageUrl,
         selectedWeight: activeWeight,
         qty: 1,
         weights: item.weights,
@@ -105,7 +105,7 @@ const AddToFav = () => {
                       >
                         <td className="p-4 flex items-center gap-4 max-w-[300px]">
                           <img
-                            src={item.imageUrl}
+                            src={item.image || item.imageUrl}
                             alt={`${item.name} - Kavi's Dry Fruits`}
                             className="w-14 h-14 object-cover border border-green-400 rounded-md flex-shrink-0"
                           />
@@ -124,7 +124,7 @@ const AddToFav = () => {
                                 id: item.productId,
                                 name: item.name,
                                 price,
-                                image: item.imageUrl,
+                                image: item.image || item.imageUrl,
                                 selectedWeight: activeWeight,
                                 qty: 1,
                                 weights: item.weights,

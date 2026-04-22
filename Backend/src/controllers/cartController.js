@@ -16,7 +16,8 @@ const getCart = async (req, res) => {
 const addToCart = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { productId, name, category, price, quantity, imageUrl, selectedWeight, weights, prices, docId } = req.body;
+    const { productId, name, category, price, quantity, image, imageUrl, selectedWeight, weights, prices, docId } = req.body;
+    const finalImage = image || imageUrl;
     
     // Check if exists
     const [existing] = await db.query('SELECT id, quantity FROM cart WHERE docId = ?', [docId]);
@@ -26,8 +27,8 @@ const addToCart = async (req, res) => {
       res.json({ message: 'Cart updated' });
     } else {
       await db.query(
-        'INSERT INTO cart (userId, productId, name, category, price, quantity, imageUrl, selectedWeight, weights, prices, docId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, productId, name, category, price, quantity, imageUrl, selectedWeight, JSON.stringify(weights), JSON.stringify(prices), docId]
+        'INSERT INTO cart (userId, productId, name, category, price, quantity, image, selectedWeight, weights, prices, docId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, productId, name, category, price, quantity, finalImage, selectedWeight, JSON.stringify(weights), JSON.stringify(prices), docId]
       );
       res.json({ message: 'Added to cart' });
     }

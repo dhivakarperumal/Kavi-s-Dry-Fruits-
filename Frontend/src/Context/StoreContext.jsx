@@ -101,7 +101,12 @@ export const StoreProvider = ({ children }) => {
               type: 'single',
               prices,
               weights,
+              category: p.category || "General",
+              category: p.category || "General",
+              image: (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []))[0] || "",
+              imageUrl: (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []))[0] || "",
               images: typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []),
+              health_benefits: typeof p.healthBenefits === 'string' ? JSON.parse(p.healthBenefits || '[]') : (p.healthBenefits || []),
               tags: typeof p.tags === 'string' ? JSON.parse(p.tags || '[]') : (p.tags || []),
               rating: Number(p.rating || 4.5)
             };
@@ -110,6 +115,7 @@ export const StoreProvider = ({ children }) => {
           // Map MySQL combos to Frontend schema
           const mappedCombos = rawCombos.map(c => {
             const details = typeof c.comboDetails === 'string' ? JSON.parse(c.comboDetails || '{}') : (c.comboDetails || {});
+            const items = typeof c.comboItems === 'string' ? JSON.parse(c.comboItems || '[]') : (c.comboItems || []);
             const price = Number(details.offerPrice || details.mrp || 0);
             const mrp = Number(details.mrp || price || 0);
             const weight = String(details.totalWeight || 'Combo');
@@ -118,9 +124,18 @@ export const StoreProvider = ({ children }) => {
               ...c,
               type: 'combo',
               category: 'Combo',
+              price,
+              offerPrice: price,
+              mrp,
+              image: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
+              imageUrl: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
+              combos: items, // Rename for frontend compatibility
+              comboItems: items,
+              comboDetails: details,
               prices: { [weight]: { mrp, offerPrice: price } },
               weights: [weight],
               images: typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []),
+              health_benefits: typeof c.healthBenefits === 'string' ? JSON.parse(c.healthBenefits || '[]') : (c.healthBenefits || []),
               tags: typeof c.tags === 'string' ? JSON.parse(c.tags || '[]') : (c.tags || []),
               rating: Number(c.rating || 4.8)
             };
@@ -171,7 +186,7 @@ export const StoreProvider = ({ children }) => {
         category: product.category || "General",
         price: product.price || 0,
         quantity: newQty,
-        imageUrl: product.image || product.img || product.imageUrl || "",
+        image: product.image || product.img || product.imageUrl || "",
         selectedWeight: weight,
         weights: product.weights || [],
         prices: product.prices || {},
@@ -194,7 +209,7 @@ export const StoreProvider = ({ children }) => {
             category: product.category,
             price: product.price,
             quantity: newQty,
-            imageUrl: product.image || product.img || product.imageUrl || "",
+            image: product.image || product.img || product.imageUrl || "",
             selectedWeight: weight,
             weights: product.weights,
             prices: product.prices,
@@ -269,7 +284,7 @@ export const StoreProvider = ({ children }) => {
         productId,
         name: product.name || "Unknown Product",
         price: product.price || 0,
-        imageUrl: product.image || product.img || product.imageUrl || "",
+        image: product.image || product.img || product.imageUrl || "",
         selectedWeight: product.selectedWeight || "",
         weights: product.weights || [],
         prices: product.prices || {},
@@ -281,7 +296,7 @@ export const StoreProvider = ({ children }) => {
           productId,
           name: product.name,
           price: product.price,
-          imageUrl: product.image || product.img || product.imageUrl || "",
+          image: product.image || product.img || product.imageUrl || "",
           selectedWeight: product.selectedWeight,
           weights: product.weights,
           prices: product.prices,
