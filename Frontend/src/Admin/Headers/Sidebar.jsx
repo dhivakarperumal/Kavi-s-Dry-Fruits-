@@ -84,15 +84,7 @@ const Sidebar = ({
       ],
     },
 
-    {
-      label: "Settings",
-      icon: <MdSettings />,
-      dropdown: [
-        { label: "Settings", icon: <MdSettings /> },
-        { label: "Delivery Settings", icon: <MdDeliveryDining /> },
-        { label: "Profile", icon: <FaUsersCog /> },
-      ],
-    },
+  
   ];
 
   const handleClick = (item) => {

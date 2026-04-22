@@ -127,6 +127,11 @@ const Checkout = () => {
     shipping_amount: "0" 
   });
 
+  // --- Coupon States ---
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+
   useEffect(() => {
     const fetchShippingSettings = async () => {
       try {
@@ -143,6 +148,46 @@ const Checkout = () => {
   const subtotal = useMemo(() => {
     return itemsToCheckout.reduce((acc, item) => acc + calculateItemTotal(item), 0);
   }, [itemsToCheckout]);
+
+  // Recalculate discount whenever subtotal or appliedCoupon changes
+  useEffect(() => {
+    if (appliedCoupon) {
+      if (appliedCoupon.discountType === "percentage") {
+        const disc = (subtotal * Number(appliedCoupon.discountValue)) / 100;
+        setCouponDiscount(disc);
+      } else {
+        setCouponDiscount(Number(appliedCoupon.discountValue));
+      }
+    } else {
+      setCouponDiscount(0);
+    }
+  }, [subtotal, appliedCoupon]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+    try {
+      const res = await api.post("/coupons/validate", { 
+        code: couponCode.trim(), 
+        subtotal 
+      });
+      setAppliedCoupon(res.data);
+      toast.success("Coupon applied successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid coupon code");
+      setAppliedCoupon(null);
+      setCouponCode("");
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponDiscount(0);
+    toast.success("Coupon removed");
+  };
 
   const shippingCost = useMemo(() => {
     if (shippingSettings.shipping_enabled !== "true") return 0;
@@ -185,7 +230,9 @@ const Checkout = () => {
 
   const MIN_PURCHASE = 300;
 
-  const finalAmount = useMemo(() => subtotal + shippingCost, [subtotal, shippingCost]);
+  const finalAmount = useMemo(() => {
+    return Math.max(0, subtotal + shippingCost - couponDiscount);
+  }, [subtotal, shippingCost, couponDiscount]);
 
   const isMinimumMet = useMemo(() => subtotal >= MIN_PURCHASE, [subtotal]);
   const remainingToMin = useMemo(() => Math.max(0, MIN_PURCHASE - subtotal), [subtotal]);
@@ -341,6 +388,8 @@ const Checkout = () => {
       shippingCharge: shippingCost,
       items: trimmedCartItems,
       gstAmount: 0, // Simplified or calculated if needed
+      couponCode: appliedCoupon?.code || null,
+      discountAmount: couponDiscount,
       totalAmount: finalAmount,
     };
 
@@ -664,47 +713,100 @@ const Checkout = () => {
           {/* Order Summary */}
           <h3 className="text-xl font-bold mb-4">Order Summary</h3>
 
-          <div className="space-y-2 text-sm font-medium">
-            <div className="flex justify-between">
-              <span>Items</span>
-              <span>{itemsToCheckout.length}</span>
-            </div>
-
-            <div className="flex justify-between">
+          <div className="space-y-3 font-medium">
+            {/* 1. Subtotal */}
+            <div className="flex justify-between text-slate-600">
               <span>Sub Total</span>
               <span>₹{subtotal.toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-between">
-              <span>Combo Items</span>
-              <span>{itemsToCheckout.filter(i => i.category === "Combo").length}</span>
+            {/* 2. Coupon Section */}
+            <div className="my-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm">
+              <label className="block text-[10px] font-black text-emerald-700 mb-2 uppercase tracking-[0.15em]">
+                Apply Coupon
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="CODE"
+                  disabled={appliedCoupon}
+                  className="flex-1 px-3 py-2 text-sm border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 bg-white font-bold"
+                />
+                {appliedCoupon ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="px-4 py-2 text-xs font-black bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all shadow-md shadow-rose-200"
+                  >
+                    REMOVE
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="px-4 py-2 text-xs font-black bg-emerald-900 text-white rounded-xl hover:bg-emerald-800 transition-all shadow-md shadow-emerald-200"
+                  >
+                    APPLY
+                  </button>
+                )}
+              </div>
+              {appliedCoupon && (
+                <p className="mt-2 text-[10px] text-emerald-600 font-black flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  {appliedCoupon.code} APPLIED SUCCESSFULLY!
+                </p>
+              )}
             </div>
 
-            <div className="flex justify-between">
-              <span>Total Weight</span>
-              <span>
-                {
-                  itemsToCheckout
+            {/* 3. Discount (Conditional) */}
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600 italic">
+                <span>Discount Applied</span>
+                <span>- ₹{couponDiscount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {/* 4. Shipping */}
+            <div className="flex justify-between text-slate-600">
+              <span>Delivery Charges</span>
+              <span>₹{shippingCost.toFixed(2)}</span>
+            </div>
+
+            <div className="pt-2 border-t border-dashed border-slate-200" />
+
+            {/* 5. Final Total */}
+            <div className="flex justify-between text-xl font-black text-slate-900 pt-1">
+              <span>Total Amount</span>
+              <span className="text-emerald-700">₹{finalAmount.toFixed(2)}</span>
+            </div>
+
+            {/* 6. Extra Info (Separated) */}
+            <div className="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Order Details</p>
+              <div className="flex justify-between text-xs text-slate-500 font-bold">
+                <span>Total Items</span>
+                <span>{itemsToCheckout.length} items</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-500 font-bold">
+                <span>Estimated Weight</span>
+                <span>
+                  {itemsToCheckout
                     .filter(i => i.category !== "Combo")
                     .reduce((total, item) => {
                       const weight = parseInt((item.selectedWeight || "").replace("g", "")) || 0;
                       const qty = parseInt(item.qty || item.quantity || 1) || 1;
                       return total + weight * qty;
-                    }, 0)
-                } g
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>₹{shippingCost.toFixed(2)}</span>
-            </div>
-
-            <hr className="border-dashed border-green-400 my-4" />
-
-            <div className="flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span>₹{finalAmount.toFixed(2)}</span>
+                    }, 0)} g
+                </span>
+              </div>
+              {itemsToCheckout.some(i => i.category === "Combo") && (
+                <div className="flex justify-between text-xs text-slate-500 font-bold">
+                  <span>Combo Packs</span>
+                  <span>{itemsToCheckout.filter(i => i.category === "Combo").length} packs</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
