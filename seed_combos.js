@@ -1,4 +1,4 @@
-const { db } = require('./Backend/src/config/db');
+const db = require('./Backend/src/config/db');
 
 const combos = [
   {

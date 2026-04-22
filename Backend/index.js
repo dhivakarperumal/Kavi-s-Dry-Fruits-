@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { db, initializeDatabase, ensureAdminUser } = require('./src/config/db');
+const db = require('./src/config/db');
+const { initializeDatabase, ensureAdminUser } = db;
 
 // Routers
 const authRoutes = require('./src/routers/authRoutes');
