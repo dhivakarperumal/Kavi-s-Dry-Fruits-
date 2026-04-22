@@ -13,11 +13,24 @@ import { useStore } from "../Context/StoreContext";
 const FestiveGiftPack = () => {
   const { allProducts, addToFav, addToCart } = useStore();
 
-  const filteredProduct = allProducts.filter(
-  (item) =>
-    (item.offer === true || item.offer > 0) &&
-    item.category === "Combo"
-);
+  const filteredProduct = allProducts.filter((item) => {
+    const isCombo = item.category === "Combo" || item.type === "combo";
+    
+    // Check if it has a discount/offer
+    let hasOffer = false;
+    if (isCombo) {
+      hasOffer = Number(item.mrp || 0) > Number(item.price || 0);
+    } else {
+      // For fallback/non-combo items in this section
+      const activeWeight = item.weights?.[0];
+      const pObj = item.prices?.[activeWeight];
+      if (pObj) {
+        hasOffer = Number(pObj.mrp || 0) > Number(pObj.offerPrice || 0);
+      }
+    }
+
+    return isCombo && (hasOffer || true); // Showing all combos for now, or those with offers
+  });
 
 
   const settings = {
