@@ -108,7 +108,7 @@ const StockDetail = () => {
       if (!matched) return toast.error("Product mismatch.");
 
       const existingStock = Number(matched.totalStock) || 0;
-      const addedQuantity = isCombo ? parseInt(form.currentQuantity) : parseInt(form.currentQuantity) * 1000;
+      const addedQuantity = parseInt(form.currentQuantity) * 1000; // EVERYTHING is inputted as KG, stored as grams
       const newStock = existingStock + addedQuantity;
 
       const endpoint = matched.type === 'combo' ? `/combos/${matched.id}` : `/products/${matched.id}`;
@@ -188,24 +188,36 @@ const StockDetail = () => {
                     <p className="text-2xl font-black text-slate-900 tracking-tighter">{liveStocks.length}</p>
                 </div>
             </div>
+            {/* Single-product stock (grams → KG) */}
             <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5">
                 <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
                     <FaBoxOpen size={20} />
                 </div>
                 <div>
-                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Live Inventory</p>
+                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Products Stock</p>
                     <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                        {liveStocks.reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000} <span className="text-xs text-gray-400">Tons</span>
+                        {(liveStocks
+                          .filter(s => s.type !== 'combo')
+                          .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
+                        ).toFixed(1)}
+                        <span className="text-xs text-gray-400"> KG</span>
                     </p>
                 </div>
             </div>
+            {/* Combo stock (grams → KG) */}
             <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5">
                 <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
                     <FaHistory size={20} />
                 </div>
                 <div>
-                    <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">Recent Updates</p>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">Last 24h</p>
+                    <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">Combo Stock</p>
+                    <p className="text-2xl font-black text-slate-900 tracking-tighter">
+                        {(liveStocks
+                          .filter(s => s.type === 'combo')
+                          .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
+                        ).toFixed(1)}
+                        <span className="text-xs text-gray-400"> KG</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -244,17 +256,13 @@ const StockDetail = () => {
                      <div>
                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock Level</p>
                        <p className={`text-xl font-[900] tracking-tighter ${Number(item.totalStock) < 5000 ? 'text-red-500' : 'text-emerald-700'}`}>
-                         {item.type === 'combo' ? (
-                           <>{item.totalStock || 0} <span className="text-[10px] font-bold text-gray-400">PCS</span></>
-                         ) : (
-                           <>{(Number(item.totalStock) || 0) / 1000} <span className="text-[10px] font-bold text-gray-400">KG</span></>
-                         )}
+                         {((Number(item.totalStock) || 0) / 1000).toFixed(2)} <span className="text-[10px] font-bold text-gray-400">KG</span>
                        </p>
                      </div>
                      
                      {item.lastInvoice ? (
                        <Link 
-                         to={`/admin/invoice?no=${item.lastInvoice}`} 
+                         to={`/adminpanel/invoice?no=${item.lastInvoice}`} 
                          className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                          title="View Last Invoice"
                        >
@@ -312,15 +320,13 @@ const StockDetail = () => {
                              </td>
                              <td className="px-8 py-6 text-center">
                                 <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black tracking-tighter ${Number(item.totalStock) < 5000 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
-                                    {item.type === 'combo'
-                                      ? `${item.totalStock || 0} pcs`
-                                      : `${(Number(item.totalStock) || 0) / 1000} kg`}
+                                    {((Number(item.totalStock) || 0) / 1000).toFixed(2)} kg
                                 </div>
                              </td>
                              <td className="px-8 py-6 text-right">
                                 {item.lastInvoice ? (
                                   <Link
-                                    to={`/admin/invoice?no=${item.lastInvoice}`}
+                                    to={`/adminpanel/invoice?no=${item.lastInvoice}`}
                                     className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-black text-xs uppercase tracking-widest transition-colors"
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -429,7 +435,7 @@ const StockDetail = () => {
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Arrival Quantity ({isCombo ? "PCS" : "KG"}) *</label>
+                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Arrival Quantity (KG) *</label>
                           <input
                             type="number"
                             min="0"
@@ -467,7 +473,7 @@ const StockDetail = () => {
                               {(() => {
                                 const matched = liveStocks.find(p => p.productId === form.productId);
                                 const current = Number(matched?.totalStock) || 0;
-                                return isCombo ? `${current} PCS` : `${current / 1000} KG`;
+                                return `${current / 1000} KG`;
                               })()}
                            </p>
                         </div>
@@ -475,7 +481,7 @@ const StockDetail = () => {
                         <div className="text-center">
                            <p className="text-[9px] font-black text-emerald-800 uppercase tracking-widest mb-1">New Batch</p>
                            <p className="text-xl font-black text-blue-600 tracking-tighter">
-                              + {form.currentQuantity || 0} {isCombo ? 'PCS' : 'KG'}
+                              + {form.currentQuantity || 0} KG
                            </p>
                         </div>
                         <div className="h-px w-8 bg-emerald-200 hidden md:block" />
@@ -485,9 +491,9 @@ const StockDetail = () => {
                               {(() => {
                                 const matched = liveStocks.find(p => p.productId === form.productId);
                                 const current = Number(matched?.totalStock) || 0;
-                                const added = isCombo ? (Number(form.currentQuantity) || 0) : (Number(form.currentQuantity) || 0) * 1000;
+                                const added = (Number(form.currentQuantity) || 0) * 1000;
                                 const total = current + added;
-                                return isCombo ? `${total} PCS` : `${total / 1000} KG`;
+                                return `${total / 1000} KG`;
                               })()}
                            </p>
                         </div>
