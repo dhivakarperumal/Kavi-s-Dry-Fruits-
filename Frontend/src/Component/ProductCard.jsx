@@ -83,12 +83,19 @@ const ProductCard = React.memo(({
             loading="lazy"
           />
         </Link>
+        {product.isOutOfStock && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10 p-4">
+            <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest text-xs shadow-xl transform -rotate-12 border-2 border-white">
+              Out of Stock
+            </span>
+          </div>
+        )}
         <span className="absolute top-2 left-0 bg-primary text-white text-xs px-3 py-1 rounded-r-full shadow">
           Bestseller
         </span>
         <button
           onClick={handleAddToFav}
-          className={`absolute top-2 right-2 border p-2 rounded-full transition cursor-pointer ${isFavorite ? "bg-rose-500 text-white border-rose-500" : "bg-white text-slate-400 border-slate-200 hover:bg-primary hover:text-white"}`}
+          className={`absolute top-2 right-2 border p-2 rounded-full transition cursor-pointer z-20 ${isFavorite ? "bg-rose-500 text-white border-rose-500" : "bg-white text-slate-400 border-slate-200 hover:bg-primary hover:text-white"}`}
         >
           <FiHeart className={isFavorite ? "fill-current" : ""} />
         </button>
@@ -97,28 +104,13 @@ const ProductCard = React.memo(({
       <h3 className="font-semibold text-base sm:text-lg text-center mb-2">
         {product.name}
       </h3>
-      {product.isOutOfStock ? (
-        <>
-          <p className="text-center text-gray-600 text-sm mb-2">
-            MRP:{" "}
-            <span className="line-through text-gray-400">
-              ₹{mrp}
-            </span>{" "}
-            ₹{offerPrice}
-          </p>
-          <p className="text-center text-red-500 text-sm mb-2 font-medium">
-            Out of Stock
-          </p>
-        </>
-      ) : (
-        <p className="text-center text-gray-600 text-sm mb-2">
-          MRP:{" "}
-          <span className="line-through text-gray-400">
-            ₹{mrp}
-          </span>{" "}
-          ₹{offerPrice}
-        </p>
-      )}
+      <p className="text-center text-gray-600 text-sm mb-2">
+        MRP:{" "}
+        <span className="line-through text-gray-400">
+          ₹{mrp}
+        </span>{" "}
+        <span className="font-bold text-green-700 text-lg">₹{offerPrice}</span>
+      </p>
       <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
       <div className="flex justify-between items-center mt-auto px-1">
         <button

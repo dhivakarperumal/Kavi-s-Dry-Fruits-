@@ -200,6 +200,14 @@ const SingleProductView = () => {
                   onTouchStart={() => setZoomed((z) => !z)}
                 />
 
+                {isOutOfStock && (
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10 p-4 rounded-lg pointer-events-none">
+                    <span className="bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl transform -rotate-6 border-2 border-white">
+                      Out of Stock
+                    </span>
+                  </div>
+                )}
+
                 {/* Zoom pane shown on large screens when zoomed === true */}
                 {zoomed && (
                   <div
@@ -267,11 +275,6 @@ const SingleProductView = () => {
                   (You save ₹{mrp - price})
                 </span>
               </p>
-              {isOutOfStock && (
-                <p className="text-red-500 font-medium text-md mb-2">
-                  Out of Stock
-                </p>
-              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <select
