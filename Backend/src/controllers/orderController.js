@@ -132,7 +132,7 @@ const createOrder = async (req, res) => {
               // Reduce constituent products stock by weight
               console.log(`[Stock-Reduce] Combo Sub-Item: ${subItem.name}, Reduction: ${subTotalToSubtract}g`);
               await connection.query(
-                `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+                `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, 
                 [subTotalToSubtract, subItem.name]
               );
             }
