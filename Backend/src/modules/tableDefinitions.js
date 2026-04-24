@@ -96,7 +96,10 @@ const tables = {
     CREATE TABLE IF NOT EXISTS coupons (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       code VARCHAR(50) NOT NULL UNIQUE,
-      discount DECIMAL(10,2),
+      discountType VARCHAR(50),
+      discountValue DECIMAL(10,2),
+      minPurchase DECIMAL(10,2),
+      usageLimit INT,
       expiryDate DATE,
       status VARCHAR(20) DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -137,6 +140,7 @@ const tables = {
       order_id VARCHAR(100),
       product_id VARCHAR(100),
       name VARCHAR(255),
+      image TEXT,
       quantity INT,
       price DECIMAL(10, 2),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

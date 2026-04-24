@@ -70,6 +70,7 @@ const initializeDatabase = async () => {
   await syncColumns('delivery_locations', tableDefinitions.delivery_locations);
   await syncColumns('cart', tableDefinitions.cart);
   await syncColumns('favorites', tableDefinitions.favorites);
+  await syncColumns('coupons', tableDefinitions.coupons);
   await syncColumns('stock_history', tableDefinitions.stock_history);
   await syncColumns('dealers', tableDefinitions.dealers);
   await syncColumns('invoices', tableDefinitions.invoices);

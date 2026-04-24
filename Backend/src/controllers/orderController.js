@@ -37,25 +37,42 @@ const createOrder = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const { 
-      orderId, userId, clientName, clientPhone, clientGST, email, 
-      shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days,
-      customerType, paymentMode, paymentStatus, 
-      paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount 
-    } = req.body;
+    const orderId = req.body.orderId || null;
+    const userId = req.body.userId || null;
+    const clientName = req.body.clientName || null;
+    const clientPhone = req.body.clientPhone || null;
+    const clientGST = req.body.clientGST || null;
+    const email = req.body.email || null;
+    const shippingAddress = req.body.shippingAddress || {};
+    const area = req.body.area || null;
+    const pincode = req.body.pincode || null;
+    const lat = req.body.lat !== undefined ? req.body.lat : null;
+    const lng = req.body.lng !== undefined ? req.body.lng : null;
+    const distance = req.body.distance !== undefined ? req.body.distance : null;
+    const delivery_charge = req.body.delivery_charge !== undefined ? req.body.delivery_charge : 0;
+    const delivery_days = req.body.delivery_days !== undefined ? req.body.delivery_days : 0;
+    const customerType = req.body.customerType || null;
+    const paymentMode = req.body.paymentMode || null;
+    const paymentStatus = req.body.paymentStatus || null;
+    const paymentId = req.body.paymentId || null;
+    const orderStatus = req.body.orderStatus || 'Order Placed';
+    const shippingCharge = req.body.shippingCharge !== undefined ? req.body.shippingCharge : 0;
+    const items = req.body.items || [];
+    const gstAmount = req.body.gstAmount !== undefined ? req.body.gstAmount : 0;
+    const totalAmount = req.body.totalAmount !== undefined ? req.body.totalAmount : 0;
 
     // 1. Insert Order
     const [result] = await connection.query(
       'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus || 'Order Placed', shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
+      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
     );
 
     // 2. Insert Order Items
     const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
     for (const item of parsedItems) {
       await connection.query(
-        'INSERT INTO order_items (order_id, product_id, name, quantity, price) VALUES (?, ?, ?, ?, ?)',
-        [orderId, item.id || item.productId, item.name, item.qty || item.quantity, item.price]
+        'INSERT INTO order_items (order_id, product_id, name, image, quantity, price) VALUES (?, ?, ?, ?, ?, ?)',
+        [orderId, item.id || item.productId, item.name, item.image || item.images?.[0] || '', item.qty || item.quantity, item.price]
       );
     }
 
@@ -71,7 +88,8 @@ const createOrder = async (req, res) => {
       const isCombo = item.category === "Combo" || item.type === "combo";
       const table = isCombo ? 'combos' : 'products';
       
-      const [rows] = await connection.query(`SELECT id, totalStock, comboDetails, comboItems FROM ${table} WHERE id = ?`, [item.id]);
+      const columns = isCombo ? 'id, totalStock, comboDetails, comboItems' : 'id, totalStock';
+      const [rows] = await connection.query(`SELECT ${columns} FROM ${table} WHERE id = ?`, [item.id]);
       
       if (rows.length > 0) {
         const productData = rows[0];
