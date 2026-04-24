@@ -11,10 +11,10 @@ const getInvoices = async (req, res) => {
 
 const createInvoice = async (req, res) => {
   try {
-    const { invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName } = req.body;
+    const { invoiceNo, dealerId, dealerName, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName, items } = req.body;
     const [result] = await db.query(
-      'INSERT INTO invoices (invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [invoiceNo, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName]
+      'INSERT INTO invoices (invoiceNo, dealerId, dealerName, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName, items) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [invoiceNo, dealerId, dealerName, invoiceDate, invoiceValue, invoiceGSTValue, invoiceTotalValue, transportAmount, billPdfBase64, billPdfName, JSON.stringify(items || [])]
     );
     res.json({ id: result.insertId, message: 'Invoice created' });
   } catch (error) {

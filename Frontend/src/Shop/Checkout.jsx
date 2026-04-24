@@ -7,6 +7,7 @@ import emailjs from "@emailjs/browser";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import api from "../services/api";
+import axios from "axios";
 
 const Checkout = () => {
   const { cartItems, clearCart, user } = useStore();
@@ -34,6 +35,7 @@ const Checkout = () => {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errors, setErrors] = useState({});
+
 
   // ---------------- Order ID generation ----------------
   const generateOrderId = async () => {
@@ -163,6 +165,70 @@ const Checkout = () => {
     }
   }, [subtotal, appliedCoupon]);
 
+  // ---------------- Delivery & Distance Logic ----------------
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    distance: 0,
+    charge: 0,
+    time: "Enter location",
+    days: 0,
+    lat: 0,
+    lng: 0,
+    areaName: ""
+  });
+
+  const WAREHOUSE = { lat: 11.6643, lng: 78.1460 };
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const getDeliveryRules = (distance) => {
+    if (distance <= 10) return { charge: 40, time: "Same Day", days: 0 };
+    if (distance <= 50) return { charge: 80, time: "1–2 Days", days: 1 };
+    if (distance <= 200) return { charge: 150, time: "2–4 Days", days: 2 };
+    return { charge: 250, time: "4–7 Days", days: 4 };
+  };
+
+  const updateDeliveryByLocation = async (query) => {
+    if (!query || query.length < 3) return;
+    try {
+      const response = await axios.get(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
+      if (response.data && response.data.length > 0) {
+        const { lat, lon, display_name } = response.data[0];
+        const dist = calculateDistance(WAREHOUSE.lat, WAREHOUSE.lng, parseFloat(lat), parseFloat(lon));
+        const rules = getDeliveryRules(dist);
+        
+        setDeliveryInfo({
+          distance: dist.toFixed(2),
+          charge: subtotal >= 999 ? 0 : rules.charge, // Free delivery above 999
+          time: rules.time,
+          days: rules.days,
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+          areaName: display_name
+        });
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+    }
+  };
+
+  // Debounced location update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const query = /^\d{6}$/.test(form.zip) ? form.zip : form.city;
+      if (query) updateDeliveryByLocation(query);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [form.zip, form.city, subtotal]);
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error("Please enter a coupon code");
@@ -189,64 +255,7 @@ const Checkout = () => {
     toast.success("Coupon removed");
   };
 
-  const shippingCost = useMemo(() => {
-    if (shippingSettings.shipping_enabled !== "true") return 0;
-
-    const baseRate = Number(shippingSettings.shipping_amount || 0);
-    let totalWeightGrams = 0;
-
-    itemsToCheckout.forEach((item) => {
-      const qty = Number(item.qty || item.quantity || 1);
-      const weightStr = String(item.selectedWeight || "").toLowerCase();
-      
-      let weight = parseFloat(weightStr.replace(/[()]/g, ""));
-      
-      if (isNaN(weight) || weight === 0) {
-        // Fallback 1: Combo or Direct total weight fields
-        weight = Number(item.totalWeight || item.comboDetails?.totalWeight || 0);
-        
-        // Fallback 2: Item's own weight field
-        if (weight === 0) {
-          weight = Number(item.weight || 0);
-        }
-
-        // Fallback 3: Sum individual combo items if still 0
-        if (weight === 0) {
-          const items = item.combos || item.comboItems || [];
-          weight = items.reduce((sum, sub) => {
-            const wStr = String(sub.weight || "").replace(/[()]/g, "").toLowerCase();
-            let w = parseFloat(wStr) || 0;
-            if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
-            return sum + w;
-          }, 0);
-        }
-      } else if (weightStr.includes("kg") || weightStr.includes("k")) {
-        weight *= 1000;
-      }
-      
-      totalWeightGrams += (weight * qty);
-    });
-
-    if (totalWeightGrams === 0) return 0;
-
-    let cost = baseRate;
-    
-    // Tiered pricing for the first 1kg
-    if (totalWeightGrams <= 500) {
-      // Light order: ₹20 discount from base
-      cost = Math.max(0, baseRate - 20);
-    } else if (totalWeightGrams <= 1000) {
-      // Standard 1kg order: Full base rate
-      cost = baseRate;
-    } else {
-      // Heavy order: Base + extras
-      const extraWeight = totalWeightGrams - 1000;
-      const extraChunks = Math.ceil(extraWeight / 200);
-      cost = baseRate + (extraChunks * 10);
-    }
-
-    return cost;
-  }, [itemsToCheckout, shippingSettings]);
+  const shippingCost = deliveryInfo.charge;
 
   const MIN_PURCHASE = 300;
 
@@ -387,7 +396,7 @@ const Checkout = () => {
       productId: item.productId || item.id,
       name: item.name,
       image: item.images?.[0] || item.image || "",
-      selectedWeight: item.selectedWeight || "",
+      weight: item.selectedWeight || item.weight || item.totalWeight || item.comboDetails?.totalWeight || "",
       price: parsePrice(item.price || 0),
       qty: parseInt(item.qty || item.quantity || 1, 10),
       category: item.category || "",
@@ -407,8 +416,15 @@ const Checkout = () => {
       paymentId: paymentId,
       orderStatus: "Placed",
       shippingCharge: shippingCost,
+      delivery_charge: deliveryInfo.charge,
+      area: form.city,
+      pincode: form.zip,
+      lat: deliveryInfo.lat,
+      lng: deliveryInfo.lng,
+      distance: deliveryInfo.distance,
+      delivery_days: deliveryInfo.days,
       items: trimmedCartItems,
-      gstAmount: 0, // Simplified or calculated if needed
+      gstAmount: 0, 
       couponCode: appliedCoupon?.code || null,
       discountAmount: couponDiscount,
       totalAmount: finalAmount,
@@ -808,6 +824,27 @@ const Checkout = () => {
                   }, 0).toLocaleString()} g
                 </span>
               </div>
+            </div>
+
+            {/* Delivery Details */}
+            <div className="bg-green-50 p-4 rounded-md border border-green-200 mt-4">
+              <h3 className="font-bold text-green-800 mb-2">Delivery Information</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <span className="text-gray-600">Estimated Distance:</span>
+                <span className="font-semibold">{deliveryInfo.distance} KM</span>
+                <span className="text-gray-600">Delivery Charge:</span>
+                <span className="font-semibold text-green-700">₹{deliveryInfo.charge}</span>
+                <span className="text-gray-600">Estimated Time:</span>
+                <span className="font-semibold">{deliveryInfo.time}</span>
+                {deliveryInfo.areaName && (
+                  <span className="text-gray-600 col-span-2 mt-2 italic text-xs leading-tight">
+                    {deliveryInfo.areaName}
+                  </span>
+                )}
+              </div>
+              {subtotal >= 999 && (
+                <p className="text-xs text-green-600 font-bold mt-2">✓ Free Delivery Applied</p>
+              )}
             </div>
           </div>
         </div>

@@ -14,13 +14,12 @@ import { toast } from "react-hot-toast";
 import LodingPage from "../Component/LoadingPage";
 import { Helmet } from "react-helmet";
 
-const categories = ["All","Nuts", "Dryfruits", "Dates", "Raisins", "Driedfruits", "Seeds"];
 const weights = ["All", "100g", "250g", "500g", "1000g"];
 const productsPerPage = 30;
 
 const Category = () => {
   const { categoryName } = useParams();
-  const { addToFav, addToCart, allProducts, loadingProducts } = useStore();
+  const { addToFav, addToCart, allProducts, allCategories, loadingProducts } = useStore();
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedWeight, setSelectedWeight] = useState("All");
@@ -32,10 +31,17 @@ const Category = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+  const availableCategories = ["All", ...allCategories.map(c => c.name)];
+
   useEffect(() => {
-    const capitalized = categoryName.charAt(0).toUpperCase() + categoryName.slice(1).toLowerCase();
-    setSelectedCategory(capitalized);
-  }, [categoryName]);
+    if (categoryName) {
+      // Find matching category name from allCategories (case & space insensitive)
+      const found = allCategories.find(c => c.name.toLowerCase().replace(/\s+/g, '') === categoryName.toLowerCase().replace(/\s+/g, ''));
+      setSelectedCategory(found ? found.name : "All");
+    } else {
+      setSelectedCategory("All");
+    }
+  }, [categoryName, allCategories]);
 
   useEffect(() => {
     const prices = allProducts.flatMap((p) => {
@@ -184,7 +190,7 @@ const Category = () => {
               <h3 className="font-semibold border-b border-dashed border-green-400 pb-1 mb-2 text-green-700">
                 Category
               </h3>
-              {categories.map((cat) => (
+              {availableCategories.map((cat) => (
                 <label key={cat} className="flex items-center gap-2 mb-2 text-sm">
                   <input
                     type="radio"
@@ -265,7 +271,7 @@ const Category = () => {
                 if (isNaN(offerPrice) || offerPrice <= 0) offerPrice = mrp;
                 
                 const avgRating = product.rating || 4.5;
-                const isOutOfStock = product.stock <= 0;
+                const isOutOfStock = product.isOutOfStock;
 
                 return (
                   <div key={product.id} className="group bg-white rounded-2xl p-4 shadow hover:ring-2 hover:ring-green1 transition relative">

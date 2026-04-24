@@ -57,7 +57,7 @@ const ProductCard = React.memo(({
 
   const handleAddToCart = (e) => {
     e.preventDefault();
-    if (product.stock <= 0) {
+    if (product.isOutOfStock) {
       toast.error("Out of Stock");
       return;
     }
@@ -83,12 +83,19 @@ const ProductCard = React.memo(({
             loading="lazy"
           />
         </Link>
+        {product.isOutOfStock && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10 p-4">
+            <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest text-xs shadow-xl transform -rotate-12 border-2 border-white">
+              Out of Stock
+            </span>
+          </div>
+        )}
         <span className="absolute top-2 left-0 bg-primary text-white text-xs px-3 py-1 rounded-r-full shadow">
           Bestseller
         </span>
         <button
           onClick={handleAddToFav}
-          className={`absolute top-2 right-2 border p-2 rounded-full transition cursor-pointer ${isFavorite ? "bg-rose-500 text-white border-rose-500" : "bg-white text-slate-400 border-slate-200 hover:bg-primary hover:text-white"}`}
+          className={`absolute top-2 right-2 border p-2 rounded-full transition cursor-pointer z-20 ${isFavorite ? "bg-rose-500 text-white border-rose-500" : "bg-white text-slate-400 border-slate-200 hover:bg-primary hover:text-white"}`}
         >
           <FiHeart className={isFavorite ? "fill-current" : ""} />
         </button>
@@ -97,35 +104,20 @@ const ProductCard = React.memo(({
       <h3 className="font-semibold text-base sm:text-lg text-center mb-2">
         {product.name}
       </h3>
-      {product.stock <= 0 ? (
-        <>
-          <p className="text-center text-gray-600 text-sm mb-2">
-            MRP:{" "}
-            <span className="line-through text-gray-400">
-              ₹{mrp}
-            </span>{" "}
-            ₹{offerPrice}
-          </p>
-          <p className="text-center text-red-500 text-sm mb-2 font-medium">
-            Out of Stock
-          </p>
-        </>
-      ) : (
-        <p className="text-center text-gray-600 text-sm mb-2">
-          MRP:{" "}
-          <span className="line-through text-gray-400">
-            ₹{mrp}
-          </span>{" "}
-          ₹{offerPrice}
-        </p>
-      )}
+      <p className="text-center text-gray-600 text-sm mb-2">
+        MRP:{" "}
+        <span className="line-through text-gray-400">
+          ₹{mrp}
+        </span>{" "}
+        <span className="font-bold text-green-700 text-lg">₹{offerPrice}</span>
+      </p>
       <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
       <div className="flex justify-between items-center mt-auto px-1">
         <button
-          disabled={product.stock <= 0}
+          disabled={product.isOutOfStock}
           onClick={handleAddToCart}
           className={`${
-            product.stock <= 0
+            product.isOutOfStock
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-green1 hover:bg-green2"
           } text-white w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer`}
@@ -143,7 +135,7 @@ const ProductCard = React.memo(({
   return (
     prevProps.product.id === nextProps.product.id &&
     prevProps.activeWeight === nextProps.activeWeight &&
-    prevProps.product.stock === nextProps.product.stock &&
+    prevProps.product.isOutOfStock === nextProps.product.isOutOfStock &&
     prevProps.product.rating === nextProps.product.rating &&
     prevProps.favItems?.length === nextProps.favItems?.length
   );

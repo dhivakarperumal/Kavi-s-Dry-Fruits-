@@ -7,6 +7,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { FaChevronRight, FaChevronLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
+import { useStore } from "../Context/StoreContext";
 
 const PrevArrow = (props) => {
   const { onClick, style } = props;
@@ -34,27 +35,15 @@ const NextArrow = (props) => {
   );
 };
 
-const categories = [
-  { name: "Nuts", defaultImage: 'https://kavisdryfruits.com/images/Category/nut.png', hoverImage: 'https://kavisdryfruits.com/images/Category/Nuts.png' },
-  { name: "Dryfruits", defaultImage: 'https://kavisdryfruits.com/images/Category/c3.png', hoverImage: "https://kavisdryfruits.com/images/Category/c4.png" },
-  { name: "Dates", defaultImage: "https://kavisdryfruits.com/images/Category/dates.png", hoverImage: "https://kavisdryfruits.com/images/Category/dates_1.png" },
-  { name: "Raisins", defaultImage: "https://kavisdryfruits.com/images/Category/black_raisan.png", hoverImage: "https://kavisdryfruits.com/images/Category/y.png" },
-  {
-    name: "Driedfruits",
-    defaultImage: "https://kavisdryfruits.com/images/Category/fig.png",
-    hoverImage: "https://kavisdryfruits.com/images/Category/fig_1.png",
-  },
-  { name: "Seeds", defaultImage: 'https://kavisdryfruits.com/images/Category/Pumpkin seeds.png', hoverImage: "https://kavisdryfruits.com/images/Category/Seed.png" },
-];
-
 const Category = () => {
+  const { allCategories } = useStore();
   const [hoverIndex, setHoverIndex] = useState(null);
 
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: allCategories.length > 6,
     speed: 600,
-    slidesToShow: 6,
+    slidesToShow: Math.min(allCategories.length, 6) || 1,
     slidesToScroll: 1,
     autoplay: true,
     arrows: true,
@@ -103,7 +92,7 @@ const Category = () => {
       {/* Slider */}
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <Slider {...settings}>
-          {categories.map((item, index) => (
+          {allCategories.map((item, index) => (
             <div key={index} className="px-4">
               <Link
                 to={`/category/${item.name.toLowerCase().replace(/\s+/g, "")}`}
@@ -116,8 +105,8 @@ const Category = () => {
                   <img
                     src={
                       hoverIndex === index
-                        ? item.hoverImage || item.defaultImage
-                        : item.defaultImage
+                        ? item.images?.hover || item.images?.default
+                        : item.images?.default
                     }
                     alt={item.name}
                     className="w-[120px] h-[120px] object-contain mb-2 transition duration-500"

@@ -14,7 +14,7 @@ const createCoupon = async (req, res) => {
     const { code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status } = req.body;
     const [result] = await db.query(
       'INSERT INTO coupons (code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status || 'active']
+      [code, discountType, discountValue, minPurchase !== undefined && minPurchase !== '' ? minPurchase : null, expiryDate || null, usageLimit !== undefined && usageLimit !== '' ? usageLimit : null, status || 'active']
     );
     res.json({ id: result.insertId, message: 'Coupon created' });
   } catch (error) {
