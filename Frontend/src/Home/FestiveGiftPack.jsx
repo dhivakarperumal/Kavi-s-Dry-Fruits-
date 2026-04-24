@@ -1,4 +1,11 @@
 import ProductCard from "../Component/ProductCard";
+import { Link } from "react-router-dom";
+import { useStore } from "../Context/StoreContext";
+import { Helmet } from "react-helmet";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import rightBg from "/images/offer-side-bg2.png";
 
 const FestiveGiftPack = () => {
   const { allProducts, addToCart, addToFav, favItems } = useStore();

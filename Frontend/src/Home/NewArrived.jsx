@@ -1,4 +1,7 @@
 import ProductCard from "../Component/ProductCard";
+import { Link } from "react-router-dom";
+import { useStore } from "../Context/StoreContext";
+import { Helmet } from "react-helmet";
 
 const NewArrived = () => {
   const { allProducts, addToCart, addToFav, favItems } = useStore();
