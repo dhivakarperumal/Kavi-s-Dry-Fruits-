@@ -309,6 +309,33 @@ const tables = {
       totalStickers INT,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  order_tracking: `
+    CREATE TABLE IF NOT EXISTS order_tracking (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id VARCHAR(100) NOT NULL,
+      status VARCHAR(50) NOT NULL,
+      description TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  delivery_locations: `
+    CREATE TABLE IF NOT EXISTS delivery_locations (
+      order_id VARCHAR(100) NOT NULL PRIMARY KEY,
+      agent_id INT,
+      lat DECIMAL(10,8),
+      lng DECIMAL(11,8),
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  delivery_agents: `
+    CREATE TABLE IF NOT EXISTS delivery_agents (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      status VARCHAR(50) DEFAULT 'Active',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };
 

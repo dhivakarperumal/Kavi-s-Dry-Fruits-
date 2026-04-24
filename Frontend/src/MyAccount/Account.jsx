@@ -10,6 +10,8 @@ import { Helmet } from "react-helmet";
 import toast from "react-hot-toast";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
+import OrderTracking from "../Shop/OrderTracking";
+import { FaTruck } from "react-icons/fa";
 
 const Account = () => {
   const { user } = useAuth();
@@ -39,6 +41,7 @@ const Account = () => {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
+  const [trackingOrderId, setTrackingOrderId] = useState("");
   const location = useLocation();
 
   const countries = ["India"];
@@ -541,6 +544,7 @@ const Account = () => {
     { key: "personal", label: "Personal Info" },
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Manage Address" },
+    { key: "tracking", label: "Track Order" },
   ];
   const renderContent = () => {
     const firstName = (userInfo.username || "").split(" ")[0] || "";
@@ -606,6 +610,38 @@ const Account = () => {
                 Update Changes
               </button>
             </div>
+          </div>
+        );
+      case "tracking":
+        return (
+          <div className="bg-white p-6 rounded-xl shadow border border-green-200 w-full">
+            {!trackingOrderId ? (
+              <div className="text-center py-10">
+                <FaTruck className="mx-auto text-green-600 mb-4" size={50} />
+                <h3 className="text-xl font-bold mb-4">Track Your Order</h3>
+                <div className="max-w-md mx-auto flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Enter Order ID (e.g. ORD-123)" 
+                    className="flex-1 border border-green-300 rounded px-4 py-2 focus:outline-none"
+                    value={trackingOrderId}
+                    onChange={(e) => setTrackingOrderId(e.target.value)}
+                  />
+                  {/* Since state is updated above, we don't need a separate button here unless we want to trigger something */}
+                </div>
+                <p className="text-sm text-gray-500 mt-4">Enter your Order ID to see real-time tracking information.</p>
+              </div>
+            ) : (
+              <div>
+                <button 
+                  onClick={() => setTrackingOrderId("")}
+                  className="mb-4 text-green-600 flex items-center gap-1 font-bold"
+                >
+                  ← Back to Search
+                </button>
+                <OrderTracking orderId={trackingOrderId} />
+              </div>
+            )}
           </div>
         );
       case "orders":
@@ -715,7 +751,7 @@ const Account = () => {
                             </div>
                           )} */}
 
-                        <div className="bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-center">
+                        <div className="bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-center text-black">
                           {order.orderStatus === "Placed" && "🛒 Placed"}
                           {order.orderStatus === "Packing" && "📦 Packing"}
                           {order.orderStatus === "Shipped" && "🚚 Shipped"}
@@ -724,6 +760,17 @@ const Account = () => {
                           {order.orderStatus === "Delivered" && "✅ Delivered"}
                           {order.orderStatus === "Cancelled" && "❌ Cancelled"}
                         </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrackingOrderId(order.orderId);
+                            setActiveTab("tracking");
+                          }}
+                          className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+                        >
+                          <FaTruck size={14} /> Track Order
+                        </button>
                       </div>
                     </div>
 

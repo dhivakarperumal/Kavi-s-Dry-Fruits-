@@ -4,8 +4,9 @@ import api from "../services/api";
 import { FaCheckCircle, FaBox, FaTruck, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import PageHeader from "../Component/PageHeader";
 
-const OrderTracking = () => {
-  const { orderId } = useParams();
+const OrderTracking = ({ orderId: propOrderId }) => {
+  const { orderId: paramOrderId } = useParams();
+  const orderId = propOrderId || paramOrderId;
   const [order, setOrder] = useState(null);
   const [tracking, setTracking] = useState([]);
   const [location, setLocation] = useState(null);
@@ -37,8 +38,8 @@ const OrderTracking = () => {
   if (loading) return <div className="p-10 text-center">Loading Tracking...</div>;
   if (!order) return <div className="p-10 text-center text-red-600">Order not found</div>;
 
-  const statuses = ["Order Placed", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Delivered"];
-  const currentStatusIndex = statuses.indexOf(order.orderStatus);
+  const statuses = ["Placed", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Delivered"];
+  const currentStatusIndex = statuses.findIndex(s => s.toLowerCase() === (order.orderStatus || "").toLowerCase());
 
   return (
     <div className="bg-green4 min-h-screen">
