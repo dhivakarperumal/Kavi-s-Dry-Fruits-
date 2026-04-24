@@ -427,8 +427,8 @@ const StockDetail = () => {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
              
-             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                <div className="bg-emerald-600 p-8 text-white relative">
+             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+                <div className="bg-emerald-600 p-8 text-white relative flex-shrink-0">
                    <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                    <div className="relative flex items-center justify-between">
                       <div>
@@ -441,7 +441,7 @@ const StockDetail = () => {
                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                    <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Select Catalog Item *</label>
                        <select
@@ -470,6 +470,26 @@ const StockDetail = () => {
                           <input type="text" value={form.productCategory} readOnly className="w-full bg-emerald-50/50 border border-emerald-100 rounded-2xl px-5 py-3.5 text-emerald-900 font-black text-sm shadow-inner" />
                        </div>
                    </div>
+
+                   {/* Combo Items Display */}
+                   {isCombo && (
+                     <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label className="text-[10px] font-black text-emerald-800 uppercase tracking-widest ml-1">Combo Contents</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                           {(() => {
+                             const matched = liveStocks.find(p => p.productId === form.productId);
+                             const items = safeParse(matched?.comboItems);
+                             if (items.length === 0) return <p className="text-[10px] text-gray-400 italic">No items defined for this combo</p>;
+                             return items.map((item, idx) => (
+                               <div key={idx} className="flex items-center justify-between bg-emerald-50/30 border border-emerald-100 rounded-xl px-4 py-2.5">
+                                 <span className="text-xs font-black text-emerald-950 truncate max-w-[160px]">{item.name}</span>
+                                 <span className="text-[10px] font-bold text-emerald-600 bg-white px-2.5 py-1 rounded-full border border-emerald-50 shadow-sm">{item.weight}</span>
+                               </div>
+                             ));
+                           })()}
+                        </div>
+                     </div>
+                   )}
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="space-y-2">
