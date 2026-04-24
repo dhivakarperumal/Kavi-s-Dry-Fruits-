@@ -17,6 +17,7 @@ const Checkout = () => {
 
   // Initialize itemsToCheckout as empty, then populate reactively
   const [itemsToCheckout, setItemsToCheckout] = useState([]);
+  const [isCalculatingDelivery, setIsCalculatingDelivery] = useState(false);
 
   const [form, setForm] = useState({
     fullname: "",
@@ -86,19 +87,20 @@ const Checkout = () => {
 
   // populate itemsToCheckout when cartItems or checkoutProduct changes
   useEffect(() => {
-    if (checkoutProduct) {
-      setItemsToCheckout([
-        {
-          ...checkoutProduct,
-          qty: checkoutProduct.qty || checkoutProduct.quantity || 1,
-        },
-      ]);
-    } else if (Array.isArray(cartItems) && cartItems.length > 0) {
-      setItemsToCheckout(cartItems.map((it) => ({ ...it, qty: it.qty || it.quantity || 1 })));
-    } else {
-      setItemsToCheckout([]);
+    // Only initialize if itemsToCheckout is empty to prevent manual quantity resets
+    if (itemsToCheckout.length === 0) {
+      if (checkoutProduct) {
+        setItemsToCheckout([
+          {
+            ...checkoutProduct,
+            qty: checkoutProduct.qty || checkoutProduct.quantity || 1,
+          },
+        ]);
+      } else if (Array.isArray(cartItems) && cartItems.length > 0) {
+        setItemsToCheckout(cartItems.map((it) => ({ ...it, qty: it.qty || it.quantity || 1 })));
+      }
     }
-  }, [cartItems, checkoutProduct]);
+  }, [cartItems, checkoutProduct, itemsToCheckout.length]);
 
   // Prefill form with user info (if available)
   useEffect(() => {
@@ -126,7 +128,13 @@ const Checkout = () => {
 
   const [shippingSettings, setShippingSettings] = useState({ 
     shipping_enabled: "false", 
-    shipping_amount: "0" 
+    shipping_amount: "0",
+    store_latitude: "11.6643",
+    store_longitude: "78.1460",
+    store_city: "Tirupattur",
+    store_zip: "635601",
+    distance_buffer: "0",
+    distance_multiplier: "1.0"
   });
 
   // --- Coupon States ---
@@ -138,7 +146,7 @@ const Checkout = () => {
     const fetchShippingSettings = async () => {
       try {
         const res = await api.get("/settings");
-        if (res.data) setShippingSettings(res.data);
+        if (res.data) setShippingSettings((prev) => ({ ...prev, ...res.data }));
       } catch (err) {
         console.error("Fetch shipping settings error:", err);
       }
@@ -176,7 +184,10 @@ const Checkout = () => {
     areaName: ""
   });
 
-  const WAREHOUSE = { lat: 11.6643, lng: 78.1460 };
+  const WAREHOUSE = { 
+    lat: parseFloat(shippingSettings.store_latitude || "11.6643"), 
+    lng: parseFloat(shippingSettings.store_longitude || "78.1460") 
+  };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // km
@@ -190,44 +201,197 @@ const Checkout = () => {
   };
 
   const getDeliveryRules = (distance) => {
-    if (distance <= 10) return { charge: 40, time: "Same Day", days: 0 };
-    if (distance <= 50) return { charge: 80, time: "1–2 Days", days: 1 };
-    if (distance <= 200) return { charge: 150, time: "2–4 Days", days: 2 };
-    return { charge: 250, time: "4–7 Days", days: 4 };
+    if (distance <= 15) return { charge: 40, time: "Same Day", days: 0 };
+    if (distance <= 100) return { charge: 60, time: "1–2 Days", days: 1 };
+    if (distance <= 400) return { charge: 90, time: "2–3 Days", days: 2 };
+    if (distance <= 1000) return { charge: 140, time: "3–5 Days", days: 4 };
+    return { charge: 200, time: "5–8 Days", days: 7 };
   };
 
-  const updateDeliveryByLocation = async (query) => {
-    if (!query || query.length < 3) return;
+  const updateDeliveryByLocation = async () => {
+    const { zip, city, street, state } = form;
+    
+    // Only proceed if we have at least one address component
+    if (!zip && !city && !street && !state) {
+      setDeliveryInfo({
+        distance: 0,
+        charge: 0,
+        time: "Enter location",
+        days: 0,
+        lat: 0,
+        lng: 0,
+        areaName: ""
+      });
+      return;
+    }
+
+    const searchQuery = [street, city, state, zip, "India"].filter(Boolean).join(", ");
+    if (searchQuery.length < 3) return;
+
+    setIsCalculatingDelivery(true);
     try {
-      const response = await axios.get(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
-      if (response.data && response.data.length > 0) {
-        const { lat, lon, display_name } = response.data[0];
-        const dist = calculateDistance(WAREHOUSE.lat, WAREHOUSE.lng, parseFloat(lat), parseFloat(lon));
+      const response = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+        params: {
+          q: searchQuery,
+          format: "json",
+          limit: 1,
+          "accept-language": "en"
+        },
+        headers: {
+          "User-Agent": "KavisDryFruits/1.0"
+        }
+      });
+
+      let geoData = response.data[0];
+
+      // Fallback: If no result for "Street, City, Zip", try just "City, Zip"
+      if (!geoData) {
+        const fallbackQuery = [city, zip, "India"].filter(Boolean).join(", ");
+        if (fallbackQuery !== searchQuery) {
+          const fallbackRes = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+            params: { q: fallbackQuery, format: "json", limit: 1, "accept-language": "en" },
+            headers: { "User-Agent": "KavisDryFruits/1.0" }
+          });
+          if (fallbackRes.data && fallbackRes.data.length > 0) {
+            geoData = fallbackRes.data[0];
+          }
+        }
+      }
+
+      if (geoData) {
+        const { lat, lon, display_name } = geoData;
+        const destLat = parseFloat(lat);
+        const destLon = parseFloat(lon);
+
+        let roadDist = 0;
+        try {
+          const distRes = await api.get("/settings/distance", {
+            params: {
+              originLat: WAREHOUSE.lat,
+              originLng: WAREHOUSE.lng,
+              destLat,
+              destLng: destLon
+            }
+          });
+          roadDist = distRes.data.distance;
+        } catch (routeErr) {
+          console.warn("Backend distance failed, falling back to local straight-line:", routeErr);
+          roadDist = calculateDistance(WAREHOUSE.lat, WAREHOUSE.lng, destLat, destLon) * 1.3;
+        }
+
+        const multiplier = parseFloat(shippingSettings.distance_multiplier || "1.0");
+        const buffer = parseFloat(shippingSettings.distance_buffer || "0");
+        const dist = Math.ceil((roadDist * multiplier) + buffer);
+
         const rules = getDeliveryRules(dist);
         
         setDeliveryInfo({
-          distance: dist.toFixed(2),
-          charge: subtotal >= 999 ? 0 : rules.charge, // Free delivery above 999
+          distance: dist,
+          charge: subtotal >= 999 ? 0 : rules.charge,
           time: rules.time,
           days: rules.days,
-          lat: parseFloat(lat),
-          lng: parseFloat(lon),
+          lat: destLat,
+          lng: destLon,
           areaName: display_name
         });
+      } else {
+        setDeliveryInfo(prev => ({ ...prev, distance: 0, charge: 0, areaName: "Location not found" }));
       }
     } catch (error) {
       console.error("Geocoding error:", error);
+    } finally {
+      setIsCalculatingDelivery(false);
     }
+  };
+
+  const fetchCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsCalculatingDelivery(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
+            { headers: { "User-Agent": "KavisDryFruits/1.0" } }
+          );
+
+          if (response.data && response.data.address) {
+            const addr = response.data.address;
+            const city = addr.city || addr.town || addr.village || addr.suburb || "";
+            const zip = addr.postcode || "";
+            const state = addr.state || "";
+            const street = addr.road || addr.suburb || "";
+
+            setForm((prev) => ({
+              ...prev,
+              city: city,
+              zip: zip,
+              state: state,
+              street: prev.street || street,
+            }));
+
+            // Force distance calculation with these specific coords
+            let roadDist = 0;
+            try {
+              const distRes = await api.get("/settings/distance", {
+                params: {
+                  originLat: WAREHOUSE.lat,
+                  originLng: WAREHOUSE.lng,
+                  destLat: latitude,
+                  destLng: longitude
+                }
+              });
+              roadDist = distRes.data.distance;
+            } catch (routeErr) {
+              roadDist = calculateDistance(WAREHOUSE.lat, WAREHOUSE.lng, latitude, longitude) * 1.3;
+            }
+
+            const multiplier = parseFloat(shippingSettings.distance_multiplier || "1.0");
+            const buffer = parseFloat(shippingSettings.distance_buffer || "0");
+            const dist = Math.ceil((roadDist * multiplier) + buffer);
+
+            const rules = getDeliveryRules(dist);
+
+            setDeliveryInfo({
+              distance: dist.toFixed(2),
+              charge: subtotal >= 999 ? 0 : rules.charge,
+              time: rules.time,
+              days: rules.days,
+              lat: latitude,
+              lng: longitude,
+              areaName: response.data.display_name,
+            });
+
+            toast.success("Location detected!");
+          }
+        } catch (err) {
+          console.error("Reverse geocoding error:", err);
+          toast.error("Failed to fetch address from location.");
+        } finally {
+          setIsCalculatingDelivery(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        toast.error("Could not get your location. Please check permissions.");
+        setIsCalculatingDelivery(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   // Debounced location update
   useEffect(() => {
     const timer = setTimeout(() => {
-      const query = /^\d{6}$/.test(form.zip) ? form.zip : form.city;
-      if (query) updateDeliveryByLocation(query);
-    }, 1000);
+      updateDeliveryByLocation();
+    }, 800);
     return () => clearTimeout(timer);
-  }, [form.zip, form.city, subtotal]);
+  }, [form.zip, form.city, form.street, form.state, subtotal, shippingSettings.store_latitude, shippingSettings.store_longitude]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -827,20 +991,37 @@ const Checkout = () => {
             </div>
 
             {/* Delivery Details */}
-            <div className="bg-green-50 p-4 rounded-md border border-green-200 mt-4">
-              <h3 className="font-bold text-green-800 mb-2">Delivery Information</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <span className="text-gray-600">Estimated Distance:</span>
-                <span className="font-semibold">{deliveryInfo.distance} KM</span>
-                <span className="text-gray-600">Delivery Charge:</span>
-                <span className="font-semibold text-green-700">₹{deliveryInfo.charge}</span>
-                <span className="text-gray-600">Estimated Time:</span>
-                <span className="font-semibold">{deliveryInfo.time}</span>
-                {deliveryInfo.areaName && (
-                  <span className="text-gray-600 col-span-2 mt-2 italic text-xs leading-tight">
-                    {deliveryInfo.areaName}
-                  </span>
-                )}
+            <div className="bg-green-50 p-4 rounded-md border border-green-200 mt-4 relative overflow-hidden">
+              {isCalculatingDelivery && (
+                <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 backdrop-blur-[1px]">
+                   <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
+              <h3 className="font-bold text-green-800 mb-2 flex items-center justify-between">
+                Delivery Information
+                {deliveryInfo.distance > 0 && <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full uppercase">Calculated</span>}
+              </h3>
+              <div className="grid grid-cols-1 gap-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">From (Store):</span>
+                  <span className="font-semibold">{shippingSettings.store_city || "Tirupattur"}, {shippingSettings.store_zip}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">To (You):</span>
+                  <span className="font-semibold text-right max-w-[150px] truncate">{deliveryInfo.areaName || "Enter Location"}</span>
+                </div>
+                <div className="flex justify-between border-t border-green-100 pt-2">
+                  <span className="text-gray-600">Estimated Distance:</span>
+                  <span className="font-bold text-green-800">{deliveryInfo.distance} KM</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Delivery Charge:</span>
+                  <span className="font-bold text-green-700">₹{deliveryInfo.charge}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Estimated Time:</span>
+                  <span className="font-semibold">{deliveryInfo.time}</span>
+                </div>
               </div>
               {subtotal >= 999 && (
                 <p className="text-xs text-green-600 font-bold mt-2">✓ Free Delivery Applied</p>
@@ -854,7 +1035,21 @@ const Checkout = () => {
           onSubmit={handleSubmit}
           className="md:col-span-2 space-y-6 bg-white p-6 rounded-md border border-green-300 shadow"
         >
-          <h2 className="text-2xl font-bold mb-2">Billing Details</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Billing Details</h2>
+            <button
+              type="button"
+              onClick={fetchCurrentLocation}
+              disabled={isCalculatingDelivery}
+              className="flex items-center gap-2 text-xs font-bold bg-green-100 text-green-700 px-3 py-2 rounded-full hover:bg-green-200 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Use My Location
+            </button>
+          </div>
 
           <div className="mb-4">
             <h3 className="font-semibold mb-2">Saved Addresses</h3>
