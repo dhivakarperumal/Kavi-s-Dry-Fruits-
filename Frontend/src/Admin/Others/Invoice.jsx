@@ -34,6 +34,7 @@ const Invoice = () => {
     items: [],
   });
   const [dealers, setDealers] = useState([]);
+  const [allStoreItems, setAllStoreItems] = useState([]);
 
   const [invoices, setInvoices] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -85,9 +86,24 @@ const Invoice = () => {
     }
   };
 
+  const fetchStoreItems = async () => {
+    try {
+      const [prodRes, comboRes] = await Promise.all([
+        api.get("/products"),
+        api.get("/combos")
+      ]);
+      const normalizedProducts = (prodRes.data || []).map(p => ({ name: p.name, price: p.price }));
+      const normalizedCombos = (comboRes.data || []).map(c => ({ name: c.name, price: c.price }));
+      setAllStoreItems([...normalizedProducts, ...normalizedCombos]);
+    } catch (error) {
+      console.error("Failed to fetch store items", error);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
     fetchDealers();
+    fetchStoreItems();
   }, []);
 
   const addItem = () => {
@@ -107,6 +123,13 @@ const Invoice = () => {
   const handleItemChange = (index, field, value) => {
     const newItems = [...invoiceData.items];
     newItems[index][field] = value;
+
+    if (field === 'productName') {
+      const matched = allStoreItems.find(item => item.name === value);
+      if (matched) {
+        newItems[index].price = matched.price;
+      }
+    }
     setInvoiceData(prev => ({ ...prev, items: newItems }));
   };
 
@@ -451,11 +474,15 @@ const Invoice = () => {
                             <div key={idx} className="flex gap-3 items-end animate-in fade-in slide-in-from-right-4 duration-300">
                                <div className="flex-1 space-y-1">
                                   <input 
+                                     list="product-names"
                                      placeholder="Item name" 
                                      value={item.productName} 
                                      onChange={(e) => handleItemChange(idx, 'productName', e.target.value)}
                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-emerald-500"
                                   />
+                                  <datalist id="product-names">
+                                     {allStoreItems.map((item, i) => <option key={i} value={item.name} />)}
+                                  </datalist>
                                </div>
                                <div className="w-20 space-y-1">
                                   <input 
