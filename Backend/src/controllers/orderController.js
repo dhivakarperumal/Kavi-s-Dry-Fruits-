@@ -55,7 +55,7 @@ const createOrder = async (req, res) => {
     const paymentMode = req.body.paymentMode || null;
     const paymentStatus = req.body.paymentStatus || null;
     const paymentId = req.body.paymentId || null;
-    const orderStatus = req.body.orderStatus || 'Placed';
+    const orderStatus = req.body.orderStatus || 'Order Placed';
     const shippingCharge = req.body.shippingCharge !== undefined ? req.body.shippingCharge : 0;
     const items = req.body.items || [];
     const gstAmount = req.body.gstAmount !== undefined ? req.body.gstAmount : 0;
@@ -79,7 +79,7 @@ const createOrder = async (req, res) => {
     // 3. Insert Initial Tracking
     await connection.query(
       'INSERT INTO order_tracking (order_id, status) VALUES (?, ?)',
-      [orderId, 'Placed']
+      [orderId, 'Order Placed']
     );
 
     // 4. Reduce Stock

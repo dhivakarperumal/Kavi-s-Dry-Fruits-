@@ -414,7 +414,7 @@ const Checkout = () => {
       paymentMode: "Online Payment",
       paymentStatus: "Paid",
       paymentId: paymentId,
-      orderStatus: "Placed",
+      orderStatus: "Order Placed",
       shippingCharge: shippingCost,
       delivery_charge: deliveryInfo.charge,
       area: form.city,

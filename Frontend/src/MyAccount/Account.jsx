@@ -653,13 +653,14 @@ const Account = () => {
               allOrders.map((order, index) => {
                 const isOpen = selectedOrderId === order.orderId;
                 const statusSteps = [
-                  "Placed",
-                  "Packing",
+                  "Order Placed",
+                  "Order Confirmed",
+                  "Processing",
                   "Shipped",
                   "Out for Delivery",
                   "Delivered",
                 ];
-                const currentStatus = order.orderStatus || "Placed";
+                const currentStatus = order.orderStatus || "Order Placed";
                 const statusIndex = statusSteps.indexOf(currentStatus);
 
                 return (
@@ -752,13 +753,15 @@ const Account = () => {
                           )} */}
 
                         <div className="bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-center text-black">
-                          {order.orderStatus === "Placed" && "🛒 Placed"}
-                          {order.orderStatus === "Packing" && "📦 Packing"}
+                          {order.orderStatus === "Order Placed" && "🛒 Order Placed"}
+                          {order.orderStatus === "Order Confirmed" && "✅ Order Confirmed"}
+                          {order.orderStatus === "Processing" && "📦 Processing"}
                           {order.orderStatus === "Shipped" && "🚚 Shipped"}
-                          {order.orderStatus === "Out for Delivery" &&
-                            "🛵 Out for Delivery"}
+                          {order.orderStatus === "Out for Delivery" && "🛵 Out for Delivery"}
                           {order.orderStatus === "Delivered" && "✅ Delivered"}
                           {order.orderStatus === "Cancelled" && "❌ Cancelled"}
+                          {order.orderStatus === "Returned" && "🔄 Returned"}
+                          {order.orderStatus === "Refunded" && "💰 Refunded"}
                         </div>
 
                         <button

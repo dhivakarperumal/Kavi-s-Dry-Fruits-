@@ -399,11 +399,15 @@ const Dashboard = () => {
                     <td className="px-4 py-4 ">
                       <span
                         className={`px-2 py-1 rounded text-xs font-semibold ${
-                          order.orderStatus === "delivered"
+                          order.orderStatus?.toLowerCase() === "delivered"
                             ? "bg-green-100 text-green-600"
-                            : order.orderStatus === "cancelled"
+                          : order.orderStatus?.toLowerCase() === "cancelled"
                             ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-600"
+                          : order.orderStatus?.toLowerCase() === "order placed"
+                            ? "bg-blue-100 text-blue-600"
+                          : order.orderStatus?.toLowerCase() === "shipped"
+                            ? "bg-purple-100 text-purple-600"
+                          : "bg-yellow-100 text-yellow-600"
                         }`}
                       >
                         {order.orderStatus}

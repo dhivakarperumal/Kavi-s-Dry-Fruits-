@@ -264,11 +264,15 @@ const Orders = () => {
                     }}
                     className="border p-1 rounded cursor-pointer"
                   >
-                    <option value="Placed">Placed</option>
-                    <option value="Packing">Packing</option>
+                    <option value="Order Placed">Order Placed</option>
+                    <option value="Order Confirmed">Order Confirmed</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
                     <option value="Out for Delivery">Out for Delivery</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Refunded">Refunded</option>
                   </select>
 
                   {showCancelInput === order.id && (
