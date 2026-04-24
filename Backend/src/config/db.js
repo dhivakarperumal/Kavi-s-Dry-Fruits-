@@ -41,18 +41,19 @@ const initializeDatabase = async () => {
     }
   }
 
-  // Column Sync Logic
+  // Column Sync Logic - handles types with precision like DECIMAL(10, 8), VARCHAR(255)
   const syncColumns = async (table, definitionSql) => {
     try {
-      const columnMatches = definitionSql.matchAll(/^\s*([a-zA-Z0-9_]+)\s+([a-zA-Z0-9_()]+)/gm);
+      // Regex captures: columnName + full type (including parentheses with commas/spaces inside)
+      const columnMatches = definitionSql.matchAll(/^\s*([a-zA-Z0-9_]+)\s+([a-zA-Z0-9_]+(?:\([^)]+\))?)/gm);
       for (const match of columnMatches) {
         const columnName = match[1];
-        const columnType = match[2];
-        if (['CREATE', 'TABLE', 'IF', 'NOT', 'EXISTS', 'PRIMARY', 'UNIQUE', 'DEFAULT', 'ENGINE', 'CHARSET'].includes(columnName.toUpperCase())) continue;
-        const [cols] = await promisePool.query(`SHOW COLUMNS FROM ${table} LIKE ?`, [columnName]);
+        const columnType = match[2]; // e.g. DECIMAL(10, 8) or VARCHAR(255) or INT
+        if (['CREATE', 'TABLE', 'IF', 'NOT', 'EXISTS', 'PRIMARY', 'UNIQUE', 'DEFAULT', 'ENGINE', 'CHARSET', 'KEY', 'CONSTRAINT', 'FOREIGN', 'INDEX'].includes(columnName.toUpperCase())) continue;
+        const [cols] = await promisePool.query(`SHOW COLUMNS FROM \`${table}\` LIKE ?`, [columnName]);
         if (cols.length === 0) {
-          console.log(`[Sync] Adding missing column: ${table}.${columnName}`);
-          await promisePool.query(`ALTER TABLE ${table} ADD COLUMN ${columnName} ${columnType}`);
+          console.log(`[Sync] Adding missing column: ${table}.${columnName} (${columnType})`);
+          await promisePool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${columnName}\` ${columnType}`);
         }
       }
     } catch (err) { console.warn(`[Sync-Warn] ${table} sync failed:`, err.message); }
@@ -62,6 +63,23 @@ const initializeDatabase = async () => {
   await syncColumns('combos', tableDefinitions.combos);
   await syncColumns('categories', tableDefinitions.categories);
   await syncColumns('reviews', tableDefinitions.reviews);
+  await syncColumns('orders', tableDefinitions.orders);
+  await syncColumns('order_items', tableDefinitions.order_items);
+  await syncColumns('order_tracking', tableDefinitions.order_tracking);
+  await syncColumns('delivery_agents', tableDefinitions.delivery_agents);
+  await syncColumns('delivery_locations', tableDefinitions.delivery_locations);
+  await syncColumns('cart', tableDefinitions.cart);
+  await syncColumns('favorites', tableDefinitions.favorites);
+  await syncColumns('stock_history', tableDefinitions.stock_history);
+  await syncColumns('dealers', tableDefinitions.dealers);
+  await syncColumns('invoices', tableDefinitions.invoices);
+  await syncColumns('user_addresses', tableDefinitions.user_addresses);
+  await syncColumns('health_benefits', tableDefinitions.health_benefits);
+  await syncColumns('seo_keywords', tableDefinitions.seo_keywords);
+  await syncColumns('seo_settings', tableDefinitions.seo_settings);
+  await syncColumns('app_settings', tableDefinitions.app_settings);
+  await syncColumns('site_settings', tableDefinitions.site_settings);
+  await syncColumns('sticker_records', tableDefinitions.sticker_records);
 
   // UUID Maintenance
   try {

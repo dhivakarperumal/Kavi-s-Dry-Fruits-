@@ -2,22 +2,33 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../Component/PageHeader";
 import { Helmet } from "react-helmet";
+import { useStore } from "../Context/StoreContext";
+import api from "../services/api";
 
 const Orders = () => {
-  const navigate = useNavigate();
+  const { user } = useStore();
   const [allOrders, setAllOrders] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const username = localStorage.getItem("username") || "guest";
-    const storedOrders =
-      JSON.parse(localStorage.getItem(`${username}_orders`)) || [];
-    if (storedOrders.length > 0) {
-      setAllOrders(storedOrders.reverse());
-    } else {
-      navigate("/");
-    }
-  }, [navigate]);
+    const fetchOrders = async () => {
+      const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+      if (!userIdToUse || userIdToUse === "undefined") {
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await api.get(`/orders/user/${userIdToUse}`);
+        setAllOrders(response.data);
+      } catch (error) {
+        console.error("Fetch orders error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [user, navigate]);
 
   const handlePrint = (order, e) => {
     e.stopPropagation(); 
@@ -73,9 +84,19 @@ const Orders = () => {
     };
   };
 
+  if (loading) {
+    return <div className="text-center mt-10">Loading orders...</div>;
+  }
+
   if (!allOrders.length) {
     return (
-      <div className="text-center text-red-600 mt-10">No orders found.</div>
+      <div className="text-center mt-10">
+        <PageHeader title="Your Orders" curpage="Order Completed" />
+        <p className="text-red-600 mt-10 text-xl font-bold">No orders found.</p>
+        <button onClick={() => navigate("/shop")} className="mt-4 bg-green-700 text-white px-6 py-2 rounded">
+          Start Shopping
+        </button>
+      </div>
     );
   }
 
@@ -137,10 +158,19 @@ const Orders = () => {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={(e) => handlePrint(order, e)}
-                  className="bg-green-600 hover:bg-green-700 text-white text-sm px-6 py-3 rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/tracking/${order.orderId}`);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded font-bold"
                 >
-                  Download Invoice
+                  Track Order
+                </button>
+                <button
+                  onClick={(e) => handlePrint(order, e)}
+                  className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded font-bold"
+                >
+                  Invoice
                 </button>
                 {/* <div className="text-black text-xl">
                   {selectedIndex === index ? <FaChevronUp /> : <FaChevronDown />}

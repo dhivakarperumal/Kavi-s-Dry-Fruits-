@@ -66,11 +66,15 @@ const tables = {
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       userId VARCHAR(36) NOT NULL,
       productId VARCHAR(50) NOT NULL,
+      docId VARCHAR(200),
       name VARCHAR(255),
       image LONGTEXT,
       price DECIMAL(10,2),
       quantity INT,
       weight VARCHAR(50),
+      selectedWeight VARCHAR(100),
+      weights LONGTEXT,
+      prices LONGTEXT,
       category VARCHAR(100),
       type VARCHAR(50),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -108,6 +112,13 @@ const tables = {
       clientGST VARCHAR(100),
       email VARCHAR(255),
       shippingAddress TEXT,
+      area VARCHAR(255),
+      pincode VARCHAR(10),
+      lat DECIMAL(10, 8),
+      lng DECIMAL(11, 8),
+      distance DECIMAL(10, 2),
+      delivery_charge DECIMAL(10,2),
+      delivery_days INT,
       customerType VARCHAR(50),
       paymentMode VARCHAR(50),
       paymentStatus VARCHAR(50),
@@ -118,6 +129,43 @@ const tables = {
       totalAmount DECIMAL(10,2),
       items JSON,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  order_items: `
+    CREATE TABLE IF NOT EXISTS order_items (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id VARCHAR(100),
+      product_id VARCHAR(100),
+      name VARCHAR(255),
+      quantity INT,
+      price DECIMAL(10, 2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  order_tracking: `
+    CREATE TABLE IF NOT EXISTS order_tracking (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id VARCHAR(100),
+      status VARCHAR(100),
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  delivery_agents: `
+    CREATE TABLE IF NOT EXISTS delivery_agents (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255),
+      phone VARCHAR(20),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  delivery_locations: `
+    CREATE TABLE IF NOT EXISTS delivery_locations (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id VARCHAR(100),
+      agent_id INT,
+      lat DECIMAL(10, 8),
+      lng DECIMAL(11, 8),
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
   dealers: `
@@ -149,11 +197,14 @@ const tables = {
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       productId VARCHAR(50),
       productName VARCHAR(255),
+      productCategory VARCHAR(255),
       type VARCHAR(50),
       changeAmount INT,
+      addedQuantity INT,
       finalStock INT,
       invoiceNumber VARCHAR(100),
       action VARCHAR(50),
+      timestamp DATETIME DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -168,8 +219,24 @@ const tables = {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
+  seo_keywords: `
+    CREATE TABLE IF NOT EXISTS seo_keywords (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      keywords TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
   app_settings: `
     CREATE TABLE IF NOT EXISTS app_settings (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      setting_key VARCHAR(100) UNIQUE,
+      setting_value TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  site_settings: `
+    CREATE TABLE IF NOT EXISTS site_settings (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       setting_key VARCHAR(100) UNIQUE,
       setting_value TEXT,
@@ -188,6 +255,50 @@ const tables = {
       image LONGTEXT,
       selected TINYINT(1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  user_addresses: `
+    CREATE TABLE IF NOT EXISTS user_addresses (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      fullname VARCHAR(255),
+      email VARCHAR(255),
+      contact VARCHAR(50),
+      zip VARCHAR(20),
+      city VARCHAR(100),
+      state VARCHAR(100),
+      street TEXT,
+      country VARCHAR(100) DEFAULT 'India',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  health_benefits: `
+    CREATE TABLE IF NOT EXISTS health_benefits (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50),
+      productName VARCHAR(255),
+      category VARCHAR(255),
+      shortDescription TEXT,
+      detailedDescription TEXT,
+      benefits LONGTEXT,
+      images LONGTEXT,
+      videos LONGTEXT,
+      howToEat TEXT,
+      howToStore TEXT,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  sticker_records: `
+    CREATE TABLE IF NOT EXISTS sticker_records (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      productId VARCHAR(50),
+      weight VARCHAR(50),
+      price DECIMAL(10,2),
+      barcode LONGTEXT,
+      packingDate DATE,
+      printQty INT,
+      totalStickers INT,
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };

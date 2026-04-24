@@ -29,6 +29,7 @@ import Adminpanel from "./Admin/AdminPanel.jsx";
 import { Toaster } from "react-hot-toast";
 import ViewInvoice from "./Admin/ViewInvoice.jsx";
 import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
+import OrderTracking from "./Shop/OrderTracking.jsx";
 
 
 
@@ -88,6 +89,14 @@ const router = createBrowserRouter([
         element: (
           <PrivateRouter>
             <Orders />
+          </PrivateRouter>
+        ),
+      },
+      {
+        path: "/tracking/:orderId",
+        element: (
+          <PrivateRouter>
+            <OrderTracking />
           </PrivateRouter>
         ),
       },

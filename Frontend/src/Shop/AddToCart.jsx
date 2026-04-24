@@ -17,10 +17,11 @@ const CartRow = React.memo(
     decreaseQuantity,
     removeItem,
     updatingWeightId,
+    handleWeightChange,
   }) => {
     const imgSource = Array.isArray(item.image)
       ? item.image[0]
-      : item.image || "";
+      : item.image || null;
 
     const subtotal =
       parseFloat(item?.price || 0) * parseInt(item?.quantity || 1);
@@ -31,11 +32,13 @@ const CartRow = React.memo(
     return (
       <tr key={item.id} className="border-b bg-green4">
         <td className="p-4 flex items-center gap-4 max-w-[300px]">
-          <img
-            src={imgSource}
-            alt={`${item.name} - Kavi's Dry Fruits`}
-            className="w-14 h-14 object-cover border border-green-400 rounded-md"
-          />
+          {imgSource && (
+            <img
+              src={imgSource}
+              alt={`${item.name} - Kavi's Dry Fruits`}
+              className="w-14 h-14 object-cover border border-green-400 rounded-md"
+            />
+          )}
           <div className="truncate">
             <p className="font-bold truncate">{item.name}</p>
           </div>
@@ -308,6 +311,7 @@ const AddToCart = () => {
                       decreaseQuantity={decQty}
                       removeItem={remove}
                       updatingWeightId={updatingWeightId}
+                      handleWeightChange={handleWeightChange}
                     />
                   ))}
                 </tbody>

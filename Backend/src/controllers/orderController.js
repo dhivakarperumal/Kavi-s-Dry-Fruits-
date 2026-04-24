@@ -5,11 +5,28 @@ const getOrders = async (req, res) => {
     const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
     const parsedRows = rows.map(row => ({
       ...row,
-      shippingAddress: JSON.parse(row.shippingAddress || '{}'),
-      items: JSON.parse(row.items || '[]'),
-      cartItems: JSON.parse(row.items || '[]') // compatibility fallback
+      shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
+      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
+      cartItems: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items
     }));
     res.json(parsedRows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getOrderById = async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM orders WHERE orderId = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Order not found' });
+    
+    const row = rows[0];
+    const order = {
+      ...row,
+      shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
+      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
+    };
+    res.json(order);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -22,43 +39,52 @@ const createOrder = async (req, res) => {
 
     const { 
       orderId, userId, clientName, clientPhone, clientGST, email, 
-      shippingAddress, customerType, paymentMode, paymentStatus, 
+      shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days,
+      customerType, paymentMode, paymentStatus, 
       paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount 
     } = req.body;
 
     // 1. Insert Order
     const [result] = await connection.query(
-      'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
+      'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus || 'Order Placed', shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
     );
 
-    // 2. Reduce Stock
+    // 2. Insert Order Items
     const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
-    
+    for (const item of parsedItems) {
+      await connection.query(
+        'INSERT INTO order_items (order_id, product_id, name, quantity, price) VALUES (?, ?, ?, ?, ?)',
+        [orderId, item.id || item.productId, item.name, item.qty || item.quantity, item.price]
+      );
+    }
+
+    // 3. Insert Initial Tracking
+    await connection.query(
+      'INSERT INTO order_tracking (order_id, status) VALUES (?, ?)',
+      [orderId, 'Order Placed']
+    );
+
+    // 4. Reduce Stock
     for (const item of parsedItems) {
       const qty = parseInt(item.qty || item.quantity || 1, 10);
       const isCombo = item.category === "Combo" || item.type === "combo";
       const table = isCombo ? 'combos' : 'products';
       
-      // Get current stock and details
       const [rows] = await connection.query(`SELECT id, totalStock, comboDetails, comboItems FROM ${table} WHERE id = ?`, [item.id]);
       
       if (rows.length > 0) {
         const productData = rows[0];
-        let currentStock = Number(productData.totalStock || 0);
         let weightToSubtract = 0;
 
         if (isCombo) {
-          // A. Reduce Combo Stock itself
           const details = typeof productData.comboDetails === 'string' ? JSON.parse(productData.comboDetails || '{}') : (productData.comboDetails || {});
           const comboWeight = Number(details.totalWeight || 0);
           weightToSubtract = qty * comboWeight;
 
-          // B. Reduce Individual Items stock inside the Combo
           const comboItems = typeof productData.comboItems === 'string' ? JSON.parse(productData.comboItems || '[]') : (productData.comboItems || []);
           for (const subItem of comboItems) {
             if (subItem.name) {
-              // Parse weight of sub-item (handle formats like "500g" or "(500g)")
               const subWeightStr = String(subItem.weight || "").replace(/[()]/g, "").toLowerCase();
               let subWeightPerUnit = parseFloat(subWeightStr) || 0;
               if (subWeightStr.includes("kg") || subWeightStr.includes("k")) {
@@ -66,18 +92,13 @@ const createOrder = async (req, res) => {
               }
               const subTotalToSubtract = qty * subWeightPerUnit;
 
-              // Find and update product by name (Atomic relative subtraction)
-              const [res] = await connection.query(
+              await connection.query(
                 `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
                 [subTotalToSubtract, subItem.name]
               );
-              if (res.affectedRows > 0) {
-                console.log(`[Stock-ComboItem] Atomic reduction for '${subItem.name.trim()}': -${subTotalToSubtract}g`);
-              }
             }
           }
         } else {
-          // For single products, we parse the selected weight (e.g. "500g" or "1kg")
           const weightStr = String(item.selectedWeight || "").toLowerCase();
           let weightPerUnit = parseFloat(weightStr) || 0;
           if (weightStr.includes("kg") || weightStr.includes("k")) {
@@ -86,9 +107,7 @@ const createOrder = async (req, res) => {
           weightToSubtract = qty * weightPerUnit;
         }
 
-        // Finalize stock reduction for the main item (Product or Combo)
         await connection.query(`UPDATE ${table} SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE id = ?`, [weightToSubtract, item.id]);
-        console.log(`[Stock-${isCombo ? 'Combo' : 'Single'}] Reduced '${item.name}' by ${weightToSubtract}g`);
       }
     }
 
@@ -104,12 +123,27 @@ const createOrder = async (req, res) => {
 };
 
 const updateOrder = async (req, res) => {
+  const connection = await db.getConnection();
   try {
+    await connection.beginTransaction();
     const { orderStatus } = req.body;
-    await db.query('UPDATE orders SET orderStatus = ? WHERE id = ?', [orderStatus, req.params.id]);
+    const { id } = req.params;
+
+    // Get orderId first
+    const [orders] = await connection.query('SELECT orderId FROM orders WHERE id = ?', [id]);
+    if (orders.length > 0) {
+      const orderId = orders[0].orderId;
+      await connection.query('UPDATE orders SET orderStatus = ? WHERE id = ?', [orderStatus, id]);
+      await connection.query('INSERT INTO order_tracking (order_id, status) VALUES (?, ?)', [orderId, orderStatus]);
+    }
+
+    await connection.commit();
     res.json({ message: 'Order updated' });
   } catch (error) {
+    await connection.rollback();
     res.status(500).json({ error: error.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -128,9 +162,9 @@ const getUserOrders = async (req, res) => {
     const [rows] = await db.query('SELECT * FROM orders WHERE userId = ? ORDER BY created_at DESC', [userId]);
     res.json(rows.map(row => ({
       ...row,
-      shippingAddress: JSON.parse(row.shippingAddress || '{}'),
-      items: JSON.parse(row.items || '[]'),
-      cartItems: JSON.parse(row.items || '[]'),
+      shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
+      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
+      cartItems: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
       date: row.created_at
     })));
   } catch (error) {
@@ -138,4 +172,48 @@ const getUserOrders = async (req, res) => {
   }
 };
 
-module.exports = { getOrders, createOrder, updateOrder, deleteOrder, getUserOrders };
+const getOrderTracking = async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM order_tracking WHERE order_id = ? ORDER BY updated_at ASC', [req.params.id]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updateLocation = async (req, res) => {
+  try {
+    const { orderId, agentId, lat, lng } = req.body;
+    await db.query(
+      'INSERT INTO delivery_locations (order_id, agent_id, lat, lng) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE lat = VALUES(lat), lng = VALUES(lng)',
+      [orderId, agentId, lat, lng]
+    );
+    res.json({ message: 'Location updated' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getOrderLocation = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT dl.*, da.name as agentName, da.phone as agentPhone FROM delivery_locations dl LEFT JOIN delivery_agents da ON dl.agent_id = da.id WHERE dl.order_id = ? ORDER BY dl.updated_at DESC LIMIT 1',
+      [req.params.id]
+    );
+    res.json(rows[0] || null);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { 
+  getOrders, 
+  getOrderById,
+  createOrder, 
+  updateOrder, 
+  deleteOrder, 
+  getUserOrders, 
+  getOrderTracking, 
+  updateLocation, 
+  getOrderLocation 
+};
