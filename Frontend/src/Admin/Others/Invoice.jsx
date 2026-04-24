@@ -22,6 +22,8 @@ import {
 const Invoice = () => {
   const [invoiceData, setInvoiceData] = useState({
     invoiceNo: "",
+    dealerName: "",
+    dealerId: "",
     invoiceDate: new Date().toISOString().split('T')[0],
     invoiceValue: "",
     invoiceGSTValue: "",
@@ -29,7 +31,9 @@ const Invoice = () => {
     transportAmount: "0",
     billPdfBase64: null,
     billPdfName: "",
+    items: [],
   });
+  const [dealers, setDealers] = useState([]);
 
   const [invoices, setInvoices] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -72,9 +76,46 @@ const Invoice = () => {
     }
   };
 
+  const fetchDealers = async () => {
+    try {
+      const response = await api.get("/dealers");
+      setDealers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch dealers", error);
+    }
+  };
+
   useEffect(() => {
     fetchInvoices();
+    fetchDealers();
   }, []);
+
+  const addItem = () => {
+    setInvoiceData(prev => ({
+      ...prev,
+      items: [...prev.items, { productName: "", qty: 1, price: 0 }]
+    }));
+  };
+
+  const removeItem = (index) => {
+    setInvoiceData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...invoiceData.items];
+    newItems[index][field] = value;
+    setInvoiceData(prev => ({ ...prev, items: newItems }));
+  };
+
+  useEffect(() => {
+    if (invoiceData.items.length > 0) {
+      const subtotal = invoiceData.items.reduce((sum, item) => sum + (parseFloat(item.qty || 0) * parseFloat(item.price || 0)), 0);
+      setInvoiceData(prev => ({ ...prev, invoiceValue: subtotal.toString() }));
+    }
+  }, [invoiceData.items]);
 
   useEffect(() => {
     const val = parseFloat(invoiceData.invoiceValue) || 0;
@@ -114,6 +155,8 @@ const Invoice = () => {
     setShowModal(false);
     setInvoiceData({
       invoiceNo: "",
+      dealerName: "",
+      dealerId: "",
       invoiceDate: new Date().toISOString().split('T')[0],
       invoiceValue: "",
       invoiceGSTValue: "",
@@ -121,6 +164,7 @@ const Invoice = () => {
       transportAmount: "0",
       billPdfBase64: null,
       billPdfName: "",
+      items: [],
     });
     fetchInvoices();
   };
@@ -239,6 +283,11 @@ const Invoice = () => {
                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{inv.invoiceDate}</span>
                   </div>
                   
+                  <div className="space-y-1 mb-6 border-b border-gray-50 pb-4">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Dealer</p>
+                     <p className="text-sm font-black text-slate-800">{inv.dealerName || "Unknown Dealer"} <span className="text-[9px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded-md ml-1">{inv.dealerId}</span></p>
+                  </div>
+
                   <div className="space-y-1 mb-8">
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Net Payable</p>
                      <p className="text-4xl font-[900] text-emerald-950 tracking-tighter italic">₹ {parseFloat(inv.invoiceTotalValue).toLocaleString('en-IN')}</p>
@@ -282,6 +331,7 @@ const Invoice = () => {
                    <tr>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Filing ID</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Date</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Dealer</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Base Amount</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Taxes & Fees</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Net Payable</th>
@@ -295,6 +345,10 @@ const Invoice = () => {
                             <span className="bg-white border border-emerald-100 text-emerald-900 px-3 py-1.5 rounded-xl text-[11px] font-[900] uppercase tracking-tight">#{inv.invoiceNo}</span>
                          </td>
                          <td className="px-8 py-6 font-black text-slate-800 text-[11px]">{inv.invoiceDate}</td>
+                         <td className="px-8 py-6 font-black text-slate-800 text-[11px]">
+                            {inv.dealerName || "Unknown"}
+                            <div className="text-[9px] text-slate-400">{inv.dealerId}</div>
+                         </td>
                          <td className="px-8 py-6 font-[900] text-black">₹ {inv.invoiceValue}</td>
                          <td className="px-8 py-6 text-center">
                             <div className="flex flex-col items-center gap-1">
@@ -328,8 +382,8 @@ const Invoice = () => {
         {showModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
-             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                <div className="bg-emerald-600 p-8 text-white relative">
+             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-y-auto max-h-[90vh] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 custom-scrollbar">
+                <div className="bg-emerald-600 p-8 text-white relative sticky top-0 z-20">
                    <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl opacity-50" />
                    <div className="relative flex items-center justify-between">
                       <div>
@@ -339,7 +393,7 @@ const Invoice = () => {
                       <button onClick={closeModal} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all"><FaTimes size={18} /></button>
                    </div>
                 </div>
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 pb-12">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Invoice ID (Auto-Gen) *</label>
@@ -353,10 +407,89 @@ const Invoice = () => {
                          </div>
                       </div>
                    </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Dealer Name *</label>
+                         <input 
+                            list="dealer-names"
+                            type="text" 
+                            placeholder="Select or enter dealer name" 
+                            name="dealerName" 
+                            value={invoiceData.dealerName} 
+                            onChange={(e) => {
+                               const selectedDealer = dealers.find(d => d.dealerName === e.target.value);
+                               if (selectedDealer) {
+                                  setInvoiceData(prev => ({ ...prev, dealerName: selectedDealer.dealerName, dealerId: selectedDealer.dealerId }));
+                               } else {
+                                  handleChange(e);
+                               }
+                            }} 
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm" 
+                            required 
+                         />
+                         <datalist id="dealer-names">
+                            {dealers.map(d => <option key={d.dealerId} value={d.dealerName} />)}
+                         </datalist>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Dealer ID</label>
+                         <input type="text" placeholder="Enter dealer ID" name="dealerId" value={invoiceData.dealerId} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm" />
+                      </div>
+                   </div>
+
+                   {/* Items List */}
+                   <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Invoice Items</label>
+                         <button type="button" onClick={addItem} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-100 transition-colors">
+                            <FaPlus size={10} /> Add Item
+                         </button>
+                      </div>
+                      
+                      <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                         {invoiceData.items.map((item, idx) => (
+                            <div key={idx} className="flex gap-3 items-end animate-in fade-in slide-in-from-right-4 duration-300">
+                               <div className="flex-1 space-y-1">
+                                  <input 
+                                     placeholder="Item name" 
+                                     value={item.productName} 
+                                     onChange={(e) => handleItemChange(idx, 'productName', e.target.value)}
+                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-emerald-500"
+                                  />
+                               </div>
+                               <div className="w-20 space-y-1">
+                                  <input 
+                                     type="number" 
+                                     placeholder="Qty" 
+                                     value={item.qty} 
+                                     onChange={(e) => handleItemChange(idx, 'qty', e.target.value)}
+                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-emerald-500"
+                                  />
+                               </div>
+                               <div className="w-28 space-y-1">
+                                  <input 
+                                     type="number" 
+                                     placeholder="Price" 
+                                     value={item.price} 
+                                     onChange={(e) => handleItemChange(idx, 'price', e.target.value)}
+                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-emerald-500"
+                                  />
+                               </div>
+                               <button type="button" onClick={() => removeItem(idx)} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                                  <FaTimes size={14} />
+                               </button>
+                            </div>
+                         ))}
+                         {invoiceData.items.length === 0 && (
+                            <p className="text-center py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">No items added yet</p>
+                         )}
+                      </div>
+                   </div>
+
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Value (₹) *</label>
-                         <input type="number" name="invoiceValue" value={invoiceData.invoiceValue} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none font-black text-black text-sm" required />
+                         <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Subtotal (₹) *</label>
+                         <input type="number" name="invoiceValue" value={invoiceData.invoiceValue} onChange={handleChange} className="w-full bg-emerald-50/30 border border-emerald-100 rounded-2xl px-5 py-3.5 outline-none font-black text-emerald-900 text-sm" required />
                       </div>
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">GST (₹) *</label>

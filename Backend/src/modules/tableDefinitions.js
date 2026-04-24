@@ -188,6 +188,8 @@ const tables = {
     CREATE TABLE IF NOT EXISTS invoices (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       invoiceNo VARCHAR(100) NOT NULL UNIQUE,
+      dealerId VARCHAR(50),
+      dealerName VARCHAR(255),
       invoiceDate DATE,
       invoiceValue DECIMAL(15,2),
       invoiceGSTValue DECIMAL(15,2),
@@ -195,6 +197,7 @@ const tables = {
       transportAmount DECIMAL(15,2),
       billPdfBase64 LONGTEXT,
       billPdfName VARCHAR(255),
+      items JSON,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,

@@ -112,15 +112,7 @@ const router = createBrowserRouter([
     )
   },
 
-  // Standalone invoice viewer - accessible via /adminpanel/invoice?no=INV-001
-  {
-    path: "/adminpanel/invoice",
-    element: (
-      <PrivateRouter allowedRoles={["admin"]}>
-        <ViewInvoice />
-      </PrivateRouter>
-    )
-  },
+  // The Admin panel handles /adminpanel/invoice internally using Invoice.jsx
 
   // Legacy route fallback for /admin/invoice?no=INV-001
   {
