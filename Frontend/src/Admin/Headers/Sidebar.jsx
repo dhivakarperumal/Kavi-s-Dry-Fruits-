@@ -40,7 +40,7 @@ const Sidebar = ({
       dropdown: [
         // { label: "Add Products", icon: <MdOutlineAddBox /> },
         { label: "All Products", icon: <MdOutlineInventory2 /> },
-        { label: "Add Category", icon: <MdCategory /> },
+        { label: "Categorys", icon: <MdCategory /> },
         { label: "Stock Details", collection: "products", icon: <AiOutlineStock /> },
 
       ],
