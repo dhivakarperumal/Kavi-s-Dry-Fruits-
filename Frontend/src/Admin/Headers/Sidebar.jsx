@@ -71,7 +71,7 @@ const Sidebar = ({
     // { label: "Dealer", icon: <FaUsers /> },
     // { label: "Reviews", icon: <MdPreview /> },
     { label: "SEO Keywords", icon: <FaSearch /> },
-    { label: "Invoice", icon: <FaFileInvoice /> },
+    // { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
 
 
