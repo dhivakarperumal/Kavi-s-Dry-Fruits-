@@ -207,8 +207,23 @@ export const StoreProvider = ({ children }) => {
       const productId = String(product.id || product.productId || "unknown");
       const weight = String(product.selectedWeight || "default");
       const docId = `${productId}_${weight}`.replace(/[\/\\.#\s]+/g, "_");
-      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      // Extract the most reliable user ID available
+      const userIdToUse = String(
+        user.user_id || 
+        user.userUuid || 
+        user.userId || 
+        user.uid || 
+        user.id || 
+        ""
+      ).trim().replace(/^:/, ""); // Remove any accidental leading colon
 
+      if (!userIdToUse) {
+        console.error("[Cart-Error] No valid User ID found in user object:", user);
+        return toast.error("Session error: Please log out and log back in.");
+      }
+
+      console.log(`[Cart-Action] Adding to cart for user: ${userIdToUse}`);
+      
       // Local update check
       const existing = cartItems.find((c) => c.docId === docId);
       const newQty = (existing?.quantity || 0) + (product.qty || 1);

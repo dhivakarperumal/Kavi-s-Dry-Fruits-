@@ -494,7 +494,15 @@ const Checkout = () => {
     );
 
   const saveAddressAfterPayment = async () => {
-    const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+    const userIdToUse = String(
+      user?.user_id || 
+      user?.userUuid || 
+      user?.userId || 
+      user?.uid || 
+      user?.id || 
+      ""
+    ).trim().replace(/^:/, "");
+
     if (!userIdToUse || userIdToUse === "undefined") return;
     if (isDuplicateAddress(form)) return;
     try {
@@ -544,8 +552,17 @@ const Checkout = () => {
 
   // ---------------- Place order (save to Firestore + update stock) ----------------
   const placeOrder = async (paymentId = "") => {
-    const userIdToUse = String(user?.user_id || user?.userUuid || user?.userId || user?.uid || "");
+    const userIdToUse = String(
+      user?.user_id || 
+      user?.userUuid || 
+      user?.userId || 
+      user?.uid || 
+      user?.id || 
+      ""
+    ).trim().replace(/^:/, "");
+
     if (!userIdToUse) {
+      console.error("[Checkout-Error] No valid User ID found during placeOrder:", user);
       throw new Error("User must be logged in to place an order.");
     }
 
