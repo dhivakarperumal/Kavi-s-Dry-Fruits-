@@ -396,7 +396,7 @@ const Checkout = () => {
       productId: item.productId || item.id,
       name: item.name,
       image: item.images?.[0] || item.image || "",
-      selectedWeight: item.selectedWeight || "",
+      weight: item.selectedWeight || item.weight || item.totalWeight || item.comboDetails?.totalWeight || "",
       price: parsePrice(item.price || 0),
       qty: parseInt(item.qty || item.quantity || 1, 10),
       category: item.category || "",
