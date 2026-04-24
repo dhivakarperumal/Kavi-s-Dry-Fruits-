@@ -182,9 +182,9 @@ const Orders = () => {
             {selectedIndex === index && (
               <div className="bg-white px-6 py-4">
                 <div className="divide-y">
-                  {order.cartItems.map((item) => (
+                  {order.cartItems.map((item, idx) => (
                     <div
-                      key={item.id}
+                      key={`${item.id}-${idx}`}
                       className="flex items-center justify-between py-4"
                     >
                       <div className="flex items-center">
