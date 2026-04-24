@@ -376,10 +376,12 @@ const Dashboard = () => {
       <div className="bg-white p-6 rounded-2xl shadow-md mt-10">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Today’s Orders</h2>
 
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-200 text-sm rounded-lg overflow-hidden">
-            <thead className="bg-green-500 text-white">
-              <tr>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-[#009669]  text-white">
+                <th className="px-4 py-4 ">S No </th>
                 <th className="px-4 py-4 ">Order ID</th>
                 <th className="px-4 py-4 ">Customer Name</th>
                 <th className="px-4 py-4 ">Amount</th>
@@ -388,8 +390,9 @@ const Dashboard = () => {
             </thead>
             <tbody>
               {todayOrders.length > 0 ? (
-                todayOrders.map((order) => (
-                  <tr key={order.id} className="text-center hover:bg-gray-50">
+                todayOrders.map((order,ind) => (
+                  <tr key={order.id} className=" hover:bg-gray-50">
+                    <td className="px-4 py-4 ">{ ind+1 }</td>
                     <td className="px-4 py-4 ">{order.orderId}</td>
                     <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
                     <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
@@ -417,6 +420,7 @@ const Dashboard = () => {
               )}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </div>
