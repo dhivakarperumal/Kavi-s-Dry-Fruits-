@@ -17,7 +17,7 @@ const Orders = () => {
       const res = await api.get("/orders");
       // Filter for non-delivered and non-cancelled orders for management
       const filtered = (res.data || []).filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled"
+        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
       ).map(o => ({
         ...o,
         // Parse JSON strings from MySQL

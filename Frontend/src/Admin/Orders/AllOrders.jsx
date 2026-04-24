@@ -95,19 +95,24 @@ const AllOrders = () => {
 
   // Filtered status options
   const getStatusOptions = (current) => {
-    const all = ["Placed", "Packing", "Out for Delivery", "Delivered", "Cancelled"];
+    const all = [
+      "Order Placed",
+      "Order Confirmed",
+      "Processing",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+      "Returned",
+      "Refunded"
+    ];
 
-    if (current === "Packing")
-      return ["Packing", "Out for Delivery", "Delivered", "Cancelled"];
-
-    if (current === "Out for Delivery")
-      return ["Out for Delivery", "Delivered", "Cancelled"];
-
-    if (current === "Delivered") return ["Delivered"];
-
+    if (current === "Delivered") return ["Delivered", "Returned"];
     if (current === "Cancelled") return ["Cancelled"];
+    if (current === "Returned") return ["Returned", "Refunded"];
+    if (current === "Refunded") return ["Refunded"];
 
-    return all; // Placed → show all
+    return all;
   };
 
   // Print Invoice
@@ -314,7 +319,10 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                           if (v === "Cancelled") setShowCancelInput(order.id);
                           else handleStatusUpdate(order.id, v);
                         }}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${order.orderStatus === 'Delivered' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-600'}`}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${
+                          order.orderStatus === 'Order Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                          order.orderStatus === 'Delivered' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
+                          'bg-slate-50 border-slate-100 text-slate-600'}`}
                       >
                         {getStatusOptions(order.orderStatus).map((s) => (
                           <option key={s} value={s}>{s}</option>

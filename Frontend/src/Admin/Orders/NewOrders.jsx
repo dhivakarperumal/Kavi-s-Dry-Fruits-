@@ -26,7 +26,7 @@ const NewOrders = () => {
     try {
       const res = await api.get("/orders");
       const parsed = (res.data || []).filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled"
+        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
       ).map(o => ({
         ...o,
         cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
@@ -164,7 +164,17 @@ const NewOrders = () => {
     setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
   }, []);
 
-  const statusOptions = ["Placed", "Packing", "Out for Delivery", "Delivered", "Cancelled"];
+  const statusOptions = [
+    "Order Placed",
+    "Order Confirmed",
+    "Processing",
+    "Shipped",
+    "Out for Delivery",
+    "Delivered",
+    "Cancelled",
+    "Returned",
+    "Refunded"
+  ];
 
   return (
     <div className="p-4 sm:p-8  min-h-screen">
@@ -284,7 +294,10 @@ const NewOrders = () => {
                          <select
                           value={order.orderStatus}
                           onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
-                          className={`w-40 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer ${order.orderStatus === 'Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}
+                          className={`w-40 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer ${
+                            order.orderStatus === 'Order Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 
+                            order.orderStatus === 'Order Confirmed' ? 'bg-blue-50 border-blue-100 text-blue-700' :
+                            'bg-amber-50 border-amber-100 text-amber-700'}`}
                         >
                           {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
@@ -357,7 +370,11 @@ const NewOrders = () => {
                </div>
 
                {/* Decorative Gradient Line */}
-               <div className={`absolute bottom-0 left-0 h-1.5 transition-all duration-500 ${order.orderStatus === 'Placed' ? 'bg-indigo-500 w-1/4' : 'bg-amber-500 w-3/4'}`}></div>
+               <div className={`absolute bottom-0 left-0 h-1.5 transition-all duration-500 ${
+                  order.orderStatus === 'Order Placed' ? 'bg-indigo-500 w-1/4' : 
+                  order.orderStatus === 'Order Confirmed' ? 'bg-blue-500 w-2/4' :
+                  order.orderStatus === 'Processing' ? 'bg-amber-500 w-3/4' :
+                  'bg-emerald-500 w-full'}`}></div>
             </div>
           ))}
         </div>
