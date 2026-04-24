@@ -564,7 +564,7 @@ const Checkout = () => {
       price: parsePrice(item.price || 0),
       qty: parseInt(item.qty || item.quantity || 1, 10),
       category: item.category || "",
-      type: item.type || (item.category === "Combo" ? "combo" : "single"),
+      type: item.type || ((item.category || "").toLowerCase().includes("combo") ? "combo" : "single"),
     }));
 
     const orderData = {

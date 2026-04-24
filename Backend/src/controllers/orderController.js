@@ -85,11 +85,16 @@ const createOrder = async (req, res) => {
     // 4. Reduce Stock
     for (const item of parsedItems) {
       const qty = parseInt(item.qty || item.quantity || 1, 10);
-      const isCombo = (item.category || "").toLowerCase().includes("combo") || item.type === "combo";
+      const isCombo = (item.type === "combo") || (item.category || "").toLowerCase().includes("combo") || String(item.productId || item.id || "").startsWith("KPR");
       const table = isCombo ? 'combos' : 'products';
       
-      const columns = isCombo ? 'productId, totalStock, comboDetails, comboItems' : 'productId, totalStock';
-      const [rows] = await connection.query(`SELECT ${columns} FROM ${table} WHERE productId = ?`, [item.productId || item.id]);
+      const columns = isCombo ? 'productId, id, totalStock, comboDetails, comboItems' : 'productId, id, totalStock';
+      const [rows] = await connection.query(
+        `SELECT ${columns} FROM ${table} WHERE TRIM(productId) = TRIM(?) OR id = ?`, 
+        [item.productId || item.id, item.id]
+      );
+      
+      console.log(`[Stock-Check] Searching ${table} for ID: ${item.productId || item.id}. Found: ${rows.length} rows.`);
       
       if (rows.length > 0) {
         const productData = rows[0];
@@ -97,10 +102,23 @@ const createOrder = async (req, res) => {
 
         if (isCombo) {
           const details = typeof productData.comboDetails === 'string' ? JSON.parse(productData.comboDetails || '{}') : (productData.comboDetails || {});
-          const comboWeight = Number(details.totalWeight || 0);
-          weightToSubtract = qty * comboWeight;
-
           const comboItems = typeof productData.comboItems === 'string' ? JSON.parse(productData.comboItems || '[]') : (productData.comboItems || []);
+          
+          let comboWeight = Number(details.totalWeight || 0);
+          
+          // FALLBACK: If totalWeight is missing in details, calculate it from comboItems
+          if (comboWeight <= 0) {
+            console.log(`[Stock-Warn] comboWeight missing for ${productData.productId}, calculating from items...`);
+            comboWeight = comboItems.reduce((sum, item) => {
+              const wStr = String(item.weight || "").toLowerCase();
+              let wVal = parseFloat(wStr) || 0;
+              if (wStr.includes("kg") || wStr.includes("k")) wVal *= 1000;
+              return sum + wVal;
+            }, 0);
+          }
+
+          weightToSubtract = qty * comboWeight;
+          console.log(`[Stock-Check] Combo ${productData.productId} weight per unit: ${comboWeight}g. Qty: ${qty}. Total to subtract: ${weightToSubtract}g`);
 
           for (const subItem of comboItems) {
             if (subItem.name) {
@@ -120,8 +138,11 @@ const createOrder = async (req, res) => {
             }
           }
           // For combos, we subtract the total weight (grams) from the combo table
-          console.log(`[Stock-Reduce] Combo: ${item.productId}, Total weight reduction: ${weightToSubtract}g`);
-          await connection.query(`UPDATE combos SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ?`, [weightToSubtract, item.productId || item.id]);
+          console.log(`[Stock-Reduce] Combo: ${productData.productId}, Total weight reduction: ${weightToSubtract}g`);
+          await connection.query(
+            `UPDATE combos SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ? OR id = ?`, 
+            [weightToSubtract, productData.productId, productData.id]
+          );
         } else {
           // For single products, we subtract the weight
           // Support both 'weight' and 'selectedWeight' names from frontend
@@ -132,9 +153,12 @@ const createOrder = async (req, res) => {
           }
           const weightToSubtract = qty * weightPerUnit;
           
-          console.log(`[Stock-Reduce] Product: ${item.productId}, Qty: ${qty}, Weight/Unit: ${weightPerUnit}g, Total: ${weightToSubtract}g`);
+          console.log(`[Stock-Reduce] Product: ${productData.productId}, Qty: ${qty}, Weight/Unit: ${weightPerUnit}g, Total: ${weightToSubtract}g`);
           
-          await connection.query(`UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ?`, [weightToSubtract, item.productId || item.id]);
+          await connection.query(
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ? OR id = ?`, 
+            [weightToSubtract, productData.productId, productData.id]
+          );
         }
       }
     }
