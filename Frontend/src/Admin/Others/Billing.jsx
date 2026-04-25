@@ -261,7 +261,7 @@ const Billing = () => {
                             <tr className="text-left">
 
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Image</th>
+                               
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Descriptor</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Timestamp</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
@@ -279,34 +279,7 @@ const Billing = () => {
                                 return (
                                     <tr key={order.id} className="hover:bg-slate-50 transition-all group">
                                         <td className="px-8 py-6 font-black text-slate-900 text-xs">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                        <td className="px-8 py-6">
-                                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center p-0.5 shadow-sm group-hover:border-indigo-600 transition-all">
-                                                {items[0]?.image ? (
-                                                    <img
-                                                        src={(() => {
-                                                            const raw = items[0]?.image || "";
-                                                            let resolved = raw;
-                                                            try {
-                                                                if (typeof raw === 'string' && raw.startsWith('[')) {
-                                                                    resolved = JSON.parse(raw)[0];
-                                                                } else if (Array.isArray(raw)) {
-                                                                    resolved = raw[0];
-                                                                }
-                                                            } catch (e) {
-                                                                resolved = raw;
-                                                            }
-                                                            if (!resolved) return "";
-                                                            if (resolved.startsWith('http') || resolved.startsWith('data:')) return resolved;
-                                                            return `http://localhost:5000${resolved.startsWith('/') ? '' : '/'}${resolved}`;
-                                                        })()}
-                                                        alt=""
-                                                        className="w-full h-full object-contain"
-                                                    />
-                                                ) : (
-                                                    <FiPackage className="text-slate-200 group-hover:text-indigo-600" size={16} />
-                                                )}
-                                            </div>
-                                        </td>
+                                       
 
                                         <td className="px-8 py-6">
                                             <span className="bg-slate-100 text-slate-500 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tight group-hover:bg-indigo-600 group-hover:text-white transition-all">
