@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
+import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaChevronLeft, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
@@ -15,9 +15,10 @@ const NewOrders = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(null);
   const [viewMode, setViewMode] = useState("table"); // "table" or "card"
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
 
@@ -75,9 +76,15 @@ const NewOrders = () => {
       temp = temp.filter((o) => new Date(o.date) >= fromDate && new Date(o.date) <= toDate);
     }
     setFilteredOrders(temp);
+    setCurrentPage(1); // Reset to first page on filter change
   }, [orders, searchText, dateFilter, customRange]);
 
-  const currentOrders = filteredOrders.slice(0, itemsPerPage);
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when items per page changes
+  }, [itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleStatusUpdate = async (id, newStatus) => {
     if (!newStatus) return;
@@ -255,10 +262,10 @@ const NewOrders = () => {
 
       {/* Main Content Area */}
       {viewMode === "table" ? (
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669]  text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client</th>
@@ -272,7 +279,7 @@ const NewOrders = () => {
                 currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
                     <td className="px-8 py-6 font-black text-slate-800 text-xs">
-                       {index + 1}
+                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-8 py-6">
                       <button onClick={() => setSelectedOrder(order)} className="text-indigo-600 font-black text-sm hover:underline block mb-1">#{order.orderId}</button>
@@ -377,6 +384,53 @@ const NewOrders = () => {
                   'bg-emerald-500 w-full'}`}></div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-10 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm gap-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Showing <span className="text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-800">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> of <span className="text-slate-800">{filteredOrders.length}</span> Orders
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-100 transition-all ${currentPage === 1 ? "text-slate-200 cursor-not-allowed" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 shadow-sm"}`}
+            >
+              <FaChevronLeft size={14} />
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pg = i + 1;
+                // Logic to show limited pages
+                if (pg === 1 || pg === totalPages || (pg >= currentPage - 1 && pg <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={pg}
+                      onClick={() => setCurrentPage(pg)}
+                      className={`w-11 h-11 rounded-2xl text-xs font-black transition-all ${currentPage === pg ? "bg-indigo-600 text-white shadow-indigo-200 shadow-xl" : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"}`}
+                    >
+                      {pg}
+                    </button>
+                  );
+                } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                  return <span key={pg} className="px-2 text-slate-300 font-bold">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-100 transition-all ${currentPage === totalPages ? "text-slate-200 cursor-not-allowed" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 shadow-sm"}`}
+            >
+              <FaChevronRight size={14} />
+            </button>
+          </div>
         </div>
       )}
 

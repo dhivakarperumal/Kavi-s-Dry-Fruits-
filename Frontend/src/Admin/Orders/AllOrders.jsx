@@ -14,9 +14,10 @@ const AllOrders = () => {
   const [searchText, setSearchText] = useState("");
   const [dateFilter, setDateFilter] = useState("All");
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   // modal state for order details
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch all orders from all users
   const fetchOrders = async () => {
@@ -74,10 +75,15 @@ const AllOrders = () => {
     }
 
     setFilteredOrders(temp);
+    setCurrentPage(1);
   }, [orders, searchText, dateFilter, customRange]);
 
-  // Display limited orders based on selected count
-  const currentOrders = filteredOrders.slice(0, itemsPerPage);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // Status Update Logic
   const handleStatusUpdate = async (id, newStatus) => {
@@ -272,11 +278,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669]  text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
@@ -291,7 +297,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
                     <td className="px-8 py-6 font-black text-slate-800 text-xs">
-                       {index + 1}
+                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-8 py-6">
                        <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline decoration-2">#{order.orderId}</button>
@@ -356,9 +362,50 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
             </tbody>
           </table>
         </div>
-        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center font-black text-[10px] text-slate-400 uppercase tracking-widest">
-           <span>Total Logs: {filteredOrders.length}</span>
-           <span>Showing: {currentOrders.length}</span>
+        <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Showing {Math.min(filteredOrders.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredOrders.length, currentPage * itemsPerPage)} of {filteredOrders.length} Logs
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white transition-all ${currentPage === 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-indigo-50 hover:text-indigo-600 shadow-sm"}`}
+              >
+                <span className="text-xs">←</span>
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pg = i + 1;
+                  if (pg === 1 || pg === totalPages || (pg >= currentPage - 1 && pg <= currentPage + 1)) {
+                    return (
+                      <button
+                        key={pg}
+                        onClick={() => setCurrentPage(pg)}
+                        className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === pg ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:bg-white hover:text-slate-600 border border-transparent hover:border-slate-200"}`}
+                      >
+                        {pg}
+                      </button>
+                    );
+                  } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                    return <span key={pg} className="px-1 text-slate-300">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white transition-all ${currentPage === totalPages ? "opacity-30 cursor-not-allowed" : "hover:bg-indigo-50 hover:text-indigo-600 shadow-sm"}`}
+              >
+                <span className="text-xs">→</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -145,11 +145,11 @@ const ReturnOrders = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669]  text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>

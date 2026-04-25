@@ -11,7 +11,7 @@ const CancelOrders = () => {
   const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const ordersPerPage = 10;
+  const [ordersPerPage, setOrdersPerPage] = useState(10);
 
   useEffect(() => {
     fetchCancelledOrders();
@@ -77,6 +77,10 @@ const CancelOrders = () => {
       );
     });
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, ordersPerPage]);
+
   // --- Pagination ---
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
@@ -120,6 +124,15 @@ const CancelOrders = () => {
               <option value="month">Monthly Audit</option>
               <option value="custom">Custom Filter</option>
             </select>
+            
+            <select
+              value={ordersPerPage}
+              onChange={(e) => setOrdersPerPage(Number(e.target.value))}
+              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
+            >
+              <option value={25}>Show 25</option>
+              <option value={100}>Show 100</option>
+            </select>
           </div>
         </div>
       </div>
@@ -131,11 +144,11 @@ const CancelOrders = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669]  text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
@@ -191,16 +204,48 @@ const CancelOrders = () => {
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-8 flex justify-center gap-2">
-           {[...Array(totalPages)].map((_, i) => (
-             <button
-               key={i}
-               onClick={() => setCurrentPage(i + 1)}
-               className={`w-10 h-10 rounded-xl font-black text-xs transition-all ${currentPage === i + 1 ? "bg-indigo-600 text-white shadow-lg" : "bg-white border border-slate-200 text-slate-400 hover:border-indigo-200"}`}
-             >
-               {i + 1}
-             </button>
-           ))}
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-between bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm gap-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Showing <span className="text-slate-800">{Math.min(filteredOrders.length, (currentPage - 1) * ordersPerPage + 1)}</span> to <span className="text-slate-800">{Math.min(filteredOrders.length, currentPage * ordersPerPage)}</span> of <span className="text-slate-800">{filteredOrders.length}</span> Voided Logs
+          </p>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-200 bg-white transition-all ${currentPage === 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-rose-50 hover:text-rose-600 shadow-sm"}`}
+            >
+              <span className="text-xs">←</span>
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pg = i + 1;
+                if (pg === 1 || pg === totalPages || (pg >= currentPage - 1 && pg <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={pg}
+                      onClick={() => setCurrentPage(pg)}
+                      className={`w-11 h-11 rounded-2xl text-[10px] font-black transition-all ${currentPage === pg ? "bg-rose-500 text-white shadow-rose-100 shadow-xl" : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"}`}
+                    >
+                      {pg}
+                    </button>
+                  );
+                } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                  return <span key={pg} className="px-1 text-slate-300 font-black">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-200 bg-white transition-all ${currentPage === totalPages ? "opacity-30 cursor-not-allowed" : "hover:bg-rose-50 hover:text-rose-600 shadow-sm"}`}
+            >
+              <span className="text-xs">→</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
