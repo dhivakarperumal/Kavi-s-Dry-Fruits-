@@ -8,7 +8,9 @@ const Topbar = ({
   activeSection,
   adminName = "Administrator",
   todayOrdersCount = 0,
+  todayOrdersList = [],
   lowStockCount = 0,
+  lowStockItems = [],
   ordersold = [],
   handleLogout,
 }) => {
@@ -117,14 +119,55 @@ const Topbar = ({
             )}
           </button>
           {isOrderDropdown && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-              <div className="px-4 py-2 text-[10px] font-bold text-emerald-600 uppercase tracking-widest border-b border-gray-100">
-                Orders
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
+              <div className="px-4 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">New Orders</span>
+                <span className="bg-emerald-200 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full">{todayOrdersCount} Today</span>
               </div>
-              <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-emerald-50 transition">
-                <FaBoxOpen className="text-emerald-500" />
-                Today's Orders: <span className="font-bold ml-auto">{todayOrdersCount}</span>
+              
+              <div className="max-h-80 overflow-y-auto">
+                {todayOrdersList.length > 0 ? (
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100">Order</th>
+                        <th className="px-2 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100">Customer</th>
+                        <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {todayOrdersList.map((order, idx) => (
+                        <tr key={idx} className="hover:bg-emerald-50/50 transition-colors border-b border-gray-50 last:border-0">
+                          <td className="px-4 py-3">
+                            <p className="text-[10px] font-black text-slate-900">#{order.orderId || order.id}</p>
+                            <span className={`text-[7px] font-black uppercase px-1 rounded ${
+                              order.orderStatus === 'Pending' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                            }`}>{order.orderStatus}</span>
+                          </td>
+                          <td className="px-2 py-3">
+                            <p className="text-[10px] font-black text-slate-700 truncate max-w-[80px]">{order.customerName || order.userName || 'Guest'}</p>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-[10px] font-black text-emerald-600">₹{order.totalAmount || order.totalPrice || 0}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center">
+                    <FaBoxOpen className="mx-auto text-slate-200 mb-2" size={24} />
+                    <p className="text-xs font-medium text-slate-400">No new orders today yet</p>
+                  </div>
+                )}
               </div>
+
+              <button
+                onClick={() => { navigate('/adminpanel/all-orders'); setIsOrderDropdown(false); }}
+                className="w-full py-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-inner"
+              >
+                View All Orders
+              </button>
             </div>
           )}
         </div>
@@ -147,14 +190,58 @@ const Topbar = ({
             )}
           </button>
           {isStockDropdown && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-              <div className="px-4 py-2 text-[10px] font-bold text-amber-500 uppercase tracking-widest border-b border-gray-100">
-                Stock Alerts
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
+              <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Stock Alerts</span>
+                <span className="bg-amber-200 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full">{lowStockCount} Items</span>
               </div>
-              <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-amber-50 transition">
-                <MdWarning className="text-amber-400" />
-                Low Stock: <span className="font-bold ml-auto">{lowStockCount}</span>
+              
+              <div className="max-h-80 overflow-y-auto">
+                {lowStockItems.length > 0 ? (
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100">Product</th>
+                        <th className="px-2 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100">Cat</th>
+                        <th className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100 text-right">Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lowStockItems.map((item, idx) => {
+                        const stockGrams = Number(item.totalStock || 0);
+                        return (
+                          <tr key={idx} className="hover:bg-amber-50/50 transition-colors border-b border-gray-50 last:border-0">
+                            <td className="px-4 py-3">
+                              <p className="text-[10px] font-black text-slate-900 truncate max-w-[100px]">{item.name}</p>
+                              <span className="text-[8px] font-medium text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
+                            </td>
+                            <td className="px-2 py-3">
+                              <span className="text-[7px] font-black bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded uppercase">{item.category?.substring(0, 5)}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span className="text-[10px] font-black text-amber-600">
+                                {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(1) + "K" : stockGrams + "G"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center">
+                    <FaBoxOpen className="mx-auto text-slate-200 mb-2" size={24} />
+                    <p className="text-xs font-medium text-slate-400">All stock levels healthy</p>
+                  </div>
+                )}
               </div>
+
+              <button
+                onClick={() => { navigate('/adminpanel/stock-details'); setIsStockDropdown(false); }}
+                className="w-full py-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition"
+              >
+                View Full Inventory
+              </button>
             </div>
           )}
         </div>

@@ -150,25 +150,25 @@ const AdminPanel = () => {
         const products = productsRes.status === "fulfilled" ? (productsRes.value.data || []) : [];
         
         const todayStr = new Date().toISOString().split('T')[0];
-        const todayActiveOrdersCount = orders.filter(o => 
+        const todayActiveOrdersList = orders.filter(o => 
           o.orderStatus !== "Delivered" && 
           o.orderStatus !== "Cancelled" && 
           o.orderStatus !== "Returned" && 
           o.orderStatus !== "Refunded" &&
           (o.created_at || o.date || "").includes(todayStr)
-        ).length;
+        );
 
-        const lowStockItemsCount = products.filter(p => {
-          const stock = parseFloat(p.stock || 0);
-          return stock <= 3;
-        }).length;
+        const lowStockItems = products.filter(p => {
+          const stock = parseFloat(p.totalStock || 0);
+          return stock <= 3000; // 3 KG threshold (stored as grams)
+        });
 
         setCollectionCounts({
           users: usersRes.status === "fulfilled" ? (usersRes.value.data?.length || usersRes.value.data?.users?.length || 0) : 0,
           products: products.length,
           orders: orders.length,
-          "New Orders": todayActiveOrdersCount,
-          lowStock: lowStockItemsCount
+          "New Orders": todayActiveOrdersList,
+          lowStockList: lowStockItems
         });
       } catch (err) {
         console.error("Error fetching counts:", err);
@@ -254,8 +254,10 @@ const AdminPanel = () => {
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
           handleLogout={handleLogout}
-          todayOrdersCount={collectionCounts["New Orders"] || 0}
-          lowStockCount={collectionCounts.lowStock || 0}
+          todayOrdersCount={collectionCounts["New Orders"]?.length || 0}
+          todayOrdersList={collectionCounts["New Orders"] || []}
+          lowStockCount={collectionCounts.lowStockList?.length || 0}
+          lowStockItems={collectionCounts.lowStockList || []}
           adminName={user?.name || "Administrator"}
         />
 
