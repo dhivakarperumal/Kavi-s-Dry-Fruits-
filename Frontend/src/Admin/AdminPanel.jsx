@@ -168,7 +168,9 @@ const AdminPanel = () => {
           products: products.length,
           orders: orders.length,
           "New Orders": todayActiveOrdersList,
-          lowStockList: lowStockItems
+          lowStockList: lowStockItems,
+          allProducts: products,
+          allOrders: orders
         });
       } catch (err) {
         console.error("Error fetching counts:", err);
@@ -253,11 +255,14 @@ const AdminPanel = () => {
         <Topbar
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
+          setActiveSection={setActiveSection}
           handleLogout={handleLogout}
           todayOrdersCount={collectionCounts["New Orders"]?.length || 0}
           todayOrdersList={collectionCounts["New Orders"] || []}
           lowStockCount={collectionCounts.lowStockList?.length || 0}
           lowStockItems={collectionCounts.lowStockList || []}
+          allProducts={collectionCounts.allProducts || []}
+          allOrders={collectionCounts.allOrders || []}
           adminName={user?.name || "Administrator"}
         />
 

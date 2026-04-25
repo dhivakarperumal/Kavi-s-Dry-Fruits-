@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaBars, FaBell, FaBoxOpen, FaSignOutAlt, FaUserCircle, FaSearch, FaCog, FaUsers } from "react-icons/fa";
+import { FaBars, FaBell, FaBoxOpen, FaSignOutAlt, FaUserCircle, FaSearch, FaCog, FaUsers, FaFileInvoice } from "react-icons/fa";
 import { MdWarning } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 const Topbar = ({
   setIsSidebarOpen,
   activeSection,
+  setActiveSection,
   adminName = "Administrator",
   todayOrdersCount = 0,
   todayOrdersList = [],
   lowStockCount = 0,
   lowStockItems = [],
+  allProducts = [],
+  allOrders = [],
   ordersold = [],
   handleLogout,
 }) => {
@@ -75,7 +78,7 @@ const Topbar = ({
         {/* 🔍 Expanding search input — appears LEFT of the search icon */}
         <div
           style={{
-            overflow: "hidden",
+            overflow: showSearch ? "visible" : "hidden",
             maxWidth: showSearch ? "220px" : "0px",
             opacity: showSearch ? 1 : 0,
             transition: "max-width 0.3s ease, opacity 0.25s ease",
@@ -85,11 +88,70 @@ const Topbar = ({
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search..."
+              placeholder="Search orders, products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-4 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl outline-none text-gray-700 placeholder-gray-400 focus:border-emerald-400 focus:bg-white focus:ring-2 focus:ring-emerald-100 transition-all"
             />
+            {/* Search Results Dropdown */}
+            {searchQuery && (
+              <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden z-[70] max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-200 origin-top">
+                <div className="p-3 bg-slate-50 border-b border-gray-100 flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Search Results</span>
+                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Live</span>
+                </div>
+                
+                {/* Product Results */}
+                {allProducts.filter(p => 
+                  String(p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  String(p.productId || "").toLowerCase().includes(searchQuery.toLowerCase())
+                ).slice(0, 3).map(product => (
+                  <button
+                    key={`p-${product.id}`}
+                    onClick={() => { setActiveSection("All Products"); setShowSearch(false); setSearchQuery(""); }}
+                    className="w-full flex items-center gap-3 p-4 hover:bg-emerald-50 transition-colors border-b border-gray-50 text-left group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 group-hover:scale-110 transition-transform">
+                      <FaBoxOpen size={14} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate">{product.name}</p>
+                      <p className="text-[9px] font-medium text-slate-400 uppercase">Product #{product.productId}</p>
+                    </div>
+                  </button>
+                ))}
+
+                {/* Order Results */}
+                {allOrders.filter(o => 
+                  String(o.orderId || o.id || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  String(o.customerName || o.userName || o.clientName || "").toLowerCase().includes(searchQuery.toLowerCase())
+                ).slice(0, 3).map(order => (
+                  <button
+                    key={`o-${order.id}`}
+                    onClick={() => { setActiveSection("All Orders"); setShowSearch(false); setSearchQuery(""); }}
+                    className="w-full flex items-center gap-3 p-4 hover:bg-blue-50 transition-colors border-b border-gray-50 text-left group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 group-hover:scale-110 transition-transform">
+                      <FaFileInvoice size={14} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate">Order #{order.orderId || order.id}</p>
+                      <p className="text-[9px] font-medium text-slate-400 uppercase">{order.customerName || order.userName || order.clientName || 'Guest'}</p>
+                    </div>
+                  </button>
+                ))}
+
+                {allProducts.filter(p => String(p.name || "").toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && 
+                 allOrders.filter(o => String(o.orderId || o.id || "").toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                  <div className="p-8 text-center text-slate-400">
+                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <FaSearch className="opacity-20" size={20} />
+                    </div>
+                    <p className="text-xs font-medium italic">No matches for "{searchQuery}"</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
