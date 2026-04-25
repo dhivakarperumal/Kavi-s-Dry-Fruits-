@@ -34,30 +34,24 @@ ChartJS.register(
 );
 
 const DashboardStats = ({ stats }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
     {stats.map((stat, i) => (
       <div
         key={i}
-        className={`group relative overflow-hidden rounded-xl p-4 transform transition duration-300 ease-in-out hover:scale-105 hover:shadow-xl ${stat.bgColor}`}
+        className={`group relative overflow-hidden rounded-2xl p-6 shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
       >
-        <div
-          className={`absolute bottom-0 right-0 w-32 h-32 ${stat.round1} opacity-30 rounded-full translate-x-1/3 translate-y-1/3 transition-all duration-300 group-hover:opacity-50 group-hover:scale-110`}
-        ></div>
-        <div
-          className={`absolute bottom-0 right-0 w-24 h-24 ${stat.round2} opacity-40 rounded-full translate-x-1/3 translate-y-1/3 transition-all duration-300 group-hover:opacity-60 group-hover:scale-105`}
-        ></div>
+        {/* Background Decorative Circles */}
+        <div className={`absolute -bottom-8 -right-8 w-40 h-40 ${stat.round1} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150`}></div>
+        <div className={`absolute -top-10 -right-4 w-28 h-28 ${stat.round2} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125`}></div>
 
-        <div className="flex items-start justify-between">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${stat.iconBg}`}
-          >
+        <div className="flex items-center justify-between relative z-10">
+          <div>
+            <p className="text-white/80 font-bold text-sm tracking-widest uppercase mb-1">{stat.title}</p>
+            <h3 className="text-4xl font-extrabold text-white">{stat.value}</h3>
+          </div>
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner backdrop-blur-md border border-white/20 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ${stat.iconBg}`}>
             {stat.icon}
           </div>
-        </div>
-
-        <div className="mt-6">
-          <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
-          <h3 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h3>
         </div>
       </div>
     ))}
@@ -180,7 +174,7 @@ const Dashboard = () => {
         });
 
         setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
-        setLiveStocks(unifiedProducts.sort((a,b) => (a.productId||"").localeCompare(b.productId||"", "en", {numeric:true})));
+        setLiveStocks(unifiedProducts.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
         setProductsData(unifiedProducts);
         setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
         setMonthlyOrders(months.map((m) => ({ month: m, count: ordersByMonth[m] })));
@@ -206,56 +200,55 @@ const Dashboard = () => {
       title: "Users",
       value: stats.users,
       icon: <FaUsers />,
-      bgColor: "bg-blue-100",
-      iconBg: "bg-blue-500 text-white",
-      round1: "bg-blue-300",
-      round2: "bg-blue-200",
+      bgColor: "bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
     },
     {
       title: "Products",
       value: stats.products,
       icon: <FaBoxOpen />,
-      bgColor: "bg-green-100",
-      iconBg: "bg-green-500 text-white",
-      round1: "bg-green-300",
-      round2: "bg-green-200",
+      bgColor: "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
     },
     {
       title: "Delivery Orders",
       value: stats.deliveryOrders,
       icon: <FaTruck />,
-      bgColor: "bg-purple-100",
-      iconBg: "bg-purple-500 text-white",
-      round1: "bg-purple-300",
-      round2: "bg-purple-200",
+      bgColor: "bg-gradient-to-br from-purple-500 to-purple-700 shadow-purple-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
     },
     {
       title: "Cancelled Orders",
       value: stats.cancelledOrders,
       icon: <FaTimesCircle />,
-      bgColor: "bg-red-100",
-      iconBg: "bg-red-500 text-white",
-      round1: "bg-red-300",
-      round2: "bg-red-200",
+      bgColor: "bg-gradient-to-br from-red-500 to-red-700 shadow-red-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
     },
     {
       title: "Returned Orders",
       value: stats.returnedOrders,
       icon: <FaUndoAlt />,
-      bgColor: "bg-yellow-100",
-      iconBg: "bg-yellow-500 text-white",
-      round1: "bg-yellow-300",
-      round2: "bg-yellow-200",
+      bgColor: "bg-gradient-to-br from-yellow-400 to-orange-500 shadow-orange-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
     },
-
     {
       title: "Low Stock",
       value: lowStockCount,
       icon: <FaBoxOpen />,
-      bgColor: "bg-red-100",
-      iconBg: "bg-red-500 text-white",
-      round1: "bg-red-300",
-      round2: "bg-red-200",
+      bgColor: "bg-gradient-to-br from-rose-400 to-rose-600 shadow-rose-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
     },
   ];
 
@@ -377,54 +370,53 @@ const Dashboard = () => {
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Today’s Orders</h2>
 
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-[#009669]  text-white">
-                <th className="px-4 py-4 ">S No </th>
-                <th className="px-4 py-4 ">Order ID</th>
-                <th className="px-4 py-4 ">Customer Name</th>
-                <th className="px-4 py-4 ">Amount</th>
-                <th className="px-4 py-4 ">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todayOrders.length > 0 ? (
-                todayOrders.map((order,ind) => (
-                  <tr key={order.id} className=" hover:bg-gray-50">
-                    <td className="px-4 py-4 ">{ ind+1 }</td>
-                    <td className="px-4 py-4 ">{order.orderId}</td>
-                    <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
-                    <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
-                    <td className="px-4 py-4 ">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          order.orderStatus?.toLowerCase() === "delivered"
-                            ? "bg-green-100 text-green-600"
-                          : order.orderStatus?.toLowerCase() === "cancelled"
-                            ? "bg-red-100 text-red-600"
-                          : order.orderStatus?.toLowerCase() === "order placed"
-                            ? "bg-blue-100 text-blue-600"
-                          : order.orderStatus?.toLowerCase() === "shipped"
-                            ? "bg-purple-100 text-purple-600"
-                          : "bg-yellow-100 text-yellow-600"
-                        }`}
-                      >
-                        {order.orderStatus}
-                      </span>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-[#009669]  text-white">
+                  <th className="px-4 py-4 ">S No </th>
+                  <th className="px-4 py-4 ">Order ID</th>
+                  <th className="px-4 py-4 ">Customer Name</th>
+                  <th className="px-4 py-4 ">Amount</th>
+                  <th className="px-4 py-4 ">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todayOrders.length > 0 ? (
+                  todayOrders.map((order, ind) => (
+                    <tr key={order.id} className=" hover:bg-gray-50">
+                      <td className="px-4 py-4 ">{ind + 1}</td>
+                      <td className="px-4 py-4 ">{order.orderId}</td>
+                      <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
+                      <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
+                      <td className="px-4 py-4 ">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold ${order.orderStatus?.toLowerCase() === "delivered"
+                              ? "bg-green-100 text-green-600"
+                              : order.orderStatus?.toLowerCase() === "cancelled"
+                                ? "bg-red-100 text-red-600"
+                                : order.orderStatus?.toLowerCase() === "order placed"
+                                  ? "bg-blue-100 text-blue-600"
+                                  : order.orderStatus?.toLowerCase() === "shipped"
+                                    ? "bg-purple-100 text-purple-600"
+                                    : "bg-yellow-100 text-yellow-600"
+                            }`}
+                        >
+                          {order.orderStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center text-gray-500 py-4 ">
+                      No orders placed today.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center text-gray-500 py-4 ">
-                    No orders placed today.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
