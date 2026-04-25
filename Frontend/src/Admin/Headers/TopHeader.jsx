@@ -125,7 +125,10 @@ const Topbar = ({
                 <span className="bg-emerald-200 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full">{todayOrdersCount} Today</span>
               </div>
               
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto pr-1" style={{ 
+                scrollbarWidth: 'thin', 
+                scrollbarColor: '#A7F3D0 transparent' 
+              }}>
                 {todayOrdersList.length > 0 ? (
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50 sticky top-0">
@@ -196,7 +199,10 @@ const Topbar = ({
                 <span className="bg-amber-200 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full">{lowStockCount} Items</span>
               </div>
               
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto pr-1" style={{ 
+                scrollbarWidth: 'thin', 
+                scrollbarColor: '#A7F3D0 transparent' 
+              }}>
                 {lowStockItems.length > 0 ? (
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-slate-50 sticky top-0">
