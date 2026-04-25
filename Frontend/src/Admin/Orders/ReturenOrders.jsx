@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaTimes, FaBoxOpen, FaSearch } from "react-icons/fa";
+import api from "../../services/api";
 
 const ReturnOrders = () => {
   const [returnOrders, setReturnOrders] = useState([]);
@@ -13,6 +12,7 @@ const ReturnOrders = () => {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const itemsPerPage = 8;
 
   useEffect(() => {
@@ -20,12 +20,22 @@ const ReturnOrders = () => {
   }, []);
 
   const fetchReturnOrders = async () => {
+    setLoading(true);
     try {
-      const snapshot = await getDocs(collection(db, "returnOrders"));
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const res = await api.get("/orders");
+      const data = (res.data || [])
+        .filter(o => o.orderStatus === "Returned" || o.orderStatus === "Refunded")
+        .map(o => ({
+          ...o,
+          cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+          shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+          date: o.created_at || o.date
+        }));
       setReturnOrders(data);
     } catch (error) {
       console.error("Error fetching return orders:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,11 +145,11 @@ const ReturnOrders = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669] text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>

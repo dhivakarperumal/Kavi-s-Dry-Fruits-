@@ -11,10 +11,15 @@ import toast from "react-hot-toast";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import OrderTracking from "../Shop/OrderTracking";
-import { FaTruck } from "react-icons/fa";
+import { FaTruck, FaShoppingCart } from "react-icons/fa";
+import { MdRefresh } from "react-icons/md";
+import { useStore } from "../Context/StoreContext";
+import { useNavigate } from "react-router-dom";
 
 const Account = () => {
   const { user } = useAuth();
+  const { addToCart, clearCart, allProducts } = useStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("personal");
   const [userInfo, setUserInfo] = useState({
     username: "",
@@ -42,6 +47,7 @@ const Account = () => {
   });
   const [errors, setErrors] = useState({});
   const [trackingOrderId, setTrackingOrderId] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const location = useLocation();
 
   const countries = ["India"];
@@ -446,6 +452,52 @@ const Account = () => {
       toast.error("Failed to cancel order.");
     }
   };
+  
+  const handleReorder = async (order) => {
+    try {
+      const items = order.items || order.cartItems || [];
+      if (items.length === 0) return toast.error("No items found in this order.");
+      
+      toast.loading("Re-adding items to cart...");
+      
+      // Clear existing cart first
+      await clearCart();
+      
+      for (const item of items) {
+        // Try to find the full product details from allProducts
+        const fullProduct = allProducts.find(p => String(p.id) === String(item.id || item.productId));
+        
+        if (fullProduct) {
+          await addToCart({
+            ...fullProduct,
+            selectedWeight: item.weight || item.selectedWeight || fullProduct.weights?.[0],
+            qty: item.qty || item.quantity || 1,
+            price: item.price || fullProduct.prices?.[item.weight || item.selectedWeight]?.offerPrice || fullProduct.offerPrice
+          });
+        } else {
+          // Fallback if product not in current inventory (might be discontinued)
+          await addToCart({
+            id: item.id || item.productId,
+            productId: item.productId,
+            name: item.name,
+            image: item.image,
+            selectedWeight: item.weight || item.selectedWeight,
+            qty: item.qty || item.quantity || 1,
+            price: item.price,
+            category: item.category || "General"
+          });
+        }
+      }
+      
+      toast.dismiss();
+      toast.success("Items added to cart!");
+      navigate("/checkout");
+    } catch (err) {
+      toast.dismiss();
+      console.error("Reorder failed:", err);
+      toast.error("Failed to reorder items.");
+    }
+  };
 
   const AddReviewForm = ({ onReviewSubmitted, order, userInfo, userId }) => {
     const [message, setMessage] = useState("");
@@ -617,27 +669,49 @@ const Account = () => {
           <div className="bg-white p-6 rounded-xl shadow border border-green-200 w-full">
             {!trackingOrderId ? (
               <div className="text-center py-10">
-                <FaTruck className="mx-auto text-green-600 mb-4" size={50} />
-                <h3 className="text-xl font-bold mb-4">Track Your Order</h3>
-                <div className="max-w-md mx-auto flex gap-2">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <FaTruck className="text-green-600" size={40} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Track Your Order</h3>
+                <p className="text-gray-500 mb-8 max-w-sm mx-auto">Enter your Order ID or Docket Number to see real-time tracking information.</p>
+                
+                <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
                   <input 
                     type="text" 
-                    placeholder="Enter Order ID (e.g. ORD-123)" 
-                    className="flex-1 border border-green-300 rounded px-4 py-2 focus:outline-none"
-                    value={trackingOrderId}
-                    onChange={(e) => setTrackingOrderId(e.target.value)}
+                    placeholder="e.g. ORD0001 or AA123456789IN" 
+                    className="flex-1 border border-green-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all font-medium"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && setTrackingOrderId(searchInput.trim())}
                   />
-                  {/* Since state is updated above, we don't need a separate button here unless we want to trigger something */}
+                  <button 
+                    onClick={() => {
+                      if (!searchInput.trim()) return toast.error("Please enter an ID to track");
+                      setTrackingOrderId(searchInput.trim());
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-green-100 transition-all whitespace-nowrap"
+                  >
+                    Track Now
+                  </button>
                 </div>
-                <p className="text-sm text-gray-500 mt-4">Enter your Order ID to see real-time tracking information.</p>
+                
+                <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto opacity-50 grayscale">
+                   <div className="text-xs font-medium">Order Placed</div>
+                   <div className="text-xs font-medium">Processing</div>
+                   <div className="text-xs font-medium">In Transit</div>
+                   <div className="text-xs font-medium">Delivered</div>
+                </div>
               </div>
             ) : (
               <div>
                 <button 
-                  onClick={() => setTrackingOrderId("")}
-                  className="mb-4 text-green-600 flex items-center gap-1 font-bold"
+                  onClick={() => {
+                    setTrackingOrderId("");
+                    setSearchInput("");
+                  }}
+                  className="mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 font-bold transition-all"
                 >
-                  ← Back to Search
+                  ← New Search
                 </button>
                 <OrderTracking orderId={trackingOrderId} />
               </div>
@@ -653,13 +727,14 @@ const Account = () => {
               allOrders.map((order, index) => {
                 const isOpen = selectedOrderId === order.orderId;
                 const statusSteps = [
-                  "Placed",
-                  "Packing",
+                  "Order Placed",
+                  "Order Confirmed",
+                  "Processing",
                   "Shipped",
                   "Out for Delivery",
                   "Delivered",
                 ];
-                const currentStatus = order.orderStatus || "Placed";
+                const currentStatus = order.orderStatus || "Order Placed";
                 const statusIndex = statusSteps.indexOf(currentStatus);
 
                 return (
@@ -677,12 +752,17 @@ const Account = () => {
                         <h2 className="font-bold text-base md:text-lg text-black">
                           Order ID: {order.orderId}
                         </h2>
-                        <p className="text-sm text-black">
-                          Placed on:{" "}
+                        <p className="text-sm text-black opacity-60">
                           {order.created_at || order.date
                             ? new Date(order.created_at || order.date).toLocaleString()
                             : "N/A"}
                         </p>
+                        {order.docketNumber && (statusIndex >= 3 || order.orderStatus === "Shipped") && (
+                          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-lg border border-yellow-400 shadow-sm">
+                            <span className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Docket:</span>
+                            <span className="text-xs font-black text-black">{order.docketNumber}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
@@ -691,74 +771,37 @@ const Account = () => {
                             e.stopPropagation();
                             handlePrint(order);
                           }}
-                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm rounded"
+                          className="flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all shadow-md"
+                          title="Print Invoice"
                         >
-                          <FaPrint /> Invoice
+                          <FaPrint /> 
                         </button>
 
-                        {/* {order.orderStatus !== "Cancelled" &&
-                          order.orderStatus !== "Delivered" && (
-                            <div className="flex flex-col gap-1">
-                              {!order.showCancelReason ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const updated = [...allOrders];
-                                    updated[index].showCancelReason = true;
-                                    setAllOrders(updated);
-                                  }}
-                                  className="bg-red-600 text-white px-3 py-1.5 text-sm rounded hover:bg-red-700"
-                                >
-                                  Cancel Order
-                                </button>
-                              ) : (
-                                <div
-                                  className="bg-red-50 border border-red-300 rounded px-2 py-2 w-full sm:w-64"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <textarea
-                                    placeholder="Reason"
-                                    onChange={(e) => {
-                                      const updated = [...allOrders];
-                                      updated[index].cancelReason =
-                                        e.target.value;
-                                      setAllOrders(updated);
-                                    }}
-                                    className="w-full border border-red-300 rounded text-sm p-1 mb-1"
-                                  />
-                                  <button
-                                    onClick={() => {
-                                      if (
-                                        !order.cancelReason ||
-                                        order.cancelReason.trim() === ""
-                                      ) {
-                                        return toast.error(
-                                          "Please enter a reason."
-                                        );
-                                      }
-                                      cancelOrder(
-                                        order.orderId,
-                                        order.cancelReason,
-                                        index
-                                      );
-                                    }}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-sm w-full rounded"
-                                  >
-                                    Confirm Cancel
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )} */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReorder(order);
+                          }}
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-bold rounded-full transition-all shadow-md"
+                        >
+                          <MdRefresh size={18} /> Reorder
+                        </button>
 
-                        <div className="bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-center text-black">
-                          {order.orderStatus === "Placed" && "🛒 Placed"}
-                          {order.orderStatus === "Packing" && "📦 Packing"}
+                        <div className={`px-4 py-1.5 rounded-full text-xs font-black shadow-sm border-2 ${
+                          order.orderStatus === "Delivered" ? "bg-green-100 text-green-700 border-green-200" :
+                          order.orderStatus === "Shipped" ? "bg-blue-100 text-blue-700 border-blue-200" :
+                          order.orderStatus === "Processing" ? "bg-orange-50 text-orange-700 border-orange-100" :
+                          order.orderStatus === "Cancelled" ? "bg-red-50 text-red-700 border-red-100" :
+                          "bg-white text-gray-700 border-gray-200"
+                        }`}>
+                          {order.orderStatus === "Order Placed" && "🛒 Order Placed"}
+                          {order.orderStatus === "Order Confirmed" && "✅ Order Confirmed"}
+                          {order.orderStatus === "Processing" && "📦 Processing"}
                           {order.orderStatus === "Shipped" && "🚚 Shipped"}
-                          {order.orderStatus === "Out for Delivery" &&
-                            "🛵 Out for Delivery"}
-                          {order.orderStatus === "Delivered" && "✅ Delivered"}
+                          {order.orderStatus === "Out for Delivery" && "🛵 Out for Delivery"}
+                          {order.orderStatus === "Delivered" && "✨ Delivered"}
                           {order.orderStatus === "Cancelled" && "❌ Cancelled"}
+                          {order.orderStatus === "Returned" && "🔄 Returned"}
                         </div>
 
                         <button
@@ -767,9 +810,9 @@ const Account = () => {
                             setTrackingOrderId(order.orderId);
                             setActiveTab("tracking");
                           }}
-                          className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+                          className="bg-green-600 text-white px-6 py-2 rounded-full text-sm font-black flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100 border-b-4 border-green-800"
                         >
-                          <FaTruck size={14} /> Track Order
+                          <FaTruck size={14} /> Track
                         </button>
                       </div>
                     </div>
@@ -803,25 +846,37 @@ const Account = () => {
                         </div>
 
                         <div className="divide-y border-t">
-                          {order.cartItems?.map((item, i) => (
-                            <div
-                              key={i}
-                              className="flex justify-between items-center py-3 text-sm"
-                            >
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-gray-500">
-                                  Qty: {item.quantity || item.qty}
+                          {order.cartItems?.map((item, i) => {
+                            const raw = item.image || "";
+                            const imageUrl = (raw.startsWith('data:') || raw.startsWith('http')) 
+                              ? raw 
+                              : `http://localhost:5000/api/uploads/${raw}`;
+
+                            return (
+                              <div
+                                key={i}
+                                className="flex gap-4 items-center py-3 text-sm"
+                              >
+                                <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={item.name} 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.src = "/images/placeholder.png"; }}
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-bold text-gray-900">{item.name}</p>
+                                  <p className="text-gray-500">
+                                    Qty: {item.quantity || item.qty}
+                                  </p>
+                                </div>
+                                <p className="text-orange-600 font-black text-base">
+                                  ₹{((item.quantity || item.qty) * item.price).toFixed(2)}
                                 </p>
                               </div>
-                              <p className="text-orange-600 font-semibold">
-                                ₹
-                                {(
-                                  (item.quantity || item.qty) * item.price
-                                ).toFixed(2)}
-                              </p>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         <div className="mt-4 space-y-1 text-sm text-gray-700">

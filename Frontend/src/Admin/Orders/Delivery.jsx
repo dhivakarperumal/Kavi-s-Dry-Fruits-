@@ -12,8 +12,9 @@ const Delivery = () => {
   const [customTo, setCustomTo] = useState("");
   const [searchText, setSearchText] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [ordersPerPage, setOrdersPerPage] = useState(25);
+  const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
 
@@ -115,10 +116,16 @@ const Delivery = () => {
     });
   }, [deliveredOrders, debouncedSearch, dateBounds]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, dateBounds, ordersPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
   // ====== Display limited orders based on selected count ======
   const currentOrders = useMemo(() => {
-    return filteredOrders.slice(0, ordersPerPage);
-  }, [filteredOrders, ordersPerPage]);
+    return filteredOrders.slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage);
+  }, [filteredOrders, ordersPerPage, currentPage]);
 
   // ====== Calculate total amount for all filtered orders ======
   const totalAmount = useMemo(() => {
@@ -324,11 +331,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669]  text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Name</th>
@@ -343,10 +350,15 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
                     <td className="px-8 py-6 font-black text-slate-800 text-xs">
-                       {index + 1}
+                       {(currentPage - 1) * ordersPerPage + index + 1}
                     </td>
                     <td className="px-8 py-6">
                        <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline">#{order.orderId}</button>
+                       {order.docketNumber && (
+                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                           Docket: {order.docketNumber}
+                         </p>
+                       )}
                     </td>
                     <td className="px-8 py-6 uppercase">
                       <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
@@ -384,6 +396,53 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              Showing {Math.min(filteredOrders.length, (currentPage - 1) * ordersPerPage + 1)}-{Math.min(filteredOrders.length, currentPage * ordersPerPage)} of {filteredOrders.length} Logs
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white transition-all ${currentPage === 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-emerald-50 hover:text-emerald-600 shadow-sm"}`}
+              >
+                <span className="text-xs">←</span>
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pg = i + 1;
+                  if (pg === 1 || pg === totalPages || (pg >= currentPage - 1 && pg <= currentPage + 1)) {
+                    return (
+                      <button
+                        key={pg}
+                        onClick={() => setCurrentPage(pg)}
+                        className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === pg ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:bg-white hover:text-slate-600 border border-transparent hover:border-slate-200"}`}
+                      >
+                        {pg}
+                      </button>
+                    );
+                  } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                    return <span key={pg} className="px-1 text-slate-300">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white transition-all ${currentPage === totalPages ? "opacity-30 cursor-not-allowed" : "hover:bg-emerald-50 hover:text-emerald-600 shadow-sm"}`}
+              >
+                <span className="text-xs">→</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Re-using shared modal from OrderDetailsModal.jsx if possible, 

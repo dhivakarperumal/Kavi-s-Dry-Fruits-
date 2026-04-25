@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
+import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaChevronLeft, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
@@ -10,14 +10,15 @@ const NewOrders = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [dateFilter, setDateFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(null);
   const [viewMode, setViewMode] = useState("table"); // "table" or "card"
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
 
@@ -26,7 +27,7 @@ const NewOrders = () => {
     try {
       const res = await api.get("/orders");
       const parsed = (res.data || []).filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled"
+        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
       ).map(o => ({
         ...o,
         cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
@@ -75,9 +76,20 @@ const NewOrders = () => {
       temp = temp.filter((o) => new Date(o.date) >= fromDate && new Date(o.date) <= toDate);
     }
     setFilteredOrders(temp);
+    setCurrentPage(1); // Reset to first page on filter change
   }, [orders, searchText, dateFilter, customRange]);
 
-  const currentOrders = filteredOrders.slice(0, itemsPerPage);
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when items per page changes
+  }, [itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const generateDocketNumber = () => {
+    const randomDigits = Math.floor(100000000 + Math.random() * 900000000);
+    return `AA${randomDigits}IN`;
+  };
 
   const handleStatusUpdate = async (id, newStatus) => {
     if (!newStatus) return;
@@ -87,8 +99,13 @@ const NewOrders = () => {
         if (!cancelReason.trim()) return toast.error("Please enter cancel reason");
         data.cancelReason = cancelReason;
       }
+
+      if (newStatus === "Shipped") {
+        data.docketNumber = generateDocketNumber();
+      }
+
       await api.put(`/orders/${id}`, data);
-      toast.success(`Order ${newStatus} successfully!`);
+      toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);
       fetchOrders();
@@ -164,7 +181,36 @@ const NewOrders = () => {
     setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
   }, []);
 
-  const statusOptions = ["Placed", "Packing", "Out for Delivery", "Delivered", "Cancelled"];
+  const statusOptions = [
+    "Order Placed",
+    "Order Confirmed",
+    "Processing",
+    "Shipped",
+    "Out for Delivery",
+    "Delivered",
+    "Cancelled",
+    "Returned",
+    "Refunded"
+  ];
+
+  const getFilteredStatusOptions = (currentStatus) => {
+    const currentIndex = statusOptions.indexOf(currentStatus);
+    if (currentIndex === -1) return statusOptions;
+    
+    let options = statusOptions.slice(currentIndex);
+
+    // 1. Hide "Cancelled" if the order has already been Shipped (index 3)
+    if (currentIndex >= 3) {
+      options = options.filter(s => s !== "Cancelled");
+    }
+
+    // 2. Hide "Returned" and "Refunded" until the order is Delivered (index 5)
+    if (currentIndex < 5) {
+      options = options.filter(s => s !== "Returned" && s !== "Refunded");
+    }
+
+    return options;
+  };
 
   return (
     <div className="p-4 sm:p-8  min-h-screen">
@@ -193,13 +239,13 @@ const NewOrders = () => {
                 onClick={() => setViewMode("table")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
               >
-                <FaTable /> Table
+                <FaTable /> 
               </button>
               <button
                 onClick={() => setViewMode("card")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
               >
-                <FaThLarge /> Cards
+                <FaThLarge /> 
               </button>
             </div>
           </div>
@@ -207,7 +253,7 @@ const NewOrders = () => {
       </div>
 
       {/* Advanced Filters Bar */}
-      <div className="bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-6 mb-8">
+      <div className="bg-white p-5 rounded-[2rem]  shadow-sm flex flex-wrap items-center gap-6 mb-8">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Filter By Date</span>
           <select
@@ -245,10 +291,10 @@ const NewOrders = () => {
 
       {/* Main Content Area */}
       {viewMode === "table" ? (
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-2xl  shadow-xl overflow-hidden animate-in fade-in duration-700">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
+              <tr className="bg-[#009669]  text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client</th>
@@ -262,10 +308,15 @@ const NewOrders = () => {
                 currentOrders.map((order, index) => (
                   <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
                     <td className="px-8 py-6 font-black text-slate-800 text-xs">
-                       {index + 1}
+                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-8 py-6">
                       <button onClick={() => setSelectedOrder(order)} className="text-indigo-600 font-black text-sm hover:underline block mb-1">#{order.orderId}</button>
+                      {order.docketNumber && (
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                          Docket: {order.docketNumber}
+                        </p>
+                      )}
                       <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                          <FaClock className="text-slate-300" />
                          {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -284,9 +335,12 @@ const NewOrders = () => {
                          <select
                           value={order.orderStatus}
                           onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
-                          className={`w-40 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer ${order.orderStatus === 'Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 'bg-amber-50 border-amber-100 text-amber-700'}`}
+                          className={`w-40 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer ${
+                            order.orderStatus === 'Order Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 
+                            order.orderStatus === 'Order Confirmed' ? 'bg-blue-50 border-blue-100 text-blue-700' :
+                            'bg-amber-50 border-amber-100 text-amber-700'}`}
                         >
-                          {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                          {getFilteredStatusOptions(order.orderStatus).map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                         {showCancelInput === order.id && (
                           <div className="flex flex-col gap-2 mt-2 animate-in slide-in-from-top-2 duration-300">
@@ -322,6 +376,9 @@ const NewOrders = () => {
                   <div>
                     <span className="text-[10px] font-black text-indigo-500 bg-indigo-50/50 px-2 py-1 rounded-lg uppercase tracking-widest mb-2 inline-block">Order Pending</span>
                     <h3 onClick={() => setSelectedOrder(order)} className="text-xl font-black text-slate-900 tracking-tighter cursor-pointer hover:text-indigo-600 transition-colors">#{order.orderId}</h3>
+                    {order.docketNumber && (
+                      <p className="text-[9px] font-black text-emerald-600 uppercase mt-1">Docket: {order.docketNumber}</p>
+                    )}
                   </div>
                   <button onClick={() => handlePrint(order)} className="w-12 h-12 bg-slate-50 text-slate-300 border border-slate-100 rounded-2xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
                     <FaPrint size={18} />
@@ -352,14 +409,65 @@ const NewOrders = () => {
                     onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all appearance-none cursor-pointer"
                   >
-                    {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                    {getFilteredStatusOptions(order.orderStatus).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                </div>
 
                {/* Decorative Gradient Line */}
-               <div className={`absolute bottom-0 left-0 h-1.5 transition-all duration-500 ${order.orderStatus === 'Placed' ? 'bg-indigo-500 w-1/4' : 'bg-amber-500 w-3/4'}`}></div>
+               <div className={`absolute bottom-0 left-0 h-1.5 transition-all duration-500 ${
+                  order.orderStatus === 'Order Placed' ? 'bg-indigo-500 w-1/4' : 
+                  order.orderStatus === 'Order Confirmed' ? 'bg-blue-500 w-2/4' :
+                  order.orderStatus === 'Processing' ? 'bg-amber-500 w-3/4' :
+                  'bg-emerald-500 w-full'}`}></div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between mt-10 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm gap-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Showing <span className="text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-800">{Math.min(currentPage * itemsPerPage, filteredOrders.length)}</span> of <span className="text-slate-800">{filteredOrders.length}</span> Orders
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-100 transition-all ${currentPage === 1 ? "text-slate-200 cursor-not-allowed" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 shadow-sm"}`}
+            >
+              <FaChevronLeft size={14} />
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pg = i + 1;
+                // Logic to show limited pages
+                if (pg === 1 || pg === totalPages || (pg >= currentPage - 1 && pg <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={pg}
+                      onClick={() => setCurrentPage(pg)}
+                      className={`w-11 h-11 rounded-2xl text-xs font-black transition-all ${currentPage === pg ? "bg-indigo-600 text-white shadow-indigo-200 shadow-xl" : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"}`}
+                    >
+                      {pg}
+                    </button>
+                  );
+                } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                  return <span key={pg} className="px-2 text-slate-300 font-bold">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-100 transition-all ${currentPage === totalPages ? "text-slate-200 cursor-not-allowed" : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100 shadow-sm"}`}
+            >
+              <FaChevronRight size={14} />
+            </button>
+          </div>
         </div>
       )}
 

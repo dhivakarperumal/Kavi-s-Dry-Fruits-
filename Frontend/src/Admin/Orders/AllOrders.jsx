@@ -14,9 +14,12 @@ const AllOrders = () => {
   const [searchText, setSearchText] = useState("");
   const [dateFilter, setDateFilter] = useState("All");
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   // modal state for order details
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState("table"); // "table" or "card"
+  const [statusFilter, setStatusFilter] = useState("All");
 
   // Fetch all orders from all users
   const fetchOrders = async () => {
@@ -73,17 +76,36 @@ const AllOrders = () => {
       );
     }
 
-    setFilteredOrders(temp);
-  }, [orders, searchText, dateFilter, customRange]);
+    if (statusFilter !== "All") {
+      temp = temp.filter((o) => o.orderStatus === statusFilter);
+    }
 
-  // Display limited orders based on selected count
-  const currentOrders = filteredOrders.slice(0, itemsPerPage);
+    setFilteredOrders(temp);
+    setCurrentPage(1);
+  }, [orders, searchText, dateFilter, customRange, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const generateDocketNumber = () => {
+    const randomDigits = Math.floor(100000000 + Math.random() * 900000000);
+    return `AA${randomDigits}IN`;
+  };
 
   // Status Update Logic
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      await api.put(`/orders/${id}`, { orderStatus: newStatus });
-      toast.success("Status updated!");
+      const data = { orderStatus: newStatus };
+      if (newStatus === "Shipped") {
+        data.docketNumber = generateDocketNumber();
+      }
+
+      await api.put(`/orders/${id}`, data);
+      toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : "Status updated!");
       fetchOrders();
       setCancelReason("");
       setShowCancelInput(null);
@@ -95,19 +117,39 @@ const AllOrders = () => {
 
   // Filtered status options
   const getStatusOptions = (current) => {
-    const all = ["Placed", "Packing", "Out for Delivery", "Delivered", "Cancelled"];
+    const all = [
+      "Order Placed",
+      "Order Confirmed",
+      "Processing",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+      "Returned",
+      "Refunded"
+    ];
 
-    if (current === "Packing")
-      return ["Packing", "Out for Delivery", "Delivered", "Cancelled"];
-
-    if (current === "Out for Delivery")
-      return ["Out for Delivery", "Delivered", "Cancelled"];
-
-    if (current === "Delivered") return ["Delivered"];
-
+    if (current === "Delivered") return ["Delivered", "Returned"];
     if (current === "Cancelled") return ["Cancelled"];
+    if (current === "Returned") return ["Returned", "Refunded"];
+    if (current === "Refunded") return ["Refunded"];
 
-    return all; // Placed → show all
+    const currentIndex = all.indexOf(current);
+    if (currentIndex === -1) return all;
+
+    let options = all.slice(currentIndex);
+
+    // 1. Hide "Cancelled" if the order has already been Shipped (index 3)
+    if (currentIndex >= 3) {
+      options = options.filter(s => s !== "Cancelled");
+    }
+
+    // 2. Hide "Returned" and "Refunded" until the order is Delivered (index 5)
+    if (currentIndex < 5) {
+      options = options.filter(s => s !== "Returned" && s !== "Refunded");
+    }
+
+    return options;
   };
 
   // Print Invoice
@@ -240,7 +282,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
               onChange={(e) => setDateFilter(e.target.value)}
               className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
             >
-              <option value="All">Full History</option>
+              <option value="All">All</option>
               <option value="Today">Today's Log</option>
               <option value="This Week">Weekly View</option>
               <option value="This Month">Monthly View</option>
@@ -248,14 +290,38 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
             </select>
 
             <select
-              value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
             >
-              <option value={25}>Show 25</option>
-              <option value={100}>Show 100</option>
-              <option value={500}>Show 500</option>
+              <option value="All">All Status</option>
+              <option value="Order Placed">Placed</option>
+              <option value="Order Confirmed">Confirmed</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Out for Delivery">Out for Delivery</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Returned">Returned</option>
+              <option value="Refunded">Refunded</option>
             </select>
+
+      
+            
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl ">
+              <button 
+                onClick={() => setViewMode("table")} 
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                Table
+              </button>
+              <button 
+                onClick={() => setViewMode("card")} 
+                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                Cards
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -267,90 +333,216 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
         </div>
       )}
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-[#009669] border-b border-emerald-700 text-white">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Revenue</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">State</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {currentOrders.length > 0 ? (
-                currentOrders.map((order, index) => (
-                  <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
-                    <td className="px-8 py-6 font-black text-slate-800 text-xs">
-                       {index + 1}
-                    </td>
-                    <td className="px-8 py-6">
-                       <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline decoration-2">#{order.orderId}</button>
-                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
-                         {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                       </p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
-                      <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{order.shippingAddress?.city || "Local Order"}</p>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <span className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                        {order.paymentMethod || "COD"}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <select
-                        value={order.orderStatus}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v === "Cancelled") setShowCancelInput(order.id);
-                          else handleStatusUpdate(order.id, v);
-                        }}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${order.orderStatus === 'Delivered' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-600'}`}
-                      >
-                        {getStatusOptions(order.orderStatus).map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                      {showCancelInput === order.id && (
-                         <div className="mt-2 flex flex-col gap-2">
-                            <textarea className="w-full text-xs p-2 border border-rose-100 rounded-xl bg-rose-50" placeholder="Reason..." onChange={e => setCancelReason(e.target.value)} />
-                            <button onClick={() => handleStatusUpdate(order.id, "Cancelled")} className="bg-rose-500 text-white text-[9px] font-black uppercase py-2 rounded-lg tracking-widest shadow-lg shadow-rose-100">Confirm Cancel</button>
-                         </div>
-                      )}
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex justify-center gap-3">
-                        <button onClick={() => setSelectedOrder(order)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaEye /></button>
-                        <button onClick={() => handlePrint(order)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaPrint /></button>
+      {viewMode === "table" ? (
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-700">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-[#009669]  text-white">
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Revenue</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">State</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {currentOrders.length > 0 ? (
+                  currentOrders.map((order, index) => (
+                    <tr key={order.id} className="group hover:bg-slate-50/70 transition-colors">
+                      <td className="px-8 py-6 font-black text-slate-800 text-xs">
+                         {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
+                      <td className="px-8 py-6">
+                         <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline decoration-2">#{order.orderId}</button>
+                         {order.docketNumber && (
+                           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                             Docket: {order.docketNumber}
+                           </p>
+                         )}
+                         <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
+                           {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                         </p>
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{order.shippingAddress?.city || "Local Order"}</p>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <span className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                          {order.paymentMethod || "COD"}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <select
+                          value={order.orderStatus}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === "Cancelled") setShowCancelInput(order.id);
+                            else handleStatusUpdate(order.id, v);
+                          }}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${
+                            order.orderStatus === 'Order Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
+                            order.orderStatus === 'Delivered' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
+                            'bg-slate-50 border-slate-100 text-slate-600'}`}
+                        >
+                          {getStatusOptions(order.orderStatus).map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        {showCancelInput === order.id && (
+                           <div className="mt-2 flex flex-col gap-2">
+                              <textarea className="w-full text-xs p-2 border border-rose-100 rounded-xl bg-rose-50" placeholder="Reason..." onChange={e => setCancelReason(e.target.value)} />
+                              <button onClick={() => handleStatusUpdate(order.id, "Cancelled")} className="bg-rose-500 text-white text-[9px] font-black uppercase py-2 rounded-lg tracking-widest shadow-lg shadow-rose-100">Confirm Cancel</button>
+                           </div>
+                        )}
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex justify-center gap-3">
+                          <button onClick={() => setSelectedOrder(order)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaEye /></button>
+                          <button onClick={() => handlePrint(order)} className="w-10 h-10 flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-2xl transition-all border border-slate-100 shadow-sm"><FaPrint /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                      <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                         <FaPrint className="text-3xl opacity-20" />
                       </div>
+                      No archived orders found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
-                    <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                       <FaPrint className="text-3xl opacity-20" />
-                    </div>
-                    No archived orders found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center font-black text-[10px] text-slate-400 uppercase tracking-widest">
-           <span>Total Logs: {filteredOrders.length}</span>
-           <span>Showing: {currentOrders.length}</span>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 text-left">
+          {currentOrders.length > 0 ? (
+            currentOrders.map((order) => (
+              <div key={order.id} className="bg-white rounded-[2.5rem] border border-slate-200 p-8 hover:shadow-2xl hover:shadow-indigo-100 transition-all group relative overflow-hidden">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest mb-2 inline-block ${
+                      order.orderStatus === 'Order Placed' ? 'bg-indigo-50 text-indigo-500' :
+                      order.orderStatus === 'Delivered' ? 'bg-emerald-50 text-emerald-500' :
+                      'bg-slate-50 text-slate-500'
+                    }`}>{order.orderStatus}</span>
+                    <h3 onClick={() => setSelectedOrder(order)} className="text-xl font-black text-slate-900 tracking-tighter cursor-pointer hover:text-indigo-600 transition-colors">#{order.orderId}</h3>
+                    {order.docketNumber && (
+                      <p className="text-[9px] font-black text-emerald-600 uppercase mt-1 bg-emerald-50/50 w-fit px-2 py-0.5 rounded-md">Docket: {order.docketNumber}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setSelectedOrder(order)} className="w-10 h-10 bg-slate-50 text-slate-300 border border-slate-100 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all">
+                      <FaEye size={16} />
+                    </button>
+                    <button onClick={() => handlePrint(order)} className="w-10 h-10 bg-slate-50 text-slate-300 border border-slate-100 rounded-xl flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
+                      <FaPrint size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client</p>
+                    <p className="text-sm font-black text-slate-800 uppercase">{order.clientName || order.fullname || "Guest"}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</p>
+                    <p className="text-lg font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment</p>
+                    <p className="text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{order.paymentMethod || "COD"}</p>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-50">
+                  <select
+                    value={order.orderStatus}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "Cancelled") setShowCancelInput(order.id);
+                      else handleStatusUpdate(order.id, v);
+                    }}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all appearance-none cursor-pointer"
+                  >
+                    {getStatusOptions(order.orderStatus).map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  
+                  {showCancelInput === order.id && (
+                    <div className="mt-4 animate-in slide-in-from-top-2">
+                       <textarea className="w-full text-xs p-3 border border-rose-100 rounded-2xl bg-rose-50 mb-2" placeholder="Cancellation reason..." onChange={e => setCancelReason(e.target.value)} />
+                       <button onClick={() => handleStatusUpdate(order.id, "Cancelled")} className="w-full bg-rose-500 text-white text-[10px] font-black uppercase py-3 rounded-xl tracking-widest shadow-xl shadow-rose-100">Cancel Order</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em] bg-white rounded-[3rem] border border-slate-200">
+               No orders found for this selection
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-8 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+        <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Showing {Math.min(filteredOrders.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredOrders.length, currentPage * itemsPerPage)} of {filteredOrders.length} Logs
+          </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white transition-all ${currentPage === 1 ? "opacity-30 cursor-not-allowed" : "hover:bg-indigo-50 hover:text-indigo-600 shadow-sm"}`}
+              >
+                <span className="text-xs">←</span>
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pg = i + 1;
+                  if (pg === 1 || pg === totalPages || (pg >= currentPage - 1 && pg <= currentPage + 1)) {
+                    return (
+                      <button
+                        key={pg}
+                        onClick={() => setCurrentPage(pg)}
+                        className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === pg ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:bg-white hover:text-slate-600 border border-transparent hover:border-slate-200"}`}
+                      >
+                        {pg}
+                      </button>
+                    );
+                  } else if (pg === currentPage - 2 || pg === currentPage + 2) {
+                    return <span key={pg} className="px-1 text-slate-300">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white transition-all ${currentPage === totalPages ? "opacity-30 cursor-not-allowed" : "hover:bg-indigo-50 hover:text-indigo-600 shadow-sm"}`}
+              >
+                <span className="text-xs">→</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

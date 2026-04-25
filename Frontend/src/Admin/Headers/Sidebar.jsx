@@ -59,11 +59,11 @@ const Sidebar = ({
       label: "Orders",
       icon: <FaDropbox />,
       dropdown: [
-        { label: "New Orders", icon: <MdDeliveryDining /> },
+        { label: "New Orders", collection: "New Orders", icon: <MdDeliveryDining /> },
         { label: "All Orders", icon: <FaDropbox /> },
         { label: "Delivered Orders", icon: <MdDeliveryDining /> },
-        // { label: "Cancel Orders", icon: <MdOutlineCancelPresentation /> },
-        // { label: "Returned Orders", icon: <MdOutlineCancelPresentation /> },
+        { label: "Cancel Orders", icon: <MdOutlineCancelPresentation /> },
+        { label: "Returned Orders", icon: <MdOutlineCancelPresentation /> },
       ],
     },
 
@@ -84,7 +84,7 @@ const Sidebar = ({
       ],
     },
 
-  
+
   ];
 
   const handleClick = (item) => {
@@ -114,10 +114,10 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] transform shadow-2xl transition-all duration-300 md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
+      className={`fixed inset-y-0 left-0 flex flex-col z-[60] transform shadow-2xl transition-all duration-300 md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
         } ${isCollapsed ? "w-20" : "w-72"}`}
       style={{
-        background: "linear-gradient(160deg, #064e3b 0%, #065f46 40%, #047857 80%, #059669 100%)",
+        background: "linear-gradient(160deg, #064e3b 0%, #065f46 40%, #064e3b 80%, #064e3b 100%)",
         color: "#ecfdf5"
       }}
     >
@@ -212,7 +212,7 @@ const Sidebar = ({
       </div>
 
       {/* Sidebar Menu */}
-      <nav className="flex flex-col px-2 py-5 h-full overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <nav className="flex flex-col flex-1 px-2 py-5 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {SideBarmenu.map((item) => {
           const count =
             item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
@@ -223,15 +223,20 @@ const Sidebar = ({
             <div key={item.label} className="mb-1">
               <button
                 onClick={() => handleClick(item)}
-                className={`flex justify-between items-center w-full text-left px-4 py-3.5 rounded-xl font-bold cursor-pointer transition-all capitalize ${activeSection === item.label
-                    ? "bg-white/20 text-white shadow-md shadow-black/30 backdrop-blur-sm"
-                    : isActiveParent
-                      ? "bg-white/10 text-white"
-                      : "text-emerald-100 hover:bg-white/10 hover:text-white"
+                className={`flex justify-between items-center w-full text-left px-4 py-3.5 font-bold cursor-pointer transition-all capitalize ${activeSection === item.label
+                  ? "bg-gradient-to-r from-white/20 to-white/5 text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)] border-l-[4px] border-[#6ee7b7] rounded-r-xl"
+                  : isActiveParent
+                    ? "bg-white/10 text-white rounded-xl"
+                    : "text-emerald-100 hover:bg-white/10 hover:text-white rounded-xl"
                   }`}
               >
                 <span className="flex items-center gap-3">
-                  <span className="text-[1.25rem] flex-shrink-0">{item.icon}</span>
+                  <span className={`text-[1.25rem] flex-shrink-0 p-2 rounded-lg flex items-center justify-center transition-colors ${activeSection === item.label
+                      ? "bg-white text-[#064e3b] shadow-md"
+                      : "bg-white/10 text-emerald-100 shadow-sm border border-white/5"
+                    }`}>
+                    {item.icon}
+                  </span>
                   {!isCollapsed && <span>{item.label}</span>}
                 </span>
 
@@ -261,12 +266,17 @@ const Sidebar = ({
                         setActiveSection(subItem.label);
                         if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
-                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold rounded-lg text-sm transition-all cursor-pointer capitalize ${activeSection === subItem.label
-                          ? "bg-white/20 text-white shadow-sm mb-1"
-                          : "text-emerald-200 hover:bg-white/10 hover:text-white mb-1"
+                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold text-sm transition-all cursor-pointer capitalize ${activeSection === subItem.label
+                        ? "bg-gradient-to-r from-white/20 to-transparent text-white shadow-md border-l-[3px] border-[#6ee7b7] rounded-r-lg mb-1"
+                        : "text-emerald-200 hover:bg-white/10 hover:text-white rounded-lg mb-1"
                         }`}
                     >
-                      <span className="text-[1.1rem] flex-shrink-0">{subItem.icon}</span>
+                      <span className={`text-[1.1rem] flex-shrink-0 p-1.5 rounded-md flex items-center justify-center transition-colors ${activeSection === subItem.label
+                          ? "bg-white text-[#064e3b] shadow-sm"
+                          : "bg-white/10 text-emerald-200 border border-white/5"
+                        }`}>
+                        {subItem.icon}
+                      </span>
                       {!isCollapsed && <span className="truncate">{subItem.label}</span>}
                       {!isCollapsed && subItem.collection && collectionCounts[subItem.label] > 0 && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white cursor-pointer font-bold ml-2 shadow-sm">
@@ -281,15 +291,18 @@ const Sidebar = ({
           );
         })}
 
-        {/* Back to Site */}
+      </nav>
+
+      {/* Back to Home - Pinned to Bottom */}
+      <div className="p-4 border-t border-white/10 mt-auto bg-black/20">
         <Link
           to="/"
-          className="flex items-center gap-3 px-4 py-3 mt-1 text-sm font-bold rounded-xl text-emerald-200 hover:bg-white/10 hover:text-white transition-colors"
+          className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/10 shadow-md transition-colors ${isCollapsed ? 'justify-center px-0' : ''}`}
         >
           <span className="text-[1.25rem] flex-shrink-0"><FaHome /></span>
-          {!isCollapsed && <span>Back to Site</span>}
+          {!isCollapsed && <span>Back to Home</span>}
         </Link>
-      </nav>
+      </div>
     </aside>
   );
 };

@@ -38,7 +38,14 @@ const OrderTracking = ({ orderId: propOrderId }) => {
   if (loading) return <div className="p-10 text-center">Loading Tracking...</div>;
   if (!order) return <div className="p-10 text-center text-red-600">Order not found</div>;
 
-  const statuses = ["Placed", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Delivered"];
+  const statuses = [
+    "Order Placed",
+    "Order Confirmed",
+    "Processing",
+    "Shipped",
+    "Out for Delivery",
+    "Delivered"
+  ];
   const currentStatusIndex = statuses.findIndex(s => s.toLowerCase() === (order.orderStatus || "").toLowerCase());
 
   return (
