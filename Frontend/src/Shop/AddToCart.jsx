@@ -132,23 +132,36 @@ const AddToCart = () => {
 
   // Robust price extractor: handles the prices object structure
   const extractPriceFromPrices = (pricesObj, weightKey) => {
-    if (!pricesObj || typeof pricesObj !== "object") {
-      console.error("Invalid pricesObj:", pricesObj);
+    let pObj = pricesObj;
+    
+    // Safety: If pricesObj is a string (double-encoded), parse it
+    if (typeof pricesObj === "string") {
+      try {
+        pObj = JSON.parse(pricesObj);
+      } catch (e) {
+        console.error("Failed to parse pricesObj string:", pricesObj);
+        return NaN;
+      }
+    }
+
+    if (!pObj || typeof pObj !== "object") {
+      console.error("Invalid pObj:", pObj);
       return NaN;
     }
 
-    // Direct lookup with the weight key
-    let price = pricesObj[weightKey];
+    // Helper to normalize strings (remove spaces, lowercase)
+    const normalize = (s) => String(s).toLowerCase().replace(/\s+/g, "");
+    const target = normalize(weightKey);
 
-    // If not found, try common variations
+    // Direct lookup first
+    let price = pObj[weightKey];
+
+    // If not found, try normalized matching
     if (price === undefined) {
-      const keys = Object.keys(pricesObj);
-      // Try to find by matching the weight string
-      const matchedKey = keys.find(
-        (k) => String(k).toLowerCase() === String(weightKey).toLowerCase().trim()
-      );
+      const keys = Object.keys(pObj);
+      const matchedKey = keys.find((k) => normalize(k) === target);
       if (matchedKey) {
-        price = pricesObj[matchedKey];
+        price = pObj[matchedKey];
       }
     }
 
@@ -160,7 +173,7 @@ const AddToCart = () => {
       return isNaN(num) ? NaN : num;
     }
 
-    console.error("Price not found:", { weightKey, availableKeys: Object.keys(pricesObj) });
+    console.error("Price not found:", { weightKey, availableKeys: Object.keys(pObj) });
     return NaN;
   };
 

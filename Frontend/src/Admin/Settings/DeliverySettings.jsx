@@ -271,14 +271,14 @@ const DeliverySettings = () => {
 
   return (
     <div className="p-4 sm:p-10 bg-slate-50 min-h-screen">
-      <div className="max-w-2xl mx-auto">
-        <button
+      <div className="max-w-7xl mx-auto">
+        {/* <button
           onClick={() => navigate("/adminpanel/settings")}
           className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors mb-6 group"
         >
           <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
           <span className="font-semibold">Back to Settings</span>
-        </button>
+        </button> */}
 
         <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
           <div className="flex items-center gap-4 mb-8">
@@ -342,116 +342,13 @@ const DeliverySettings = () => {
               </div>
             )}
 
-            {/* Distance Buffer */}
-            <div className="pt-6 border-t border-slate-100">
-              <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">
-                Distance Buffer (Extra KM)
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={settings.distance_buffer}
-                  onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, distance_buffer: e.target.value }))
-                  }
-                  className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold text-slate-900"
-                  placeholder="e.g. 2"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">KM</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-2 ml-1 italic">
-                Added after the multiplier.
-              </p>
-            </div>
+           
 
-            {/* Distance Multiplier */}
-            <div className="pt-6 border-t border-slate-100">
-              <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">
-                Distance Multiplier
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={settings.distance_multiplier}
-                  onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, distance_multiplier: e.target.value }))
-                  }
-                  className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold text-slate-900"
-                  placeholder="e.g. 1.1"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">x</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-2 ml-1 italic">
-                Multiplies the road distance to account for route variations. (1.0 = No change)
-              </p>
-            </div>
+          
 
-            {/* Google Maps API Key */}
-            <div className="pt-6 border-t border-slate-100">
-              <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">
-                Google Maps API Key (Optional)
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={settings.google_maps_api_key}
-                  onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, google_maps_api_key: e.target.value }))
-                  }
-                  className="w-full px-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold text-slate-900"
-                  placeholder="Enter Google Maps API Key"
-                />
-              </div>
-              <p className="text-xs text-slate-400 mt-2 ml-1 italic">
-                If provided, the app will use Google Maps Distance Matrix API for even more accurate road distances.
-              </p>
-            </div>
+            
 
-            {/* Test Calculation Tool */}
-            <div className="pt-8 mt-8 border-t-2 border-emerald-100 bg-emerald-50/30 p-6 rounded-[2rem]">
-              <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
-                <div className="w-2 h-6 bg-emerald-500 rounded-full" />
-                Test Distance Calculation
-              </h3>
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={testLocation}
-                  onChange={(e) => setTestLocation(e.target.value)}
-                  className="flex-1 px-4 py-3 bg-white border border-emerald-100 rounded-2xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold text-slate-900"
-                  placeholder="Enter a city (e.g. Vellore)"
-                />
-                <button
-                  onClick={handleTestCalculation}
-                  disabled={testing}
-                  className="px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition-all disabled:bg-slate-300"
-                >
-                  {testing ? "Testing..." : "Test"}
-                </button>
-              </div>
-
-              {testResult && (
-                <div className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm animate-in fade-in slide-in-from-top-2">
-                  <p className="text-xs text-slate-500 mb-3 font-bold">FOUND: {testResult.location}</p>
-                  <div className="grid grid-cols-2 gap-y-2 text-sm font-medium">
-                    <span className="text-slate-500">Road Distance:</span>
-                    <span className="text-slate-900 text-right">{testResult.rawRoadDist} KM</span>
-                    <span className="text-slate-500">Multiplier:</span>
-                    <span className="text-slate-900 text-right">x{testResult.multiplier}</span>
-                    <span className="text-slate-500">Buffer:</span>
-                    <span className="text-slate-900 text-right">+{testResult.buffer} KM</span>
-                    <div className="col-span-2 pt-2 mt-2 border-t border-slate-100 flex justify-between items-center">
-                      <span className="font-bold text-slate-900 text-base">FINAL RESULT:</span>
-                      <span className="font-black text-emerald-600 text-2xl">{testResult.finalDist} KM</span>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-4 italic">
-                    Method used: {testResult.method}
-                  </p>
-                </div>
-              )}
-            </div>
+           
             {/* Store Location Settings */}
             <div className="pt-6 border-t border-slate-100">
               <div className="flex items-center justify-between mb-4">
@@ -582,7 +479,7 @@ const DeliverySettings = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all duration-300 shadow-lg shadow-slate-900/10 disabled:bg-slate-400"
+              className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-800 transition-all duration-300 shadow-lg shadow-slate-900/10 disabled:bg-slate-400"
             >
               <FaSave />
               {saving ? "Saving Changes..." : "Save Settings"}

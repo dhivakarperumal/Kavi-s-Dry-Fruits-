@@ -147,6 +147,8 @@ const AdminPanel = () => {
         ]);
 
         const orders = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
+        const products = productsRes.status === "fulfilled" ? (productsRes.value.data || []) : [];
+        
         const todayStr = new Date().toISOString().split('T')[0];
         const todayActiveOrdersCount = orders.filter(o => 
           o.orderStatus !== "Delivered" && 
@@ -156,11 +158,17 @@ const AdminPanel = () => {
           (o.created_at || o.date || "").includes(todayStr)
         ).length;
 
+        const lowStockItemsCount = products.filter(p => {
+          const stock = parseFloat(p.stock || 0);
+          return stock <= 3;
+        }).length;
+
         setCollectionCounts({
           users: usersRes.status === "fulfilled" ? (usersRes.value.data?.length || usersRes.value.data?.users?.length || 0) : 0,
-          products: productsRes.status === "fulfilled" ? (productsRes.value.data?.length || 0) : 0,
+          products: products.length,
           orders: orders.length,
           "New Orders": todayActiveOrdersCount,
+          lowStock: lowStockItemsCount
         });
       } catch (err) {
         console.error("Error fetching counts:", err);
@@ -246,6 +254,9 @@ const AdminPanel = () => {
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
           handleLogout={handleLogout}
+          todayOrdersCount={collectionCounts["New Orders"] || 0}
+          lowStockCount={collectionCounts.lowStock || 0}
+          adminName={user?.name || "Administrator"}
         />
 
         <main className="flex-1 overflow-y-auto p-2">
