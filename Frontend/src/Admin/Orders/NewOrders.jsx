@@ -239,13 +239,13 @@ const NewOrders = () => {
                 onClick={() => setViewMode("table")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
               >
-                <FaTable /> Table
+                <FaTable /> 
               </button>
               <button
                 onClick={() => setViewMode("card")}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
               >
-                <FaThLarge /> Cards
+                <FaThLarge /> 
               </button>
             </div>
           </div>
@@ -253,7 +253,7 @@ const NewOrders = () => {
       </div>
 
       {/* Advanced Filters Bar */}
-      <div className="bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-6 mb-8">
+      <div className="bg-white p-5 rounded-[2rem]  shadow-sm flex flex-wrap items-center gap-6 mb-8">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Filter By Date</span>
           <select
@@ -291,7 +291,7 @@ const NewOrders = () => {
 
       {/* Main Content Area */}
       {viewMode === "table" ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-2xl  shadow-xl overflow-hidden animate-in fade-in duration-700">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#009669]  text-white">

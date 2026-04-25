@@ -11,7 +11,9 @@ import {
     FiRefreshCw,
     FiCalendar,
     FiUser,
-    FiPackage
+    FiPackage,
+    FiList,
+    FiGrid
 } from "react-icons/fi";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -108,21 +110,48 @@ const Billing = () => {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 p-2 md:p-8 text-left bg-slate-50/50 min-h-screen">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Billing Console</h1>
-                    <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Financial Intelligence & Transaction Ledger</p>
+                <div className="flex items-center gap-4 w-full md:w-auto">
+
+                    <div className="relative w-full md:w-80">
+                        <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Ref ID, Client or Contact..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-12 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 shadow-sm transition-all text-xs w-full font-black uppercase tracking-widest"
+                        />
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={fetchOrders}
-                        className="flex items-center justify-center w-11 h-11 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm cursor-pointer"
-                        title="Sync Records"
-                    >
-                        <FiRefreshCw size={18} className={loading ? "animate-spin" : ""} />
-                    </button>
+
+                    {/* Advanced Filters / Search Bar */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-0 rounded-[2.5rem]  ">
+                        <div className="flex items-center gap-4">
+
+                            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 ml-4">
+                                <button
+                                    onClick={() => setViewMode("table")}
+                                    className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                                    title="Table View"
+                                >
+                                    <FiList size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("card")}
+                                    className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                                    title="Card View"
+                                >
+                                    <FiGrid size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
                     <Link
                         to="/adminpanel/billing/create"
-                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest"
+                        className="flex items-center gap-2 px-6 py-4.5 bg-[#009669] hover:bg-indigo-700 text-white rounded-2xl text-xs font-black transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest"
                     >
                         <FiPlus size={16} /> New Transaction
                     </Link>
@@ -147,10 +176,10 @@ const Billing = () => {
                             <FiTrendingUp />
                         </div>
                     </div>
-                        <div className="flex items-center gap-2 mt-6 relative z-10">
-                            <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
-                            <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredOrders.length} Settlements Processed</span>
-                        </div>
+                    <div className="flex items-center gap-2 mt-6 relative z-10">
+                        <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                        <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredOrders.length} Settlements Processed</span>
+                    </div>
                 </div>
 
                 {/* Traffic Card */}
@@ -197,49 +226,7 @@ const Billing = () => {
                 </div>
             </div>
 
-            {/* Advanced Filters / Search Bar */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-4">
-                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Ledger Registry</h3>
-                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 ml-4">
-                        <button 
-                            onClick={() => setViewMode("table")} 
-                            className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-                            title="Table View"
-                        >
-                            <FiFileText size={16} />
-                        </button>
-                        <button 
-                            onClick={() => setViewMode("card")} 
-                            className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-                            title="Card View"
-                        >
-                            <FiCreditCard size={16} />
-                        </button>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <select
-                        value={itemsPerPage}
-                        onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                        className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-                    >
-                        <option value={10}>Show 10</option>
-                        <option value={25}>Show 25</option>
-                        <option value={100}>Show 100</option>
-                    </select>
-                    <div className="relative w-full md:w-80">
-                        <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Ref ID, Client or Contact..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-12 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 shadow-sm transition-all text-xs w-full font-black uppercase tracking-widest"
-                        />
-                    </div>
-                </div>
-            </div>
+
 
             {/* Content Area */}
             {loading ? (
@@ -268,61 +255,91 @@ const Billing = () => {
                     )}
                 </div>
             ) : viewMode === "table" ? (
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-2xl hover:shadow-slate-100/50">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-900 border-b border-slate-800">
-                                <tr>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Descriptor</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Timestamp</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Volume</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Classification</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Settlement</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {currentOrders.map((order, index) => {
-                                    const items = order.items.length > 0 ? order.items : order.cartItems;
-                                    const itemCount = items.reduce((s, i) => s + (parseInt(i.quantity || i.qty) || 0), 0);
-                                    const status = order.orderStatus || order.status || "Pending";
+                <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm mt-4">
+                    <table className="w-full border-collapse">
+                        <thead className="bg-[#009669]">
+                            <tr className="text-left">
 
-                                    return (
-                                        <tr key={order.id} className="hover:bg-slate-50 transition-all group">
-                                            <td className="px-8 py-6 font-black text-slate-900 text-xs">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                            <td className="px-8 py-6">
-                                                <span className="bg-slate-100 text-slate-500 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tight group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                                                    #{order.orderId || order.id}
-                                                </span>
-                                            </td>
-                                            <td className="px-8 py-6 text-[11px] text-slate-400 font-black uppercase">
-                                                {formatDateTime(order.created_at || order.date)}
-                                            </td>
-                                            <td className="px-8 py-6">
-                                                <p className="font-black text-slate-900 text-xs uppercase tracking-tight">{order.clientName || order.customer_name || "Guest Trace"}</p>
-                                                <p className="text-[9px] font-bold text-slate-300 mt-1">{order.clientPhone || order.customer_phone}</p>
-                                            </td>
-                                            <td className="px-8 py-6 text-center">
-                                                <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-widest">
-                                                    {itemCount} Units
-                                                </span>
-                                            </td>
-                                            <td className="px-8 py-6">
-                                                <span className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest border ${getStatusStyle(status)}`}>
-                                                    {status}
-                                                </span>
-                                            </td>
-                                            <td className="px-8 py-6 font-black text-slate-900 text-sm text-right tracking-tighter">
-                                                ₹{parseFloat(order.totalAmount || order.total_amount || 0).toFixed(2)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Image</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Descriptor</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Timestamp</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Volume</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Classification</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Settlement</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {currentOrders.map((order, index) => {
+                                const items = order.items.length > 0 ? order.items : order.cartItems;
+                                const itemCount = items.reduce((s, i) => s + (parseInt(i.quantity || i.qty) || 0), 0);
+                                const status = order.orderStatus || order.status || "Pending";
+
+                                return (
+                                    <tr key={order.id} className="hover:bg-slate-50 transition-all group">
+                                        <td className="px-8 py-6 font-black text-slate-900 text-xs">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                        <td className="px-8 py-6">
+                                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center p-0.5 shadow-sm group-hover:border-indigo-600 transition-all">
+                                                {items[0]?.image ? (
+                                                    <img
+                                                        src={(() => {
+                                                            const raw = items[0]?.image || "";
+                                                            let resolved = raw;
+                                                            try {
+                                                                if (typeof raw === 'string' && raw.startsWith('[')) {
+                                                                    resolved = JSON.parse(raw)[0];
+                                                                } else if (Array.isArray(raw)) {
+                                                                    resolved = raw[0];
+                                                                }
+                                                            } catch (e) {
+                                                                resolved = raw;
+                                                            }
+                                                            if (!resolved) return "";
+                                                            if (resolved.startsWith('http') || resolved.startsWith('data:')) return resolved;
+                                                            return `http://localhost:5000${resolved.startsWith('/') ? '' : '/'}${resolved}`;
+                                                        })()}
+                                                        alt=""
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                ) : (
+                                                    <FiPackage className="text-slate-200 group-hover:text-indigo-600" size={16} />
+                                                )}
+                                            </div>
+                                        </td>
+
+                                        <td className="px-8 py-6">
+                                            <span className="bg-slate-100 text-slate-500 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tight group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                                #{order.orderId || order.id}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6 text-[11px] text-slate-400 font-black uppercase">
+                                            {formatDateTime(order.created_at || order.date)}
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="font-black text-slate-900 text-xs uppercase tracking-tight">{order.clientName || order.customer_name || "Guest Trace"}</p>
+                                            <p className="text-[9px] font-bold text-slate-300 mt-1">{order.clientPhone || order.customer_phone}</p>
+                                        </td>
+                                        <td className="px-8 py-6 text-center">
+                                            <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-widest">
+                                                {itemCount} Units
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <span className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest border ${getStatusStyle(status)}`}>
+                                                {status}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6 font-black text-slate-900 text-sm text-right tracking-tighter">
+                                            ₹{parseFloat(order.totalAmount || order.total_amount || 0).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
+
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {currentOrders.map((order, index) => {
@@ -342,7 +359,7 @@ const Billing = () => {
                                     </div>
                                     <div className="w-14 h-14 bg-white border border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden group-hover:border-indigo-600 transition-all p-0.5 shadow-sm">
                                         {items[0]?.image ? (
-                                            <img 
+                                            <img
                                                 src={(() => {
                                                     const raw = items[0]?.image || "";
                                                     let resolved = raw;
@@ -358,8 +375,8 @@ const Billing = () => {
                                                     if (!resolved) return "";
                                                     if (resolved.startsWith('http') || resolved.startsWith('data:')) return resolved;
                                                     return `http://localhost:5000${resolved.startsWith('/') ? '' : '/'}${resolved}`;
-                                                })()} 
-                                                alt="" 
+                                                })()}
+                                                alt=""
                                                 className="w-full h-full object-contain"
                                             />
                                         ) : (
@@ -388,7 +405,7 @@ const Billing = () => {
                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Settlement</p>
                                         <p className="text-2xl font-black text-emerald-600 tracking-tighter">₹{parseFloat(order.totalAmount || order.total_amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</p>
                                     </div>
-                                    <Link 
+                                    <Link
                                         to={`/adminpanel/invoice/${order.orderId || order.id}`}
                                         className="w-12 h-12 bg-slate-50 text-slate-400 border border-slate-100 rounded-2xl flex items-center justify-center hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all"
                                         title="View Invoice"
@@ -408,7 +425,7 @@ const Billing = () => {
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         Showing {Math.min(filteredOrders.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredOrders.length, currentPage * itemsPerPage)} of {filteredOrders.length} Settlements
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -417,7 +434,7 @@ const Billing = () => {
                         >
                             <span className="text-sm">←</span>
                         </button>
-                        
+
                         <div className="flex items-center gap-1">
                             {[...Array(totalPages)].map((_, i) => {
                                 const pg = i + 1;

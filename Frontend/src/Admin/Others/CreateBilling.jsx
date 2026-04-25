@@ -322,8 +322,10 @@ const CreateBilling = () => {
     const price = Number(selectedProduct.price ?? selectedProduct.priceMap?.[selectedProduct.weight]) ||
                   Number(Object.values(selectedProduct.priceMap || {})[0] || 0);
 
-    const total = price * selectedProduct.quantity;
-    const gst = parseFloat(selectedProduct.gst || 0);
+    const qty = parseInt(selectedProduct.quantity || 1);
+    const total = price * qty;
+    const gstPercent = parseFloat(selectedProduct.gst || 0);
+    const calculatedGst = (total * gstPercent) / 100;
 
     const existingIndex = invoiceItems.findIndex(
       (item) => item.id === selectedProduct.id && (isCombo || item.weight === selectedProduct.weight)
@@ -332,30 +334,42 @@ const CreateBilling = () => {
     if (existingIndex !== -1) {
       const updatedItems = [...invoiceItems];
       const existingItem = updatedItems[existingIndex];
-      const newQuantity = existingItem.quantity + selectedProduct.quantity;
+      const newQuantity = existingItem.quantity + qty;
+      const newTotal = price * newQuantity;
+      const newGst = (newTotal * gstPercent) / 100;
+      
       updatedItems[existingIndex] = {
         ...existingItem,
         quantity: newQuantity,
-        total: price * newQuantity,
-        gst: existingItem.gst + gst,
+        total: newTotal,
+        gst: newGst,
       };
       setInvoiceItems(updatedItems);
-      setGstAmount((prev) => prev + gst);
+      // Recalculate total GST from all items for accuracy
+      const totalGst = updatedItems.reduce((sum, item) => sum + (item.gst || 0), 0);
+      setGstAmount(totalGst);
     } else {
       setInvoiceItems([...invoiceItems, { 
         ...selectedProduct, 
-        id: selectedProduct.dbId, // Use database ID for stock reduction
-        productId: selectedProduct.id, // Keep the SKU separately
-        selectedWeight: selectedProduct.weight, // Used by backend for grams calculation
+        id: selectedProduct.dbId, 
+        productId: selectedProduct.id, 
+        selectedWeight: selectedProduct.weight, 
         price, 
+        quantity: qty,
         total, 
-        gst, 
+        gst: calculatedGst, 
         weight: isCombo ? "Combo" : selectedProduct.weight 
       }]);
-      setGstAmount((prev) => prev + gst);
+      setGstAmount((prev) => prev + calculatedGst);
     }
 
     setSelectedProduct({});
+  };
+
+  const removeInvoiceItem = (index) => {
+    const item = invoiceItems[index];
+    setGstAmount((prev) => prev - (item.gst || 0));
+    setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -669,11 +683,12 @@ const CreateBilling = () => {
                         <span className="text-xs font-black text-gray-400">{invoiceItems.length} items total</span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-[#009669] border-b border-emerald-700">
+                    <div className="overflow-hidden rounded-xl border border-slate-100 shadow-sm mt-4">
+                        <table className="w-full border-collapse">
+                            <thead className="bg-[#009669]">
                                 <tr className="text-left">
                                     <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                                    <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">Image</th>
                                     <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest">Product</th>
                                     <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-center">Qty</th>
                                     <th className="px-4 py-4 text-[10px] font-black text-white uppercase tracking-widest text-right">Amount</th>
@@ -684,6 +699,19 @@ const CreateBilling = () => {
                                 {invoiceItems.length > 0 ? invoiceItems.map((item, index) => (
                                     <tr key={index} className="group hover:bg-gray-50/50 transition-colors">
                                         <td className="px-4 py-5 font-bold text-gray-400 text-[10px]">#{item.id}</td>
+                                        <td className="px-4 py-5">
+                                            <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center p-0.5">
+                                                {item.image ? (
+                                                    <img 
+                                                        src={item.image} 
+                                                        alt="" 
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                ) : (
+                                                    <FiPackage className="text-slate-200" size={16} />
+                                                )}
+                                            </div>
+                                        </td>
                                         <td className="px-4 py-5">
                                             <p className="font-black text-slate-700 text-xs">{item.name}</p>
                                             <p className="text-[9px] font-black text-primary bg-primary/5 inline-block px-1.5 py-0.5 rounded mt-1 uppercase tracking-tighter">{item.weight}</p>
