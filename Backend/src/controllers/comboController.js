@@ -70,7 +70,7 @@ exports.addCombo = async (req, res) => {
     await connection.commit();
     res.status(201).json({ id: result.insertId, message: 'Combo pack added and component stock reduced' });
   } catch (error) {
-    await connection.rollback();
+    try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     console.error(error);
     res.status(500).json({ message: 'Server error: ' + error.message });
   } finally {
@@ -114,23 +114,34 @@ exports.updateCombo = async (req, res) => {
     // If stock increased, reduce components
     if (delta > 0 && comboItems && comboItems.length > 0) {
       const details = typeof comboDetails === 'string' ? JSON.parse(comboDetails || '{}') : (comboDetails || {});
-      const totalWeight = Number(details.totalWeight || 1);
+      
+      // Calculate real total weight from items if missing or set to 1
+      let calculatedTotalWeight = comboItems.reduce((sum, ci) => {
+        const wStr = String(ci.weight || "").toLowerCase();
+        let w = parseFloat(wStr) || 0;
+        if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+        return sum + w;
+      }, 0);
 
-      for (const item of comboItems) {
+      const totalWeight = Number(details.totalWeight) || calculatedTotalWeight || 1;
+      const numUnitsDelta = delta / totalWeight;
+
+      // SORT to prevent deadlocks
+      const sortedItems = [...comboItems].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+      for (const item of sortedItems) {
         if (item.name && item.weight) {
           const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
           let itemWeight = parseFloat(itemWeightStr) || 0;
           if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
           
-          const reductionAmount = (delta / totalWeight) * itemWeight;
+          const reductionAmount = numUnitsDelta * itemWeight;
 
-          const [res] = await connection.query(
+          await connection.query(
             `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
             [reductionAmount, item.name]
           );
-          if (res.affectedRows > 0) {
-            console.log(`[Admin-UpdateCombo] Atomic reduction for '${item.name.trim()}': -${reductionAmount}g`);
-          }
+          console.log(`[Admin-UpdateCombo] Sub-item '${item.name}': -${reductionAmount}g`);
         }
       }
     }
@@ -138,7 +149,7 @@ exports.updateCombo = async (req, res) => {
     await connection.commit();
     res.json({ message: 'Combo pack updated and component stock adjusted' });
   } catch (error) {
-    await connection.rollback();
+    try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   } finally {

@@ -11,10 +11,15 @@ import toast from "react-hot-toast";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import OrderTracking from "../Shop/OrderTracking";
-import { FaTruck } from "react-icons/fa";
+import { FaTruck, FaShoppingCart } from "react-icons/fa";
+import { MdRefresh } from "react-icons/md";
+import { useStore } from "../Context/StoreContext";
+import { useNavigate } from "react-router-dom";
 
 const Account = () => {
   const { user } = useAuth();
+  const { addToCart, clearCart, allProducts } = useStore();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("personal");
   const [userInfo, setUserInfo] = useState({
     username: "",
@@ -446,6 +451,52 @@ const Account = () => {
       toast.error("Failed to cancel order.");
     }
   };
+  
+  const handleReorder = async (order) => {
+    try {
+      const items = order.items || order.cartItems || [];
+      if (items.length === 0) return toast.error("No items found in this order.");
+      
+      toast.loading("Re-adding items to cart...");
+      
+      // Clear existing cart first
+      await clearCart();
+      
+      for (const item of items) {
+        // Try to find the full product details from allProducts
+        const fullProduct = allProducts.find(p => String(p.id) === String(item.id || item.productId));
+        
+        if (fullProduct) {
+          await addToCart({
+            ...fullProduct,
+            selectedWeight: item.weight || item.selectedWeight || fullProduct.weights?.[0],
+            qty: item.qty || item.quantity || 1,
+            price: item.price || fullProduct.prices?.[item.weight || item.selectedWeight]?.offerPrice || fullProduct.offerPrice
+          });
+        } else {
+          // Fallback if product not in current inventory (might be discontinued)
+          await addToCart({
+            id: item.id || item.productId,
+            productId: item.productId,
+            name: item.name,
+            image: item.image,
+            selectedWeight: item.weight || item.selectedWeight,
+            qty: item.qty || item.quantity || 1,
+            price: item.price,
+            category: item.category || "General"
+          });
+        }
+      }
+      
+      toast.dismiss();
+      toast.success("Items added to cart!");
+      navigate("/checkout");
+    } catch (err) {
+      toast.dismiss();
+      console.error("Reorder failed:", err);
+      toast.error("Failed to reorder items.");
+    }
+  };
 
   const AddReviewForm = ({ onReviewSubmitted, order, userInfo, userId }) => {
     const [message, setMessage] = useState("");
@@ -692,9 +743,19 @@ const Account = () => {
                             e.stopPropagation();
                             handlePrint(order);
                           }}
-                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm rounded"
+                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm rounded transition-all"
                         >
                           <FaPrint /> Invoice
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReorder(order);
+                          }}
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-sm rounded transition-all shadow-md hover:shadow-blue-200"
+                        >
+                          <MdRefresh size={18} /> Reorder
                         </button>
 
                         {/* {order.orderStatus !== "Cancelled" &&

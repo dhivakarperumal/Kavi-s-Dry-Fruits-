@@ -97,18 +97,23 @@ const createOrder = async (req, res) => {
     );
 
     // 4. Reduce Stock
-    for (const item of parsedItems) {
+    // Sort items by ID/Name BEFORE the loop to fully prevent deadlocks
+    const sortedItems = [...parsedItems].sort((a, b) => 
+      String(a.productId || a.id || "").localeCompare(String(b.productId || b.id || ""))
+    );
+
+    for (const item of sortedItems) {
       const qty = parseInt(item.qty || item.quantity || 1, 10);
-      const isCombo = (item.type === "combo") || (item.category || "").toLowerCase().includes("combo") || String(item.productId || item.id || "").startsWith("KPR");
+      const isCombo = (item.type === "combo") || 
+                      (item.category || "").toLowerCase().includes("combo") || 
+                      String(item.productId || item.id || "").startsWith("KPR");
       const table = isCombo ? 'combos' : 'products';
       
       const columns = isCombo ? 'productId, id, totalStock, comboDetails, comboItems' : 'productId, id, totalStock';
       const [rows] = await connection.query(
         `SELECT ${columns} FROM ${table} WHERE TRIM(productId) = TRIM(?) OR id = ?`, 
-        [item.productId || item.id, item.id]
+        [item.productId || item.id || "", item.id || 0]
       );
-      
-      console.log(`[Stock-Check] Searching ${table} for ID: ${item.productId || item.id}. Found: ${rows.length} rows.`);
       
       if (rows.length > 0) {
         const productData = rows[0];
@@ -120,58 +125,46 @@ const createOrder = async (req, res) => {
           
           let comboWeight = Number(details.totalWeight || 0);
           
-          // FALLBACK: If totalWeight is missing in details, calculate it from comboItems
           if (comboWeight <= 0) {
-            console.log(`[Stock-Warn] comboWeight missing for ${productData.productId}, calculating from items...`);
-            comboWeight = comboItems.reduce((sum, item) => {
-              const wStr = String(item.weight || "").toLowerCase();
-              let wVal = parseFloat(wStr) || 0;
-              if (wStr.includes("kg") || wStr.includes("k")) wVal *= 1000;
-              return sum + wVal;
-            }, 0);
+            comboWeight = comboItems.reduce((sum, ci) => {
+              const wStr = String(ci.weight || ci.selectedWeight || ci.totalWeight || "").toLowerCase();
+              let w = parseFloat(wStr) || 0;
+              if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+              return sum + w;
+            }, 0) || 1;
           }
 
           weightToSubtract = qty * comboWeight;
-          console.log(`[Stock-Check] Combo ${productData.productId} weight per unit: ${comboWeight}g. Qty: ${qty}. Total to subtract: ${weightToSubtract}g`);
+          
+          // Sort sub-items for deadlock prevention
+          const sortedSubItems = [...comboItems].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 
-          for (const subItem of comboItems) {
+          for (const subItem of sortedSubItems) {
             if (subItem.name) {
               const subWeightStr = String(subItem.weight || "").replace(/[()]/g, "").toLowerCase();
               let subWeightPerUnit = parseFloat(subWeightStr) || 0;
-              if (subWeightStr.includes("kg") || subWeightStr.includes("k")) {
-                subWeightPerUnit *= 1000;
-              }
+              if (subWeightStr.includes("kg") || subWeightStr.includes("k")) subWeightPerUnit *= 1000;
               const subTotalToSubtract = qty * subWeightPerUnit;
 
-              // Reduce constituent products stock by weight
-              console.log(`[Stock-Reduce] Combo Sub-Item: ${subItem.name}, Reduction: ${subTotalToSubtract}g`);
               await connection.query(
                 `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, 
                 [subTotalToSubtract, subItem.name]
               );
             }
           }
-          // For combos, we subtract the total weight (grams) from the combo table
-          console.log(`[Stock-Reduce] Combo: ${productData.productId}, Total weight reduction: ${weightToSubtract}g`);
           await connection.query(
             `UPDATE combos SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ? OR id = ?`, 
             [weightToSubtract, productData.productId, productData.id]
           );
         } else {
-          // For single products, we subtract the weight
-          // Support both 'weight' and 'selectedWeight' names from frontend
           const weightStr = String(item.weight || item.selectedWeight || "").toLowerCase();
           let weightPerUnit = parseFloat(weightStr) || 0;
-          if (weightStr.includes("kg") || weightStr.includes("k")) {
-            weightPerUnit *= 1000;
-          }
-          const weightToSubtract = qty * weightPerUnit;
-          
-          console.log(`[Stock-Reduce] Product: ${productData.productId}, Qty: ${qty}, Weight/Unit: ${weightPerUnit}g, Total: ${weightToSubtract}g`);
+          if (weightStr.includes("kg") || weightStr.includes("k")) weightPerUnit *= 1000;
+          const totalWeightToSubtract = qty * weightPerUnit;
           
           await connection.query(
             `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ? OR id = ?`, 
-            [weightToSubtract, productData.productId, productData.id]
+            [totalWeightToSubtract, productData.productId, productData.id]
           );
         }
       }
@@ -180,7 +173,7 @@ const createOrder = async (req, res) => {
     await connection.commit();
     res.json({ id: result.insertId, message: 'Order created and stock updated' });
   } catch (error) {
-    await connection.rollback();
+    try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     console.error('Order creation failed:', error);
     res.status(500).json({ error: error.message });
   } finally {

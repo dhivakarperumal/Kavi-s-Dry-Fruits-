@@ -572,17 +572,24 @@ const Checkout = () => {
 
     const orderId = await generateOrderId();
 
-    const trimmedCartItems = itemsToCheckout.map((item) => ({
-      id: item.id,
-      productId: item.productId || item.id,
-      name: item.name,
-      image: item.images?.[0] || item.image || "",
-      weight: item.selectedWeight || item.weight || item.totalWeight || item.comboDetails?.totalWeight || "",
-      price: parsePrice(item.price || 0),
-      qty: parseInt(item.qty || item.quantity || 1, 10),
-      category: item.category || "",
-      type: item.type || ((item.category || "").toLowerCase().includes("combo") ? "combo" : "single"),
-    }));
+    const trimmedCartItems = itemsToCheckout.map((item) => {
+      // Ensure we don't send massive base64 images to the DB record
+      let safeImage = item.image || (item.images && item.images[0]) || "";
+      if (safeImage.startsWith("data:image") && safeImage.length > 10000) {
+        safeImage = safeImage.substring(0, 100); // Just a reference for base64 if too large
+      }
+
+      return {
+        id: item.id,
+        productId: item.productId || item.id,
+        name: item.name,
+        image: safeImage,
+        weight: item.selectedWeight || item.weight || "",
+        price: parsePrice(item.price || 0),
+        qty: parseInt(item.qty || item.quantity || 1, 10),
+        type: item.type || "single",
+      };
+    });
 
     const orderData = {
       orderId,
