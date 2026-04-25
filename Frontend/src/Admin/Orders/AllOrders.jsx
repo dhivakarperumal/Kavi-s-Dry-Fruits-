@@ -334,7 +334,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
       )}
 
       {viewMode === "table" ? (
-        <div className="bg-white rounded-2xl  shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-700">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
