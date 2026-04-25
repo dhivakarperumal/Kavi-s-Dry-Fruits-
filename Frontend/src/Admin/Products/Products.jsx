@@ -12,6 +12,7 @@ import {
   FaEye,
   FaHeartbeat,
 } from "react-icons/fa";
+import { MdKeyboardArrowDown } from "react-icons/md";
 import { toast } from "react-hot-toast";
 import api from "../../services/api";
 import JsBarcode from "jsbarcode";
@@ -70,7 +71,7 @@ const Products = () => {
   );
 
   return (
-    <div className="w-full p-4 md:p-10 mt-15 min-h-screen bg-transparent animate-in fade-in duration-700">
+    <div className="w-full p-4 md:p-10 mt-0 min-h-screen bg-transparent animate-in fade-in duration-700">
       {/* Header & Tabs */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-12 gap-8 bg-white/40 backdrop-blur-md p-8 rounded-[3rem] border border-white/60 shadow-xl shadow-gray-100">
         <div className="flex-1">
@@ -725,37 +726,40 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         <FaEdit className="text-white text-xs" />
                       </label>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 relative">
                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
-                      <select 
-                        value={item.name} 
-                        onChange={(e) => { 
-                          const val = e.target.value;
-                          const u = [...form.comboItems]; 
-                          const matchedProd = products.find(p => p.name === val);
-                          if (matchedProd) {
-                            const variants = typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : matchedProd.variants;
-                            const images = typeof matchedProd.images === 'string' ? JSON.parse(matchedProd.images || '[]') : matchedProd.images;
-                            u[i].name = matchedProd.name;
-                            u[i].weight = variants[0]?.weight || "";
-                            u[i].image = images[0] || "";
-                          } else {
-                            u[i].name = val;
-                          }
-                          setForm({ ...form, comboItems: u }); 
-                        }} 
-                        className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
-                      >
-                        <option value="">Choose Existing Product</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.name}>
-                            {p.name} ({p.productId})
-                          </option>
-                        ))}
-                        <option value="custom">-- Custom Item --</option>
-                      </select>
+                      <div className="relative">
+                        <select 
+                          value={item.name} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            const u = [...form.comboItems]; 
+                            const matchedProd = products.find(p => p.name === val);
+                            if (matchedProd) {
+                              const variants = typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : matchedProd.variants;
+                              const images = typeof matchedProd.images === 'string' ? JSON.parse(matchedProd.images || '[]') : matchedProd.images;
+                              u[i].name = matchedProd.name;
+                              u[i].weight = variants[0]?.weight || "";
+                              u[i].image = images[0] || "";
+                            } else {
+                              u[i].name = val;
+                            }
+                            setForm({ ...form, comboItems: u }); 
+                          }} 
+                          className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs appearance-none pr-6"
+                        >
+                          <option value="">Choose Existing Product</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} — {p.productId}
+                            </option>
+                          ))}
+                          <option value="custom">-- Custom Item --</option>
+                        </select>
+                        <MdKeyboardArrowDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                      </div>
                     </div>
-                    <div className="w-32 border-l pl-5 flex flex-col">
+                    <div className="w-30 border-l border-gray-100 pl-5 flex flex-col">
                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
                       {(() => {
                         const matchedProd = products.find(p => p.name === item.name);
@@ -763,38 +767,47 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         
                         if (variants.length > 0) {
                           return (
-                            <select 
-                              value={item.weight}
-                              onChange={(e) => {
-                                const u = [...form.comboItems];
-                                u[i].weight = e.target.value;
-                                setForm({ ...form, comboItems: u });
-                              }}
-                              className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs"
-                            >
-                              {!item.weight && <option value="">Select Weight</option>}
-                              {variants.map((v, idx) => (
-                                <option key={idx} value={v.weight}>{v.weight}</option>
-                              ))}
-                            </select>
+                            <div className="relative">
+                              <select 
+                                value={item.weight}
+                                onChange={(e) => {
+                                  const u = [...form.comboItems];
+                                  u[i].weight = e.target.value;
+                                  setForm({ ...form, comboItems: u });
+                                }}
+                                className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs appearance-none pr-6"
+                              >
+                                {!item.weight && <option value="">Select</option>}
+                                {variants.map((v, idx) => (
+                                  <option key={idx} value={v.weight}>{v.weight}</option>
+                                ))}
+                              </select>
+                              <MdKeyboardArrowDown className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none" size={14} />
+                            </div>
                           );
                         }
                         
                         return (
                           <input 
-                            placeholder="e.g. 100g" 
+                            placeholder="Weight" 
                             value={item.weight} 
                             onChange={(e) => { 
                               const u = [...form.comboItems]; 
                               u[i].weight = e.target.value; 
                               setForm({ ...form, comboItems: u }); 
                             }} 
-                            className="w-full outline-none text-blue-600 font-bold bg-transparent border-none p-0 focus:ring-0 text-xs" 
+                            className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 text-xs placeholder:text-gray-300"
                           />
                         );
                       })()}
                     </div>
-                    {form.comboItems.length > 1 && (<button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} className="text-red-300 hover:text-red-600 p-2"><FaTrash size={16} /></button>)}
+                    <button 
+                      type="button" 
+                      onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} 
+                      className="p-3 text-red-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    >
+                      <FaTrash size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
