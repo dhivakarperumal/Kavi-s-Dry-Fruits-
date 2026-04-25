@@ -37,7 +37,6 @@ const createOrder = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const orderId = req.body.orderId || null;
     const userId = req.body.userId || null;
     const clientName = req.body.clientName || null;
     const clientPhone = req.body.clientPhone || null;
@@ -60,11 +59,26 @@ const createOrder = async (req, res) => {
     const items = req.body.items || [];
     const gstAmount = req.body.gstAmount !== undefined ? req.body.gstAmount : 0;
     const totalAmount = req.body.totalAmount !== undefined ? req.body.totalAmount : 0;
+    const docketNumber = req.body.docketNumber || null;
+    const cancelReason = req.body.cancelReason || null;
+
+    // Generate sequential Order ID if not provided or to ensure format ORD0001
+    let orderId = req.body.orderId;
+    if (!orderId || !orderId.startsWith('ORD')) {
+      const [lastOrder] = await connection.query('SELECT orderId FROM orders WHERE orderId LIKE "ORD%" ORDER BY id DESC LIMIT 1');
+      if (lastOrder.length === 0) {
+        orderId = 'ORD0001';
+      } else {
+        const lastId = lastOrder[0].orderId;
+        const lastNum = parseInt(lastId.replace('ORD', ''), 10);
+        orderId = `ORD${String(lastNum + 1).padStart(4, '0')}`;
+      }
+    }
 
     // 1. Insert Order
     const [result] = await connection.query(
-      'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount]
+      'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount, docketNumber, cancelReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount, docketNumber, cancelReason]
     );
 
     // 2. Insert Order Items
@@ -178,14 +192,20 @@ const updateOrder = async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const { orderStatus } = req.body;
+    const { orderStatus, docketNumber, cancelReason } = req.body;
     const { id } = req.params;
 
     // Get orderId first
     const [orders] = await connection.query('SELECT orderId FROM orders WHERE id = ?', [id]);
     if (orders.length > 0) {
       const orderId = orders[0].orderId;
-      await connection.query('UPDATE orders SET orderStatus = ? WHERE id = ?', [orderStatus, id]);
+      
+      // Update the order with new status and optional tracking/cancel info
+      await connection.query(
+        'UPDATE orders SET orderStatus = ?, docketNumber = COALESCE(?, docketNumber), cancelReason = COALESCE(?, cancelReason) WHERE id = ?', 
+        [orderStatus, docketNumber || null, cancelReason || null, id]
+      );
+      
       await connection.query('INSERT INTO order_tracking (order_id, status) VALUES (?, ?)', [orderId, orderStatus]);
     }
 

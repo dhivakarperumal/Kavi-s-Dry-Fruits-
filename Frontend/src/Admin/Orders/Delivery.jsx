@@ -354,6 +354,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                     </td>
                     <td className="px-8 py-6">
                        <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline">#{order.orderId}</button>
+                       {order.docketNumber && (
+                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                           Docket: {order.docketNumber}
+                         </p>
+                       )}
                     </td>
                     <td className="px-8 py-6 uppercase">
                       <p className="font-black text-slate-800 text-sm leading-tight mb-1">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>

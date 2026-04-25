@@ -85,11 +85,21 @@ const AllOrders = () => {
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const generateDocketNumber = () => {
+    const randomDigits = Math.floor(100000000 + Math.random() * 900000000);
+    return `AA${randomDigits}IN`;
+  };
+
   // Status Update Logic
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      await api.put(`/orders/${id}`, { orderStatus: newStatus });
-      toast.success("Status updated!");
+      const data = { orderStatus: newStatus };
+      if (newStatus === "Shipped") {
+        data.docketNumber = generateDocketNumber();
+      }
+
+      await api.put(`/orders/${id}`, data);
+      toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : "Status updated!");
       fetchOrders();
       setCancelReason("");
       setShowCancelInput(null);
@@ -118,7 +128,22 @@ const AllOrders = () => {
     if (current === "Returned") return ["Returned", "Refunded"];
     if (current === "Refunded") return ["Refunded"];
 
-    return all;
+    const currentIndex = all.indexOf(current);
+    if (currentIndex === -1) return all;
+
+    let options = all.slice(currentIndex);
+
+    // 1. Hide "Cancelled" if the order has already been Shipped (index 3)
+    if (currentIndex >= 3) {
+      options = options.filter(s => s !== "Cancelled");
+    }
+
+    // 2. Hide "Returned" and "Refunded" until the order is Delivered (index 5)
+    if (currentIndex < 5) {
+      options = options.filter(s => s !== "Returned" && s !== "Refunded");
+    }
+
+    return options;
   };
 
   // Print Invoice
@@ -301,6 +326,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                     </td>
                     <td className="px-8 py-6">
                        <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline decoration-2">#{order.orderId}</button>
+                       {order.docketNumber && (
+                         <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                           Docket: {order.docketNumber}
+                         </p>
+                       )}
                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
                          {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                        </p>

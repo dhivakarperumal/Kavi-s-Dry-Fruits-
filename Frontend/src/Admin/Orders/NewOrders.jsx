@@ -86,6 +86,11 @@ const NewOrders = () => {
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const generateDocketNumber = () => {
+    const randomDigits = Math.floor(100000000 + Math.random() * 900000000);
+    return `AA${randomDigits}IN`;
+  };
+
   const handleStatusUpdate = async (id, newStatus) => {
     if (!newStatus) return;
     try {
@@ -94,8 +99,13 @@ const NewOrders = () => {
         if (!cancelReason.trim()) return toast.error("Please enter cancel reason");
         data.cancelReason = cancelReason;
       }
+
+      if (newStatus === "Shipped") {
+        data.docketNumber = generateDocketNumber();
+      }
+
       await api.put(`/orders/${id}`, data);
-      toast.success(`Order ${newStatus} successfully!`);
+      toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);
       fetchOrders();
@@ -182,6 +192,25 @@ const NewOrders = () => {
     "Returned",
     "Refunded"
   ];
+
+  const getFilteredStatusOptions = (currentStatus) => {
+    const currentIndex = statusOptions.indexOf(currentStatus);
+    if (currentIndex === -1) return statusOptions;
+    
+    let options = statusOptions.slice(currentIndex);
+
+    // 1. Hide "Cancelled" if the order has already been Shipped (index 3)
+    if (currentIndex >= 3) {
+      options = options.filter(s => s !== "Cancelled");
+    }
+
+    // 2. Hide "Returned" and "Refunded" until the order is Delivered (index 5)
+    if (currentIndex < 5) {
+      options = options.filter(s => s !== "Returned" && s !== "Refunded");
+    }
+
+    return options;
+  };
 
   return (
     <div className="p-4 sm:p-8  min-h-screen">
@@ -283,6 +312,11 @@ const NewOrders = () => {
                     </td>
                     <td className="px-8 py-6">
                       <button onClick={() => setSelectedOrder(order)} className="text-indigo-600 font-black text-sm hover:underline block mb-1">#{order.orderId}</button>
+                      {order.docketNumber && (
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                          Docket: {order.docketNumber}
+                        </p>
+                      )}
                       <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                          <FaClock className="text-slate-300" />
                          {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -306,7 +340,7 @@ const NewOrders = () => {
                             order.orderStatus === 'Order Confirmed' ? 'bg-blue-50 border-blue-100 text-blue-700' :
                             'bg-amber-50 border-amber-100 text-amber-700'}`}
                         >
-                          {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                          {getFilteredStatusOptions(order.orderStatus).map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                         {showCancelInput === order.id && (
                           <div className="flex flex-col gap-2 mt-2 animate-in slide-in-from-top-2 duration-300">
@@ -342,6 +376,9 @@ const NewOrders = () => {
                   <div>
                     <span className="text-[10px] font-black text-indigo-500 bg-indigo-50/50 px-2 py-1 rounded-lg uppercase tracking-widest mb-2 inline-block">Order Pending</span>
                     <h3 onClick={() => setSelectedOrder(order)} className="text-xl font-black text-slate-900 tracking-tighter cursor-pointer hover:text-indigo-600 transition-colors">#{order.orderId}</h3>
+                    {order.docketNumber && (
+                      <p className="text-[9px] font-black text-emerald-600 uppercase mt-1">Docket: {order.docketNumber}</p>
+                    )}
                   </div>
                   <button onClick={() => handlePrint(order)} className="w-12 h-12 bg-slate-50 text-slate-300 border border-slate-100 rounded-2xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
                     <FaPrint size={18} />
@@ -372,7 +409,7 @@ const NewOrders = () => {
                     onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all appearance-none cursor-pointer"
                   >
-                    {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                    {getFilteredStatusOptions(order.orderStatus).map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                </div>
 
