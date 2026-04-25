@@ -52,7 +52,7 @@ const AdminPanel = () => {
   // Sync URL Path with Active Section
   useEffect(() => {
     const path = location.pathname.replace(/^\/adminpanel\/?/, "").toLowerCase();
-    
+
     if (!path) {
       if (activeSection !== "dashboard") setActiveSection("dashboard");
       return;
@@ -126,7 +126,7 @@ const AdminPanel = () => {
       "Profile": "profile",
       "Delivery Settings": "delivery-settings",
     };
-    
+
     const urlPath = reverseMap[newSection] || "dashboard";
     navigate(`/adminpanel/${urlPath === "dashboard" ? "" : urlPath}`);
   };
@@ -148,8 +148,11 @@ const AdminPanel = () => {
 
         const orders = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
         const todayStr = new Date().toISOString().split('T')[0];
-        const todayNewOrdersCount = orders.filter(o => 
-          (o.orderStatus || "").toLowerCase() === "order placed" && 
+        const todayActiveOrdersCount = orders.filter(o => 
+          o.orderStatus !== "Delivered" && 
+          o.orderStatus !== "Cancelled" && 
+          o.orderStatus !== "Returned" && 
+          o.orderStatus !== "Refunded" &&
           (o.created_at || o.date || "").includes(todayStr)
         ).length;
 
@@ -157,7 +160,7 @@ const AdminPanel = () => {
           users: usersRes.status === "fulfilled" ? (usersRes.value.data?.length || usersRes.value.data?.users?.length || 0) : 0,
           products: productsRes.status === "fulfilled" ? (productsRes.value.data?.length || 0) : 0,
           orders: orders.length,
-          "New Orders": todayNewOrdersCount,
+          "New Orders": todayActiveOrdersCount,
         });
       } catch (err) {
         console.error("Error fetching counts:", err);
@@ -179,42 +182,42 @@ const AdminPanel = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard":          return <Dashboard />;
+      case "dashboard": return <Dashboard />;
 
       // Users
-      case "All Users":          return <Users />;
-      case "New Users":          return <NewUsers />;
-      case "Add Users":          return <AddUsers />;
+      case "All Users": return <Users />;
+      case "New Users": return <NewUsers />;
+      case "Add Users": return <AddUsers />;
 
       // Products
-      case "Add Products":       return <Products />;
-      case "All Products":       return <Allproduct />;
-      case "Add Category":       return <Category />;
-      case "Stock Details":      return <StockDetails />;
-      
+      case "Add Products": return <Products />;
+      case "All Products": return <Allproduct />;
+      case "Add Category": return <Category />;
+      case "Stock Details": return <StockDetails />;
+
 
       // Orders
-      case "Orders":             return <Orders />;
-      case "New Orders":         return <NewOrders />;
-      case "All Orders":         return <AllOrders />;
-      case "Delivered Orders":   return <Delivery />;
-      case "Cancel Orders":      return <CancelOrders />;
-      case "Returned Orders":    return <ReturenOrders />;
+      case "Orders": return <Orders />;
+      case "New Orders": return <NewOrders />;
+      case "All Orders": return <AllOrders />;
+      case "Delivered Orders": return <Delivery />;
+      case "Cancel Orders": return <CancelOrders />;
+      case "Returned Orders": return <ReturenOrders />;
 
       // Others
-      case "Stickers":           return <Stickers />;
-      case "Dealer":             return <AddDealer />;
-      case "Reviews":            return <Reviews />;
-      case "SEO Keywords":       return <SEOKeywords />;
-      case "Invoice":            return <Invoice />;
-      case "Billing":            return <Billing />;
-      case "Create Billing":     return <CreateBilling />;
-      case "Add Health Benefit":  return <AddHealthBenefit />;
+      case "Stickers": return <Stickers />;
+      case "Dealer": return <AddDealer />;
+      case "Reviews": return <Reviews />;
+      case "SEO Keywords": return <SEOKeywords />;
+      case "Invoice": return <Invoice />;
+      case "Billing": return <Billing />;
+      case "Create Billing": return <CreateBilling />;
+      case "Add Health Benefit": return <AddHealthBenefit />;
       case "View Health Benefits": return <ViewHealthBenefits />;
-      case "Settings":           return <Settings />;
-      case "Offers & Coupons":   return <OffersAndCoupons />;
-      case "Profile":            return <Profile />;
-      case "Delivery Settings":  return <DeliverySettings />;
+      case "Settings": return <Settings />;
+      case "Offers & Coupons": return <OffersAndCoupons />;
+      case "Profile": return <Profile />;
+      case "Delivery Settings": return <DeliverySettings />;
 
       default:
         return (

@@ -149,7 +149,7 @@ const ReturnOrders = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669]  text-white">
+              <tr className="bg-[#009669] text-white">
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order ID</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Identity</th>
