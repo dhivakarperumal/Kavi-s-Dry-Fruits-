@@ -752,12 +752,17 @@ const Account = () => {
                         <h2 className="font-bold text-base md:text-lg text-black">
                           Order ID: {order.orderId}
                         </h2>
-                        <p className="text-sm text-black">
-                          Placed on:{" "}
+                        <p className="text-sm text-black opacity-60">
                           {order.created_at || order.date
                             ? new Date(order.created_at || order.date).toLocaleString()
                             : "N/A"}
                         </p>
+                        {order.docketNumber && (statusIndex >= 3 || order.orderStatus === "Shipped") && (
+                          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-lg border border-yellow-400 shadow-sm">
+                            <span className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Docket:</span>
+                            <span className="text-xs font-black text-black">{order.docketNumber}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
@@ -766,7 +771,8 @@ const Account = () => {
                             e.stopPropagation();
                             handlePrint(order);
                           }}
-                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm rounded transition-all"
+                          className="flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all shadow-md"
+                          title="Print Invoice"
                         >
                           <FaPrint /> 
                         </button>
@@ -776,76 +782,26 @@ const Account = () => {
                             e.stopPropagation();
                             handleReorder(order);
                           }}
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-sm rounded transition-all shadow-md hover:shadow-blue-200"
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-bold rounded-full transition-all shadow-md"
                         >
                           <MdRefresh size={18} /> Reorder
                         </button>
 
-                        {/* {order.orderStatus !== "Cancelled" &&
-                          order.orderStatus !== "Delivered" && (
-                            <div className="flex flex-col gap-1">
-                              {!order.showCancelReason ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const updated = [...allOrders];
-                                    updated[index].showCancelReason = true;
-                                    setAllOrders(updated);
-                                  }}
-                                  className="bg-red-600 text-white px-3 py-1.5 text-sm rounded hover:bg-red-700"
-                                >
-                                  Cancel Order
-                                </button>
-                              ) : (
-                                <div
-                                  className="bg-red-50 border border-red-300 rounded px-2 py-2 w-full sm:w-64"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <textarea
-                                    placeholder="Reason"
-                                    onChange={(e) => {
-                                      const updated = [...allOrders];
-                                      updated[index].cancelReason =
-                                        e.target.value;
-                                      setAllOrders(updated);
-                                    }}
-                                    className="w-full border border-red-300 rounded text-sm p-1 mb-1"
-                                  />
-                                  <button
-                                    onClick={() => {
-                                      if (
-                                        !order.cancelReason ||
-                                        order.cancelReason.trim() === ""
-                                      ) {
-                                        return toast.error(
-                                          "Please enter a reason."
-                                        );
-                                      }
-                                      cancelOrder(
-                                        order.orderId,
-                                        order.cancelReason,
-                                        index
-                                      );
-                                    }}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-sm w-full rounded"
-                                  >
-                                    Confirm Cancel
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )} */}
-
-                        <div className="bg-white border border-gray-300 rounded px-3 py-1 text-sm font-medium text-center text-black">
+                        <div className={`px-4 py-1.5 rounded-full text-xs font-black shadow-sm border-2 ${
+                          order.orderStatus === "Delivered" ? "bg-green-100 text-green-700 border-green-200" :
+                          order.orderStatus === "Shipped" ? "bg-blue-100 text-blue-700 border-blue-200" :
+                          order.orderStatus === "Processing" ? "bg-orange-50 text-orange-700 border-orange-100" :
+                          order.orderStatus === "Cancelled" ? "bg-red-50 text-red-700 border-red-100" :
+                          "bg-white text-gray-700 border-gray-200"
+                        }`}>
                           {order.orderStatus === "Order Placed" && "🛒 Order Placed"}
                           {order.orderStatus === "Order Confirmed" && "✅ Order Confirmed"}
                           {order.orderStatus === "Processing" && "📦 Processing"}
                           {order.orderStatus === "Shipped" && "🚚 Shipped"}
                           {order.orderStatus === "Out for Delivery" && "🛵 Out for Delivery"}
-                          {order.orderStatus === "Delivered" && "✅ Delivered"}
+                          {order.orderStatus === "Delivered" && "✨ Delivered"}
                           {order.orderStatus === "Cancelled" && "❌ Cancelled"}
                           {order.orderStatus === "Returned" && "🔄 Returned"}
-                          {order.orderStatus === "Refunded" && "💰 Refunded"}
                         </div>
 
                         <button
@@ -854,7 +810,7 @@ const Account = () => {
                             setTrackingOrderId(order.orderId);
                             setActiveTab("tracking");
                           }}
-                          className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+                          className="bg-green-600 text-white px-6 py-2 rounded-full text-sm font-black flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100 border-b-4 border-green-800"
                         >
                           <FaTruck size={14} /> Track
                         </button>
