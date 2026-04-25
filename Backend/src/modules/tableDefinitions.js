@@ -336,6 +336,20 @@ const tables = {
       status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+
+  otp_sessions: `
+    CREATE TABLE IF NOT EXISTS otp_sessions (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      phone VARCHAR(20) NOT NULL,
+      otp_hash VARCHAR(255) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      resend_after DATETIME NOT NULL,
+      attempts TINYINT UNSIGNED DEFAULT 0,
+      is_used TINYINT(1) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_otp_phone (phone)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };
 
