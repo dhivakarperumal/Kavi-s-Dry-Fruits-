@@ -114,7 +114,7 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-[60] transform shadow-2xl transition-all duration-300 md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
+      className={`fixed inset-y-0 left-0 flex flex-col z-[60] transform shadow-2xl transition-all duration-300 md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"
         } ${isCollapsed ? "w-20" : "w-72"}`}
       style={{
         background: "linear-gradient(160deg, #064e3b 0%, #065f46 40%, #064e3b 80%, #064e3b 100%)",
@@ -212,7 +212,7 @@ const Sidebar = ({
       </div>
 
       {/* Sidebar Menu */}
-      <nav className="flex flex-col px-2 py-5 h-full overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <nav className="flex flex-col flex-1 px-2 py-5 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {SideBarmenu.map((item) => {
           const count =
             item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
@@ -291,15 +291,18 @@ const Sidebar = ({
           );
         })}
 
-        {/* Back to Site */}
+      </nav>
+
+      {/* Back to Home - Pinned to Bottom */}
+      <div className="p-4 border-t border-white/10 mt-auto bg-black/20">
         <Link
           to="/"
-          className="flex items-center gap-3 px-4 py-3 mt-1 text-sm font-bold rounded-xl text-emerald-200 hover:bg-white/10 hover:text-white transition-colors"
+          className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/10 shadow-md transition-colors ${isCollapsed ? 'justify-center px-0' : ''}`}
         >
           <span className="text-[1.25rem] flex-shrink-0"><FaHome /></span>
-          {!isCollapsed && <span>Back to Site</span>}
+          {!isCollapsed && <span>Back to Home</span>}
         </Link>
-      </nav>
+      </div>
     </aside>
   );
 };
