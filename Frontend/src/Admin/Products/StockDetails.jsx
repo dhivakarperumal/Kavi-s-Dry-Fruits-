@@ -51,7 +51,7 @@ const StockDetail = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const itemsPerPage = 10;
+  const itemsPerPage = 50;
 
   const fetchStocks = async () => {
     setLoading(true);

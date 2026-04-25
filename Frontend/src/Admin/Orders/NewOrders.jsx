@@ -10,7 +10,7 @@ const NewOrders = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [dateFilter, setDateFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(null);

@@ -59,7 +59,7 @@ const Sidebar = ({
       label: "Orders",
       icon: <FaDropbox />,
       dropdown: [
-        { label: "New Orders", icon: <MdDeliveryDining /> },
+        { label: "New Orders", collection: "New Orders", icon: <MdDeliveryDining /> },
         { label: "All Orders", icon: <FaDropbox /> },
         { label: "Delivered Orders", icon: <MdDeliveryDining /> },
         { label: "Cancel Orders", icon: <MdOutlineCancelPresentation /> },

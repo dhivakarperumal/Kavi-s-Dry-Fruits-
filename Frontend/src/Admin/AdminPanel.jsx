@@ -146,10 +146,18 @@ const AdminPanel = () => {
           api.get("/orders"),
         ]);
 
+        const orders = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayNewOrdersCount = orders.filter(o => 
+          (o.orderStatus || "").toLowerCase() === "order placed" && 
+          (o.created_at || o.date || "").includes(todayStr)
+        ).length;
+
         setCollectionCounts({
-          users:    usersRes.status    === "fulfilled" ? (usersRes.value.data?.length    || usersRes.value.data?.users?.length    || 0) : 0,
+          users: usersRes.status === "fulfilled" ? (usersRes.value.data?.length || usersRes.value.data?.users?.length || 0) : 0,
           products: productsRes.status === "fulfilled" ? (productsRes.value.data?.length || 0) : 0,
-          orders:   ordersRes.status   === "fulfilled" ? (ordersRes.value.data?.length   || 0) : 0,
+          orders: orders.length,
+          "New Orders": todayNewOrdersCount,
         });
       } catch (err) {
         console.error("Error fetching counts:", err);

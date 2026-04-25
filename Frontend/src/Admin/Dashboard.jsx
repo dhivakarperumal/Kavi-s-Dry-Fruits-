@@ -11,6 +11,7 @@ import {
   BarElement,
   LineElement,
   PointElement,
+  Filler,
 } from "chart.js";
 import { Pie, Bar, Line } from "react-chartjs-2";
 import {
@@ -30,7 +31,8 @@ ChartJS.register(
   LinearScale,
   BarElement,
   LineElement,
-  PointElement
+  PointElement,
+  Filler
 );
 
 const DashboardStats = ({ stats }) => (
@@ -103,6 +105,8 @@ const Dashboard = () => {
 
         const revenueByMonth = {};
         const ordersByMonth = {};
+        const deliveredByMonth = {};
+        const cancelledByMonth = {};
         const topProductOrdersMap = {};
         const todayOrdersList = [];
 
@@ -116,8 +120,14 @@ const Dashboard = () => {
           const status = (order.orderStatus || "").toLowerCase();
 
           totalRevenue += total;
-          if (status === "delivered") deliveryCount++;
-          if (status === "cancelled") cancelledCount++;
+          if (status === "delivered") {
+            deliveryCount++;
+            deliveredByMonth[month] = (deliveredByMonth[month] || 0) + 1;
+          }
+          if (status === "cancelled") {
+            cancelledCount++;
+            cancelledByMonth[month] = (cancelledByMonth[month] || 0) + 1;
+          }
           if (status === "returned") returnedCount++;
 
           revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
@@ -152,7 +162,7 @@ const Dashboard = () => {
 
         const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const months = allMonths;
-        
+
         const topProductChartData = Object.entries(topProductOrdersMap)
           .map(([name, monthlyData]) => ({
             label: name,
@@ -179,7 +189,12 @@ const Dashboard = () => {
         setLiveStocks(unifiedProducts.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
         setProductsData(unifiedProducts);
         setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
-        setMonthlyOrders(months.map((m) => ({ month: m, count: ordersByMonth[m] })));
+        setMonthlyOrders(months.map((m) => ({
+          month: m,
+          total: ordersByMonth[m] || 0,
+          delivered: deliveredByMonth[m] || 0,
+          cancelled: cancelledByMonth[m] || 0
+        })));
         setTopProducts(topProductChartData);
         setTodayOrders(todayOrdersList);
 
@@ -192,7 +207,7 @@ const Dashboard = () => {
   }, []);
 
   const lowStockCount = productsData.filter(
-    (item) => (item.combos?.length > 0 ? item.stock <= 5 : item.stock <= 5000)
+    (item) => (Number(item.totalStock) || 0) <= 3000
   ).length;
 
   const profit = stats.revenue * 0.2;
@@ -272,18 +287,68 @@ const Dashboard = () => {
     labels: monthlyOrders.map((d) => d.month),
     datasets: [
       {
-        label: "Orders",
-        data: monthlyOrders.map((d) => d.count),
-        borderColor: "#6366f1",
-        backgroundColor: "rgba(99, 102, 241, 0.15)",
+        label: "Total Orders",
+        data: monthlyOrders.map((d) => d.total),
+        borderColor: "#8b5cf6", // Violet-500
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return "rgba(139, 92, 246, 0.1)";
+          const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+          gradient.addColorStop(0, "rgba(139, 92, 246, 0.0)");
+          gradient.addColorStop(1, "rgba(139, 92, 246, 0.5)");
+          return gradient;
+        },
         borderWidth: 3,
         pointBackgroundColor: "#fff",
-        pointBorderColor: "#6366f1",
+        pointBorderColor: "#8b5cf6",
         pointBorderWidth: 2,
         pointRadius: 4,
         fill: true,
         tension: 0.4,
       },
+      {
+        label: "Delivered",
+        data: monthlyOrders.map((d) => d.delivered),
+        borderColor: "#10b981", // Emerald-500
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return "rgba(16, 185, 129, 0.1)";
+          const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+          gradient.addColorStop(0, "rgba(16, 185, 129, 0.0)");
+          gradient.addColorStop(1, "rgba(16, 185, 129, 0.4)");
+          return gradient;
+        },
+        borderWidth: 3,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#10b981",
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: "Cancelled",
+        data: monthlyOrders.map((d) => d.cancelled),
+        borderColor: "#ef4444", // Red-500
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return "rgba(239, 68, 68, 0.1)";
+          const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+          gradient.addColorStop(0, "rgba(239, 68, 68, 0.0)");
+          gradient.addColorStop(1, "rgba(239, 68, 68, 0.4)");
+          return gradient;
+        },
+        borderWidth: 3,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#ef4444",
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        fill: true,
+        tension: 0.4,
+      }
     ],
   };
 
@@ -315,18 +380,29 @@ const Dashboard = () => {
     })),
   };
 
-  const stockColors = ["#dc2626", "#0284c7", "#f97316", "#16a34a"]; // Red, Blue, Orange, Green
   const stockChart = {
     labels: liveStocks.map((p) => p.name),
     datasets: [
       {
         label: "Stock Level",
-        data: liveStocks.map((p) =>
-          p.combos?.length > 0 ? p.stock : (p.stock || 0) / 1000
-        ),
-        backgroundColor: liveStocks.map((_, i) => stockColors[i % stockColors.length]),
-        borderRadius: 0,
+        data: liveStocks.map((p) => (Number(p.totalStock) || 0) / 1000),
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return "rgba(99, 102, 241, 0.5)";
+          const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+          gradient.addColorStop(0, "rgba(99, 102, 241, 0.05)"); // Indigo very light at bottom
+          gradient.addColorStop(0.5, "rgba(99, 102, 241, 0.4)");
+          gradient.addColorStop(1, "rgba(79, 70, 229, 0.9)"); // Solid Indigo at top
+          return gradient;
+        },
+        hoverBackgroundColor: "#4338ca",
+        borderColor: "#6366f1",
+        borderWidth: { top: 2, right: 2, left: 2, bottom: 0 },
+        borderRadius: { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 },
         borderSkipped: false,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8,
       },
     ],
   };
@@ -335,11 +411,36 @@ const Dashboard = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { weight: '600' } } },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        titleFont: { size: 14, weight: 'bold' },
+        bodyFont: { size: 13 },
+        padding: 14,
+        cornerRadius: 12,
+        displayColors: false,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+      }
     },
     scales: {
       x: { grid: { display: false } },
-      y: { grid: { borderDash: [5, 5] }, beginAtZero: true }
+      y: { grid: { color: 'rgba(226, 232, 240, 0.6)', borderDash: [5, 5] }, beginAtZero: true, border: { display: false } }
+    }
+  };
+
+  const stockChartOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      legend: { display: false }
+    },
+    scales: {
+      ...chartOptions.scales,
+      x: {
+        ...chartOptions.scales.x,
+        ticks: { display: false }
+      }
     }
   };
 
@@ -375,7 +476,7 @@ const Dashboard = () => {
           <FaUsers className="text-red-500" /> Current Product Stock Levels
         </h2>
         <div className="w-full h-80">
-          <Bar data={stockChart} options={chartOptions} />
+          <Bar data={stockChart} options={stockChartOptions} />
         </div>
       </div>
 
@@ -403,10 +504,10 @@ const Dashboard = () => {
       </div>
 
       {/* ✅ Today Orders Table */}
-      <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
+      <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Today’s Orders</h2>
 
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
