@@ -49,7 +49,7 @@ const Topbar = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-4.5 bg-white border-b border-gray-200 shadow-sm">
 
       {/* ── LEFT: Hamburger + Title ── */}
       <div className="flex items-center gap-3">
@@ -61,7 +61,7 @@ const Topbar = ({
         </button>
 
         <div className="hidden sm:flex flex-col leading-tight">
-          <h1 className="text-[17px] font-bold text-gray-800 capitalize">{activeSection}</h1>
+          <h1 className="text-[20px] font-bold text-gray-800 capitalize">{activeSection}</h1>
           <span className="text-[11px] text-gray-500 font-medium">Welcome back, {adminName}!</span>
         </div>
       </div>

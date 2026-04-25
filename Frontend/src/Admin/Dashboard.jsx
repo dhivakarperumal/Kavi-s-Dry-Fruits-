@@ -150,7 +150,9 @@ const Dashboard = () => {
           }
         });
 
-        const months = Object.keys(revenueByMonth);
+        const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const months = allMonths;
+        
         const topProductChartData = Object.entries(topProductOrdersMap)
           .map(([name, monthlyData]) => ({
             label: name,
@@ -256,10 +258,12 @@ const Dashboard = () => {
     labels: monthlyRevenue.map((d) => d.month),
     datasets: [
       {
-        label: "Revenue",
+        label: "Revenue (₹)",
         data: monthlyRevenue.map((d) => d.amount),
-        backgroundColor: "rgba(16, 185, 129, 0.6)",
-        borderRadius: 6,
+        backgroundColor: "#0284c7", // Deep blue
+        hoverBackgroundColor: "#38bdf8", // Lighter blue on hover
+        borderRadius: 2, // Almost square edges
+        borderSkipped: false,
       },
     ],
   };
@@ -271,9 +275,14 @@ const Dashboard = () => {
         label: "Orders",
         data: monthlyOrders.map((d) => d.count),
         borderColor: "#6366f1",
-        backgroundColor: "rgba(99, 102, 241, 0.3)",
+        backgroundColor: "rgba(99, 102, 241, 0.15)",
+        borderWidth: 3,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "#6366f1",
+        pointBorderWidth: 2,
+        pointRadius: 4,
         fill: true,
-        tension: 0.3,
+        tension: 0.4,
       },
     ],
   };
@@ -283,8 +292,9 @@ const Dashboard = () => {
     datasets: [
       {
         data: productCategories.map((d) => d.value),
-        backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1"],
-        borderWidth: 2,
+        backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"],
+        borderWidth: 0,
+        hoverOffset: 4,
       },
     ],
   };
@@ -295,78 +305,105 @@ const Dashboard = () => {
       label: item.label,
       data: item.data,
       borderColor: ["#3b82f6", "#f59e0b", "#10b981"][i % 3],
-      backgroundColor: ["#93c5fd", "#fde68a", "#6ee7b7"][i % 3],
-      fill: false,
+      backgroundColor: ["rgba(59,130,246,0.1)", "rgba(245,158,11,0.1)", "rgba(16,185,129,0.1)"][i % 3],
+      borderWidth: 3,
+      pointBackgroundColor: "#fff",
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      fill: true,
       tension: 0.4,
     })),
   };
 
+  const stockColors = ["#dc2626", "#0284c7", "#f97316", "#16a34a"]; // Red, Blue, Orange, Green
   const stockChart = {
     labels: liveStocks.map((p) => p.name),
     datasets: [
       {
-        label: "Stock",
+        label: "Stock Level",
         data: liveStocks.map((p) =>
           p.combos?.length > 0 ? p.stock : (p.stock || 0) / 1000
         ),
-        backgroundColor: "rgba(239, 68, 68, 0.6)",
-        borderColor: "#dc2626",
-        borderWidth: 2,
+        backgroundColor: liveStocks.map((_, i) => stockColors[i % stockColors.length]),
+        borderRadius: 0,
+        borderSkipped: false,
       },
     ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { borderDash: [5, 5] }, beginAtZero: true }
+    }
   };
 
   return (
     <div className="p-6 min-h-screen">
       <DashboardStats stats={statsData} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Monthly Revenue</h2>
-          <Bar data={revenueChart} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <FaDollarSign className="text-emerald-500" /> Monthly Revenue
+          </h2>
+          <div className="w-full h-72">
+            <Bar data={revenueChart} options={chartOptions} />
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Product Category Distribution
+        <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <FaBoxOpen className="text-blue-500" /> Product Category Distribution
           </h2>
-          <div className="w-full h-64">
+          <div className="w-full h-72">
             <Pie
               data={categoryChart}
-              options={{ responsive: true, maintainAspectRatio: false }}
+              options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }}
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-md">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Current Product Stock Levels
+      <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mb-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <FaUsers className="text-red-500" /> Current Product Stock Levels
         </h2>
-        <Bar data={stockChart} />
+        <div className="w-full h-80">
+          <Bar data={stockChart} options={chartOptions} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 mt-10 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Monthly Orders</h2>
-          <Line data={ordersChart} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <FaTruck className="text-indigo-500" /> Monthly Orders
+          </h2>
+          <div className="w-full h-72">
+            <Line data={ordersChart} options={chartOptions} />
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Top Product Orders Over Months
+        <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <FaUndoAlt className="text-amber-500" /> Top Product Orders Over Months
           </h2>
-          <div className="w-full h-64">
+          <div className="w-full h-72">
             <Line
               data={topProductOrdersChart}
-              options={{ responsive: true, maintainAspectRatio: false }}
+              options={chartOptions}
             />
           </div>
         </div>
       </div>
 
       {/* ✅ Today Orders Table */}
-      <div className="bg-white p-6 rounded-2xl shadow-md mt-10">
+      <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Today’s Orders</h2>
 
         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
@@ -392,14 +429,14 @@ const Dashboard = () => {
                       <td className="px-4 py-4 ">
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${order.orderStatus?.toLowerCase() === "delivered"
-                              ? "bg-green-100 text-green-600"
-                              : order.orderStatus?.toLowerCase() === "cancelled"
-                                ? "bg-red-100 text-red-600"
-                                : order.orderStatus?.toLowerCase() === "order placed"
-                                  ? "bg-blue-100 text-blue-600"
-                                  : order.orderStatus?.toLowerCase() === "shipped"
-                                    ? "bg-purple-100 text-purple-600"
-                                    : "bg-yellow-100 text-yellow-600"
+                            ? "bg-green-100 text-green-600"
+                            : order.orderStatus?.toLowerCase() === "cancelled"
+                              ? "bg-red-100 text-red-600"
+                              : order.orderStatus?.toLowerCase() === "order placed"
+                                ? "bg-blue-100 text-blue-600"
+                                : order.orderStatus?.toLowerCase() === "shipped"
+                                  ? "bg-purple-100 text-purple-600"
+                                  : "bg-yellow-100 text-yellow-600"
                             }`}
                         >
                           {order.orderStatus}
