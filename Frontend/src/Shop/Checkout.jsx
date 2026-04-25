@@ -573,12 +573,7 @@ const Checkout = () => {
     const orderId = await generateOrderId();
 
     const trimmedCartItems = itemsToCheckout.map((item) => {
-      // Ensure we don't send massive base64 images to the DB record
-      let safeImage = item.image || (item.images && item.images[0]) || "";
-      if (safeImage.startsWith("data:image") && safeImage.length > 10000) {
-        safeImage = safeImage.substring(0, 100); // Just a reference for base64 if too large
-      }
-
+      const safeImage = item.image || (item.images && item.images[0]) || "";
       return {
         id: item.id,
         productId: item.productId || item.id,

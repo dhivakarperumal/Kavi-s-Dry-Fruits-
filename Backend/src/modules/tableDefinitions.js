@@ -140,7 +140,7 @@ const tables = {
       order_id VARCHAR(100),
       product_id VARCHAR(100),
       name VARCHAR(255),
-      image TEXT,
+      image LONGTEXT,
       quantity INT,
       price DECIMAL(10, 2),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

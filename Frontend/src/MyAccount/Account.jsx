@@ -47,6 +47,7 @@ const Account = () => {
   });
   const [errors, setErrors] = useState({});
   const [trackingOrderId, setTrackingOrderId] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const location = useLocation();
 
   const countries = ["India"];
@@ -668,27 +669,49 @@ const Account = () => {
           <div className="bg-white p-6 rounded-xl shadow border border-green-200 w-full">
             {!trackingOrderId ? (
               <div className="text-center py-10">
-                <FaTruck className="mx-auto text-green-600 mb-4" size={50} />
-                <h3 className="text-xl font-bold mb-4">Track Your Order</h3>
-                <div className="max-w-md mx-auto flex gap-2">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <FaTruck className="text-green-600" size={40} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Track Your Order</h3>
+                <p className="text-gray-500 mb-8 max-w-sm mx-auto">Enter your Order ID or Docket Number to see real-time tracking information.</p>
+                
+                <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
                   <input 
                     type="text" 
-                    placeholder="Enter Order ID (e.g. ORD-123)" 
-                    className="flex-1 border border-green-300 rounded px-4 py-2 focus:outline-none"
-                    value={trackingOrderId}
-                    onChange={(e) => setTrackingOrderId(e.target.value)}
+                    placeholder="e.g. ORD0001 or AA123456789IN" 
+                    className="flex-1 border border-green-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all font-medium"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && setTrackingOrderId(searchInput.trim())}
                   />
-                  {/* Since state is updated above, we don't need a separate button here unless we want to trigger something */}
+                  <button 
+                    onClick={() => {
+                      if (!searchInput.trim()) return toast.error("Please enter an ID to track");
+                      setTrackingOrderId(searchInput.trim());
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold shadow-lg shadow-green-100 transition-all whitespace-nowrap"
+                  >
+                    Track Now
+                  </button>
                 </div>
-                <p className="text-sm text-gray-500 mt-4">Enter your Order ID to see real-time tracking information.</p>
+                
+                <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto opacity-50 grayscale">
+                   <div className="text-xs font-medium">Order Placed</div>
+                   <div className="text-xs font-medium">Processing</div>
+                   <div className="text-xs font-medium">In Transit</div>
+                   <div className="text-xs font-medium">Delivered</div>
+                </div>
               </div>
             ) : (
               <div>
                 <button 
-                  onClick={() => setTrackingOrderId("")}
-                  className="mb-4 text-green-600 flex items-center gap-1 font-bold"
+                  onClick={() => {
+                    setTrackingOrderId("");
+                    setSearchInput("");
+                  }}
+                  className="mb-6 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 font-bold transition-all"
                 >
-                  ← Back to Search
+                  ← New Search
                 </button>
                 <OrderTracking orderId={trackingOrderId} />
               </div>
@@ -745,7 +768,7 @@ const Account = () => {
                           }}
                           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-sm rounded transition-all"
                         >
-                          <FaPrint /> Invoice
+                          <FaPrint /> 
                         </button>
 
                         <button
@@ -833,7 +856,7 @@ const Account = () => {
                           }}
                           className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
                         >
-                          <FaTruck size={14} /> Track Order
+                          <FaTruck size={14} /> Track
                         </button>
                       </div>
                     </div>
@@ -867,25 +890,37 @@ const Account = () => {
                         </div>
 
                         <div className="divide-y border-t">
-                          {order.cartItems?.map((item, i) => (
-                            <div
-                              key={i}
-                              className="flex justify-between items-center py-3 text-sm"
-                            >
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-gray-500">
-                                  Qty: {item.quantity || item.qty}
+                          {order.cartItems?.map((item, i) => {
+                            const raw = item.image || "";
+                            const imageUrl = (raw.startsWith('data:') || raw.startsWith('http')) 
+                              ? raw 
+                              : `http://localhost:5000/api/uploads/${raw}`;
+
+                            return (
+                              <div
+                                key={i}
+                                className="flex gap-4 items-center py-3 text-sm"
+                              >
+                                <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={item.name} 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.src = "/images/placeholder.png"; }}
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-bold text-gray-900">{item.name}</p>
+                                  <p className="text-gray-500">
+                                    Qty: {item.quantity || item.qty}
+                                  </p>
+                                </div>
+                                <p className="text-orange-600 font-black text-base">
+                                  ₹{((item.quantity || item.qty) * item.price).toFixed(2)}
                                 </p>
                               </div>
-                              <p className="text-orange-600 font-semibold">
-                                ₹
-                                {(
-                                  (item.quantity || item.qty) * item.price
-                                ).toFixed(2)}
-                              </p>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         <div className="mt-4 space-y-1 text-sm text-gray-700">

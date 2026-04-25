@@ -3,11 +3,20 @@ const db = require('../config/db');
 const getOrders = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
-    const parsedRows = rows.map(row => ({
-      ...row,
-      shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
-      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
-      cartItems: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items
+    const parsedRows = await Promise.all(rows.map(async (row) => {
+      const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [row.orderId]);
+      const normalizedItems = items.map(it => ({
+        ...it,
+        productId: it.product_id,
+        qty: it.quantity,
+        id: it.product_id
+      }));
+      return {
+        ...row,
+        shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
+        items: normalizedItems,
+        cartItems: normalizedItems
+      };
     }));
     res.json(parsedRows);
   } catch (error) {
@@ -17,14 +26,25 @@ const getOrders = async (req, res) => {
 
 const getOrderById = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM orders WHERE orderId = ?', [req.params.id]);
+    const { id } = req.params;
+    // Search by either orderId OR docketNumber
+    const [rows] = await db.query('SELECT * FROM orders WHERE orderId = ? OR docketNumber = ?', [id, id]);
     if (rows.length === 0) return res.status(404).json({ message: 'Order not found' });
     
     const row = rows[0];
+    const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [row.orderId]);
+    const normalizedItems = items.map(it => ({
+      ...it,
+      productId: it.product_id,
+      qty: it.quantity,
+      id: it.product_id
+    }));
+    
     const order = {
       ...row,
       shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
-      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
+      items: normalizedItems,
+      cartItems: normalizedItems
     };
     res.json(order);
   } catch (error) {
@@ -75,10 +95,10 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // 1. Insert Order
+    // 1. Insert Order (Store empty items JSON to avoid packet size limits, use order_items table instead)
     const [result] = await connection.query(
       'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount, docketNumber, cancelReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(items), gstAmount, totalAmount, docketNumber, cancelReason]
+      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, '[]', gstAmount, totalAmount, docketNumber, cancelReason]
     );
 
     // 2. Insert Order Items
@@ -225,13 +245,25 @@ const getUserOrders = async (req, res) => {
   try {
     const { userId } = req.params;
     const [rows] = await db.query('SELECT * FROM orders WHERE userId = ? ORDER BY created_at DESC', [userId]);
-    res.json(rows.map(row => ({
-      ...row,
-      shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
-      items: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
-      cartItems: typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items,
-      date: row.created_at
-    })));
+    
+    const ordersWithItems = await Promise.all(rows.map(async (row) => {
+      const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [row.orderId]);
+      const normalizedItems = items.map(it => ({
+        ...it,
+        productId: it.product_id,
+        qty: it.quantity,
+        id: it.product_id
+      }));
+      return {
+        ...row,
+        shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
+        items: normalizedItems,
+        cartItems: normalizedItems,
+        date: row.created_at
+      };
+    }));
+    
+    res.json(ordersWithItems);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -239,7 +271,12 @@ const getUserOrders = async (req, res) => {
 
 const getOrderTracking = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM order_tracking WHERE order_id = ? ORDER BY updated_at ASC', [req.params.id]);
+    const { id } = req.params;
+    const [orders] = await db.query('SELECT orderId FROM orders WHERE orderId = ? OR docketNumber = ?', [id, id]);
+    if (orders.length === 0) return res.json([]);
+    const realOrderId = orders[0].orderId;
+
+    const [rows] = await db.query('SELECT * FROM order_tracking WHERE order_id = ? ORDER BY updated_at ASC', [realOrderId]);
     res.json(rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -261,9 +298,14 @@ const updateLocation = async (req, res) => {
 
 const getOrderLocation = async (req, res) => {
   try {
+    const { id } = req.params;
+    const [orders] = await db.query('SELECT orderId FROM orders WHERE orderId = ? OR docketNumber = ?', [id, id]);
+    if (orders.length === 0) return res.json(null);
+    const realOrderId = orders[0].orderId;
+
     const [rows] = await db.query(
       'SELECT dl.*, da.name as agentName, da.phone as agentPhone FROM delivery_locations dl LEFT JOIN delivery_agents da ON dl.agent_id = da.id WHERE dl.order_id = ? ORDER BY dl.updated_at DESC LIMIT 1',
-      [req.params.id]
+      [realOrderId]
     );
     res.json(rows[0] || null);
   } catch (error) {
