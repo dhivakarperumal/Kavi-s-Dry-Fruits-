@@ -22,7 +22,7 @@ const Billing = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [viewMode, setViewMode] = useState("card"); // "table" or "card"
+    const [viewMode, setViewMode] = useState("table"); 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 

@@ -12,7 +12,7 @@ import JsBarcode from "jsbarcode";
 const Allproduct = () => {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [viewMode, setViewMode] = useState("card");
+  const [viewMode, setViewMode] = useState("table");
 
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [selectedWeight, setSelectedWeight] = useState("All");
@@ -32,7 +32,7 @@ const Allproduct = () => {
 
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = viewMode === "card" ? 12 : 15;
+  const itemsPerPage = viewMode === "card" ? 12 : 10;
 
   const safeParse = (data) => {
     if (!data) return [];
