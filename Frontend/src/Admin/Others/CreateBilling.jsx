@@ -29,7 +29,7 @@ const CreateBilling = () => {
       zip: "",
       country: "India",
     },
-    customerType: "Online Customer",
+    customerType: "Shop Customer",
     paymentMode: "Cash",
   });
   const [shippingCharge, setShippingCharge] = useState(0);
@@ -49,11 +49,12 @@ const CreateBilling = () => {
   const generateOrderId = async () => {
     try {
       const res = await api.get("/orders");
-      const orderNumber = res.data.length + 1;
-      return `KDF00${String(orderNumber).padStart(3, "0")}`;
+      const ordOrders = (res.data || []).filter(o => String(o.orderId || "").startsWith("ORD"));
+      const orderNumber = ordOrders.length + 1;
+      return `ORD${String(orderNumber).padStart(4, "0")}`;
     } catch (err) {
       console.error("generateOrderId error:", err);
-      return `KDF${Date.now()}`;
+      return `ORD${Date.now()}`;
     }
   };
 
@@ -197,7 +198,7 @@ const CreateBilling = () => {
             name: latest.clientName || "",
             email: latest.email || "",
             gst: latest.clientGST || "",
-            customerType: latest.customerType || "Online Customer",
+            customerType: latest.customerType || "Shop Customer",
             paymentMode: latest.paymentMode || "Cash",
             shippingAddress: {
               street: addr.street || "",
@@ -270,18 +271,40 @@ const CreateBilling = () => {
       defaultPrice = calculatePrice(priceMap, defaultWeight, false);
     }
 
-    let images = [];
-    try {
-      images = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || []);
-    } catch(e) { console.error("Images parse error", e); }
+    // Robust Image Resolver (Tack zero index image properly)
+    const getProductImage = () => {
+      let imgs = [];
+      try {
+        if (typeof product.images === 'string' && product.images.startsWith('[')) {
+          imgs = JSON.parse(product.images);
+        } else if (Array.isArray(product.images)) {
+          imgs = product.images;
+        } else if (product.image) {
+          if (typeof product.image === 'string' && product.image.startsWith('[')) {
+            imgs = JSON.parse(product.image);
+          } else {
+            imgs = [product.image];
+          }
+        }
+      } catch (e) {
+        imgs = [product.image];
+      }
+      
+      const rawImg = imgs[0] || product.image || "";
+      if (!rawImg) return "";
+      if (rawImg.startsWith('http') || rawImg.startsWith('data:')) return rawImg;
+      return `http://localhost:5000${rawImg.startsWith('/') ? '' : '/'}${rawImg}`;
+    };
+
+    const firstImage = getProductImage();
 
     setSelectedProduct({
       id: product.productId,
       dbId: product.id,
       name: product.name,
       category: product.category || "",
-      image: images[0] || product.image || "",
-      primaryImage: images[0] || product.image || "",
+      image: firstImage,
+      primaryImage: firstImage,
       weights: variants.map(v => v.weight),
       comboProducts: typeof product.comboItems === 'string' ? JSON.parse(product.comboItems) : (product.comboItems || []),
       quantity: 1,
@@ -459,8 +482,8 @@ const CreateBilling = () => {
                       value={client.customerType}
                       onChange={(e) => setClient({ ...client, customerType: e.target.value })}
                     >
-                      <option>Online Customer</option>
                       <option>Shop Customer</option>
+                      <option>Online Customer</option>
                     </select>
                   </div>
                   <div>
@@ -556,7 +579,7 @@ const CreateBilling = () => {
                                     <div className="w-14 h-14 rounded-xl bg-white overflow-hidden flex-shrink-0 border border-slate-100 flex items-center justify-center p-0.5">
                                        {selectedProduct.primaryImage ? (
                                          <img 
-                                           src={selectedProduct.primaryImage.startsWith('http') ? selectedProduct.primaryImage : `http://localhost:5000${selectedProduct.primaryImage}`} 
+                                           src={selectedProduct.primaryImage} 
                                            alt="" 
                                            className="w-full h-full object-contain"
                                          />
