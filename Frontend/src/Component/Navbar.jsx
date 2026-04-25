@@ -64,7 +64,7 @@ const Navbar = () => {
     }
   };
 
-  const pagesItems = ["About Us", "Contact Us"];
+  const pagesItems = ["About Us", "Contact Us", "Health Benefits"];
   const userFirstLetter = user?.email ? user.email.charAt(0).toUpperCase() : "";
   const isMobile = windowWidth < 1024;
 

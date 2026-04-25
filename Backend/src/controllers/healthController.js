@@ -16,26 +16,68 @@ const getHealthBenefits = async (req, res) => {
 
 const createHealthBenefit = async (req, res) => {
   try {
-    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
+    const { 
+      productId, productName, category, 
+      shortDescription = '', detailedDescription = '', 
+      benefits = [], images = [], videos = [], 
+      howToEat = '', howToStore = '' 
+    } = req.body;
+
     const [result] = await db.query(
       'INSERT INTO health_benefits (productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore]
+      [
+        productId, productName, category, 
+        shortDescription, detailedDescription, 
+        typeof benefits === 'string' ? benefits : JSON.stringify(benefits),
+        typeof images === 'string' ? images : JSON.stringify(images),
+        typeof videos === 'string' ? videos : JSON.stringify(videos),
+        howToEat, howToStore
+      ]
     );
-    res.json({ id: result.insertId, message: 'Health benefit created' });
+    res.json({ id: result.insertId, message: 'Health benefit created successfully' });
   } catch (error) {
+    console.error("Create Health Benefit Error DETAILS:", {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage
+    });
     res.status(500).json({ error: error.message });
   }
 };
 
 const updateHealthBenefit = async (req, res) => {
   try {
-    const { productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore } = req.body;
-    await db.query(
+    const { 
+      productId, productName, category, 
+      shortDescription = '', detailedDescription = '', 
+      benefits = [], images = [], videos = [], 
+      howToEat = '', howToStore = '' 
+    } = req.body;
+
+    const [result] = await db.query(
       'UPDATE health_benefits SET productId=?, productName=?, category=?, shortDescription=?, detailedDescription=?, benefits=?, images=?, videos=?, howToEat=?, howToStore=? WHERE id=?',
-      [productId, productName, category, shortDescription, detailedDescription, JSON.stringify(benefits), JSON.stringify(images), JSON.stringify(videos), howToEat, howToStore, req.params.id]
+      [
+        productId, productName, category, 
+        shortDescription, detailedDescription, 
+        typeof benefits === 'string' ? benefits : JSON.stringify(benefits),
+        typeof images === 'string' ? images : JSON.stringify(images),
+        typeof videos === 'string' ? videos : JSON.stringify(videos),
+        howToEat, howToStore, 
+        req.params.id
+      ]
     );
-    res.json({ message: 'Health benefit updated' });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Health benefit not found' });
+    }
+
+    res.json({ message: 'Health benefit updated successfully' });
   } catch (error) {
+    console.error("Update Health Benefit Error DETAILS:", {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage
+    });
     res.status(500).json({ error: error.message });
   }
 };
