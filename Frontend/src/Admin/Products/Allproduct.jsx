@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import api from "../../services/api";
 import JsBarcode from "jsbarcode";
 
-const Allproduct = () => {
+const Allproduct = ({ adminData }) => {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [viewMode, setViewMode] = useState("table");
@@ -46,6 +46,57 @@ const Allproduct = () => {
   };
 
   const fetchItems = async () => {
+    // Use adminData if available
+    if (adminData && adminData.allProducts && adminData.allProducts.length > 0) {
+      const products = adminData.allProducts || [];
+      const combos = adminData.allCombos || [];
+
+      const mappedCombos = combos.map(c => {
+        const details = typeof c.comboDetails === 'object' ? c.comboDetails : safeParse(c.comboDetails);
+        const items = typeof c.comboItems === 'object' ? c.comboItems : safeParse(c.comboItems);
+        
+        let weight = String(details?.totalWeight || c.totalWeight || '');
+        if (!weight || weight === '0' || weight === 'Combo') {
+          const calculatedWeight = (items || []).reduce((sum, item) => {
+            const wStr = String(item.weight || "").replace(/[()]/g, "").toLowerCase();
+            let w = parseFloat(wStr) || 0;
+            if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+            return sum + w;
+          }, 0);
+          weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo Pack';
+        } else if (!isNaN(weight)) {
+           weight = weight.toLowerCase().includes('g') || weight.toLowerCase().includes('k') ? weight : weight + 'g';
+        }
+        
+        return { ...c, type: 'combo', displayWeight: weight };
+      });
+
+      const unified = [
+        ...products.map(p => ({ ...p, type: 'single' })),
+        ...mappedCombos
+      ];
+      
+      setItems(unified);
+      setFilteredItems(unified);
+      setCategories([...new Set(unified.map(p => p.category).filter(Boolean))]);
+      
+      const allWeights = unified.flatMap(item => {
+        if (item.type === 'single') return safeParse(item.variants).map(v => v.weight);
+        return [item.displayWeight];
+      });
+      setWeights([...new Set(allWeights.filter(Boolean))]);
+      setTags([...new Set(unified.flatMap(item => item.tags || []).filter(Boolean))]);
+      const allPrices = unified.flatMap(item => {
+        if (item.type === 'single') return safeParse(item.variants).map(v => Number(v.offerPrice) || 0);
+        const details = typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails);
+        return [Number(details?.offerPrice) || 0];
+      });
+      const maxP = Math.max(...allPrices, 1000);
+      setMaxPrice(maxP);
+      if (priceRange[1] === 5000) setPriceRange([0, maxP]);
+      return;
+    }
+
     setLoading(true);
     try {
       const [prodRes, comboRes] = await Promise.all([
@@ -67,7 +118,6 @@ const Allproduct = () => {
           }, 0);
           weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo Pack';
         } else if (!isNaN(weight)) {
-           // Standardize numeric weights to string with 'g' if it's just a number
            weight = weight.toLowerCase().includes('g') || weight.toLowerCase().includes('k') ? weight : weight + 'g';
         }
         
@@ -101,7 +151,7 @@ const Allproduct = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(); }, [adminData]);
 
   useEffect(() => {
     let filtered = [...items];

@@ -60,10 +60,10 @@ const DashboardStats = ({ stats }) => (
   </div>
 );
 
-const Dashboard = () => {
+const Dashboard = ({ adminData }) => {
   const [stats, setStats] = useState({
-    users: 0,
-    products: 0,
+    users: adminData?.users || 0,
+    products: adminData?.products || 0,
     deliveryOrders: 0,
     cancelledOrders: 0,
     returnedOrders: 0,
@@ -79,132 +79,138 @@ const Dashboard = () => {
   const [todayOrders, setTodayOrders] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersRes, productsRes, combosRes, ordersRes] = await Promise.all([
-          api.get("/users"),
-          api.get("/products"),
-          api.get("/combos"),
-          api.get("/orders")
-        ]);
+    const processData = (users, products, combos, orders) => {
+      const unifiedProducts = [
+        ...products.map(p => ({ ...p, type: 'single' })),
+        ...combos.map(c => ({ ...c, type: 'combo' }))
+      ];
 
-        const users = usersRes.data.users || usersRes.data || [];
-        const products = productsRes.data || [];
-        const combos = combosRes.data || [];
-        const orders = ordersRes.data || [];
+      let deliveryCount = 0;
+      let cancelledCount = 0;
+      let returnedCount = 0;
+      let totalRevenue = 0;
 
-        const unifiedProducts = [
-          ...products.map(p => ({ ...p, type: 'single' })),
-          ...combos.map(c => ({ ...c, type: 'combo' }))
-        ];
+      const revenueByMonth = {};
+      const ordersByMonth = {};
+      const deliveredByMonth = {};
+      const cancelledByMonth = {};
+      const topProductOrdersMap = {};
+      const todayOrdersList = [];
 
-        let deliveryCount = 0;
-        let cancelledCount = 0;
-        let returnedCount = 0;
-        let totalRevenue = 0;
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
 
-        const revenueByMonth = {};
-        const ordersByMonth = {};
-        const deliveredByMonth = {};
-        const cancelledByMonth = {};
-        const topProductOrdersMap = {};
-        const todayOrdersList = [];
+      orders.forEach(order => {
+        const total = Number(order.totalAmount) || 0;
+        const orderDate = new Date(order.created_at || order.date);
+        const month = orderDate.toLocaleString("default", { month: "short" });
+        const status = (order.orderStatus || "").toLowerCase();
 
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        totalRevenue += total;
+        if (status === "delivered") {
+          deliveryCount++;
+          deliveredByMonth[month] = (deliveredByMonth[month] || 0) + 1;
+        }
+        if (status === "cancelled") {
+          cancelledCount++;
+          cancelledByMonth[month] = (cancelledByMonth[month] || 0) + 1;
+        }
+        if (status === "returned") returnedCount++;
 
-        orders.forEach(order => {
-          const total = Number(order.totalAmount) || 0;
-          const orderDate = new Date(order.created_at || order.date);
-          const month = orderDate.toLocaleString("default", { month: "short" });
-          const status = (order.orderStatus || "").toLowerCase();
+        revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
+        ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
 
-          totalRevenue += total;
-          if (status === "delivered") {
-            deliveryCount++;
-            deliveredByMonth[month] = (deliveredByMonth[month] || 0) + 1;
-          }
-          if (status === "cancelled") {
-            cancelledCount++;
-            cancelledByMonth[month] = (cancelledByMonth[month] || 0) + 1;
-          }
-          if (status === "returned") returnedCount++;
+        // Process items for top products
+        const items = typeof order.items === 'string' ? JSON.parse(order.items || '[]') : (order.items || []);
+        if (Array.isArray(items)) {
+          items.forEach(item => {
+            const key = item.name;
+            if (key) {
+              if (!topProductOrdersMap[key]) topProductOrdersMap[key] = {};
+              topProductOrdersMap[key][month] = (topProductOrdersMap[key][month] || 0) + (Number(item.quantity) || 1);
+            }
+          });
+        }
 
-          revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
-          ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
+        // Today's orders
+        const dt = (order.created_at || order.date || "");
+        if (dt.includes(todayStr)) {
+          todayOrdersList.push({
+            id: order.id,
+            orderId: order.orderId,
+            clientName: order.clientName,
+            clientPhone: order.clientPhone,
+            totalAmount: total,
+            orderStatus: order.orderStatus,
+            shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress || '{}') : order.shippingAddress
+          });
+        }
+      });
 
-          // Process items for top products
-          const items = typeof order.items === 'string' ? JSON.parse(order.items || '[]') : (order.items || []);
-          if (Array.isArray(items)) {
-            items.forEach(item => {
-              const key = item.name;
-              if (key) {
-                if (!topProductOrdersMap[key]) topProductOrdersMap[key] = {};
-                topProductOrdersMap[key][month] = (topProductOrdersMap[key][month] || 0) + (Number(item.quantity) || 1);
-              }
-            });
-          }
+      const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const months = allMonths;
 
-          // Today's orders
-          const dt = (order.created_at || order.date || "");
-          if (dt.includes(todayStr)) {
-            todayOrdersList.push({
-              id: order.id,
-              orderId: order.orderId,
-              clientName: order.clientName,
-              clientPhone: order.clientPhone,
-              totalAmount: total,
-              orderStatus: order.orderStatus,
-              shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress || '{}') : order.shippingAddress
-            });
-          }
-        });
+      const topProductChartData = Object.entries(topProductOrdersMap)
+        .map(([name, monthlyData]) => ({
+          label: name,
+          data: months.map((m) => monthlyData[m] || 0),
+        }))
+        .slice(0, 3);
 
-        const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const months = allMonths;
+      const cats = {};
+      unifiedProducts.forEach(p => {
+        const cat = p.category || "Other";
+        cats[cat] = (cats[cat] || 0) + 1;
+      });
 
-        const topProductChartData = Object.entries(topProductOrdersMap)
-          .map(([name, monthlyData]) => ({
-            label: name,
-            data: months.map((m) => monthlyData[m] || 0),
-          }))
-          .slice(0, 3);
+      setStats({
+        users: users.length,
+        products: unifiedProducts.length,
+        deliveryOrders: deliveryCount,
+        cancelledOrders: cancelledCount,
+        returnedOrders: returnedCount,
+        revenue: totalRevenue
+      });
 
-        const cats = {};
-        unifiedProducts.forEach(p => {
-          const cat = p.category || "Other";
-          cats[cat] = (cats[cat] || 0) + 1;
-        });
-
-        setStats({
-          users: users.length,
-          products: unifiedProducts.length,
-          deliveryOrders: deliveryCount,
-          cancelledOrders: cancelledCount,
-          returnedOrders: returnedCount,
-          revenue: totalRevenue
-        });
-
-        setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
-        setLiveStocks(unifiedProducts.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
-        setProductsData(unifiedProducts);
-        setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
-        setMonthlyOrders(months.map((m) => ({
-          month: m,
-          total: ordersByMonth[m] || 0,
-          delivered: deliveredByMonth[m] || 0,
-          cancelled: cancelledByMonth[m] || 0
-        })));
-        setTopProducts(topProductChartData);
-        setTodayOrders(todayOrdersList);
-
-      } catch (error) {
-        console.error("Dashboard data fetch error:", error);
-      }
+      setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
+      setLiveStocks(unifiedProducts.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
+      setProductsData(unifiedProducts);
+      setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
+      setMonthlyOrders(months.map((m) => ({
+        month: m,
+        total: ordersByMonth[m] || 0,
+        delivered: deliveredByMonth[m] || 0,
+        cancelled: cancelledByMonth[m] || 0
+      })));
+      setTopProducts(topProductChartData);
+      setTodayOrders(todayOrdersList);
     };
 
-    fetchData();
-  }, []);
+    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+      processData(adminData.allUsers || [], adminData.allProducts || [], adminData.allCombos || [], adminData.allOrders || []);
+    } else {
+      // Fallback if no data passed
+      const fetchData = async () => {
+        try {
+          const [usersRes, productsRes, combosRes, ordersRes] = await Promise.all([
+            api.get("/users"),
+            api.get("/products"),
+            api.get("/combos"),
+            api.get("/orders")
+          ]);
+
+          const users = usersRes.data.users || usersRes.data || [];
+          const products = productsRes.data || [];
+          const combos = combosRes.data || [];
+          const orders = ordersRes.data || [];
+          processData(users, products, combos, orders);
+        } catch (error) {
+          console.error("Dashboard data fetch error:", error);
+        }
+      };
+      fetchData();
+    }
+  }, [adminData]);
 
   const lowStockCount = productsData.filter(
     (item) => (Number(item.totalStock) || 0) <= 3000

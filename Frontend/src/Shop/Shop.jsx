@@ -45,7 +45,7 @@ const Shop = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(allProducts?.length === 0);
 
   const safePrices = (allProducts || []).flatMap((p) => {
     if (p.category === "Combo") {
