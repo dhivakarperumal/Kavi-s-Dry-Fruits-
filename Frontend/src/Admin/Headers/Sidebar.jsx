@@ -58,6 +58,7 @@ const Sidebar = ({
     {
       label: "Orders",
       icon: <FaDropbox />,
+      collection: "New Orders",
       dropdown: [
         { label: "New Orders", collection: "New Orders", icon: <MdDeliveryDining /> },
         { label: "All Orders", icon: <FaDropbox /> },
@@ -218,8 +219,8 @@ const Sidebar = ({
         {SideBarmenu.map((item) => {
           let effectiveActiveSection = activeSection === "Create Billing" ? "Billing" : activeSection;
           if (effectiveActiveSection === "Add Products") effectiveActiveSection = "All Products";
-          const count =
-            item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
+          const rawCount = item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
+          const count = Array.isArray(rawCount) ? rawCount.length : rawCount;
           const showBadge = item.collection && count > 0 && effectiveActiveSection !== item.label;
           const isActiveParent = effectiveActiveSection === item.label || (item.dropdown && item.dropdown.some(sub => sub.label === effectiveActiveSection));
 
@@ -282,9 +283,9 @@ const Sidebar = ({
                         {subItem.icon}
                       </span>
                       {!isCollapsed && <span className="truncate">{subItem.label}</span>}
-                      {!isCollapsed && subItem.collection && collectionCounts[subItem.label] > 0 && (
+                      {!isCollapsed && subItem.collection && (Array.isArray(collectionCounts[subItem.label]) ? collectionCounts[subItem.label].length : collectionCounts[subItem.label]) > 0 && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white cursor-pointer font-bold ml-2 shadow-sm">
-                          {collectionCounts[subItem.label]}
+                          {Array.isArray(collectionCounts[subItem.label]) ? collectionCounts[subItem.label].length : collectionCounts[subItem.label]}
                         </span>
                       )}
                     </button>
