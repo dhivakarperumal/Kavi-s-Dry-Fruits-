@@ -276,7 +276,7 @@ const Category = () => {
                 return (
                   <div key={product.id} className="group bg-white rounded-2xl p-4 shadow hover:ring-2 hover:ring-green1 transition relative">
                     <div className="relative h-60 flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden">
-                      <Link to={`/shop/${product.id}`}>
+                      <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`}>
                         <img
                           src={product.images?.[0] || ""}
                           alt={product.name}
@@ -297,7 +297,7 @@ const Category = () => {
                       </button>
                     </div>
 
-                    <Link to={`/shop/${product.id}`} className="font-semibold text-base sm:text-lg text-center block mt-2">
+                    <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="font-semibold text-base sm:text-lg text-center block mt-2">
                       {product.name} ({activeWeight})
                     </Link>
 

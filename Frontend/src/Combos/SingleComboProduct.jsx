@@ -20,17 +20,17 @@ const SingleComboProduct = () => {
   const [reviewInput, setReviewInput] = useState({ user: "", comment: "" });
 
   // Zoom state (add near other useState calls)
-const [zoomed, setZoomed] = useState(false);
-const [backgroundPosition, setBackgroundPosition] = useState("50% 50%");
-const zoomLevel = 2.5; // adjust magnification (1.5 - 3 recommended)
+  const [zoomed, setZoomed] = useState(false);
+  const [backgroundPosition, setBackgroundPosition] = useState("50% 50%");
+  const zoomLevel = 2.5; // adjust magnification (1.5 - 3 recommended)
 
-// call on mouse move / on mouse enter / on mouse leave
-const handleMouseMove = (e) => {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / rect.width) * 100;
-  const y = ((e.clientY - rect.top) / rect.height) * 100;
-  setBackgroundPosition(`${x}% ${y}%`);
-};
+  // call on mouse move / on mouse enter / on mouse leave
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setBackgroundPosition(`${x}% ${y}%`);
+  };
 
 
   useEffect(() => {
@@ -50,6 +50,12 @@ const handleMouseMove = (e) => {
       setQuantity(1);
       window.scrollTo(0, 0);
     } else {
+      // Redirection logic: if it's NOT a combo but exists as a product, move to shop view
+      const existsAsProduct = allProducts.find(p => String(p.id) === String(id) || p.productId === id);
+      if (existsAsProduct) {
+        navigate(`/shop/${existsAsProduct.id}`, { replace: true });
+        return;
+      }
       setProduct(null);
     }
   }, [id, allProducts]);
@@ -93,7 +99,7 @@ const handleMouseMove = (e) => {
       image: product.images?.[0],
       price: offerPrice,
     });
-    
+
   };
 
   // --- Review Submission (MySQL API, no Firebase) ---
@@ -132,17 +138,17 @@ const handleMouseMove = (e) => {
 
   return (
     <>
-    <Helmet>
-  <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
+      <Helmet>
+        <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
 
-  <meta
-    name="description"
-    content="Buy premium dry fruits, nuts, seeds, raisins, dates and combo packs at best prices. Fresh quality delivered across Tamil Nadu and India. Contact +91 94895 93504. Tirupattur 635653."
-  />
+        <meta
+          name="description"
+          content="Buy premium dry fruits, nuts, seeds, raisins, dates and combo packs at best prices. Fresh quality delivered across Tamil Nadu and India. Contact +91 94895 93504. Tirupattur 635653."
+        />
 
-  <meta
-    name="keywords"
-    content="
+        <meta
+          name="keywords"
+          content="
       dry fruits shop, buy dry fruits online, almonds online, cashews online, pistachios online, dates online, raisins online, premium dry fruits store,
       fresh dry fruits Tirupattur, Tirupattur dry fruits, dry fruits 635653, dry fruits Tamil Nadu,
       dry fruits Chennai, dry fruits Coimbatore, dry fruits Madurai, dry fruits Vellore, dry fruits Salem,
@@ -153,15 +159,15 @@ const handleMouseMove = (e) => {
       big size cashews W180, premium almonds, roasted pistachios, family pack dry fruits,
       dry fruits combo pack, Tamil Nadu pincode delivery, dry fruits shop phone number +91 94895 93504
     "
-  />
+        />
 
-  <link rel="canonical" href="https://kavisdryfruits.com/shop" />
+        <link rel="canonical" href="https://kavisdryfruits.com/shop" />
 
-  <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits Tirupattur" />
-  <meta property="og:description" content="Premium almonds, cashews, pista, dates & seeds delivered across Tamil Nadu & India. Contact +91 94895 93504." />
-  <meta property="og:url" content="https://kavisdryfruits.com/shop" />
-  <meta property="og:type" content="website" />
-</Helmet>
+        <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits Tirupattur" />
+        <meta property="og:description" content="Premium almonds, cashews, pista, dates & seeds delivered across Tamil Nadu & India. Contact +91 94895 93504." />
+        <meta property="og:url" content="https://kavisdryfruits.com/shop" />
+        <meta property="og:type" content="website" />
+      </Helmet>
 
       <PageHeader title="Product Details" subtitle="Combos" curpage={product.name} />
 
@@ -179,52 +185,56 @@ const handleMouseMove = (e) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:border-2 md:border-dashed md:border-primary rounded-lg">
 
             {/* Images (with hover/tap zoom) */}
-<div className="flex flex-col items-center border-dashed border-primary md:rounded-xl p-4">
-  <div className="relative w-full">
-    <img
-      src={selectedImage}
-      alt={product.name}
-      className="w-full h-72 mt-1 md:mt-5 sm:h-96 object-contain rounded-lg cursor-zoom-in"
-      onMouseEnter={() => setZoomed(true)}
-      onMouseLeave={() => setZoomed(false)}
-      onMouseMove={handleMouseMove}
-      onTouchStart={() => setZoomed((z) => !z)} // toggle on mobile tap
-    />
+            <div className="flex flex-col items-center border-dashed border-primary md:rounded-xl p-4">
+              <div className="relative w-full">
+                <img
+                  src={selectedImage}
+                  alt={product.name}
+                  className="w-full h-72 mt-1 md:mt-5 sm:h-96 object-contain rounded-lg cursor-zoom-in"
+                  onMouseEnter={() => setZoomed(true)}
+                  onMouseLeave={() => setZoomed(false)}
+                  onMouseMove={handleMouseMove}
+                  onTouchStart={() => setZoomed((z) => !z)} // toggle on mobile tap
+                />
 
-    {/* Zoom pane (desktop only) */}
-    {zoomed && (
-      <div
-        className="hidden md:block absolute top-0 left-full ml-4 w-[420px] h-72 sm:h-96 border rounded-lg overflow-hidden shadow-lg bg-white z-50"
-        style={{
-          backgroundImage: `url(${selectedImage})`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: `${zoomLevel * 100}%`,
-          backgroundPosition: backgroundPosition,
-        }}
-        onMouseMove={handleMouseMove}
-      />
-    )}
-  </div>
+                {/* Zoom pane (desktop only) */}
+                {zoomed && (
+                  <div
+                    className="hidden md:block absolute top-0 left-full ml-4 w-[420px] h-72 sm:h-96 border rounded-lg overflow-hidden shadow-lg bg-white z-50"
+                    style={{
+                      backgroundImage: `url(${selectedImage})`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: `${zoomLevel * 100}%`,
+                      backgroundPosition: backgroundPosition,
+                    }}
+                    onMouseMove={handleMouseMove}
+                  />
+                )}
+              </div>
 
-  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 pt-6 mt-1 md:mt-5 px-4">
-    {product.images?.map((img, idx) => (
-      <img
-        key={idx}
-        src={img}
-        onClick={() => setSelectedImage(img)}
-        className={`w-16 h-16 object-cover border rounded-lg cursor-pointer ${
-          selectedImage === img ? "border-green-600" : "border-2 border-green-200"
-        }`}
-        alt={`thumb-${idx}`}
-      />
-    ))}
-  </div>
-</div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 pt-6 mt-1 md:mt-5 px-4">
+                {product.images?.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    onClick={() => setSelectedImage(img)}
+                    className={`w-16 h-16 object-cover border rounded-lg cursor-pointer ${selectedImage === img ? "border-green-600" : "border-2 border-green-200"
+                      }`}
+                    alt={`thumb-${idx}`}
+                  />
+                ))}
+              </div>
+            </div>
 
 
             {/* Details */}
             <div className="p-2 sm:p-4">
               <h2 className="text-xl sm:text-2xl font-bold text-black">{product.name}</h2>
+              { (product.weights?.[0] || product.totalWeight || product.comboDetails?.totalWeight) && (
+                <p className="text-green-700 font-medium text-sm">
+                  Total Weight: {product.weights?.[0] || product.totalWeight || product.comboDetails?.totalWeight}
+                </p>
+              )}
 
               <div className="flex items-center gap-2 mt-2 text-primary">
                 {[...Array(5)].map((_, i) => (
@@ -290,11 +300,10 @@ const handleMouseMove = (e) => {
               <div className="flex flex-wrap gap-4 mt-6">
                 <button
                   onClick={handleAddToCart}
-                  className={`px-6 py-2 rounded-lg font-semibold transition ${
-                    isOutOfStock
+                  className={`px-6 py-2 rounded-lg font-semibold transition ${isOutOfStock
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:bg-green-700 cursor-pointer"
-                  }`}
+                    }`}
                   disabled={isOutOfStock}
                 >
                   Add to Cart
@@ -311,11 +320,10 @@ const handleMouseMove = (e) => {
                     };
                     navigate("/checkout", { state: { checkoutProduct } });
                   }}
-                  className={`border px-6 py-2 rounded-lg font-semibold ${
-                    isOutOfStock
+                  className={`border px-6 py-2 rounded-lg font-semibold ${isOutOfStock
                       ? "border-gray-400 text-gray-400 cursor-not-allowed"
                       : "border-green-600 text-primary hover:bg-green-50 cursor-pointer"
-                  }`}
+                    }`}
                   disabled={isOutOfStock}
                 >
                   Buy Now
