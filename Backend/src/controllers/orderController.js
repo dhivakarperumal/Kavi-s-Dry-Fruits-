@@ -9,7 +9,8 @@ const getOrders = async (req, res) => {
         ...it,
         productId: it.product_id,
         qty: it.quantity,
-        id: it.product_id
+        id: it.product_id,
+        weight: it.weight
       }));
       return {
         ...row,
@@ -37,7 +38,8 @@ const getOrderById = async (req, res) => {
       ...it,
       productId: it.product_id,
       qty: it.quantity,
-      id: it.product_id
+      id: it.product_id,
+      weight: it.weight
     }));
     
     const order = {
@@ -104,9 +106,10 @@ const createOrder = async (req, res) => {
     // 2. Insert Order Items
     const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
     for (const item of parsedItems) {
+      const weight = item.selectedWeight || item.weight || item.totalWeight || '';
       await connection.query(
-        'INSERT INTO order_items (order_id, product_id, name, image, quantity, price) VALUES (?, ?, ?, ?, ?, ?)',
-        [orderId, item.id || item.productId, item.name, item.image || item.images?.[0] || '', item.qty || item.quantity, item.price]
+        'INSERT INTO order_items (order_id, product_id, name, image, quantity, price, weight) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [orderId, item.id || item.productId, item.name, item.image || item.images?.[0] || '', item.qty || item.quantity, item.price, weight]
       );
     }
 
@@ -252,7 +255,8 @@ const getUserOrders = async (req, res) => {
         ...it,
         productId: it.product_id,
         qty: it.quantity,
-        id: it.product_id
+        id: it.product_id,
+        weight: it.weight
       }));
       return {
         ...row,

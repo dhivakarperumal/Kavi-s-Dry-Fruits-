@@ -76,7 +76,7 @@ const handleMouseMove = (e) => {
   // --- Cart & Favorite Handlers ---
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
-    const weight = product.weights?.[0] || 'Combo';
+    const weight = product.weights?.[0] || product.comboDetails?.totalWeight || product.totalWeight || 'Combo';
     addToCart({
       ...product,
       price: offerPrice,
@@ -307,6 +307,7 @@ const handleMouseMove = (e) => {
                       quantity,
                       price: offerPrice,
                       img: product.images[0],
+                      selectedWeight: product.weights?.[0] || product.comboDetails?.totalWeight || product.totalWeight || 'Combo',
                     };
                     navigate("/checkout", { state: { checkoutProduct } });
                   }}

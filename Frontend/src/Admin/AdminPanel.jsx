@@ -151,10 +151,7 @@ const AdminPanel = () => {
         
         const todayStr = new Date().toISOString().split('T')[0];
         const todayActiveOrdersList = orders.filter(o => 
-          o.orderStatus !== "Delivered" && 
-          o.orderStatus !== "Cancelled" && 
-          o.orderStatus !== "Returned" && 
-          o.orderStatus !== "Refunded" &&
+          o.orderStatus === "Order Placed" &&
           (o.created_at || o.date || "").includes(todayStr)
         );
 

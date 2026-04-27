@@ -147,6 +147,7 @@ const tables = {
       image LONGTEXT,
       quantity INT,
       price DECIMAL(10, 2),
+      weight VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
