@@ -182,20 +182,24 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
           createdAt: new Date().toISOString(),
         });
         toast.success("Health Benefit saved successfully!", { id: toastId });
-        // Reset form
-        setForm({
-          productId: "",
-          productName: "",
-          category: "",
-          shortDescription: "",
-          detailedDescription: "",
-          benefits: [{ title: "", description: "" }],
-          images: [],
-          videos: [{ type: "link", value: "" }],
-          howToEat: "",
-          howToStore: "",
-        });
-        setSearchQuery("");
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          // Reset form if no onSuccess provided (fallback)
+          setForm({
+            productId: "",
+            productName: "",
+            category: "",
+            shortDescription: "",
+            detailedDescription: "",
+            benefits: [{ title: "", description: "" }],
+            images: [],
+            videos: [{ type: "link", value: "" }],
+            howToEat: "",
+            howToStore: "",
+          });
+          setSearchQuery("");
+        }
       }
     } catch (error) {
       console.error("API error:", error);
@@ -497,13 +501,13 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
 
         {/* Form Actions */}
         <div className="pt-10 flex flex-col md:flex-row justify-end items-center gap-6 border-t border-gray-100">
-          {editItem && (
+          {onCancel && (
             <button 
               type="button" 
               onClick={onCancel}
               className="px-10 py-5 rounded-3xl text-gray-500 font-black uppercase tracking-widest text-sm hover:bg-gray-100 transition-all flex items-center gap-3"
             >
-              <FaTimes /> Cancel Edit
+              <FaTimes /> {editItem ? "Cancel Edit" : "Discard"}
             </button>
           )}
           <button 

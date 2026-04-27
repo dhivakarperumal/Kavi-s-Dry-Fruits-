@@ -7,7 +7,7 @@ import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import AddHealthBenefit from "./AddHealthBenefit";
 
-const ViewHealthBenefits = () => {
+const ViewHealthBenefits = ({ setActiveSection }) => {
   const [benefits, setBenefits] = useState([]);
   const [filteredBenefits, setFilteredBenefits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,35 +94,32 @@ const ViewHealthBenefits = () => {
           <div className="w-16 h-16 bg-gradient-to-tr from-emerald-600 to-green-400 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
             <FaHeartbeat size={32} />
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Health Benefits <span className="text-emerald-500">Profiles</span></h1>
-            <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Management Console</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="relative">
+              <div className="relative">
             <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
               type="text" 
               placeholder="Search product..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-12 pr-6 py-3 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm focus:border-emerald-500 outline-none w-64"
+              className="pl-12 pr-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm focus:border-emerald-500 outline-none w-64"
             />
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4">
+     
           
           <select 
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-6 py-3 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm outline-none"
+            className="px-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm outline-none"
           >
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
 
           <button 
-            onClick={() => setShowAddView(true)}
-            className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2"
+            onClick={() => setActiveSection("Add Health Benefit")}
+            className="bg-emerald-600 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2"
           >
             <FaPlus /> New Profile
           </button>
@@ -213,7 +210,7 @@ const ViewHealthBenefits = () => {
                     <div className="flex flex-col items-center gap-4 text-gray-300">
                       <FaHeartbeat size={64} className="opacity-10" />
                       <p className="font-black uppercase tracking-[0.2em] text-sm">No health profiles found</p>
-                      <button onClick={() => setShowAddView(true)} className="text-emerald-500 font-bold hover:underline text-xs">Create your first profile</button>
+                      <button onClick={() => setActiveSection("Add Health Benefit")} className="text-emerald-500 font-bold hover:underline text-xs">Create your first profile</button>
                     </div>
                   </td>
                 </tr>

@@ -249,8 +249,8 @@ const AdminPanel = () => {
       case "Invoice": return <Invoice />;
       case "Billing": return <Billing />;
       case "Create Billing": return <CreateBilling />;
-      case "Add Health Benefit": return <AddHealthBenefit />;
-      case "View Health Benefits": return <ViewHealthBenefits />;
+      case "Add Health Benefit": return <AddHealthBenefit onSuccess={() => setActiveSection("View Health Benefits")} onCancel={() => setActiveSection("View Health Benefits")} />;
+      case "View Health Benefits": return <ViewHealthBenefits setActiveSection={setActiveSection} />;
       case "Settings": return <Settings />;
       case "Offers & Coupons": return <OffersAndCoupons />;
       case "Profile": return <Profile />;
