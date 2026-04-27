@@ -21,6 +21,12 @@ import {
   FaTimesCircle,
   FaUndoAlt,
   FaDollarSign,
+  FaPlusCircle,
+  FaShoppingCart,
+  FaFileInvoice,
+  FaTags,
+  FaWarehouse,
+  FaSearch,
 } from "react-icons/fa";
 
 ChartJS.register(
@@ -60,7 +66,42 @@ const DashboardStats = ({ stats }) => (
   </div>
 );
 
-const Dashboard = ({ adminData }) => {
+const QuickAccess = ({ setActiveSection }) => {
+  const actions = [
+    { title: "Add Product", section: "Add Products", icon: <FaPlusCircle />, color: "from-blue-500 to-indigo-600" },
+    { title: "View Orders", section: "All Orders", icon: <FaShoppingCart />, color: "from-emerald-500 to-teal-600" },
+    { title: "POS Billing", section: "Create Billing", icon: <FaFileInvoice />, color: "from-amber-500 to-orange-600" },
+    { title: "Print Stickers", section: "Stickers", icon: <FaTags />, color: "from-rose-500 to-pink-600" },
+    { title: "Inventory", section: "Stock Details", icon: <FaWarehouse />, color: "from-violet-500 to-purple-600" },
+    { title: "SEO Settings", section: "SEO Keywords", icon: <FaSearch />, color: "from-slate-600 to-slate-800" },
+  ];
+
+  return (
+    <div className="mb-10">
+      <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 px-1">
+        <span className="w-2 h-8 bg-emerald-500 rounded-full"></span>
+        Quick Access
+      </h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+        {actions.map((action, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveSection(action.section)}
+            className="group relative flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+          >
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 bg-gradient-to-br ${action.color} transition-opacity duration-300`}></div>
+            <div className={`text-2xl mb-3 p-3 rounded-xl bg-gradient-to-br ${action.color} text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6`}>
+              {action.icon}
+            </div>
+            <span className="text-sm font-bold text-slate-700 tracking-tight">{action.title}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ adminData, setActiveSection }) => {
   const [stats, setStats] = useState({
     users: adminData?.users || 0,
     products: adminData?.products || 0,
@@ -451,8 +492,18 @@ const Dashboard = ({ adminData }) => {
   };
 
   return (
-    <div className="p-6 min-h-screen">
-      <DashboardStats stats={statsData} />
+    <div className="p-4 md:p-8 min-h-screen ">
+    
+
+      <QuickAccess setActiveSection={setActiveSection} />
+      
+      <div className="mb-10">
+        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 px-1">
+          <span className="w-2 h-8 bg-blue-500 rounded-full"></span>
+          Key Performance Indicators
+        </h2>
+        <DashboardStats stats={statsData} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
@@ -510,40 +561,43 @@ const Dashboard = ({ adminData }) => {
       </div>
 
       {/* ✅ Today Orders Table */}
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Today’s Orders</h2>
+      <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <span className="w-2 h-8 bg-emerald-500 rounded-full"></span>
+          Today’s Orders
+        </h2>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-[#009669]  text-white">
-                  <th className="px-4 py-4 ">S No </th>
-                  <th className="px-4 py-4 ">Order ID</th>
-                  <th className="px-4 py-4 ">Customer Name</th>
-                  <th className="px-4 py-4 ">Amount</th>
-                  <th className="px-4 py-4 ">Status</th>
+                <tr className="bg-[#009669] text-white uppercase text-xs font-black tracking-widest">
+                  <th className="px-6 py-5 ">S No </th>
+                  <th className="px-6 py-5 ">Order ID</th>
+                  <th className="px-6 py-5 ">Customer Name</th>
+                  <th className="px-6 py-5 ">Amount</th>
+                  <th className="px-6 py-5 ">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {todayOrders.length > 0 ? (
                   todayOrders.map((order, ind) => (
-                    <tr key={order.id} className=" hover:bg-gray-50">
-                      <td className="px-4 py-4 ">{ind + 1}</td>
-                      <td className="px-4 py-4 ">{order.orderId}</td>
-                      <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
-                      <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
-                      <td className="px-4 py-4 ">
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-5 text-slate-500 font-medium">{ind + 1}</td>
+                      <td className="px-6 py-5 text-slate-700 font-bold tracking-tight">{order.orderId}</td>
+                      <td className="px-6 py-5 text-slate-700 font-semibold">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
+                      <td className="px-6 py-5 text-emerald-600 font-black">₹ {order.totalAmount}</td>
+                      <td className="px-6 py-5">
                         <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${order.orderStatus?.toLowerCase() === "delivered"
-                            ? "bg-green-100 text-green-600"
+                          className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${order.orderStatus?.toLowerCase() === "delivered"
+                            ? "bg-emerald-100 text-emerald-700"
                             : order.orderStatus?.toLowerCase() === "cancelled"
-                              ? "bg-red-100 text-red-600"
+                              ? "bg-rose-100 text-rose-700"
                               : order.orderStatus?.toLowerCase() === "order placed"
-                                ? "bg-blue-100 text-blue-600"
+                                ? "bg-sky-100 text-sky-700"
                                 : order.orderStatus?.toLowerCase() === "shipped"
-                                  ? "bg-purple-100 text-purple-600"
-                                  : "bg-yellow-100 text-yellow-600"
+                                  ? "bg-indigo-100 text-indigo-700"
+                                  : "bg-amber-100 text-amber-700"
                             }`}
                         >
                           {order.orderStatus}

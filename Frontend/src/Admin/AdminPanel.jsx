@@ -219,7 +219,7 @@ const AdminPanel = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard": return <Dashboard adminData={collectionCounts} />;
+      case "dashboard": return <Dashboard adminData={collectionCounts} setActiveSection={handleSectionChange} />;
 
       // Users
       case "All Users": return <Users adminData={collectionCounts} />;
