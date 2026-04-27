@@ -115,11 +115,7 @@ const Products = () => {
               categories={categories} 
               onSuccess={() => { 
                 fetchData(); 
-                if (editItem) {
-                  navigate('/adminpanel/all-products');
-                } else {
-                  window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset view if adding new
-                }
+                navigate('/adminpanel/all-products');
               }} 
               products={products} 
               editItem={editItem} 
@@ -129,11 +125,7 @@ const Products = () => {
               categories={categories} 
               onSuccess={() => { 
                 fetchData(); 
-                if (editItem) {
-                  navigate('/adminpanel/all-products');
-                } else {
-                  window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset view if adding new
-                }
+                navigate('/adminpanel/all-products');
               }} 
               combos={combos} 
               products={products} 
@@ -161,6 +153,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     barcode: "",
     barcodeValue: "",
     rating: 5,
+    status: "Active",
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
@@ -191,7 +184,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
         ...prev,
         productId: `PR${String(maxId + 1).padStart(3, "0")}`,
         name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0",
-        barcodeValue: "", barcode: ""
+        barcodeValue: "", barcode: "", status: "Active"
       }));
     }
   }, [editItem, products]);
@@ -279,7 +272,9 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
-                  <div>
+                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                </div>
+                <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
                       Total Weight
                       <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
@@ -309,7 +304,6 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                     </div>
                     <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">{manualWeight ? 'Type to override · click ↺ to sync from variants' : 'Auto-summed from variant weights'}</p>
                   </div>
-                </div>
                 {/* <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
                   <div className="flex items-center gap-4">
@@ -422,6 +416,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     barcode: "",
     barcodeValue: "",
     rating: 5,
+    status: "Active",
   });
   const [loading, setLoading] = useState(false);
   const [manualWeight, setManualWeight] = useState(false);
@@ -458,7 +453,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       setForm((prev) => ({
         ...prev,
         productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
-        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }
+        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, status: "Active"
       }));
     }
   }, [editItem, combos]);
@@ -603,6 +598,10 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                       </div>
                     </div>
                   )}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-amber-800 shadow-sm text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                    <div className="hidden"></div>
+                  </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                       Total Weight

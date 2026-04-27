@@ -99,10 +99,12 @@ const Sidebar = ({
   };
 
   useEffect(() => {
-    const parent = SideBarmenu.find(item =>
-      item.label === activeSection ||
-      (item.dropdown && item.dropdown.some(sub => sub.label === activeSection))
-    );
+    const parent = SideBarmenu.find(item => {
+      let active = activeSection === "Create Billing" ? "Billing" : activeSection;
+      if (active === "Add Products") active = "All Products";
+      return item.label === active ||
+      (item.dropdown && item.dropdown.some(sub => sub.label === active));
+    });
     if (parent && parent.dropdown) {
       // Open the parent dropdown of the active section
       setOpenDropdown(parent.label);
@@ -214,16 +216,18 @@ const Sidebar = ({
       {/* Sidebar Menu */}
       <nav className="flex flex-col flex-1 px-2 py-5 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {SideBarmenu.map((item) => {
+          let effectiveActiveSection = activeSection === "Create Billing" ? "Billing" : activeSection;
+          if (effectiveActiveSection === "Add Products") effectiveActiveSection = "All Products";
           const count =
             item.label === "Stock Details" ? lowStockCount : collectionCounts[item.label] || 0;
-          const showBadge = item.collection && count > 0 && activeSection !== item.label;
-          const isActiveParent = activeSection === item.label || (item.dropdown && item.dropdown.some(sub => sub.label === activeSection));
+          const showBadge = item.collection && count > 0 && effectiveActiveSection !== item.label;
+          const isActiveParent = effectiveActiveSection === item.label || (item.dropdown && item.dropdown.some(sub => sub.label === effectiveActiveSection));
 
           return (
             <div key={item.label} className="mb-1">
               <button
                 onClick={() => handleClick(item)}
-                className={`flex justify-between items-center w-full text-left px-4 py-3.5 font-bold cursor-pointer transition-all capitalize ${activeSection === item.label
+                className={`flex justify-between items-center w-full text-left px-4 py-3.5 font-bold cursor-pointer transition-all capitalize ${effectiveActiveSection === item.label
                   ? "bg-gradient-to-r from-white/20 to-white/5 text-white shadow-[0_4px_12px_rgba(0,0,0,0.15)] border-l-[4px] border-[#6ee7b7] rounded-r-xl"
                   : isActiveParent
                     ? "bg-white/10 text-white rounded-xl"
@@ -231,7 +235,7 @@ const Sidebar = ({
                   }`}
               >
                 <span className="flex items-center gap-3">
-                  <span className={`text-[1.25rem] flex-shrink-0 p-2 rounded-lg flex items-center justify-center transition-colors ${activeSection === item.label
+                  <span className={`text-[1.25rem] flex-shrink-0 p-2 rounded-lg flex items-center justify-center transition-colors ${effectiveActiveSection === item.label
                       ? "bg-white text-[#064e3b] shadow-md"
                       : "bg-white/10 text-emerald-100 shadow-sm border border-white/5"
                     }`}>
@@ -266,12 +270,12 @@ const Sidebar = ({
                         setActiveSection(subItem.label);
                         if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
-                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold text-sm transition-all cursor-pointer capitalize ${activeSection === subItem.label
+                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold text-sm transition-all cursor-pointer capitalize ${effectiveActiveSection === subItem.label
                         ? "bg-gradient-to-r from-white/20 to-transparent text-white shadow-md border-l-[3px] border-[#6ee7b7] rounded-r-lg mb-1"
                         : "text-emerald-200 hover:bg-white/10 hover:text-white rounded-lg mb-1"
                         }`}
                     >
-                      <span className={`text-[1.1rem] flex-shrink-0 p-1.5 rounded-md flex items-center justify-center transition-colors ${activeSection === subItem.label
+                      <span className={`text-[1.1rem] flex-shrink-0 p-1.5 rounded-md flex items-center justify-center transition-colors ${effectiveActiveSection === subItem.label
                           ? "bg-white text-[#064e3b] shadow-sm"
                           : "bg-white/10 text-emerald-200 border border-white/5"
                         }`}>
