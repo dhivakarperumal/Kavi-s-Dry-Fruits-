@@ -293,7 +293,7 @@ const AdminPanel = () => {
           adminName={user?.name || "Administrator"}
         />
 
-        <main className="flex-1 overflow-y-auto p-2">
+        <main className="flex-1 overflow-y-auto custom-scrollbar p-2">
           {renderContent()}
         </main>
 
