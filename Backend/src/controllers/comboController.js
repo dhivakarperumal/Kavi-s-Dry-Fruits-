@@ -23,13 +23,13 @@ exports.addCombo = async (req, res) => {
     await connection.beginTransaction();
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, comboItems, comboDetails, totalStock
+      images, comboItems, comboDetails, totalStock, status
     } = req.body;
 
     const [result] = await connection.query(
       `INSERT INTO combos 
-      (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, comboItems, comboDetails, totalStock) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, comboItems, comboDetails, totalStock, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId, name, description, 
         JSON.stringify(healthBenefits || []),
@@ -37,7 +37,8 @@ exports.addCombo = async (req, res) => {
         JSON.stringify(images || []),
         JSON.stringify(comboItems || []),
         JSON.stringify(comboDetails || {}),
-        totalStock || 0
+        totalStock || 0,
+        status || 'Active'
       ]
     );
 
@@ -85,7 +86,7 @@ exports.updateCombo = async (req, res) => {
     const { id } = req.params;
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, comboItems, comboDetails, totalStock
+      images, comboItems, comboDetails, totalStock, status
     } = req.body;
 
     // Get old stock to calculate delta
@@ -97,7 +98,7 @@ exports.updateCombo = async (req, res) => {
     await connection.query(
       `UPDATE combos SET 
       productId = ?, name = ?, description = ?, healthBenefits = ?, category = ?, rating = ?, barcode = ?, barcodeValue = ?, 
-      images = ?, comboItems = ?, comboDetails = ?, totalStock = ? 
+      images = ?, comboItems = ?, comboDetails = ?, totalStock = ?, status = ? 
       WHERE id = ?`,
       [
         productId, name, description, 
@@ -107,6 +108,7 @@ exports.updateCombo = async (req, res) => {
         JSON.stringify(comboItems || []),
         JSON.stringify(comboDetails || {}),
         totalStock || 0,
+        status || 'Active',
         id
       ]
     );
