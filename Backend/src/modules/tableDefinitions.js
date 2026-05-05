@@ -39,6 +39,7 @@ const tables = {
       variants LONGTEXT,
       totalStock INT DEFAULT 0,
       lastInvoice VARCHAR(100),
+      status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -58,6 +59,7 @@ const tables = {
       comboDetails LONGTEXT,
       totalStock INT DEFAULT 0,
       lastInvoice VARCHAR(100),
+      status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -131,6 +133,8 @@ const tables = {
       gstAmount DECIMAL(10,2),
       totalAmount DECIMAL(10,2),
       items JSON,
+      docketNumber VARCHAR(255),
+      cancelReason TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -143,6 +147,7 @@ const tables = {
       image LONGTEXT,
       quantity INT,
       price DECIMAL(10, 2),
+      weight VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -335,6 +340,20 @@ const tables = {
       phone VARCHAR(50) NOT NULL,
       status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+
+  otp_sessions: `
+    CREATE TABLE IF NOT EXISTS otp_sessions (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      phone VARCHAR(20) NOT NULL,
+      otp_hash VARCHAR(255) NOT NULL,
+      expires_at DATETIME NOT NULL,
+      resend_after DATETIME NOT NULL,
+      attempts TINYINT UNSIGNED DEFAULT 0,
+      is_used TINYINT(1) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_otp_phone (phone)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };

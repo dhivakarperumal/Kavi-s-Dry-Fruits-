@@ -4,6 +4,8 @@ import { toast } from "react-hot-toast";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
 import api from "../services/api";
+import adminDataService from "../services/adminDataService";
+import LodingPage from "../Component/LoadingPage";
 
 import Sidebar from "./Headers/Sidebar";
 import Topbar from "./Headers/TopHeader";
@@ -43,7 +45,20 @@ const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [collectionCounts, setCollectionCounts] = useState({});
+  
+  // Use cache to initialize data and loading state
+  const [loading, setLoading] = useState(!adminDataService.isFresh());
+  const [collectionCounts, setCollectionCounts] = useState(adminDataService.getCache() || {
+    users: 0,
+    products: 0,
+    orders: 0,
+    "New Orders": [],
+    lowStockList: [],
+    allProducts: [],
+    allOrders: [],
+    allUsers: [],
+    allCombos: []
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -139,31 +154,53 @@ const AdminPanel = () => {
     }
 
     const fetchCounts = async () => {
+      // If we don't have fresh data, show loading
+      if (!adminDataService.isFresh()) {
+        setLoading(true);
+      }
+
       try {
-        const [usersRes, productsRes, ordersRes] = await Promise.allSettled([
+        const [usersRes, productsRes, combosRes, ordersRes] = await Promise.allSettled([
           api.get("/users"),
           api.get("/products"),
+          api.get("/combos"),
           api.get("/orders"),
         ]);
 
-        const orders = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
+        const usersList = usersRes.status === "fulfilled" ? (usersRes.value.data?.users || usersRes.value.data || []) : [];
+        const productsList = productsRes.status === "fulfilled" ? (productsRes.value.data || []) : [];
+        const combosList = combosRes.status === "fulfilled" ? (combosRes.value.data || []) : [];
+        const ordersList = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
+        
         const todayStr = new Date().toISOString().split('T')[0];
-        const todayActiveOrdersCount = orders.filter(o => 
-          o.orderStatus !== "Delivered" && 
-          o.orderStatus !== "Cancelled" && 
-          o.orderStatus !== "Returned" && 
-          o.orderStatus !== "Refunded" &&
+        const todayActiveOrdersList = ordersList.filter(o => 
+          o.orderStatus === "Order Placed" &&
           (o.created_at || o.date || "").includes(todayStr)
-        ).length;
+        );
 
-        setCollectionCounts({
-          users: usersRes.status === "fulfilled" ? (usersRes.value.data?.length || usersRes.value.data?.users?.length || 0) : 0,
-          products: productsRes.status === "fulfilled" ? (productsRes.value.data?.length || 0) : 0,
-          orders: orders.length,
-          "New Orders": todayActiveOrdersCount,
+        const lowStockItems = productsList.filter(p => {
+          const stock = parseFloat(p.totalStock || 0);
+          return stock <= 3000;
         });
-      } catch (err) {
-        console.error("Error fetching counts:", err);
+
+        const newData = {
+          users: usersList.length,
+          products: productsList.length + combosList.length,
+          orders: ordersList.length,
+          "New Orders": todayActiveOrdersList,
+          lowStockList: lowStockItems,
+          allProducts: productsList,
+          allOrders: ordersList,
+          allUsers: usersList,
+          allCombos: combosList
+        };
+
+        setCollectionCounts(newData);
+        adminDataService.setCache(newData);
+      } catch (error) {
+        console.error("Dashboard Stats Error:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -182,27 +219,27 @@ const AdminPanel = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard": return <Dashboard />;
+      case "dashboard": return <Dashboard adminData={collectionCounts} setActiveSection={handleSectionChange} />;
 
       // Users
-      case "All Users": return <Users />;
-      case "New Users": return <NewUsers />;
+      case "All Users": return <Users adminData={collectionCounts} />;
+      case "New Users": return <NewUsers adminData={collectionCounts} />;
       case "Add Users": return <AddUsers />;
 
       // Products
       case "Add Products": return <Products />;
-      case "All Products": return <Allproduct />;
+      case "All Products": return <Allproduct adminData={collectionCounts} />;
       case "Add Category": return <Category />;
-      case "Stock Details": return <StockDetails />;
+      case "Stock Details": return <StockDetails adminData={collectionCounts} />;
 
 
       // Orders
-      case "Orders": return <Orders />;
-      case "New Orders": return <NewOrders />;
-      case "All Orders": return <AllOrders />;
-      case "Delivered Orders": return <Delivery />;
-      case "Cancel Orders": return <CancelOrders />;
-      case "Returned Orders": return <ReturenOrders />;
+      case "Orders": return <Orders adminData={collectionCounts} />;
+      case "New Orders": return <NewOrders adminData={collectionCounts} />;
+      case "All Orders": return <AllOrders adminData={collectionCounts} />;
+      case "Delivered Orders": return <Delivery adminData={collectionCounts} />;
+      case "Cancel Orders": return <CancelOrders adminData={collectionCounts} />;
+      case "Returned Orders": return <ReturenOrders adminData={collectionCounts} />;
 
       // Others
       case "Stickers": return <Stickers />;
@@ -212,8 +249,8 @@ const AdminPanel = () => {
       case "Invoice": return <Invoice />;
       case "Billing": return <Billing />;
       case "Create Billing": return <CreateBilling />;
-      case "Add Health Benefit": return <AddHealthBenefit />;
-      case "View Health Benefits": return <ViewHealthBenefits />;
+      case "Add Health Benefit": return <AddHealthBenefit onSuccess={() => setActiveSection("View Health Benefits")} onCancel={() => setActiveSection("View Health Benefits")} />;
+      case "View Health Benefits": return <ViewHealthBenefits setActiveSection={setActiveSection} />;
       case "Settings": return <Settings />;
       case "Offers & Coupons": return <OffersAndCoupons />;
       case "Profile": return <Profile />;
@@ -245,10 +282,18 @@ const AdminPanel = () => {
         <Topbar
           setIsSidebarOpen={setIsSidebarOpen}
           activeSection={activeSection}
+          setActiveSection={setActiveSection}
           handleLogout={handleLogout}
+          todayOrdersCount={collectionCounts["New Orders"]?.length || 0}
+          todayOrdersList={collectionCounts["New Orders"] || []}
+          lowStockCount={collectionCounts.lowStockList?.length || 0}
+          lowStockItems={collectionCounts.lowStockList || []}
+          allProducts={collectionCounts.allProducts || []}
+          allOrders={collectionCounts.allOrders || []}
+          adminName={user?.name || "Administrator"}
         />
 
-        <main className="flex-1 overflow-y-auto p-2">
+        <main className="flex-1 overflow-y-auto custom-scrollbar p-2">
           {renderContent()}
         </main>
 

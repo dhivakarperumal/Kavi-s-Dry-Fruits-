@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import api from "../../services/api";
 import JsBarcode from "jsbarcode";
 
-const Allproduct = () => {
+const Allproduct = ({ adminData }) => {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [viewMode, setViewMode] = useState("table");
@@ -46,6 +46,57 @@ const Allproduct = () => {
   };
 
   const fetchItems = async () => {
+    // Use adminData if available
+    if (adminData && adminData.allProducts && adminData.allProducts.length > 0) {
+      const products = adminData.allProducts || [];
+      const combos = adminData.allCombos || [];
+
+      const mappedCombos = combos.map(c => {
+        const details = typeof c.comboDetails === 'object' ? c.comboDetails : safeParse(c.comboDetails);
+        const items = typeof c.comboItems === 'object' ? c.comboItems : safeParse(c.comboItems);
+        
+        let weight = String(details?.totalWeight || c.totalWeight || '');
+        if (!weight || weight === '0' || weight === 'Combo') {
+          const calculatedWeight = (items || []).reduce((sum, item) => {
+            const wStr = String(item.weight || "").replace(/[()]/g, "").toLowerCase();
+            let w = parseFloat(wStr) || 0;
+            if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
+            return sum + w;
+          }, 0);
+          weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo Pack';
+        } else if (!isNaN(weight)) {
+           weight = weight.toLowerCase().includes('g') || weight.toLowerCase().includes('k') ? weight : weight + 'g';
+        }
+        
+        return { ...c, type: 'combo', displayWeight: weight };
+      });
+
+      const unified = [
+        ...products.map(p => ({ ...p, type: 'single' })),
+        ...mappedCombos
+      ];
+      
+      setItems(unified);
+      setFilteredItems(unified);
+      setCategories([...new Set(unified.map(p => p.category).filter(Boolean))]);
+      
+      const allWeights = unified.flatMap(item => {
+        if (item.type === 'single') return safeParse(item.variants).map(v => v.weight);
+        return [item.displayWeight];
+      });
+      setWeights([...new Set(allWeights.filter(Boolean))]);
+      setTags([...new Set(unified.flatMap(item => item.tags || []).filter(Boolean))]);
+      const allPrices = unified.flatMap(item => {
+        if (item.type === 'single') return safeParse(item.variants).map(v => Number(v.offerPrice) || 0);
+        const details = typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails);
+        return [Number(details?.offerPrice) || 0];
+      });
+      const maxP = Math.max(...allPrices, 1000);
+      setMaxPrice(maxP);
+      if (priceRange[1] === 5000) setPriceRange([0, maxP]);
+      return;
+    }
+
     setLoading(true);
     try {
       const [prodRes, comboRes] = await Promise.all([
@@ -67,7 +118,6 @@ const Allproduct = () => {
           }, 0);
           weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo Pack';
         } else if (!isNaN(weight)) {
-           // Standardize numeric weights to string with 'g' if it's just a number
            weight = weight.toLowerCase().includes('g') || weight.toLowerCase().includes('k') ? weight : weight + 'g';
         }
         
@@ -101,7 +151,7 @@ const Allproduct = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(); }, [adminData]);
 
   useEffect(() => {
     let filtered = [...items];
@@ -392,54 +442,74 @@ const Allproduct = () => {
                          })}
                       </div>
                    ) : (
-                      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
-                        <table className="w-full text-left">
-                           <thead className="bg-[#009669] border-b border-emerald-700">
-                              <tr>
-                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
-                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Asset Index</th>
-                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity & Type</th>
-                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Pricing Strategy</th>
-                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Actions</th>
-                              </tr>
-                           </thead>
-                           <tbody className="divide-y divide-slate-50">
-                              {currentItems.map((item, index) => {
-                                 const isCombo = item.type === 'combo';
-                                 const price = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails))?.offerPrice : safeParse(item.variants)[0]?.offerPrice;
-                                 return (
-                                    <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
-                                       <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
-                                          {(currentPage - 1) * itemsPerPage + index + 1}
-                                       </td>
-                                       <td className="px-8 py-6">
-                                          <div className="w-14 h-14 rounded-2xl bg-slate-50 p-2 flex items-center justify-center overflow-hidden">
-                                             {safeParse(item.images)[0] ? <img src={safeParse(item.images)[0]} className="h-full w-full object-contain" alt="" /> : <FaImage size={20} className="text-slate-200" />}
-                                          </div>
-                                       </td>
-                                       <td className="px-8 py-6">
-                                          <div>
-                                             <p className="font-black text-slate-950 text-sm mb-1">{item.name}</p>
-                                             <div className="flex items-center gap-2">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
-                                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${isCombo ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600'}`}>{item.type}</span>
-                                             </div>
-                                          </div>
-                                       </td>
-                                       <td className="px-8 py-6 font-black text-slate-900 text-sm">₹ {price || '—'}</td>
-                                       <td className="px-8 py-6">
-                                          <div className="flex justify-center items-center gap-2">
-                                             <button onClick={() => setViewProduct(item)} className="p-3 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-2xl transition-all"><FaEye size={12} /></button>
-                                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-3 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all"><FaEdit size={12} /></button>
-                                             <button onClick={() => handleDelete(item)} className="p-3 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-2xl transition-all"><FaTrash size={12} /></button>
-                                          </div>
-                                       </td>
-                                    </tr>
-                                 );
-                              })}
-                           </tbody>
-                        </table>
-                      </div>
+                    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+                      <table className="w-full text-left">
+                         <thead className="bg-[#009669] border-b border-emerald-700">
+                            <tr>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Asset</th>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Product Details</th>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Category</th>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Price</th>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Stock Level</th>
+                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Actions</th>
+                            </tr>
+                         </thead>
+                         <tbody className="divide-y divide-slate-50">
+                            {currentItems.map((item, index) => {
+                               const isCombo = item.type === 'combo';
+                               const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
+                               const price = details?.offerPrice || details?.price;
+                               const stockGrams = Number(item.totalStock || 0);
+                               const isLowStock = stockGrams <= 3000; // 3 KG threshold
+
+                               return (
+                                  <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
+                                     <td className="px-8 py-6 font-black text-slate-400 text-[10px] text-center">
+                                        {(currentPage - 1) * itemsPerPage + index + 1}
+                                     </td>
+                                     <td className="px-8 py-6">
+                                        <div className="w-12 h-12 rounded-xl bg-slate-50 p-1.5 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm">
+                                           {safeParse(item.images)[0] ? <img src={safeParse(item.images)[0]} className="h-full w-full object-contain" alt="" /> : <FaImage size={16} className="text-slate-200" />}
+                                        </div>
+                                     </td>
+                                     <td className="px-8 py-6">
+                                        <div className="max-w-[200px]">
+                                           <p className="font-black text-slate-950 text-sm mb-0.5 truncate">{item.name}</p>
+                                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
+                                        </div>
+                                     </td>
+                                     <td className="px-8 py-6">
+                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isCombo ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                           {item.category || item.type}
+                                        </span>
+                                     </td>
+                                     <td className="px-8 py-6 font-black text-slate-900 text-sm">₹ {price || '—'}</td>
+                                     <td className="px-8 py-6">
+                                        <div className={`flex flex-col ${isLowStock ? 'text-amber-600' : 'text-slate-700'}`}>
+                                           <span className="font-black text-sm">
+                                              {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(2) + " KG" : stockGrams + " G"}
+                                           </span>
+                                           {isLowStock && (
+                                              <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                                 <FaBoxOpen size={8} /> Low Stock
+                                              </span>
+                                           )}
+                                        </div>
+                                     </td>
+                                     <td className="px-8 py-6">
+                                        <div className="flex justify-center items-center gap-2">
+                                           <button onClick={() => setViewProduct(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-emerald-200"><FaEye size={11} /></button>
+                                           <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-blue-200"><FaEdit size={11} /></button>
+                                           <button onClick={() => handleDelete(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-red-200"><FaTrash size={11} /></button>
+                                        </div>
+                                     </td>
+                                  </tr>
+                               );
+                            })}
+                         </tbody>
+                      </table>
+                    </div>
                    )}
 
                    {/* Pagination */}

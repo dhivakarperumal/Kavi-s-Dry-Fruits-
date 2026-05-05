@@ -42,16 +42,24 @@ const SingleProductView = () => {
     if (!id || !allProducts.length) return;
 
     const selected = allProducts.find(
-      (p) => p.id === id || p.productId === id || p.id === parseInt(id)
+      (p) => 
+        (p.id === id || p.productId === id || p.id === parseInt(id))
     );
+
     if (selected) {
+      // Redirection logic: if it's a combo, move to the combos view
+      if (selected.category === "Combo" || selected.type === "combo") {
+        navigate(`/combos/${selected.id}`, { replace: true });
+        return;
+      }
+
       setProduct(selected);
       setSelectedImage(selected.images?.[0] || "");
       setActiveWeight(selected.weights?.[0] || "");
       setQuantity(1);
 
       const related = allProducts.filter(
-        (p) => p.category === selected.category && p.id !== selected.id
+        (p) => p.category === selected.category && p.id !== selected.id && p.category !== "Combo"
       );
       setRelatedProducts(related);
     } else {
@@ -77,7 +85,7 @@ const SingleProductView = () => {
   const priceObj = product.prices?.[activeWeight];
   let price = 0;
   let mrp = 0;
-  
+
   if (typeof priceObj === "object" && priceObj !== null) {
     price = Number(priceObj.offerPrice) || Number(priceObj.mrp) || 0;
     mrp = Number(priceObj.mrp) || price;
@@ -234,7 +242,7 @@ const SingleProductView = () => {
                       className={`w-16 h-16 cursor-pointer ${selectedImage === img
                         ? "ring-2 ring-green-600"
                         : ""
-                      }`}
+                        }`}
                       objectFit="cover"
                       loading="lazy"
                       onClick={() => setSelectedImage(img)}
@@ -312,8 +320,8 @@ const SingleProductView = () => {
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
                   className={`${isOutOfStock
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-primary hover:bg-green-700 cursor-pointer"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-primary hover:bg-green-700 cursor-pointer"
                     } text-white px-6 py-2 rounded-lg font-semibold `}
                 >
                   Add to Cart
@@ -335,8 +343,8 @@ const SingleProductView = () => {
                     }
                     disabled={isOutOfStock}
                     className={`border ${isOutOfStock
-                        ? "border-gray-300 text-gray-400 cursor-not-allowed"
-                        : "border-green-600 text-primary cursor-pointer"
+                      ? "border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "border-green-600 text-primary cursor-pointer"
                       } px-6 py-2 rounded-lg font-semibold w-full`}
                   >
                     Buy Now

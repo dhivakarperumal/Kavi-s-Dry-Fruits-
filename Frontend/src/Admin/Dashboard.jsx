@@ -21,6 +21,12 @@ import {
   FaTimesCircle,
   FaUndoAlt,
   FaDollarSign,
+  FaPlusCircle,
+  FaShoppingCart,
+  FaFileInvoice,
+  FaTags,
+  FaWarehouse,
+  FaSearch,
 } from "react-icons/fa";
 
 ChartJS.register(
@@ -60,10 +66,45 @@ const DashboardStats = ({ stats }) => (
   </div>
 );
 
-const Dashboard = () => {
+const QuickAccess = ({ setActiveSection }) => {
+  const actions = [
+    { title: "Add Product", section: "Add Products", icon: <FaPlusCircle />, color: "from-blue-500 to-indigo-600" },
+    { title: "View Orders", section: "All Orders", icon: <FaShoppingCart />, color: "from-emerald-500 to-teal-600" },
+    { title: "POS Billing", section: "Create Billing", icon: <FaFileInvoice />, color: "from-amber-500 to-orange-600" },
+    { title: "Print Stickers", section: "Stickers", icon: <FaTags />, color: "from-rose-500 to-pink-600" },
+    { title: "Inventory", section: "Stock Details", icon: <FaWarehouse />, color: "from-violet-500 to-purple-600" },
+    { title: "SEO Settings", section: "SEO Keywords", icon: <FaSearch />, color: "from-slate-600 to-slate-800" },
+  ];
+
+  return (
+    <div className="mb-10">
+      <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 px-1">
+        <span className="w-2 h-8 bg-emerald-500 rounded-full"></span>
+        Quick Access
+      </h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+        {actions.map((action, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveSection(action.section)}
+            className="group relative flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+          >
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 bg-gradient-to-br ${action.color} transition-opacity duration-300`}></div>
+            <div className={`text-2xl mb-3 p-3 rounded-xl bg-gradient-to-br ${action.color} text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6`}>
+              {action.icon}
+            </div>
+            <span className="text-sm font-bold text-slate-700 tracking-tight">{action.title}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ adminData, setActiveSection }) => {
   const [stats, setStats] = useState({
-    users: 0,
-    products: 0,
+    users: adminData?.users || 0,
+    products: adminData?.products || 0,
     deliveryOrders: 0,
     cancelledOrders: 0,
     returnedOrders: 0,
@@ -79,132 +120,142 @@ const Dashboard = () => {
   const [todayOrders, setTodayOrders] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersRes, productsRes, combosRes, ordersRes] = await Promise.all([
-          api.get("/users"),
-          api.get("/products"),
-          api.get("/combos"),
-          api.get("/orders")
-        ]);
+    const processData = (users, products, combos, orders) => {
+      const unifiedProducts = [
+        ...products.map(p => ({ ...p, type: 'single' })),
+        ...combos.map(c => ({ ...c, type: 'combo' }))
+      ];
 
-        const users = usersRes.data.users || usersRes.data || [];
-        const products = productsRes.data || [];
-        const combos = combosRes.data || [];
-        const orders = ordersRes.data || [];
+      let deliveryCount = 0;
+      let cancelledCount = 0;
+      let returnedCount = 0;
+      let totalRevenue = 0;
 
-        const unifiedProducts = [
-          ...products.map(p => ({ ...p, type: 'single' })),
-          ...combos.map(c => ({ ...c, type: 'combo' }))
-        ];
+      const revenueByMonth = {};
+      const ordersByMonth = {};
+      const deliveredByMonth = {};
+      const cancelledByMonth = {};
+      const topProductOrdersMap = {};
+      const todayOrdersList = [];
 
-        let deliveryCount = 0;
-        let cancelledCount = 0;
-        let returnedCount = 0;
-        let totalRevenue = 0;
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
 
-        const revenueByMonth = {};
-        const ordersByMonth = {};
-        const deliveredByMonth = {};
-        const cancelledByMonth = {};
-        const topProductOrdersMap = {};
-        const todayOrdersList = [];
+      orders.forEach(order => {
+        const total = Number(order.totalAmount) || 0;
+        const orderDate = new Date(order.created_at || order.date);
+        const month = orderDate.toLocaleString("default", { month: "short" });
+        const status = (order.orderStatus || "").toLowerCase();
 
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        totalRevenue += total;
+        if (status === "delivered") {
+          deliveryCount++;
+          deliveredByMonth[month] = (deliveredByMonth[month] || 0) + 1;
+        }
+        if (status === "cancelled") {
+          cancelledCount++;
+          cancelledByMonth[month] = (cancelledByMonth[month] || 0) + 1;
+        }
+        if (status === "returned") returnedCount++;
 
-        orders.forEach(order => {
-          const total = Number(order.totalAmount) || 0;
-          const orderDate = new Date(order.created_at || order.date);
-          const month = orderDate.toLocaleString("default", { month: "short" });
-          const status = (order.orderStatus || "").toLowerCase();
+        revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
+        ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
 
-          totalRevenue += total;
-          if (status === "delivered") {
-            deliveryCount++;
-            deliveredByMonth[month] = (deliveredByMonth[month] || 0) + 1;
-          }
-          if (status === "cancelled") {
-            cancelledCount++;
-            cancelledByMonth[month] = (cancelledByMonth[month] || 0) + 1;
-          }
-          if (status === "returned") returnedCount++;
+        // Process items for top products
+        const items = typeof order.items === 'string' ? JSON.parse(order.items || '[]') : (order.items || []);
+        if (Array.isArray(items)) {
+          items.forEach(item => {
+            const key = item.name;
+            if (key) {
+              if (!topProductOrdersMap[key]) topProductOrdersMap[key] = {};
+              topProductOrdersMap[key][month] = (topProductOrdersMap[key][month] || 0) + (Number(item.quantity) || 1);
+            }
+          });
+        }
 
-          revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
-          ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
+        // Today's orders
+        const dt = (order.created_at || order.date || "");
+        if (dt.includes(todayStr)) {
+          todayOrdersList.push({
+            id: order.id,
+            orderId: order.orderId,
+            clientName: order.clientName,
+            clientPhone: order.clientPhone,
+            totalAmount: total,
+            orderStatus: order.orderStatus,
+            shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress || '{}') : order.shippingAddress,
+            items: typeof order.items === 'string' ? JSON.parse(order.items || '[]') : (order.items || []),
+            paymentMethod: order.paymentMethod,
+            paymentId: order.paymentId,
+            date: order.created_at || order.date
+          });
+        }
+      });
 
-          // Process items for top products
-          const items = typeof order.items === 'string' ? JSON.parse(order.items || '[]') : (order.items || []);
-          if (Array.isArray(items)) {
-            items.forEach(item => {
-              const key = item.name;
-              if (key) {
-                if (!topProductOrdersMap[key]) topProductOrdersMap[key] = {};
-                topProductOrdersMap[key][month] = (topProductOrdersMap[key][month] || 0) + (Number(item.quantity) || 1);
-              }
-            });
-          }
+      const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const months = allMonths;
 
-          // Today's orders
-          const dt = (order.created_at || order.date || "");
-          if (dt.includes(todayStr)) {
-            todayOrdersList.push({
-              id: order.id,
-              orderId: order.orderId,
-              clientName: order.clientName,
-              clientPhone: order.clientPhone,
-              totalAmount: total,
-              orderStatus: order.orderStatus,
-              shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress || '{}') : order.shippingAddress
-            });
-          }
-        });
+      const topProductChartData = Object.entries(topProductOrdersMap)
+        .map(([name, monthlyData]) => ({
+          label: name,
+          data: months.map((m) => monthlyData[m] || 0),
+        }))
+        .slice(0, 3);
 
-        const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const months = allMonths;
+      const cats = {};
+      unifiedProducts.forEach(p => {
+        const cat = p.category || "Other";
+        cats[cat] = (cats[cat] || 0) + 1;
+      });
 
-        const topProductChartData = Object.entries(topProductOrdersMap)
-          .map(([name, monthlyData]) => ({
-            label: name,
-            data: months.map((m) => monthlyData[m] || 0),
-          }))
-          .slice(0, 3);
+      setStats({
+        users: users.length,
+        products: unifiedProducts.length,
+        deliveryOrders: deliveryCount,
+        cancelledOrders: cancelledCount,
+        returnedOrders: returnedCount,
+        revenue: totalRevenue
+      });
 
-        const cats = {};
-        unifiedProducts.forEach(p => {
-          const cat = p.category || "Other";
-          cats[cat] = (cats[cat] || 0) + 1;
-        });
-
-        setStats({
-          users: users.length,
-          products: unifiedProducts.length,
-          deliveryOrders: deliveryCount,
-          cancelledOrders: cancelledCount,
-          returnedOrders: returnedCount,
-          revenue: totalRevenue
-        });
-
-        setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
-        setLiveStocks(unifiedProducts.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
-        setProductsData(unifiedProducts);
-        setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
-        setMonthlyOrders(months.map((m) => ({
-          month: m,
-          total: ordersByMonth[m] || 0,
-          delivered: deliveredByMonth[m] || 0,
-          cancelled: cancelledByMonth[m] || 0
-        })));
-        setTopProducts(topProductChartData);
-        setTodayOrders(todayOrdersList);
-
-      } catch (error) {
-        console.error("Dashboard data fetch error:", error);
-      }
+      setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
+      setLiveStocks(unifiedProducts.sort((a, b) => (a.productId || "").localeCompare(b.productId || "", "en", { numeric: true })));
+      setProductsData(unifiedProducts);
+      setMonthlyRevenue(months.map((m) => ({ month: m, amount: revenueByMonth[m] })));
+      setMonthlyOrders(months.map((m) => ({
+        month: m,
+        total: ordersByMonth[m] || 0,
+        delivered: deliveredByMonth[m] || 0,
+        cancelled: cancelledByMonth[m] || 0
+      })));
+      setTopProducts(topProductChartData);
+      setTodayOrders(todayOrdersList);
     };
 
-    fetchData();
-  }, []);
+    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+      processData(adminData.allUsers || [], adminData.allProducts || [], adminData.allCombos || [], adminData.allOrders || []);
+    } else {
+      // Fallback if no data passed
+      const fetchData = async () => {
+        try {
+          const [usersRes, productsRes, combosRes, ordersRes] = await Promise.all([
+            api.get("/users"),
+            api.get("/products"),
+            api.get("/combos"),
+            api.get("/orders")
+          ]);
+
+          const users = usersRes.data.users || usersRes.data || [];
+          const products = productsRes.data || [];
+          const combos = combosRes.data || [];
+          const orders = ordersRes.data || [];
+          processData(users, products, combos, orders);
+        } catch (error) {
+          console.error("Dashboard data fetch error:", error);
+        }
+      };
+      fetchData();
+    }
+  }, [adminData]);
 
   const lowStockCount = productsData.filter(
     (item) => (Number(item.totalStock) || 0) <= 3000
@@ -250,10 +301,10 @@ const Dashboard = () => {
       round2: "bg-white",
     },
     {
-      title: "Returned Orders",
-      value: stats.returnedOrders,
-      icon: <FaUndoAlt />,
-      bgColor: "bg-gradient-to-br from-yellow-400 to-orange-500 shadow-orange-500/40",
+      title: "Total Revenue",
+      value: `₹${stats.revenue.toLocaleString()}`,
+      icon: <FaDollarSign />,
+      bgColor: "bg-gradient-to-br from-amber-400 to-orange-500 shadow-orange-500/40",
       iconBg: "bg-white/20 text-white",
       round1: "bg-white",
       round2: "bg-white",
@@ -444,9 +495,21 @@ const Dashboard = () => {
     }
   };
 
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   return (
-    <div className="p-6 min-h-screen">
-      <DashboardStats stats={statsData} />
+    <div className="p-4 md:p-8 min-h-screen ">
+    
+
+      <QuickAccess setActiveSection={setActiveSection} />
+      
+      <div className="mb-10">
+        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 px-1">
+          <span className="w-2 h-8 bg-blue-500 rounded-full"></span>
+          Key Performance Indicators
+        </h2>
+        <DashboardStats stats={statsData} />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
@@ -504,40 +567,48 @@ const Dashboard = () => {
       </div>
 
       {/* ✅ Today Orders Table */}
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">Today’s Orders</h2>
+      <div className="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 mt-10">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <span className="w-2 h-8 bg-emerald-500 rounded-full"></span>
+          Today’s Orders
+        </h2>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-[#009669]  text-white">
-                  <th className="px-4 py-4 ">S No </th>
-                  <th className="px-4 py-4 ">Order ID</th>
-                  <th className="px-4 py-4 ">Customer Name</th>
-                  <th className="px-4 py-4 ">Amount</th>
-                  <th className="px-4 py-4 ">Status</th>
+                <tr className="bg-[#009669] text-white uppercase text-xs font-black tracking-widest">
+                  <th className="px-6 py-5 ">S No </th>
+                  <th className="px-6 py-5 ">Order ID</th>
+                  <th className="px-6 py-5 ">Customer Name</th>
+                  <th className="px-6 py-5 ">Amount</th>
+                  <th className="px-6 py-5 ">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-50">
                 {todayOrders.length > 0 ? (
                   todayOrders.map((order, ind) => (
-                    <tr key={order.id} className=" hover:bg-gray-50">
-                      <td className="px-4 py-4 ">{ind + 1}</td>
-                      <td className="px-4 py-4 ">{order.orderId}</td>
-                      <td className="px-4 py-4 ">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
-                      <td className="px-4 py-4 ">₹ {order.totalAmount}</td>
-                      <td className="px-4 py-4 ">
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-5 text-slate-500 font-medium">{ind + 1}</td>
+                      <td 
+                        className="px-6 py-5 text-blue-600 font-bold tracking-tight cursor-pointer hover:underline"
+                        onClick={() => setSelectedOrder(order)}
+                      >
+                        {order.orderId}
+                      </td>
+                      <td className="px-6 py-5 text-slate-700 font-semibold">{order.clientName || order.shippingAddress?.fullname || "Guest User"}</td>
+                      <td className="px-6 py-5 text-emerald-600 font-black">₹ {order.totalAmount}</td>
+                      <td className="px-6 py-5">
                         <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${order.orderStatus?.toLowerCase() === "delivered"
-                            ? "bg-green-100 text-green-600"
+                          className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${order.orderStatus?.toLowerCase() === "delivered"
+                            ? "bg-emerald-100 text-emerald-700"
                             : order.orderStatus?.toLowerCase() === "cancelled"
-                              ? "bg-red-100 text-red-600"
+                              ? "bg-rose-100 text-rose-700"
                               : order.orderStatus?.toLowerCase() === "order placed"
-                                ? "bg-blue-100 text-blue-600"
+                                ? "bg-sky-100 text-sky-700"
                                 : order.orderStatus?.toLowerCase() === "shipped"
-                                  ? "bg-purple-100 text-purple-600"
-                                  : "bg-yellow-100 text-yellow-600"
+                                  ? "bg-indigo-100 text-indigo-700"
+                                  : "bg-amber-100 text-amber-700"
                             }`}
                         >
                           {order.orderStatus}
@@ -557,6 +628,103 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ✅ Order Details Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar p-8 relative animate-in zoom-in duration-300">
+            <button
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition-colors p-2 hover:bg-slate-100 rounded-full"
+              onClick={() => setSelectedOrder(null)}
+            >
+              <FaTimesCircle className="text-2xl" />
+            </button>
+            
+            <div className="mb-8">
+               <h2 className="text-2xl font-black text-slate-800 mb-1">Order Details</h2>
+               <p className="text-emerald-600 font-bold">{selectedOrder.orderId}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Customer Information</p>
+                  <p className="text-slate-700 font-bold text-base">{selectedOrder.clientName || selectedOrder.shippingAddress?.fullname || "Guest User"}</p>
+                  <p className="text-slate-500">{selectedOrder.clientPhone || selectedOrder.shippingAddress?.contact || "No Phone"}</p>
+                </div>
+                
+                <div>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Payment Details</p>
+                  <p className="text-slate-700 font-bold">{selectedOrder.paymentMethod || "N/A"}</p>
+                  {selectedOrder.paymentId && <p className="text-slate-500 text-xs">ID: {selectedOrder.paymentId}</p>}
+                </div>
+
+                <div>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Order Status</p>
+                  <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-tighter">
+                    {selectedOrder.orderStatus}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Shipping Address</p>
+                  <p className="text-slate-600 leading-relaxed">
+                    {selectedOrder.shippingAddress?.street},<br />
+                    {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state}<br />
+                    {selectedOrder.shippingAddress?.zip}, {selectedOrder.shippingAddress?.country}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Order Date</p>
+                  <p className="text-slate-700 font-bold">
+                    {new Date(selectedOrder.date).toLocaleString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 border-t border-slate-100 pt-8">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Items Ordered</p>
+              <div className="space-y-3">
+                {selectedOrder.items?.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-white rounded-xl border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        <img 
+                          src={item.image || item.imageUrl || (item.images && item.images[0]) || "/images/placeholder.png"} 
+                          alt={item.name}
+                          className="w-full h-full object-contain p-1"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-slate-800 font-bold">{item.name}</p>
+                        <p className="text-slate-500 text-xs">{item.weight || item.selectedWeight || "-"} × {item.qty || item.quantity}</p>
+                      </div>
+                    </div>
+                    <p className="text-emerald-600 font-black text-base whitespace-nowrap">
+                      ₹{((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(2)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-8 bg-slate-900 rounded-3xl p-6 flex justify-between items-center text-white">
+                <p className="font-bold text-slate-400 uppercase text-xs tracking-widest">Total Amount</p>
+                <p className="text-2xl font-black italic">₹{selectedOrder.totalAmount}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

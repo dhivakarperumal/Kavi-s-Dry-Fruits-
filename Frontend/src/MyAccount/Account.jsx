@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import OrderTracking from "../Shop/OrderTracking";
-import { FaTruck, FaShoppingCart } from "react-icons/fa";
+import { FaTruck, FaShoppingCart, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
 import { useStore } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +45,14 @@ const Account = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+  };
   const [errors, setErrors] = useState({});
   const [trackingOrderId, setTrackingOrderId] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -252,16 +260,16 @@ const Account = () => {
     if (
       !currentPassword ||
       !newPassword ||
-      newPassword !== confirmPassword ||
-      currentPassword !== userInfo.password
+      newPassword !== confirmPassword
     ) {
       toast.error("Please check all fields and ensure passwords match.");
       return;
     }
     try {
-      const userRef = doc(db, "users", userIdToUse);
-      await updateDoc(userRef, { password: newPassword });
-      setUserInfo((prev) => ({ ...prev, password: newPassword }));
+      await api.put(`/users/password/${userIdToUse}`, {
+        currentPassword,
+        newPassword
+      });
       setPasswordFields({
         currentPassword: "",
         newPassword: "",
@@ -269,7 +277,7 @@ const Account = () => {
       });
       toast.success("Password updated successfully!");
     } catch (err) {
-      toast.error("Error updating password.");
+      toast.error(err?.response?.data?.message || "Error updating password.");
     }
   };
 
@@ -597,6 +605,7 @@ const Account = () => {
     { key: "orders", label: "My Orders" },
     { key: "address", label: "Manage Address" },
     { key: "tracking", label: "Track Order" },
+    { key: "password", label: "Set Password" },
   ];
   const renderContent = () => {
     const firstName = (userInfo.username || "").split(" ")[0] || "";
@@ -1122,6 +1131,80 @@ const Account = () => {
                   className="bg-gray-400 text-white px-6 py-2 rounded cursor-pointer hover:bg-gray-500 transition"
                 >
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "password":
+        return (
+          <div className="bg-white p-6 rounded-xl shadow border border-green-200 w-full">
+            <h3 className="font-bold text-lg mb-4">Set Password</h3>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col">
+                <label className="text-sm font-bold mb-1">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? "text" : "password"}
+                    name="currentPassword"
+                    value={passwordFields.currentPassword}
+                    onChange={handlePasswordChange}
+                    className="border border-green-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-1 focus:ring-green-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility("current")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600 cursor-pointer"
+                  >
+                    {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-bold mb-1">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.new ? "text" : "password"}
+                    name="newPassword"
+                    value={passwordFields.newPassword}
+                    onChange={handlePasswordChange}
+                    className="border border-green-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-1 focus:ring-green-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility("new")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600 cursor-pointer"
+                  >
+                    {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-bold mb-1">Confirm New Password</label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.confirm ? "text" : "password"}
+                    name="confirmPassword"
+                    value={passwordFields.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className="border border-green-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-1 focus:ring-green-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility("confirm")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-green-600 cursor-pointer"
+                  >
+                    {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={handlePasswordUpdate}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-semibold cursor-pointer"
+                >
+                  Update Password
                 </button>
               </div>
             </div>

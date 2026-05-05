@@ -30,9 +30,7 @@ import { Toaster } from "react-hot-toast";
 import ViewInvoice from "./Admin/ViewInvoice.jsx";
 import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
 import OrderTracking from "./Shop/OrderTracking.jsx";
-
-
-
+import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
 
 const router = createBrowserRouter([
   {
@@ -46,6 +44,7 @@ const router = createBrowserRouter([
       { path: "/category/:categoryName", element: <Categorys /> },
       { path: "/contactus", element: <Contac_Us /> },
       { path: "/aboutus", element: <About_Us /> },
+      { path: "/healthbenefits", element: <HealthBenefits /> },
       { path: "/return-policy", element: <Return_Policy /> },
       { path: "/combos", element: <Combos /> },
       { path: "/combos/:id", element: <SingleComboProduct /> },

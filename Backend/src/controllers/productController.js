@@ -22,20 +22,21 @@ exports.addProduct = async (req, res) => {
   try {
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, variants, totalStock
+      images, variants, totalStock, status
     } = req.body;
 
     const [result] = await db.query(
       `INSERT INTO products 
-      (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, variants, totalStock) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, variants, totalStock, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId, name, description, 
         JSON.stringify(healthBenefits || []),
         category, rating, barcode, barcodeValue,
         JSON.stringify(images || []),
         JSON.stringify(variants || []),
-        totalStock || 0
+        totalStock || 0,
+        status || 'Active'
       ]
     );
 
@@ -51,13 +52,13 @@ exports.updateProduct = async (req, res) => {
     const { id } = req.params;
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, variants, totalStock
+      images, variants, totalStock, status
     } = req.body;
 
     await db.query(
       `UPDATE products SET 
       productId = ?, name = ?, description = ?, healthBenefits = ?, category = ?, rating = ?, barcode = ?, barcodeValue = ?, 
-      images = ?, variants = ?, totalStock = ? 
+      images = ?, variants = ?, totalStock = ?, status = ? 
       WHERE id = ?`,
       [
         productId, name, description, 
@@ -66,6 +67,7 @@ exports.updateProduct = async (req, res) => {
         JSON.stringify(images || []),
         JSON.stringify(variants || []),
         totalStock || 0,
+        status || 'Active',
         id
       ]
     );

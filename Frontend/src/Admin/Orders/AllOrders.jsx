@@ -6,7 +6,7 @@ import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
 import { useNavigate } from "react-router-dom";
 
-const AllOrders = () => {
+const AllOrders = ({ adminData }) => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [cancelReason, setCancelReason] = useState("");
@@ -23,11 +23,22 @@ const AllOrders = () => {
 
   // Fetch all orders from all users
   const fetchOrders = async () => {
+    // Use adminData if available
+    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+      const parsedOrders = adminData.allOrders.map(o => ({
+        ...o,
+        items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        date: o.created_at || o.date
+      }));
+      setOrders(parsedOrders);
+      return;
+    }
+
     try {
       const res = await api.get("/orders");
       const parsedOrders = (res.data || []).map(o => ({
         ...o,
-        // Parse JSON strings from MySQL
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
         date: o.created_at || o.date
@@ -41,7 +52,7 @@ const AllOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [adminData]);
 
   // Apply filters
   useEffect(() => {

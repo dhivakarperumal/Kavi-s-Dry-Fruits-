@@ -6,7 +6,7 @@ import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
 import api from "../../services/api";
 
-const NewOrders = () => {
+const NewOrders = ({ adminData }) => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -23,6 +23,20 @@ const NewOrders = () => {
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
+    // If we have adminData, use it instead of showing loading
+    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+      const parsed = adminData.allOrders.filter(o => 
+        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
+      ).map(o => ({
+        ...o,
+        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        date: o.created_at || o.date
+      }));
+      setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await api.get("/orders");
@@ -45,9 +59,10 @@ const NewOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    // Only set interval if we don't have adminData or for background refresh
     const interval = setInterval(fetchOrders, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [adminData]);
 
   useEffect(() => {
     let temp = [...orders];

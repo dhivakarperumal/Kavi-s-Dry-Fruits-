@@ -83,10 +83,38 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Update password by UUID
+const updatePassword = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    const [users] = await db.query('SELECT password_hash FROM users WHERE user_id = ?', [userId]);
+    if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+
+    const user = users[0];
+    const bcrypt = require('bcryptjs');
+    
+    // Check current password if user has one
+    if (user.password_hash && currentPassword) {
+      const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!isValid) return res.status(401).json({ message: 'Incorrect current password' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE users SET password = ?, password_hash = ? WHERE user_id = ?', [newPassword, passwordHash, userId]);
+    
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllUsers,
   updateUser,
   deleteUser,
   getUserProfile,
-  updateProfile
+  updateProfile,
+  updatePassword
 };

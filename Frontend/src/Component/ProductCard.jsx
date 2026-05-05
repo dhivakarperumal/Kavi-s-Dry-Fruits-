@@ -74,7 +74,7 @@ const ProductCard = React.memo(({
   return (
     <div className="group bg-white rounded-2xl p-4 shadow-md hover:ring-2 hover:ring-green1 transition-all duration-300 relative">
       <div className="relative h-60 w-full flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
-        <Link to={`/shop/${product.id}`} className="w-full h-full flex items-center justify-center">
+        <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="w-full h-full flex items-center justify-center">
           <OptimizedImage
             src={product.images?.[0] || ""}
             alt={`${product.name} - Kavi's Dry Fruits`}
@@ -101,9 +101,11 @@ const ProductCard = React.memo(({
         </button>
       </div>
 
-      <h3 className="font-semibold text-base sm:text-lg text-center mb-2">
-        {product.name}
-      </h3>
+      <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="block">
+        <h3 className="font-semibold text-base sm:text-lg text-center mb-2 hover:text-green1 transition-colors">
+          {product.name}
+        </h3>
+      </Link>
       <p className="text-center text-gray-600 text-sm mb-2">
         MRP:{" "}
         <span className="line-through text-gray-400">
@@ -116,11 +118,10 @@ const ProductCard = React.memo(({
         <button
           disabled={product.isOutOfStock}
           onClick={handleAddToCart}
-          className={`${
-            product.isOutOfStock
+          className={`${product.isOutOfStock
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-green1 hover:bg-green2"
-          } text-white w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer`}
+            } text-white w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer`}
         >
           <IoCartOutline />
         </button>

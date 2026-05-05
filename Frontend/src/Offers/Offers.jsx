@@ -358,7 +358,7 @@ const Offers = () => {
                       </span>
                     </div>
                     <Link
-                      to={`/shop/${product.id}`}
+                      to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`}
                       className="font-semibold text-base sm:text-lg text-center block mb-2"
                     >
                       {product.name} ({activeWeight})

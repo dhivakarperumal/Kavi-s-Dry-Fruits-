@@ -256,7 +256,7 @@ const Stickers = () => {
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-5 bg-white/40 backdrop-blur-md p-5 rounded-3xl border border-white/60 shadow-xl shadow-gray-100">
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-100 bg-gradient-to-tr from-green-600 to-green-500`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-green-100 bg-emerald-500`}>
               <FaBarcode size={20} />
             </div>
             <div>
@@ -413,7 +413,7 @@ const Stickers = () => {
             {/* Add Product Button */}
             <button
               onClick={handleAddProduct}
-              className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500  hover:from-green-700 hover:to-green-600 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
             >
               <FaPlus size={14} /> Add to Print Queue
             </button>
