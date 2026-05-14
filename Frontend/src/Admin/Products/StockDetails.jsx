@@ -285,6 +285,11 @@ const StockDetail = () => {
                            #{item.productId}
                          </span>
                       </div>
+                      {Number(item.totalStock) < 3000 && (
+                        <div className="absolute inset-0 bg-white/40 flex items-center justify-center">
+                           <span className="bg-red-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">Sold Out</span>
+                        </div>
+                      )}
                    </div>
                    
                    <h4 className="text-lg font-black text-slate-950 mb-3 truncate leading-none">{item.name}</h4>
@@ -293,7 +298,7 @@ const StockDetail = () => {
                    <div className="flex items-end justify-between border-t border-gray-50 pt-4">
                      <div>
                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock Level</p>
-                       <p className={`text-xl font-[900] tracking-tighter ${Number(item.totalStock) < 5000 ? 'text-red-500' : 'text-emerald-700'}`}>
+                       <p className={`text-xl font-[900] tracking-tighter ${Number(item.totalStock) < 3000 ? 'text-red-500' : 'text-emerald-700'}`}>
                          {((Number(item.totalStock) || 0) / 1000).toFixed(2)} <span className="text-[10px] font-bold text-gray-400">KG</span>
                        </p>
                      </div>
@@ -357,7 +362,7 @@ const StockDetail = () => {
                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-900 px-3 py-1.5 rounded-full uppercase tracking-tighter">{item.category}</span>
                              </td>
                              <td className="px-8 py-6 text-center">
-                                <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black tracking-tighter ${Number(item.totalStock) < 5000 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                                <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black tracking-tighter ${Number(item.totalStock) < 3000 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
                                     {((Number(item.totalStock) || 0) / 1000).toFixed(2)} kg
                                 </div>
                              </td>
