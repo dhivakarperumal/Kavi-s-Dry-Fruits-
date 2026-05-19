@@ -17,7 +17,7 @@ async function migrate() {
       await connection.query('ALTER TABLE orders ADD COLUMN docketNumber VARCHAR(255) DEFAULT NULL');
       console.log('Added docketNumber');
     } catch (e) {
-      if (e.code === 'ER_DUP_COLUMN_NAME') console.log('docketNumber already exists');
+      if (e.code === 'ER_DUP_FIELDNAME') console.log('docketNumber already exists');
       else throw e;
     }
 
@@ -25,7 +25,15 @@ async function migrate() {
       await connection.query('ALTER TABLE orders ADD COLUMN cancelReason TEXT DEFAULT NULL');
       console.log('Added cancelReason');
     } catch (e) {
-      if (e.code === 'ER_DUP_COLUMN_NAME') console.log('cancelReason already exists');
+      if (e.code === 'ER_DUP_FIELDNAME') console.log('cancelReason already exists');
+      else throw e;
+    }
+
+    try {
+      await connection.query('ALTER TABLE users ADD COLUMN status ENUM(\'active\', \'inactive\') DEFAULT \'active\'');
+      console.log('Added status to users');
+    } catch (e) {
+      if (e.code === 'ER_DUP_FIELDNAME') console.log('status already exists in users');
       else throw e;
     }
 

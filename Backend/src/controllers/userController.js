@@ -4,7 +4,7 @@ const db = require('../config/db');
 const getAllUsers = async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, user_id, username as fullName, email, phone, role, password, created_at as createdAt FROM users'
+      'SELECT id, user_id, username as fullName, email, phone, role, password, status, created_at as createdAt FROM users'
     );
     res.json({ success: true, users });
   } catch (error) {
@@ -16,7 +16,7 @@ const getAllUsers = async (req, res) => {
 // Update user
 const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { fullName, email, phone, role, password } = req.body;
+  const { fullName, email, phone, role, password, status } = req.body;
 
   try {
     let query = 'UPDATE users SET username = ?, email = ?, phone = ?, role = ?';
@@ -26,6 +26,11 @@ const updateUser = async (req, res) => {
       const passwordHash = await require('bcryptjs').hash(password, 10);
       query += ', password = ?, password_hash = ?';
       params.push(password, passwordHash);
+    }
+    
+    if (status) {
+      query += ', status = ?';
+      params.push(status);
     }
 
     query += ' WHERE id = ?';

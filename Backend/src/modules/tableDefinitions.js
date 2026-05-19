@@ -11,6 +11,7 @@ const tables = {
       role VARCHAR(50) DEFAULT 'User',
       provider VARCHAR(50) DEFAULT 'local',
       google_id VARCHAR(255),
+      status ENUM('active', 'inactive') DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,

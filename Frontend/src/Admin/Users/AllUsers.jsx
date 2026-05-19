@@ -123,6 +123,18 @@ const Users = () => {
     }
   };
 
+  const handleToggleStatus = async (user) => {
+    const newStatus = user.status === 'inactive' ? 'active' : 'inactive';
+    try {
+      await api.put(`/users/${user.id}`, { ...user, status: newStatus });
+      toast.success(`User marked as ${newStatus}`);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status.");
+    }
+  };
+
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
@@ -201,6 +213,7 @@ const Users = () => {
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Identity Profile</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Connectivity</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Authorization</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Status</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Activity</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
               </tr>
@@ -229,6 +242,17 @@ const Users = () => {
                         {user.role}
                       </span>
                     </td>
+                    <td className="p-5">
+                      <button
+                        onClick={() => handleToggleStatus(user)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${user.status === 'inactive' ? 'bg-gray-300' : 'bg-green-500'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${user.status === 'inactive' ? 'translate-x-1' : 'translate-x-6'}`} />
+                      </button>
+                      <span className="ml-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest align-middle">
+                        {user.status === 'inactive' ? 'Inactive' : 'Active'}
+                      </span>
+                    </td>
                     <td className="p-5 text-gray-500 font-bold text-xs uppercase tracking-tighter">
                       {user.createdAt ? user.createdAt.toLocaleDateString() : "—"}
                     </td>
@@ -255,9 +279,22 @@ const Users = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-900 truncate text-lg tracking-tight">{user.fullName}</h3>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${user.role?.toLowerCase() === 'admin' ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{user.role}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${user.role?.toLowerCase() === 'admin' ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{user.role}</p>
+                    </div>
+                    <div className="flex items-center gap-2" title="Double click to toggle status" onDoubleClick={() => handleToggleStatus(user)}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(user); }}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${user.status === 'inactive' ? 'bg-gray-300' : 'bg-green-500'}`}
+                      >
+                        <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${user.status === 'inactive' ? 'translate-x-1' : 'translate-x-5'}`} />
+                      </button>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest ${user.status === 'inactive' ? 'text-gray-400' : 'text-green-600'}`}>
+                        {user.status === 'inactive' ? 'Inactive' : 'Active'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

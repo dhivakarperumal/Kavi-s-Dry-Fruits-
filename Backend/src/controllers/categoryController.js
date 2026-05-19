@@ -4,10 +4,23 @@ exports.getCategories = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM categories ORDER BY created_at DESC');
     // cimgs is stored as JSON string
-    const categories = rows.map(row => ({
-      ...row,
-      cimgs: typeof row.cimgs === 'string' ? JSON.parse(row.cimgs) : row.cimgs
-    }));
+    const categories = rows.map(row => {
+      let parsedCimgs = typeof row.cimgs === 'string' ? JSON.parse(row.cimgs) : row.cimgs;
+      
+      if (Array.isArray(parsedCimgs)) {
+        parsedCimgs = parsedCimgs.map(img => {
+          if (typeof img === 'string' && img.startsWith('data:image/') && img.includes(',base64,')) {
+            return img.replace(/(data:image\/[^;,]+),base64,/, '$1;base64,');
+          }
+          return img;
+        });
+      }
+
+      return {
+        ...row,
+        cimgs: parsedCimgs
+      };
+    });
     res.json(categories);
   } catch (error) {
     console.error(error);
