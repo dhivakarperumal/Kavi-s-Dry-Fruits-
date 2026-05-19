@@ -88,6 +88,17 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Delete profile by UUID (marks as inactive)
+const deleteProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await db.query('UPDATE users SET status = "inactive" WHERE user_id = ? OR email = ?', [userId, userId]);
+    res.json({ success: true, message: 'Account marked as inactive' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 // Update password by UUID
 const updatePassword = async (req, res) => {
   try {
@@ -121,5 +132,6 @@ module.exports = {
   deleteUser,
   getUserProfile,
   updateProfile,
+  deleteProfile,
   updatePassword
 };
