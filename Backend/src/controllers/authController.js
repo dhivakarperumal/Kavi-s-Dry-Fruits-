@@ -87,11 +87,15 @@ const login = async (req, res) => {
 
   try {
     const [users] = await db.query(
-      'SELECT id, user_id, username, email, phone, password_hash, role FROM users WHERE email = ?',
+      'SELECT id, user_id, username, email, phone, password_hash, role, status FROM users WHERE email = ?',
       [email.trim().toLowerCase()]
     );
     const user = users[0];
     if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    
+    if (user.status === 'inactive') {
+      return res.status(403).json({ success: false, message: 'Your account is inactive. Please contact support.' });
+    }
 
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
@@ -133,6 +137,9 @@ const googleLogin = async (req, res) => {
     let user;
     if (existingUsers.length > 0) {
       user = existingUsers[0];
+      if (user.status === 'inactive') {
+        return res.status(403).json({ success: false, message: 'Your account is inactive. Please contact support.' });
+      }
     } else {
       const userUuid  = createUuid();
       const fullName  = `${firstName} ${lastName}`.trim();
@@ -292,6 +299,9 @@ const verifyOtp = async (req, res) => {
 
     if (existingUsers.length > 0) {
       user = existingUsers[0];
+      if (user.status === 'inactive') {
+        return res.status(403).json({ success: false, message: 'Your account is inactive. Please contact support.' });
+      }
     } else {
       const userUuid   = createUuid();
       const last4      = phone.slice(-4);
