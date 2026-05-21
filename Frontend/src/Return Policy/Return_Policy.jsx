@@ -21,7 +21,7 @@ const Return_Policy = () => {
   <link rel="canonical" href="https://kavisdryfruits.com/return-policy" />
 </Helmet>
 
-        <PageHeader title={"Return Policy"} curpage={"Return Policy"}/>
+        <PageHeader title={"Return Policy"} subtitle={"return-policy"} curpage={"Return Policy"}/>
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
                 <h2 className="text-2xl font-bold mb-4">Return Policy</h2>

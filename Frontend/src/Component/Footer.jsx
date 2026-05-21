@@ -72,6 +72,12 @@ const Footer = () => {
                 Return Policy
               </Link>
             </li>
+            <li className=" flex items-center gap-2 transition-all duration-300 hover:translate-x-3">
+              <MdKeyboardArrowRight size={20} />
+              <Link to="/privacy-policy" className="">
+                Privacy Policy
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -182,7 +188,12 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="border-t border-white pt-4 text-center text-md text-white flex items-center justify-between flex-wrap md:flex-nowrap">
         <p>© 2025 Kavi's Dry Fruits. All Rights Reserved.</p>
-        <p className="mt-1">Privacy Policy | Terms of Service</p>
+        <p className="mt-1">
+          <Link to="/privacy-policy" className="underline">
+            Privacy Policy
+          </Link>{" "}|{" "}
+          Terms of Service
+        </p>
       </div>
     </footer>
   );

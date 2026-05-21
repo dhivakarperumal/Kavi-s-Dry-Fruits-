@@ -19,7 +19,7 @@ const ClientsAbout = () => {
           ...doc.data(),
           id: doc.id,
         }))
-        .filter((doc) => doc.selected === true); // ✅ Only selected reviews
+        .filter((doc) => doc.selected === true); 
       setReviews(fetched);
     } catch (err) {
       console.error("Error fetching reviews:", err);
@@ -115,7 +115,7 @@ const ClientsAbout = () => {
               {visibleReviews.map((review, index) => (
                 <div key={review.id || index} className="w-full max-w-md">
                   <p className="text-4xl text-left text-black font-bold">❝</p>
-                  <h4 className="font-bold text-justify text-lg mb-2">
+                  <h4 className="font-boluserNamed text-justify text-lg mb-2">
                     {review.userName}
                   </h4>
                   {/* <h4 className="font-bold text-justify text-sm text-gray-500 mb-1">
