@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 const Register = () => {
@@ -197,9 +197,13 @@ const Register = () => {
               />
               <label className="text-sm">
                 I agree with{" "}
-                <a href="#" className="underline text-green-600">Terms & Conditions</a>{" "}
+                <a href="#" className="underline text-green-600">
+                  Terms & Conditions
+                </a>{" "}
                 and{" "}
-                <a href="#" className="underline text-green-600">Privacy Policy</a>.
+                <Link to="/privacy-policy" className="underline text-green-600">
+                  Privacy Policy
+                </Link>.
               </label>
             </div>
 

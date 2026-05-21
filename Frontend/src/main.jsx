@@ -22,6 +22,7 @@ import Categorys from "./Categorys/Categorys.jsx";
 import Contac_Us from "./Contact Us/Contac_Us.jsx";
 import About_Us from "./About Us/About_Us.jsx";
 import Return_Policy from "./Return Policy/Return_Policy.jsx";
+import Privacy_Policy from "./Privacy Policy/Privacy_Policy.jsx";
 import Combos from "./Combos/Combos.jsx";
 import Offers from "./Offers/Offers.jsx";
 import SingleComboProduct from "./Combos/SingleComboProduct.jsx";
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: "/aboutus", element: <About_Us /> },
       { path: "/healthbenefits", element: <HealthBenefits /> },
       { path: "/return-policy", element: <Return_Policy /> },
+      { path: "/privacy-policy", element: <Privacy_Policy /> },
       { path: "/combos", element: <Combos /> },
       { path: "/combos/:id", element: <SingleComboProduct /> },
       { path: "/offers", element: <Offers /> },
