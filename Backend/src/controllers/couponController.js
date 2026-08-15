@@ -13,8 +13,8 @@ const createCoupon = async (req, res) => {
   try {
     const { code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status } = req.body;
     const [result] = await db.query(
-      'INSERT INTO coupons (code, discountType, discountValue, minPurchase, expiryDate, usageLimit, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [code, discountType, discountValue, minPurchase !== undefined && minPurchase !== '' ? minPurchase : null, expiryDate || null, usageLimit !== undefined && usageLimit !== '' ? usageLimit : null, status || 'active']
+      'INSERT INTO coupons (code, discountType, discountValue, minPurchase, expiryDate, usageLimit, usedCount, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [code, discountType, discountValue, minPurchase !== undefined && minPurchase !== '' ? minPurchase : null, expiryDate || null, usageLimit !== undefined && usageLimit !== '' ? usageLimit : 0, 0, status || 'active']
     );
     res.json({ id: result.insertId, message: 'Coupon created' });
   } catch (error) {
@@ -35,22 +35,26 @@ const validateCoupon = async (req, res) => {
   try {
     const { code, subtotal } = req.body;
     const [rows] = await db.query('SELECT * FROM coupons WHERE code = ? AND status = "active"', [code]);
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Invalid or inactive coupon code' });
     }
 
     const coupon = rows[0];
-    
-    // Check expiry
+    const usageLimit = Number(coupon.usageLimit || 0);
+    const usedCount = Number(coupon.usedCount || 0);
+
+    if (usageLimit > 0 && usedCount >= usageLimit) {
+      return res.status(400).json({ message: 'Coupon usage limit reached' });
+    }
+
     if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
       return res.status(400).json({ message: 'Coupon has expired' });
     }
 
-    // Check min purchase
     if (subtotal < Number(coupon.minPurchase || 0)) {
-      return res.status(400).json({ 
-        message: `Minimum purchase of ₹${coupon.minPurchase} required for this coupon` 
+      return res.status(400).json({
+        message: `Minimum purchase of ₹${coupon.minPurchase} required for this coupon`
       });
     }
 

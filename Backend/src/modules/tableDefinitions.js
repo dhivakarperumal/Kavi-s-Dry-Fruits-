@@ -105,7 +105,8 @@ const tables = {
       discountType VARCHAR(50),
       discountValue DECIMAL(10,2),
       minPurchase DECIMAL(10,2),
-      usageLimit INT,
+      usageLimit INT DEFAULT 0,
+      usedCount INT DEFAULT 0,
       expiryDate DATE,
       status VARCHAR(20) DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

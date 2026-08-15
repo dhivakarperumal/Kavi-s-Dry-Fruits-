@@ -83,6 +83,7 @@ const createOrder = async (req, res) => {
     const totalAmount = req.body.totalAmount !== undefined ? req.body.totalAmount : 0;
     const docketNumber = req.body.docketNumber || null;
     const cancelReason = req.body.cancelReason || null;
+    const couponCode = req.body.couponCode || null;
 
     // Generate sequential Order ID if not provided or to ensure format ORD0001
     let orderId = req.body.orderId;
@@ -102,6 +103,27 @@ const createOrder = async (req, res) => {
       'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount, docketNumber, cancelReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, '[]', gstAmount, totalAmount, docketNumber, cancelReason]
     );
+
+    if (couponCode) {
+      const [couponRows] = await connection.query(
+        'SELECT id, usageLimit, usedCount FROM coupons WHERE code = ? AND status = "active" FOR UPDATE',
+        [couponCode]
+      );
+
+      if (couponRows.length > 0) {
+        const usageLimit = Number(couponRows[0].usageLimit || 0);
+        const usedCount = Number(couponRows[0].usedCount || 0);
+
+        if (usageLimit > 0 && usedCount >= usageLimit) {
+          throw new Error('Coupon usage limit reached');
+        }
+
+        await connection.query(
+          'UPDATE coupons SET usedCount = usedCount + 1 WHERE id = ?',
+          [couponRows[0].id]
+        );
+      }
+    }
 
     // 2. Insert Order Items
     const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
