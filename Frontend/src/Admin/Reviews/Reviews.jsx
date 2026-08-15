@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
-import { FiEdit, FiTrash2, FiCamera, FiUploadCloud, FiPlus, FiX } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiCamera, FiUploadCloud, FiPlus, FiX, FiArrowLeft } from "react-icons/fi";
 
 const Reviews = () => {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [filteredReviews, setFilteredReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -220,6 +222,14 @@ const Reviews = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto min-h-screen bg-transparent">
+      <button
+        onClick={() => navigate('/adminpanel/settings')}
+        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
+      >
+        <FiArrowLeft />
+        <span>Back to Settings</span>
+      </button>
+
       {/* Header */}
       <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>

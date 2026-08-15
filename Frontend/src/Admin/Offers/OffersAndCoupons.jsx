@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaTicketAlt, FaTrash, FaPlus, FaPercentage, FaRegCalendarAlt, FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { FaTicketAlt, FaTrash, FaPlus, FaPercentage, FaRegCalendarAlt, FaToggleOn, FaToggleOff, FaArrowLeft } from "react-icons/fa";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 
 const OffersAndCoupons = () => {
+    const navigate = useNavigate();
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -76,6 +78,14 @@ const OffersAndCoupons = () => {
 
     return (
         <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
+            <button
+                onClick={() => navigate('/adminpanel/settings')}
+                className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
+            >
+                <FaArrowLeft />
+                <span>Back to Settings</span>
+            </button>
+
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <div>

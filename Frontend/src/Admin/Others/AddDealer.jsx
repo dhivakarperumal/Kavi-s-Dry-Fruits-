@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import { 
   FaPlus, 
+  FaArrowLeft,
   FaTrash, 
   FaStore, 
   FaPhone, 
@@ -20,6 +22,7 @@ import {
 } from "react-icons/fa";
 
 const AddDealer = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     dealerName: "",
     dealerGSTNumber: "",
@@ -143,6 +146,14 @@ const AddDealer = () => {
 
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-8 animate-in fade-in duration-700">
+      <button
+        onClick={() => navigate('/adminpanel/settings')}
+        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
+      >
+        <FaArrowLeft />
+        <span>Back to Settings</span>
+      </button>
+
       <div className="max-w-7xl mx-auto mt-20">
         
         {/* Header Section */}
