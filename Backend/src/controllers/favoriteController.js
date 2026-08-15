@@ -19,8 +19,17 @@ const addToFavorites = async (req, res) => {
     const { productId, name, price, image, imageUrl, selectedWeight, weights, prices, category } = req.body;
     const finalImage = image || imageUrl;
     await db.query(
-      'INSERT INTO favorites (userId, productId, name, price, image, selectedWeight, weights, prices, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=name, category=VALUES(category)',
-      [userId, productId, name, price, finalImage, selectedWeight, JSON.stringify(weights), JSON.stringify(prices), category || 'General']
+      `INSERT INTO favorites (userId, productId, name, price, image, selectedWeight, weights, prices, category)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         name = VALUES(name),
+         price = VALUES(price),
+         image = VALUES(image),
+         selectedWeight = VALUES(selectedWeight),
+         weights = VALUES(weights),
+         prices = VALUES(prices),
+         category = VALUES(category)`,
+      [userId, productId, name, price, finalImage, selectedWeight, JSON.stringify(weights || []), JSON.stringify(prices || {}), category || 'General']
     );
     res.json({ message: 'Added to favorites' });
   } catch (error) {

@@ -91,6 +91,9 @@ const tables = {
       name VARCHAR(255),
       image LONGTEXT,
       price DECIMAL(10,2),
+      selectedWeight VARCHAR(100),
+      weights LONGTEXT,
+      prices LONGTEXT,
       category VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
