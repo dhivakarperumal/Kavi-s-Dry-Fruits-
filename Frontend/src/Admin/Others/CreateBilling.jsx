@@ -220,7 +220,8 @@ const CreateBilling = () => {
   const calculatePrice = (priceMap, weight, isCombo, product = null) => {
     let price = 0;
     if (isCombo && product) {
-      price = product.offerPrice || product.mrp || priceMap?.["combo"] || 0;
+      const comboOfferPrice = Number(product.offerPrice || product.price || product.comboDetails?.offerPrice || product.comboDetails?.mrp || priceMap?.["combo"]?.offerPrice || priceMap?.["combo"]?.mrp || 0);
+      price = comboOfferPrice || 0;
     } else {
       const priceObj = priceMap[weight];
       if (typeof priceObj === "object" && priceObj !== null) {
@@ -239,7 +240,7 @@ const CreateBilling = () => {
     const product = productList.find((p) => p.productId === id);
     if (!product) return;
 
-    const isCombo = product.category === "Combo";
+    const isCombo = product.category === "Combo" || product.type === "combo";
     let variants = [];
     try {
       variants = typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []);
@@ -257,9 +258,18 @@ const CreateBilling = () => {
       });
     }
 
+    if (isCombo) {
+      const comboDetails = typeof product.comboDetails === 'string'
+        ? JSON.parse(product.comboDetails || '{}')
+        : (product.comboDetails || {});
+      const comboOfferPrice = Number(product.offerPrice || product.price || comboDetails.offerPrice || comboDetails.mrp || 0);
+      const comboMrp = Number(product.mrp || comboDetails.mrp || comboOfferPrice || 0);
+      priceMap = { combo: { offerPrice: comboOfferPrice, mrp: comboMrp } };
+    }
+
     const defaultWeight = isCombo ? "combo" : (variants[0]?.weight || "");
-    let defaultPrice = isCombo ? 
-      (product.offerPrice || product.mrp || 0) : 
+    let defaultPrice = isCombo ?
+      Number(product.offerPrice || product.price || product.comboDetails?.offerPrice || product.comboDetails?.mrp || (priceMap?.combo?.offerPrice) || 0) :
       calculatePrice(priceMap, defaultWeight, false);
 
     const getProductImage = () => {
