@@ -6,11 +6,10 @@ import PageHeader from "../Component/PageHeader";
 import Testimonials from "./Testimonials";
 import RelatedProducts from "./RelatedProducts";
 import { toast } from "react-hot-toast";
-import { updateDoc, doc } from "firebase/firestore";
-import { db } from "../firebase";
 import { Helmet } from "react-helmet";
 import LodingPage from "../Component/LoadingPage";
 import OptimizedImage from "../Component/OptimizedImage";
+import api from "../services/api";
 
 const SingleProductView = () => {
   const { id } = useParams();
@@ -142,9 +141,11 @@ const SingleProductView = () => {
     };
 
     try {
-      const productRef = doc(db, "products", product.id);
-      await updateDoc(productRef, {
-        reviews: [...(product.reviews || []), newReview],
+      await api.post(`/products/${product.id ?? product.productId ?? id}/review`, {
+        userName: reviewInput.user,
+        user: reviewInput.user,
+        comment: reviewInput.comment,
+        rating: 5,
       });
 
       toast.success("Review added successfully!");
