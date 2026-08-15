@@ -360,6 +360,20 @@ const tables = {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_otp_phone (phone)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  contact_submissions: `
+    CREATE TABLE IF NOT EXISTS contact_submissions (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      submissionId VARCHAR(50) NOT NULL UNIQUE,
+      name VARCHAR(255),
+      email VARCHAR(255),
+      phone VARCHAR(50),
+      address TEXT,
+      message TEXT,
+      subject VARCHAR(255),
+      source VARCHAR(100) DEFAULT 'website',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };
 

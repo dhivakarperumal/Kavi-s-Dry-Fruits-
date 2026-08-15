@@ -1,32 +1,37 @@
-import emailjs from "@emailjs/browser";
 import { toast } from "react-hot-toast";
 import { useRef, useState } from "react";
 import { Helmet } from "react-helmet";
+import api from "../services/api";
 
 const Subscribe = () => {
   const form = useRef();
   const [loading, setLoading] = useState(false);
 
-  const sendEmail = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    emailjs
-      .sendForm("service_jk0jogd", "template_g8sy9ff", form.current, {
-        publicKey: "wFa5mGD4BGmNhcjWx",
-      })
-      .then(
-        () => {
-          toast.success("Message sent successfully!");
-          form.current.reset();
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Email error:", error.text);
-          toast.error("Failed to send message. Try again.");
-          setLoading(false);
-        }
-      );
+    const formData = new FormData(form.current);
+    const payload = {
+      name: formData.get("name") || "Subscriber",
+      email: formData.get("email") || "",
+      phone: formData.get("phone") || "",
+      address: formData.get("address") || "",
+      message: formData.get("message") || "Subscribe request",
+      subject: "Website Subscription",
+      source: "subscribe"
+    };
+
+    try {
+      await api.post("/contact-form", payload);
+      toast.success("Subscribed successfully!");
+      form.current.reset();
+    } catch (error) {
+      console.error("Subscription save error:", error);
+      toast.error(error?.response?.data?.message || "Failed to save subscription. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div className="bg-green-200 px-4 py-12 md:py-20 border-t-1 border-primary relative overflow-hidden">
@@ -80,19 +85,46 @@ const Subscribe = () => {
               satisfying healthy eating can be.
             </p>
 
-            <form ref={form} onSubmit={sendEmail}  className="flex flex-col items-center gap-4">
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter Your Email..."
-                required
-                className="px-5 py-3 rounded-2xl border-green1 border-2 font-bold text-green1 focus:outline-none w-full sm:w-auto min-w-[200px] sm:min-w-[350px]"
-              />
+            <form ref={form} onSubmit={handleSubmit} className="flex flex-col items-center gap-4 w-full max-w-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your Name"
+                  className="px-5 py-3 rounded-2xl border-green1 border-2 font-bold text-green1 focus:outline-none w-full"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter Your Email..."
+                  required
+                  className="px-5 py-3 rounded-2xl border-green1 border-2 font-bold text-green1 focus:outline-none w-full"
+                />
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone Number"
+                  className="px-5 py-3 rounded-2xl border-green1 border-2 font-bold text-green1 focus:outline-none w-full"
+                />
+                <input
+                  type="text"
+                  name="address"
+                  placeholder="Address"
+                  className="px-5 py-3 rounded-2xl border-green1 border-2 font-bold text-green1 focus:outline-none w-full"
+                />
+              </div>
+              <textarea
+                name="message"
+                rows="3"
+                placeholder="Tell us what you need..."
+                className="px-5 py-3 rounded-2xl border-green1 border-2 font-bold text-green1 focus:outline-none w-full resize-none"
+              ></textarea>
               <button
                 type="submit"
-                className="bg-green-700 hover:bg-green-800 text-white font-semibold px-6 py-3 rounded-md transition"
+                disabled={loading}
+                className="bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-semibold px-6 py-3 rounded-md transition"
               >
-                Subscribe Now
+                {loading ? "Submitting..." : "Subscribe Now"}
               </button>
             </form>
           </div>

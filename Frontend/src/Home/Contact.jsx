@@ -134,7 +134,7 @@ const Contact = () => {
             <h3 className="text-xl font-bold text-primary mb-6">
               ENQUIRY FORM
             </h3>
-            <form ref={form} onSubmit={sendEmail} className="space-y-4">
+            <form ref={form} onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -155,6 +155,13 @@ const Contact = () => {
                 type="email"
                 name="email"
                 placeholder="Email Id"
+                required
+                className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
+              />
+              <input
+                type="text"
+                name="address"
+                placeholder="Recipient Address*"
                 required
                 className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
               />
