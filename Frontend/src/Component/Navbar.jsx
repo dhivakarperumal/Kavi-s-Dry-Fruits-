@@ -73,7 +73,7 @@ const Navbar = () => {
     }`;
 
   return (
-    <header className="relative z-50">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-green-100 shadow-sm">
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
