@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
 import { FaHeart, FaUser, FaBars, FaTimes, FaArrowUp, FaBoxOpen  } from "react-icons/fa";
 import { RiAdminLine } from "react-icons/ri";
@@ -67,6 +67,10 @@ const Navbar = () => {
   const pagesItems = ["About Us", "Contact Us", "Health Benefits"];
   const userFirstLetter = user?.email ? user.email.charAt(0).toUpperCase() : "";
   const isMobile = windowWidth < 1024;
+  const navLinkClass = ({ isActive }) =>
+    `transition-colors duration-200 ${
+      isActive ? "text-green-700 font-semibold" : "text-black hover:text-green-600"
+    }`;
 
   return (
     <header className="relative z-50">
@@ -86,8 +90,8 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-6 text-base font-medium text-black">
-          <Link to="/" className="hover:text-green-600">Home</Link>
-          <Link to="/shop" className="hover:text-green-600">Shop</Link>
+          <NavLink to="/" end className={navLinkClass}>Home</NavLink>
+          <NavLink to="/shop" className={navLinkClass}>Shop</NavLink>
 
           {/* Category Dropdown */}
           <div
@@ -114,8 +118,8 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link to="/combos" className="hover:text-green-600">Combos</Link>
-          <Link to="/offers" className="hover:text-green-600">Offers</Link>
+          <NavLink to="/combos" className={navLinkClass}>Combos</NavLink>
+          <NavLink to="/offers" className={navLinkClass}>Offers</NavLink>
 
           {/* Pages Dropdown */}
           <div
@@ -218,8 +222,8 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="lg:hidden pl-10 px-5 py-4 bg-white shadow text-sm space-y-4">
-          <Link to="/" onClick={() => setMenuOpen(false)} className="block">Home</Link>
-          <Link to="/shop" onClick={() => setMenuOpen(false)} className="block">Shop</Link>
+          <NavLink to="/" end onClick={() => setMenuOpen(false)} className={navLinkClass}>Home</NavLink>
+          <NavLink to="/shop" onClick={() => setMenuOpen(false)} className={navLinkClass}>Shop</NavLink>
           <div>
             <button onClick={() => setCategoryOpen(!categoryOpen)} className="w-full text-left pb-2">Category</button>
             {categoryOpen && (
@@ -237,8 +241,8 @@ const Navbar = () => {
               </div>
             )}
           </div>
-          <Link to="/combos" onClick={() => setMenuOpen(false)} className="block">Combos</Link>
-          <Link to="/offers" onClick={() => setMenuOpen(false)} className="block">Offers</Link>
+          <NavLink to="/combos" onClick={() => setMenuOpen(false)} className={navLinkClass}>Combos</NavLink>
+          <NavLink to="/offers" onClick={() => setMenuOpen(false)} className={navLinkClass}>Offers</NavLink>
           <div>
             <button onClick={() => setPagesOpen(!pagesOpen)} className="w-full text-left pb-2">Pages</button>
             {pagesOpen && (
