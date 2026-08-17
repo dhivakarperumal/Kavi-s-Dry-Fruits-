@@ -25,6 +25,7 @@ const ContactFormSubmissions = () => {
   const [dateFilter, setDateFilter] = useState("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
   const fetchSubmissions = async () => {
@@ -144,11 +145,18 @@ const ContactFormSubmissions = () => {
       const matchesSearch = !query || fields.includes(query);
       const matchesDate = matchesDateFilter(item.created_at);
 
-      return matchesSearch && matchesDate;
+      let matchesSubject = true;
+      if (subjectFilter !== "all") {
+        const itemSubject = (item.subject || "").toLowerCase();
+        const filterValue = subjectFilter.toLowerCase();
+        matchesSubject = itemSubject.includes(filterValue);
+      }
+
+      return matchesSearch && matchesDate && matchesSubject;
     });
 
     setFilteredSubmissions(filtered);
-  }, [search, submissions, dateFilter, customStartDate, customEndDate]);
+  }, [search, submissions, dateFilter, customStartDate, customEndDate, subjectFilter]);
 
   const formatDate = (value) => {
     if (!value) return "N/A";
@@ -162,6 +170,12 @@ const ContactFormSubmissions = () => {
     { value: "this_week", label: "This Week" },
     { value: "this_month", label: "This Month" },
     { value: "custom", label: "Custom" },
+  ];
+
+  const subjectOptions = [
+    { value: "all", label: "All Submissions" },
+    { value: "subscription", label: "Subscription" },
+    { value: "contact form submission", label: "Contact Form Submission" },
   ];
 
   return (
@@ -248,6 +262,29 @@ const ContactFormSubmissions = () => {
           )}
         </div>
 
+        <div className="mb-6 bg-white rounded-[1.75rem] border border-gray-100 shadow-sm p-4 md:p-5">
+          <div className="flex items-center gap-2 mb-4 text-slate-700">
+            <FiMessageSquare className="text-emerald-600" />
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Subject Filter</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {subjectOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setSubjectFilter(option.value)}
+                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                  subjectFilter === option.value
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((item) => (
@@ -257,7 +294,7 @@ const ContactFormSubmissions = () => {
         ) : filteredSubmissions.length === 0 ? (
           <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-12 text-center text-gray-600">
             <p className="text-xl font-bold text-gray-800">No contact submissions found</p>
-            <p className="mt-2 text-sm text-gray-500">Try a different search or date filter.</p>
+            <p className="mt-2 text-sm text-gray-500">Try a different search, date filter, or subject filter.</p>
           </div>
         ) : viewMode === "card" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
