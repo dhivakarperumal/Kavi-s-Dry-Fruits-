@@ -181,107 +181,94 @@ const ContactFormSubmissions = () => {
   return (
     <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 pr-4">
-            <div className="relative w-full max-w-xl">
-              <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search contact entries..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-black text-black text-sm"
-              />
-            </div>
+      
+        {/* Search + View Toggle + Filter */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+
+          {/* Search */}
+          <div className="relative w-full xl:max-w-xl">
+            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+
+            <input
+              type="text"
+              placeholder="Search contact entries..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-14 pr-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500/20 transition-all font-black text-black text-sm"
+            />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Right Controls */}
+          <div className="flex items-center justify-end gap-3">
+
+             {/* View Toggle */}
             <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2.5 rounded-xl transition-all ${viewMode === "card" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === "card"
+                    ? "bg-emerald-600 text-white shadow-lg"
+                    : "text-slate-400 hover:text-emerald-600"
+                  }`}
                 title="Card View"
               >
                 <FaThLarge size={14} />
               </button>
+
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-2.5 rounded-xl transition-all ${viewMode === "table" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === "table"
+                    ? "bg-emerald-600 text-white shadow-lg"
+                    : "text-slate-400 hover:text-emerald-600"
+                  }`}
                 title="Table View"
               >
                 <FaBars size={14} />
               </button>
+
             </div>
-          </div>
-        </div>
 
-        <div className="mb-6 bg-white rounded-[1.75rem] border border-gray-100 shadow-sm p-4 md:p-5">
-          <div className="flex items-center gap-2 mb-4 text-slate-700">
-            <FiCalendar className="text-emerald-600" />
-            <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Date Filter</span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {dateOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setDateFilter(option.value)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                  dateFilter === option.value
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-                }`}
+            {/* Filter Dropdown */}
+            <div className="relative">
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-100 shadow-sm rounded-2xl pl-4 pr-10 py-3 text-xs font-black uppercase tracking-wider text-slate-600 outline-none cursor-pointer hover:border-emerald-300 focus:border-emerald-500 transition-all"
               >
-                {option.label}
-              </button>
-            ))}
-          </div>
+                {dateOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
 
-          {dateFilter === "custom" && (
-            <div className="flex flex-wrap items-end gap-3 mt-4">
-              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <span>From</span>
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-500"
-                />
-              </label>
-
-              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <span>To</span>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-500"
-                />
-              </label>
+              <FiCalendar
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none"
+                size={15}
+              />
             </div>
-          )}
-        </div>
 
-        <div className="mb-6 bg-white rounded-[1.75rem] border border-gray-100 shadow-sm p-4 md:p-5">
-          <div className="flex items-center gap-2 mb-4 text-slate-700">
-            <FiMessageSquare className="text-emerald-600" />
-            <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Subject Filter</span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {subjectOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setSubjectFilter(option.value)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
-                  subjectFilter === option.value
-                    ? "bg-emerald-600 text-white shadow-md"
-                    : "bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
-                }`}
+            {/* Subject Dropdown */}
+            <div className="relative">
+              <select
+                value={subjectFilter}
+                onChange={(e) => setSubjectFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-100 shadow-sm rounded-2xl pl-4 pr-10 py-3 text-xs font-black uppercase tracking-wider text-slate-600 outline-none cursor-pointer hover:border-emerald-300 focus:border-emerald-500 transition-all"
               >
-                {option.label}
-              </button>
-            ))}
+                {subjectOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              <FiMessageSquare
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none"
+                size={15}
+              />
+            </div>
+
+           
           </div>
         </div>
 
