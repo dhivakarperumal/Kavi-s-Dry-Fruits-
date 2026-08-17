@@ -10,7 +10,7 @@ const Contact = () => {
   const form = useRef();
   const [loading, setLoading] = useState(false);
 
-  const sendEmail = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
 
