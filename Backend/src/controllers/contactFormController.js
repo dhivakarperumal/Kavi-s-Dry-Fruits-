@@ -3,6 +3,38 @@ const crypto = require('crypto');
 
 const createSubmissionId = () => 'CF-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
+const normalizeContactSubmission = (payload = {}) => {
+  const {
+    name,
+    email,
+    phone,
+    contact,
+    message,
+    address,
+    subject,
+    source = 'website'
+  } = payload;
+
+  const finalName = (name || '').trim() || 'Customer';
+  const finalEmail = (email || '').trim();
+  const finalPhone = (phone || contact || '').trim();
+  const finalAddress = (address || '').trim();
+  const finalMessage = (message || '').trim() || 'No message provided';
+  const finalSubject = (subject || '').trim() || 'Contact Form Submission';
+
+  return {
+    name: finalName,
+    email: finalEmail,
+    phone: finalPhone,
+    address: finalAddress,
+    message: finalMessage,
+    subject: finalSubject,
+    source
+  };
+};
+
+exports.normalizeContactSubmission = normalizeContactSubmission;
+
 exports.getContactSubmissions = async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -17,25 +49,10 @@ exports.getContactSubmissions = async (req, res) => {
 
 exports.createContactSubmission = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      phone,
-      contact,
-      message,
-      address,
-      subject,
-      source = 'website'
-    } = req.body;
+    const normalized = normalizeContactSubmission(req.body || {});
+    const { name, email, phone, message, address, subject, source } = normalized;
 
-    const finalName = (name || '').trim() || 'Customer';
-    const finalEmail = (email || '').trim();
-    const finalPhone = (phone || contact || '').trim();
-    const finalAddress = (address || '').trim();
-    const finalMessage = (message || '').trim() || 'No message provided';
-    const finalSubject = (subject || '').trim() || 'Contact Form Submission';
-
-    if (!finalEmail && !finalPhone) {
+    if (!email && !phone) {
       return res.status(400).json({ message: 'Email or phone is required.' });
     }
 
@@ -48,12 +65,12 @@ exports.createContactSubmission = async (req, res) => {
       `,
       [
         submissionId,
-        finalName,
-        finalEmail,
-        finalPhone,
-        finalAddress,
-        finalMessage,
-        finalSubject,
+        name,
+        email,
+        phone,
+        address,
+        message,
+        subject,
         source
       ]
     );

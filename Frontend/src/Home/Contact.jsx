@@ -3,33 +3,46 @@ import SEO from "../Component/SEO";
 import emailjs from "@emailjs/browser";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
-
-
+import api from "../services/api";
 
 const Contact = () => {
   const form = useRef();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    emailjs
-      .sendForm("service_jk0jogd", "template_g8sy9ff", form.current, {
-        publicKey: "wFa5mGD4BGmNhcjWx",
-      })
-      .then(
-        () => {
-          toast.success("Message sent successfully!");
-          form.current.reset();
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Email error:", error.text);
-          toast.error("Failed to send message. Try again.");
-          setLoading(false);
-        }
-      );
+    const payload = {
+      name: form.current.name.value,
+      email: form.current.email.value,
+      phone: form.current.contact.value,
+      contact: form.current.contact.value,
+      address: form.current.address.value,
+      message: form.current.message.value,
+      subject: "Contact Form Submission",
+      source: "website",
+    };
+
+    try {
+      await api.post("/contact-form", payload);
+
+      try {
+        await emailjs.sendForm("service_jk0jogd", "template_g8sy9ff", form.current, {
+          publicKey: "wFa5mGD4BGmNhcjWx",
+        });
+      } catch (emailError) {
+        console.error("Email error:", emailError);
+      }
+
+      toast.success("Message sent successfully!");
+      form.current.reset();
+    } catch (error) {
+      console.error("Contact submission error:", error);
+      toast.error(error?.response?.data?.message || "Failed to send message. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
