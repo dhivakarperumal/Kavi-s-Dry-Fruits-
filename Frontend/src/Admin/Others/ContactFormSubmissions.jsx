@@ -38,13 +38,6 @@ const ContactFormSubmissions = () => {
           <h2 className="text-2xl font-bold text-green-900">Contact Form Submissions</h2>
           <p className="text-sm text-gray-600">All messages received from the website subscribe/contact form.</p>
         </div>
-        <button
-          onClick={() => navigate("/adminpanel/settings")}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white font-medium shadow hover:bg-emerald-800"
-        >
-          <FiArrowLeft />
-          <span>Back to Settings</span>
-        </button>
       </div>
 
       {loading ? (
