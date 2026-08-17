@@ -11,6 +11,7 @@ import {
   FiClock,
   FiLayout,
   FiGrid,
+  FiCalendar,
 } from "react-icons/fi";
 import api from "../../services/api";
 import { FaBars, FaThLarge } from "react-icons/fa";
@@ -21,6 +22,9 @@ const ContactFormSubmissions = () => {
   const [filteredSubmissions, setFilteredSubmissions] = useState([]);
   const [viewMode, setViewMode] = useState("table");
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchSubmissions = async () => {
@@ -38,6 +42,88 @@ const ContactFormSubmissions = () => {
     }
   };
 
+  const toDate = (value, endOfDay = false) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+
+    if (endOfDay) {
+      date.setHours(23, 59, 59, 999);
+    } else {
+      date.setHours(0, 0, 0, 0);
+    }
+
+    return date;
+  };
+
+  const matchesDateFilter = (createdAt) => {
+    if (!createdAt) return true;
+
+    const compareDate = new Date(createdAt);
+    if (Number.isNaN(compareDate.getTime())) return true;
+
+    const now = new Date();
+
+    switch (dateFilter) {
+      case "today": {
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        return compareDate >= today && compareDate < tomorrow;
+      }
+      case "yesterday": {
+        const yesterdayStart = new Date(now);
+        yesterdayStart.setDate(now.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+
+        const yesterdayEnd = new Date(yesterdayStart);
+        yesterdayEnd.setHours(23, 59, 59, 999);
+
+        return compareDate >= yesterdayStart && compareDate <= yesterdayEnd;
+      }
+      case "this_week": {
+        const startOfWeek = new Date(now);
+        const day = startOfWeek.getDay();
+        const diffToMonday = day === 0 ? -6 : 1 - day;
+        startOfWeek.setDate(startOfWeek.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        return compareDate >= startOfWeek && compareDate <= endOfWeek;
+      }
+      case "this_month": {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        return compareDate >= monthStart && compareDate <= monthEnd;
+      }
+      case "custom": {
+        const fromDate = toDate(customStartDate);
+        const toDateValue = toDate(customEndDate, true);
+
+        if (fromDate && toDateValue) {
+          return compareDate >= fromDate && compareDate <= toDateValue;
+        }
+
+        if (fromDate) {
+          return compareDate >= fromDate;
+        }
+
+        if (toDateValue) {
+          return compareDate <= toDateValue;
+        }
+
+        return true;
+      }
+      case "all":
+      default:
+        return true;
+    }
+  };
+
   useEffect(() => {
     fetchSubmissions();
   }, []);
@@ -45,7 +131,6 @@ const ContactFormSubmissions = () => {
   useEffect(() => {
     const query = search.trim().toLowerCase();
     const filtered = submissions.filter((item) => {
-      if (!query) return true;
       const fields = [
         item.name,
         item.email,
@@ -55,16 +140,29 @@ const ContactFormSubmissions = () => {
         item.message,
         item.source,
       ].filter(Boolean).join(" ").toLowerCase();
-      return fields.includes(query);
+
+      const matchesSearch = !query || fields.includes(query);
+      const matchesDate = matchesDateFilter(item.created_at);
+
+      return matchesSearch && matchesDate;
     });
 
     setFilteredSubmissions(filtered);
-  }, [search, submissions]);
+  }, [search, submissions, dateFilter, customStartDate, customEndDate]);
 
   const formatDate = (value) => {
     if (!value) return "N/A";
     return new Date(value).toLocaleString();
   };
+
+  const dateOptions = [
+    { value: "all", label: "All" },
+    { value: "today", label: "Today" },
+    { value: "yesterday", label: "Yesterday" },
+    { value: "this_week", label: "This Week" },
+    { value: "this_month", label: "This Month" },
+    { value: "custom", label: "Custom" },
+  ];
 
   return (
     <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
@@ -100,9 +198,54 @@ const ContactFormSubmissions = () => {
                 <FaBars size={14} />
               </button>
             </div>
-
-           
           </div>
+        </div>
+
+        <div className="mb-6 bg-white rounded-[1.75rem] border border-gray-100 shadow-sm p-4 md:p-5">
+          <div className="flex items-center gap-2 mb-4 text-slate-700">
+            <FiCalendar className="text-emerald-600" />
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Date Filter</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {dateOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setDateFilter(option.value)}
+                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+                  dateFilter === option.value
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          {dateFilter === "custom" && (
+            <div className="flex flex-wrap items-end gap-3 mt-4">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <span>From</span>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-500"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <span>To</span>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-500"
+                />
+              </label>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -114,7 +257,7 @@ const ContactFormSubmissions = () => {
         ) : filteredSubmissions.length === 0 ? (
           <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-12 text-center text-gray-600">
             <p className="text-xl font-bold text-gray-800">No contact submissions found</p>
-            <p className="mt-2 text-sm text-gray-500">Try a different search or submit a new enquiry from the contact page.</p>
+            <p className="mt-2 text-sm text-gray-500">Try a different search or date filter.</p>
           </div>
         ) : viewMode === "card" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
