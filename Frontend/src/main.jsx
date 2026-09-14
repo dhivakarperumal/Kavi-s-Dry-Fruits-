@@ -113,9 +113,7 @@ const router = createBrowserRouter([
     )
   },
 
-  // The Admin panel handles /adminpanel/invoice internally using Invoice.jsx
-
-  // Legacy route fallback for /admin/invoice?no=INV-001
+  
   {
     path: "/admin/invoice",
     element: (

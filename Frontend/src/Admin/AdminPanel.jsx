@@ -41,6 +41,7 @@ import SEOKeywords from "./SEOKeywords";
 import Settings from "./Settings/Settings";
 import Profile from "./Settings/Profile";
 import DeliverySettings from "./Settings/DeliverySettings";
+import OfferBanner from "../Home/OfferBanner";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -91,6 +92,7 @@ const AdminPanel = () => {
       "cancel-orders": "Cancel Orders",
       "returned-orders": "Returned Orders",
       "stickers": "Stickers",
+      "banner": "Banner",
       "dealer": "Dealer",
       "reviews": "Reviews",
       "contact-form": "Contact Form",
@@ -130,6 +132,7 @@ const AdminPanel = () => {
       "Cancel Orders": "cancel-orders",
       "Returned Orders": "returned-orders",
       "Stickers": "stickers",
+      "Banner": "banner",
       "Dealer": "dealer",
       "Reviews": "reviews",
       "Contact Form": "contact-form",
@@ -246,6 +249,7 @@ const AdminPanel = () => {
 
       // Others
       case "Stickers": return <Stickers />;
+      case "Banner": return <OfferBanner />;
       case "Dealer": return <AddDealer />;
       case "Reviews": return <Reviews />;
       case "Contact Form": return <ContactFormSubmissions />;
