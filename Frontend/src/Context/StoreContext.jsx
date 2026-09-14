@@ -187,8 +187,16 @@ export const StoreProvider = ({ children }) => {
           );
         }
       } catch (err) {
-        console.error("Data load error:", err.message);
-        toast.error("Cannot load products or categories.");
+        const isNetworkIssue = !err?.response && !!err?.message && /network|timeout|connection|failed/i.test(err.message);
+
+        if (isNetworkIssue) {
+          console.warn("Backend is unavailable right now. Product catalog will remain empty until the API is reachable.");
+        } else {
+          console.error("Data load error:", err.message);
+        }
+
+        setAllProducts([]);
+        setAllCategories([]);
       } finally {
         setLoadingProducts(false);
       }
