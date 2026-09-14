@@ -72,7 +72,7 @@ const ProductCard = React.memo(({
   };
 
   return (
-    <div className="group bg-white rounded-2xl p-4 shadow-md hover:ring-2 hover:ring-green1 transition-all duration-300 relative">
+    <div className="group bg-white rounded-2xl p-4 shadow-md hover:ring-2 hover:ring-green1 transition-all duration-300 relative flex flex-col h-full min-h-[390px]">
       <div className="relative h-60 w-full flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
         <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="w-full h-full flex items-center justify-center">
           <OptimizedImage
@@ -101,8 +101,8 @@ const ProductCard = React.memo(({
         </button>
       </div>
 
-      <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="block">
-        <h3 className="font-semibold text-base sm:text-lg text-center mb-2 hover:text-green1 transition-colors">
+      <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="block flex-1">
+        <h3 className="font-semibold text-base sm:text-lg text-center mb-2 hover:text-green1 transition-colors truncate whitespace-nowrap overflow-hidden text-ellipsis">
           {product.name}
         </h3>
       </Link>

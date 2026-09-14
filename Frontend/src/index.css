@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 @theme {
   --color-primary: #388e3c;
   --color-green3: #e6fdd6;

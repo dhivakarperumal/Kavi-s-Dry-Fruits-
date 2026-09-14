@@ -99,7 +99,7 @@ const RelatedProducts = ({ relatedProducts }) => {
 
             return (
               <div key={`${p.id}_${relWeight}`} className="!flex !justify-center px-2">
-                <div className="group bg-white rounded-2xl p-4 shadow-md h-full w-[250px] flex flex-col relative">
+                <div className="group bg-white rounded-2xl p-4 shadow-md h-full w-[250px] min-h-[390px] flex flex-col relative">
                   <div className="absolute top-7 left-4 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
                     Bestseller
                   </div>
@@ -115,7 +115,7 @@ const RelatedProducts = ({ relatedProducts }) => {
                       loading="lazy"
                     />
                   </div>
-                  <h3 className="font-semibold text-base sm:text-lg text-center mb-2">
+                  <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis">
                     {p.name} ({relWeight})
                   </h3>
                   <p className="text-center text-gray-600 text-sm mb-2">

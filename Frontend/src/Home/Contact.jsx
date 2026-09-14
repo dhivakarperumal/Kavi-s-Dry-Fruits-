@@ -3,33 +3,46 @@ import SEO from "../Component/SEO";
 import emailjs from "@emailjs/browser";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
-
-
+import api from "../services/api";
 
 const Contact = () => {
   const form = useRef();
   const [loading, setLoading] = useState(false);
 
-  const sendEmail = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    emailjs
-      .sendForm("service_jk0jogd", "template_g8sy9ff", form.current, {
-        publicKey: "wFa5mGD4BGmNhcjWx",
-      })
-      .then(
-        () => {
-          toast.success("Message sent successfully!");
-          form.current.reset();
-          setLoading(false);
-        },
-        (error) => {
-          console.error("Email error:", error.text);
-          toast.error("Failed to send message. Try again.");
-          setLoading(false);
-        }
-      );
+    const payload = {
+      name: form.current.name.value,
+      email: form.current.email.value,
+      phone: form.current.contact.value,
+      contact: form.current.contact.value,
+      address: form.current.address.value,
+      message: form.current.message.value,
+      subject: "Contact Form Submission",
+      source: "website",
+    };
+
+    try {
+      await api.post("/contact-form", payload);
+
+      try {
+        await emailjs.sendForm("service_jk0jogd", "template_g8sy9ff", form.current, {
+          publicKey: "wFa5mGD4BGmNhcjWx",
+        });
+      } catch (emailError) {
+        console.error("Email error:", emailError);
+      }
+
+      toast.success("Message sent successfully!");
+      form.current.reset();
+    } catch (error) {
+      console.error("Contact submission error:", error);
+      toast.error(error?.response?.data?.message || "Failed to send message. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -134,7 +147,7 @@ const Contact = () => {
             <h3 className="text-xl font-bold text-primary mb-6">
               ENQUIRY FORM
             </h3>
-            <form ref={form} onSubmit={sendEmail} className="space-y-4">
+            <form ref={form} onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -155,6 +168,13 @@ const Contact = () => {
                 type="email"
                 name="email"
                 placeholder="Email Id"
+                required
+                className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
+              />
+              <input
+                type="text"
+                name="address"
+                placeholder="Recipient Address*"
                 required
                 className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
               />

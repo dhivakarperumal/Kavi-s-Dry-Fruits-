@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../services/api";
-import { Link } from "react-router-dom";
 import { 
   FaFileInvoiceDollar, 
   FaPlus, 
@@ -20,6 +20,7 @@ import {
 } from "react-icons/fa";
 
 const Invoice = () => {
+  const navigate = useNavigate();
   const [invoiceData, setInvoiceData] = useState({
     invoiceNo: "",
     dealerName: "",
@@ -220,6 +221,14 @@ const Invoice = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-700">
+      <button
+        onClick={() => navigate('/adminpanel/settings')}
+        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
+      >
+        <FaArrowLeft />
+        <span>Back to Settings</span>
+      </button>
+
       <div className="max-w-7xl mx-auto mt-20">
         
         {/* Header Section */}

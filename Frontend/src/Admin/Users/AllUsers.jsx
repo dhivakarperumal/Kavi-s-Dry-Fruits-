@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { FaEye, FaEdit, FaTrash, FaPlus, FaThLarge, FaTable } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaPlus, FaThLarge, FaTable, FaArrowLeft } from "react-icons/fa";
 import toast from "react-hot-toast";
 
 const Users = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -154,6 +156,14 @@ const Users = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-gray-50/50">
+      <button
+        onClick={() => navigate('/adminpanel/settings')}
+        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
+      >
+        <FaArrowLeft className="text-sm" />
+        <span>Back to Settings</span>
+      </button>
+
       <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-6 space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="relative w-full md:w-1/3">

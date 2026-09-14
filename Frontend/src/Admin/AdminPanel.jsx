@@ -20,6 +20,7 @@ import ReturenOrders from "./Orders/ReturenOrders";
 import StockDetails from "./Products/StockDetails";
 import AddDealer from "./Others/AddDealer";
 import Reviews from "./Reviews/Reviews";
+import ContactFormSubmissions from "./Others/ContactFormSubmissions";
 import Invoice from "./Others/Invoice";
 import Billing from "./Others/Billing";
 import CreateBilling from "./Others/CreateBilling";
@@ -92,6 +93,7 @@ const AdminPanel = () => {
       "stickers": "Stickers",
       "dealer": "Dealer",
       "reviews": "Reviews",
+      "contact-form": "Contact Form",
       "seo-keywords": "SEO Keywords",
       "invoice": "Invoice",
       "billing": "Billing",
@@ -130,6 +132,7 @@ const AdminPanel = () => {
       "Stickers": "stickers",
       "Dealer": "dealer",
       "Reviews": "reviews",
+      "Contact Form": "contact-form",
       "SEO Keywords": "seo-keywords",
       "Invoice": "invoice",
       "Billing": "billing",
@@ -245,6 +248,7 @@ const AdminPanel = () => {
       case "Stickers": return <Stickers />;
       case "Dealer": return <AddDealer />;
       case "Reviews": return <Reviews />;
+      case "Contact Form": return <ContactFormSubmissions />;
       case "SEO Keywords": return <SEOKeywords />;
       case "Invoice": return <Invoice />;
       case "Billing": return <Billing />;

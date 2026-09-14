@@ -227,6 +227,10 @@ const Account = () => {
   const handleDelete = async (idx) => {
     const addressToDelete = addresses[idx];
     if (!addressToDelete || !addressToDelete.id) return;
+
+    const confirmed = window.confirm(`Are you sure you want to delete this address for ${addressToDelete.fullname || 'this contact'}?`);
+    if (!confirmed) return;
+
     try {
       await api.delete(`/users/addresses/${addressToDelete.id}`);
       setAddresses(prev => prev.filter((_, i) => i !== idx));

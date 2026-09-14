@@ -272,13 +272,13 @@ const DeliverySettings = () => {
   return (
     <div className="p-4 sm:p-10 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* <button
+        <button
           onClick={() => navigate("/adminpanel/settings")}
           className="flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors mb-6 group"
         >
           <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
           <span className="font-semibold">Back to Settings</span>
-        </button> */}
+        </button>
 
         <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
           <div className="flex items-center gap-4 mb-8">

@@ -81,6 +81,7 @@ const initializeDatabase = async () => {
   await syncColumns('app_settings', tableDefinitions.app_settings);
   await syncColumns('site_settings', tableDefinitions.site_settings);
   await syncColumns('sticker_records', tableDefinitions.sticker_records);
+  await syncColumns('contact_submissions', tableDefinitions.contact_submissions);
 
   // UUID Maintenance
   try {

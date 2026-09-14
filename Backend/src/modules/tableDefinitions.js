@@ -91,6 +91,9 @@ const tables = {
       name VARCHAR(255),
       image LONGTEXT,
       price DECIMAL(10,2),
+      selectedWeight VARCHAR(100),
+      weights LONGTEXT,
+      prices LONGTEXT,
       category VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -102,7 +105,8 @@ const tables = {
       discountType VARCHAR(50),
       discountValue DECIMAL(10,2),
       minPurchase DECIMAL(10,2),
-      usageLimit INT,
+      usageLimit INT DEFAULT 0,
+      usedCount INT DEFAULT 0,
       expiryDate DATE,
       status VARCHAR(20) DEFAULT 'active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -355,6 +359,20 @@ const tables = {
       is_used TINYINT(1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_otp_phone (phone)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
+  contact_submissions: `
+    CREATE TABLE IF NOT EXISTS contact_submissions (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      submissionId VARCHAR(50) NOT NULL UNIQUE,
+      name VARCHAR(255),
+      email VARCHAR(255),
+      phone VARCHAR(50),
+      address TEXT,
+      message TEXT,
+      subject VARCHAR(255),
+      source VARCHAR(100) DEFAULT 'website',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `
 };

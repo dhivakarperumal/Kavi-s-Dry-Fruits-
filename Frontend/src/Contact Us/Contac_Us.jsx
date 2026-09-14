@@ -7,25 +7,25 @@ import { Helmet } from "react-helmet";
 const Contac_Us = () => {
   return (
     <div>
-    <Helmet>
-  <title>Contact Kavi’s Dry Fruits – Customer Support & Order Enquiries</title>
+      <Helmet>
+        <title>Contact Kavi’s Dry Fruits – Customer Support & Order Enquiries</title>
 
-  <meta
-    name="description"
-    content="Get in touch with Kavi’s Dry Fruits for order enquiries, wholesale prices, bulk ordering, delivery details & customer support."
-  />
+        <meta
+          name="description"
+          content="Get in touch with Kavi’s Dry Fruits for order enquiries, wholesale prices, bulk ordering, delivery details & customer support."
+        />
 
-  <meta
-    name="keywords"
-    content="contact kavis dry fruits, dry fruits shop phone number, dry fruits delivery support"
-  />
+        <meta
+          name="keywords"
+          content="contact kavis dry fruits, dry fruits shop phone number, dry fruits delivery support"
+        />
 
-  <link rel="canonical" href="https://kavisdryfruits.com/contact" />
-</Helmet>
+        <link rel="canonical" href="https://kavisdryfruits.com/contact" />
+      </Helmet>
 
-        <PageHeader title={"Contact Us"} curpage={"Contact Us"}/>
-        <Contact/>  
-        <Services/>
+      <PageHeader title={"Contact Us"} curpage={"Contact Us"} />
+      <Contact />
+      <Services />
     </div>
   )
 }
