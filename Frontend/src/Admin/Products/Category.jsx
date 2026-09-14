@@ -24,6 +24,7 @@ const Category = () => {
 
   const [editId, setEditId] = useState(null);
   const [previewImgs, setPreviewImgs] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -86,20 +87,10 @@ const Category = () => {
         )
       );
 
-      const base64Images = await Promise.all(
-        compressedFiles.map(
-          (file) =>
-            new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            })
-        )
-      );
-
-      setCategory((prev) => ({ ...prev, cimgs: base64Images }));
-      setPreviewImgs(base64Images);
+      const filePreviews = compressedFiles.map((file) => URL.createObjectURL(file));
+      setImageFiles(compressedFiles);
+      setCategory((prev) => ({ ...prev, cimgs: [] }));
+      setPreviewImgs(filePreviews);
       toast.success("Images ready!");
     } catch (error) {
       toast.error("Image processing failed.");
@@ -115,12 +106,14 @@ const Category = () => {
     setShowModal(false);
     setEditId(null);
     setCategory({ catId: "", cname: "", cdescription: "", cimgs: [] });
+    setImageFiles([]);
     setPreviewImgs([]);
   };
 
   const openAddModal = () => {
     const nextId = generateCategoryId(categories);
     setCategory({ catId: nextId, cname: "", cdescription: "", cimgs: [] });
+    setImageFiles([]);
     setPreviewImgs([]);
     setEditId(null);
     setShowModal(true);
@@ -128,18 +121,25 @@ const Category = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!category.cname || !category.cdescription || category.cimgs.length === 0) {
+    if (!category.cname || !category.cdescription || (category.cimgs.length === 0 && imageFiles.length === 0)) {
       toast.error("Please fill all fields.");
       return;
     }
 
     setLoading(true);
     try {
+      const formData = new FormData();
+      formData.append("catId", category.catId);
+      formData.append("cname", category.cname);
+      formData.append("cdescription", category.cdescription);
+      formData.append("cimgs", JSON.stringify(category.cimgs));
+      imageFiles.forEach((file) => formData.append("images", file));
+
       if (editId) {
-        await api.put(`/categories/${editId}`, category);
+        await api.put(`/categories/${editId}`, formData);
         toast.success("Category updated!");
       } else {
-        await api.post("/categories", category);
+        await api.post("/categories", formData);
         toast.success("Category added!");
       }
       closeModal();
@@ -157,6 +157,7 @@ const Category = () => {
       cdescription: cat.cdescription,
       cimgs: cat.cimgs,
     });
+    setImageFiles([]);
     setPreviewImgs(cat.cimgs || []);
     setEditId(cat.id);
     setShowModal(true);
@@ -367,9 +368,9 @@ const Category = () => {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
              <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
              
-             <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+             <div className="bg-white w-full max-w-2xl max-h-[90vh] flex flex-col rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
                 {/* Modal Header */}
-                <div className="bg-emerald-600 p-8 text-white relative">
+                <div className="bg-emerald-600 p-8 text-white relative shrink-0">
                    <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                    <div className="relative flex items-center justify-between">
                       <div>
@@ -383,7 +384,7 @@ const Category = () => {
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Auto-Generated ID</label>

@@ -46,7 +46,7 @@ const DashboardStats = ({ stats }) => (
     {stats.map((stat, i) => (
       <div
         key={i}
-        className={`group relative overflow-hidden rounded-2xl p-6 shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
+        className={`group relative overflow-hidden rounded-2xl p-6 min-h-[150px] shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
       >
         {/* Background Decorative Circles */}
         <div className={`absolute -bottom-8 -right-8 w-40 h-40 ${stat.round1} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150`}></div>
@@ -87,7 +87,7 @@ const QuickAccess = ({ setActiveSection }) => {
           <button
             key={i}
             onClick={() => setActiveSection(action.section)}
-            className="group relative flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+            className="group relative flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
           >
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 bg-gradient-to-br ${action.color} transition-opacity duration-300`}></div>
             <div className={`text-2xl mb-3 p-3 rounded-xl bg-gradient-to-br ${action.color} text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6`}>
