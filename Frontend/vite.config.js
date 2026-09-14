@@ -6,7 +6,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
-  
   // ===== PERFORMANCE OPTIMIZATIONS =====
   build: {
     // Code splitting for better caching
