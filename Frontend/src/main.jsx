@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import App from "./App.jsx";
 import "./index.css";
@@ -33,7 +33,7 @@ import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
 import OrderTracking from "./Shop/OrderTracking.jsx";
 import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,

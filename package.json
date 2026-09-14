@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "backend": "nodemon Backend/index.js",
-    "frontend": "npm start --prefix frontend",
+    "frontend": "npm start --prefix frontend",    
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "keywords": [],
