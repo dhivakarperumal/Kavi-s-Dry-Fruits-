@@ -592,7 +592,7 @@ const Stickers = ({ adminData }) => {
         </div>
 
         {/* Quick Summary / Status Chips */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Sticker Types</p>
@@ -613,15 +613,7 @@ const Stickers = ({ adminData }) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Display Mode</p>
-              <p className="text-xl font-black text-gray-900 mt-0.5 capitalize">{viewMode}</p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-gray-50 text-gray-500 flex items-center justify-center font-bold">
-              {viewMode === "card" ? <FaThLarge size={16} /> : <FaBars size={16} />}
-            </div>
-          </div>
+         
 
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between col-span-2 sm:col-span-1">
             <div>
