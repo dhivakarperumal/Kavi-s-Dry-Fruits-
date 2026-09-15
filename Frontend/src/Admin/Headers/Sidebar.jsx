@@ -10,7 +10,6 @@ import {
   MdOutlineProductionQuantityLimits,
   MdCategory,
   MdOutlineInventory2,
-  MdOutlineAddBox,
   MdDeliveryDining,
   MdOutlineCancelPresentation,
   MdPreview,
@@ -46,14 +45,7 @@ const Sidebar = ({
       ],
     },
 
-    // {
-    //   label: "users",
-    //   icon: <FaUsersCog />,
-    //   dropdown: [
-    //     { label: "New Users", collection: "users", icon: <FaUsers /> },
-    //     { label: "All Users", collection: "users", icon: <FaUsers /> },
-    //   ],
-    // },
+    
 
     {
       label: "Orders",
@@ -77,15 +69,8 @@ const Sidebar = ({
     // { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
 
-
-    {
-      label: "Health Benefits",
-      icon: <MdPreview />,
-      dropdown: [
-        { label: "Add Health Benefit", icon: <MdOutlineAddBox /> },
-        { label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
-      ],
-    },
+{ label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
+    
 
 
   ];
