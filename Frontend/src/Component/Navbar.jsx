@@ -213,7 +213,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="lg:hidden border-t border-green-100 bg-[#f7fbf7] px-4 py-4 shadow-inner">
+        <div className="lg:hidden max-h-[calc(100dvh-6.5rem)] overflow-y-auto overscroll-contain border-t border-green-100 bg-[#f7fbf7] px-4 py-4 shadow-inner">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <NavLink
               to="/"
