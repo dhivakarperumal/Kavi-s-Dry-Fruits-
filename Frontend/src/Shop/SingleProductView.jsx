@@ -200,7 +200,7 @@ const SingleProductView = () => {
                 <OptimizedImage
                   src={selectedImage}
                   alt={`${product.name} - Kavi's Dry Fruits`}
-                  className="w-full h-72 sm:h-96 rounded-lg cursor-zoom-in"
+                  className="w-full h-[26rem] sm:h-[32rem] rounded-lg bg-white cursor-zoom-in"
                   objectFit="contain"
                   loading="lazy"
                   onMouseEnter={() => setZoomed(true)}
@@ -220,7 +220,7 @@ const SingleProductView = () => {
                 {/* Zoom pane shown on large screens when zoomed === true */}
                 {zoomed && (
                   <div
-                    className="hidden md:block absolute top-0 left-full  ml-10 w-[420px] h-72 sm:h-96 border rounded-lg overflow-hidden shadow-lg bg-white z-50"
+                    className="hidden md:block absolute top-0 left-full ml-10 w-[min(680px,calc(100vw-2rem))] h-[37.5rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
                     style={{
                       backgroundImage: `url(${selectedImage})`,
                       backgroundRepeat: "no-repeat",
