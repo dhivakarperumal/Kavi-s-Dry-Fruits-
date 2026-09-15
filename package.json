@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3"
   },
   "name": "kavi's",
   "version": "1.0.0",
@@ -9,7 +10,7 @@
   "main": "index.js",
   "scripts": {
     "backend": "nodemon Backend/index.js",
-    "frontend": "npm start --prefix frontend",    
+    "frontend": "npm start --prefix frontend",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "keywords": [],
