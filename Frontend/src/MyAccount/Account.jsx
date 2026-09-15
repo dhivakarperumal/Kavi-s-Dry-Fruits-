@@ -179,6 +179,21 @@ const Account = () => {
     };
 
     const isUpdate = editingIndex !== null;
+    const normalizeAddressValue = (value) => String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+    const getAddressKey = (address) => [
+      address.street,
+      address.city,
+      address.state,
+      address.country,
+      address.zip,
+    ].map(normalizeAddressValue).join("|");
+    const updatedAddressKey = getAddressKey(updated);
+    const duplicateIndex = addresses.findIndex((address) => getAddressKey(address) === updatedAddressKey);
+
+    if (duplicateIndex !== -1 && (!isUpdate || duplicateIndex !== editingIndex)) {
+      toast.error("This address is already saved.");
+      return;
+    }
     
     const saveOp = async () => {
       try {
