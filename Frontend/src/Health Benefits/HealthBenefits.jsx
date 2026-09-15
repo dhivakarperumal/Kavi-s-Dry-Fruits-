@@ -211,7 +211,7 @@ const HealthBenefits = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
         
         {/* Editorial Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
+        {/*<div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100/70 border border-emerald-200 text-emerald-800 text-xs font-extrabold uppercase tracking-widest">
             <FaLeaf className="text-emerald-600" /> 100% Pure & Nutritionist Backed
           </div>
