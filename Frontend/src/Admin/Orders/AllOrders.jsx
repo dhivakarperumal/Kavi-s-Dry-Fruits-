@@ -29,6 +29,7 @@ const AllOrders = ({ adminData }) => {
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
         date: o.created_at || o.date
       }));
       setOrders(parsedOrders);
@@ -41,6 +42,7 @@ const AllOrders = ({ adminData }) => {
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
         date: o.created_at || o.date
       }));
       setOrders(parsedOrders);

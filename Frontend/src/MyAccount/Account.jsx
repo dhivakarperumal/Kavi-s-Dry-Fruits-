@@ -13,6 +13,7 @@ import { FaTruck, FaShoppingCart, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
 import { useStore } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import UserOrderDetailsModal from "./UserOrderDetailsModal";
 
 const Account = () => {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ const Account = () => {
     phone: "",
   });
   const [allOrders, setAllOrders] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({
     fullname: "",
@@ -116,6 +118,18 @@ const Account = () => {
         console.error("Address fetch error:", err);
         setAddresses([]);
       }
+
+      // 4. Fetch this user's reviews so each order can be reviewed only once
+      try {
+        const reviewsRes = await api.get("/reviews");
+        const reviews = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+        setUserReviews(
+          reviews.filter((review) => String(review.userId) === userIdToUse)
+        );
+      } catch (err) {
+        console.error("Reviews fetch error:", err);
+        setUserReviews([]);
+      }
     };
 
     fetchData();
@@ -179,6 +193,21 @@ const Account = () => {
     };
 
     const isUpdate = editingIndex !== null;
+    const normalizeAddressValue = (value) => String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+    const getAddressKey = (address) => [
+      address.street,
+      address.city,
+      address.state,
+      address.country,
+      address.zip,
+    ].map(normalizeAddressValue).join("|");
+    const updatedAddressKey = getAddressKey(updated);
+    const duplicateIndex = addresses.findIndex((address) => getAddressKey(address) === updatedAddressKey);
+
+    if (duplicateIndex !== -1 && (!isUpdate || duplicateIndex !== editingIndex)) {
+      toast.error("This address is already saved.");
+      return;
+    }
     
     const saveOp = async () => {
       try {
@@ -573,14 +602,20 @@ const Account = () => {
       // Find the DB internal ID for this orderId string
       const orderToCancel = allOrders[index];
       if (!orderToCancel || !orderToCancel.id) return;
+      if (!reason || !reason.trim()) {
+        toast.error("Please enter a cancellation reason.");
+        return;
+      }
 
       await api.put(`/orders/${orderToCancel.id}`, {
-        orderStatus: "Cancelled"
+        orderStatus: "Cancelled",
+        cancelReason: reason.trim()
       });
 
       // Update local state
       const updated = [...allOrders];
       updated[index].orderStatus = "Cancelled";
+      updated[index].cancelReason = reason.trim();
       setAllOrders(updated);
 
       toast.success("Order cancelled!");
@@ -658,7 +693,11 @@ const Account = () => {
 
         toast.success("Review submitted successfully!");
         setMessage("");
-        onReviewSubmitted?.();
+        onReviewSubmitted?.({
+          orderId: order.orderId,
+          userId,
+          comment: message.trim(),
+        });
       } catch (error) {
         console.error("Error submitting review:", error);
         toast.error("Error submitting review. Try again.");
@@ -857,6 +896,11 @@ const Account = () => {
           </div>
         );
       case "orders":
+        const selectedOrder = allOrders.find((order) => order.orderId === selectedOrderId);
+        const selectedOrderReview = userReviews.find(
+          (review) => String(review.orderId) === String(selectedOrder?.orderId)
+        );
+
         return (
           <div className="bg-white min-h-screen py-6 px-2 md:px-6 rounded-xl">
             {allOrders.length === 0 ? (
@@ -878,13 +922,13 @@ const Account = () => {
                 return (
                   <div
                     key={order.orderId}
-                    className="w-full mx-auto shadow-md mb-6 rounded-lg border border-yellow-300"
+                    className="w-full mx-auto shadow-md mb-6 rounded-lg border border-green-200"
                   >
                     <div
                       className={`${
-                        isOpen ? "bg-yellow-100" : "bg-yellow-400"
+                        isOpen ? "bg-green-100" : "bg-green-50"
                       } flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer`}
-                      onClick={() => setSelectedOrderId(isOpen ? null : order.orderId)}
+                      onClick={() => setSelectedOrderId(order.orderId)}
                     >
                       <div className="flex-1">
                         <h2 className="font-bold text-base md:text-lg text-black">
@@ -896,8 +940,8 @@ const Account = () => {
                             : "N/A"}
                         </p>
                         {order.docketNumber && (statusIndex >= 3 || order.orderStatus === "Shipped") && (
-                          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-lg border border-yellow-400 shadow-sm">
-                            <span className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Docket:</span>
+                          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-lg border border-green-200 shadow-sm">
+                            <span className="text-[10px] font-black uppercase text-green-700 tracking-wider">Docket:</span>
                             <span className="text-xs font-black text-black">{order.docketNumber}</span>
                           </div>
                         )}
@@ -955,7 +999,7 @@ const Account = () => {
                       </div>
                     </div>
 
-                    {isOpen && (
+                    {false && (
                       <div className="bg-white px-4 py-4">
                         <div className="mb-4">
                           <h3 className="font-semibold text-base mb-2">
@@ -1079,6 +1123,31 @@ const Account = () => {
                   </div>
                 );
               })
+            )}
+            {selectedOrder && (
+              <UserOrderDetailsModal
+                order={selectedOrder}
+                onClose={() => setSelectedOrderId(null)}
+                onPrint={handlePrint}
+                existingReview={selectedOrderReview}
+                renderReviewForm={(onReviewSubmitted) => (
+                  <AddReviewForm
+                    order={selectedOrder}
+                    userInfo={userInfo}
+                    userId={userIdToUse}
+                    onReviewSubmitted={(review) => {
+                      setUserReviews((currentReviews) => [...currentReviews, review]);
+                      onReviewSubmitted(review);
+                    }}
+                  />
+                )}
+                onCancel={(reason) => {
+                  const orderIndex = allOrders.findIndex((item) => item.orderId === selectedOrder.orderId);
+                  if (orderIndex >= 0 && window.confirm("Are you sure you want to cancel this order?")) {
+                    cancelOrder(selectedOrder.orderId, reason, orderIndex);
+                  }
+                }}
+              />
             )}
           </div>
         );

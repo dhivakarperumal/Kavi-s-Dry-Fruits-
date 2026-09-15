@@ -22,6 +22,19 @@ exports.addReview = async (req, res) => {
         const finalComment = bodyComment || req.body.comment || 'No comment provided';
         const reviewId = createReviewId();
 
+        if (userId && orderId) {
+            const [existingReviews] = await db.query(
+                'SELECT id, reviewId, comment FROM reviews WHERE userId = ? AND orderId = ? LIMIT 1',
+                [userId, orderId]
+            );
+            if (existingReviews.length > 0) {
+                return res.status(409).json({
+                    message: 'You have already reviewed this order.',
+                    review: existingReviews[0]
+                });
+            }
+        }
+
         const [result] = await db.query(
             'INSERT INTO reviews (reviewId, userName, comment, image, selected, userId, orderId, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [reviewId, finalUserName, finalComment, image || null, Boolean(selected) || false, userId || null, orderId || null, Number(rating) || 0]
