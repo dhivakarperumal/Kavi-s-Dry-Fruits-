@@ -35,6 +35,7 @@
 
     const [savedAddresses, setSavedAddresses] = useState([]);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+    const [processingMessage, setProcessingMessage] = useState("Opening secure payment...");
     const [errors, setErrors] = useState({});
 
 
@@ -673,6 +674,7 @@
       }
 
       setIsPlacingOrder(true);
+      setProcessingMessage("Opening secure payment...");
 
       try {
         // create and append razorpay script
@@ -694,6 +696,7 @@
             description: "Order Payment",
             handler: async (response) => {
               try {
+                setProcessingMessage("Payment successful. Finalizing your order...");
                 await placeOrder(response?.razorpay_payment_id || "");
                 toast.success("Order placed successfully!");
                 setIsPlacingOrder(false);
@@ -824,6 +827,21 @@
   </Helmet>
 
         <PageHeader title="Check Out Page" subtitle="shop" curpage="Check Out Page" />
+        {isPlacingOrder && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-2xl">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-9 w-9 animate-spin text-green-700" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-90" fill="currentColor" d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2Z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Please wait</h2>
+              <p className="mt-2 text-sm text-slate-600">{processingMessage}</p>
+              <p className="mt-4 text-xs font-medium text-slate-400">Do not close or refresh this page.</p>
+            </div>
+          </div>
+        )}
         <div className="bg-Beach min-h-screen py-10 px-4 sm:px-10 grid md:grid-cols-3 gap-8">
 
           {/* Move Product sidebar first so product details show before Billing Details */}
@@ -1216,21 +1234,7 @@
               }`}
               disabled={isPlacingOrder || !isMinimumMet}
             >
-              {isPlacingOrder ? (
-                <div className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4l3.5-3.5L12 0v4a8 8 0 018 8h-4l3.5 3.5L20 12h-4a8 8 0 01-8 8v-4l-3.5 3.5L4 12z"
-                    />
-                  </svg>
-                  Processing...
-                </div>
-              ) : (
-                `Place Order (₹${finalAmount.toFixed(2)})`
-              )}
+              {`Place Order (₹${finalAmount.toFixed(2)})`}
             </button>
 
             {/* Minimum purchase notice */}
