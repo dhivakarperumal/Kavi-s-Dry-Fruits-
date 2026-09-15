@@ -26,7 +26,7 @@ const SingleProductView = () => {
   // add these near your other useState declarations
   const [zoomed, setZoomed] = useState(false);
   const [backgroundPosition, setBackgroundPosition] = useState("50% 50%");
-  const zoomLevel = 2.5; // change to 1.5/2/3 depending on how much magnification you want
+  const zoomLevel = 2;
 
   const handleMouseMove = (e) => {
     // Calculate cursor position inside the image element in percent
@@ -220,7 +220,7 @@ const SingleProductView = () => {
                 {/* Zoom pane shown on large screens when zoomed === true */}
                 {zoomed && (
                   <div
-                    className="hidden md:block absolute top-0 left-full ml-10 w-[min(680px,calc(100vw-2rem))] h-[37.5rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
+                    className="hidden md:block absolute top-0 left-full ml-6 w-[min(500px,calc(100vw-2rem))] h-[29rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
                     style={{
                       backgroundImage: `url(${selectedImage})`,
                       backgroundRepeat: "no-repeat",

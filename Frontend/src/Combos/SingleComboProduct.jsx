@@ -22,7 +22,7 @@ const SingleComboProduct = () => {
   // Zoom state (add near other useState calls)
   const [zoomed, setZoomed] = useState(false);
   const [backgroundPosition, setBackgroundPosition] = useState("50% 50%");
-  const zoomLevel = 2.5; // adjust magnification (1.5 - 3 recommended)
+  const zoomLevel = 2;
 
   // call on mouse move / on mouse enter / on mouse leave
   const handleMouseMove = (e) => {
@@ -200,7 +200,7 @@ const SingleComboProduct = () => {
                 {/* Zoom pane (desktop only) */}
                 {zoomed && (
                   <div
-                    className="hidden md:block absolute top-0 left-full ml-10 w-[min(680px,calc(100vw-2rem))] h-[37.5rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
+                    className="hidden md:block absolute top-0 left-full ml-6 w-[min(500px,calc(100vw-2rem))] h-[29rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
                     style={{
                       backgroundImage: `url(${selectedImage})`,
                       backgroundRepeat: "no-repeat",
