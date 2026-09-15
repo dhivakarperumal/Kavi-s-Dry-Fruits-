@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   FaEdit, FaTrash, FaEye, FaSearch, FaFilter, FaHeartbeat, 
-  FaPlus, FaChevronLeft, FaChevronRight, FaBoxOpen, FaThList, FaVideo
+  FaPlus, FaChevronLeft, FaChevronRight, FaBoxOpen, FaThList, FaVideo, FaUtensils , FaSave 
   , FaThLarge
 } from "react-icons/fa";
 import api from "../../services/api";
