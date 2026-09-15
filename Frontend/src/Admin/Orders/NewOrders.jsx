@@ -119,13 +119,24 @@ const NewOrders = ({ adminData }) => {
         data.docketNumber = generateDocketNumber();
       }
 
+      // ✅ Optimistic update: immediately reflect change in the UI
+      setOrders(prev => prev.map(o =>
+        o.id === id
+          ? { ...o, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
+          : o
+      ));
+
       await api.put(`/orders/${id}`, data);
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);
-      fetchOrders();
+
+      // Background sync to confirm DB state (no loading spinner)
+      fetchOrders(true);
     } catch (err) {
       toast.error("Failed to update status!");
+      // Revert optimistic update on failure
+      fetchOrders(true);
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaTimes, FaSearch } from "react-icons/fa";
+import { FaTimes, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import api from "../../services/api";
 
 const CancelOrders = () => {
@@ -12,6 +12,7 @@ const CancelOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [ordersPerPage, setOrdersPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState("table");
 
   useEffect(() => {
     fetchCancelledOrders();
@@ -134,6 +135,11 @@ const CancelOrders = () => {
               <option value={25}>Show 25</option>
               <option value={100}>Show 100</option>
             </select>
+
+            <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+              <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-rose-500 text-white shadow-lg" : "text-slate-400 hover:text-rose-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>
+              <button type="button" onClick={() => setViewMode("card")} className={`p-3 rounded-xl transition-all ${viewMode === "card" ? "bg-rose-500 text-white shadow-lg" : "text-slate-400 hover:text-rose-600"}`} aria-label="Card view" title="Card view"><FaThLarge /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -146,6 +152,31 @@ const CancelOrders = () => {
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700">
+        {viewMode === "card" ? (
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {currentOrders.length > 0 ? currentOrders.map((order, index) => (
+              <article key={order.id} className="border border-rose-100 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-black text-slate-500 text-sm">#{order.orderId}</p>
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mt-2">{order.orderStatus}</p>
+                  </div>
+                  <span className="text-xs font-black text-slate-400">#{(currentPage - 1) * ordersPerPage + index + 1}</span>
+                </div>
+                <div className="mt-6 space-y-3">
+                  <p className="font-black text-slate-800">{order.shippingAddress?.fullname || "Guest"}</p>
+                  <p className="text-xs font-bold text-slate-500">{new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  <p className="text-xl font-black text-slate-800 opacity-60">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                  <span className="inline-block px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">{order.paymentMethod || "COD"}</span>
+                  <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 flex items-start gap-3">
+                    <FaTimes className="text-rose-400 text-xs mt-0.5" />
+                    <p className="text-[11px] font-black text-rose-700 leading-snug">{order.cancelReason || "No formal reason provided"}</p>
+                  </div>
+                </div>
+              </article>
+            )) : <div className="md:col-span-2 xl:col-span-3 py-20 text-center text-slate-400 font-black uppercase tracking-widest">No cancelled orders found</div>}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -202,6 +233,7 @@ const CancelOrders = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {totalPages > 1 && (

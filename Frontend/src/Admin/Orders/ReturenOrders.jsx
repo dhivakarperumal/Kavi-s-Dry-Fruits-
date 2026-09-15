@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaTimes, FaBoxOpen, FaSearch } from "react-icons/fa";
+import { FaTimes, FaBoxOpen, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import api from "../../services/api";
 
 const ReturnOrders = () => {
@@ -13,6 +13,7 @@ const ReturnOrders = () => {
   const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("table");
   const itemsPerPage = 8;
 
   useEffect(() => {
@@ -132,6 +133,10 @@ const ReturnOrders = () => {
               <option value="month">Monthly Audit</option>
               <option value="custom">Custom Selector</option>
             </select>
+            <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+              <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-indigo-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>
+              <button type="button" onClick={() => setViewMode("card")} className={`p-3 rounded-xl transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-indigo-600"}`} aria-label="Card view" title="Card view"><FaThLarge /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -147,6 +152,28 @@ const ReturnOrders = () => {
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+        {viewMode === "card" ? (
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {paginatedOrders.length > 0 ? paginatedOrders.map((order, index) => (
+              <article key={order.id} className="border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 hover:underline">#{order.orderId}</button>
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mt-2">{order.orderStatus}</p>
+                  </div>
+                  <span className="text-xs font-black text-slate-500">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                </div>
+                <div className="mt-6 space-y-3 text-sm">
+                  <p className="font-black text-slate-800">{order.shippingAddress?.fullname || "Guest Transaction"}</p>
+                  <p className="text-xs font-bold text-slate-500">{order.date ? new Date(order.date).toLocaleDateString() : "-"}</p>
+                  <p className="text-xl font-black text-emerald-600">₹{Number(order.refundAmount || order.totalAmount).toLocaleString('en-IN')}</p>
+                  <p className="text-xs text-slate-500 italic line-clamp-2">"{order.returnReason || "General Return Claim"}"</p>
+                </div>
+                <button onClick={() => setSelectedOrder(order)} className="w-full mt-6 pt-4 border-t border-slate-100 text-indigo-600 font-black text-[10px] uppercase tracking-widest hover:text-indigo-800">Review Claim</button>
+              </article>
+            )) : <div className="md:col-span-2 xl:col-span-3 py-20 text-center text-slate-400 font-black uppercase tracking-widest">No return requests found</div>}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -208,6 +235,7 @@ const ReturnOrders = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {totalPages > 1 && (

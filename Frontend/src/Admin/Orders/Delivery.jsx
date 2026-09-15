@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FaPrint, FaTrash, FaSearch } from "react-icons/fa";
+import { FaPrint, FaTrash, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import logo from "/images/Kavi_logo.png";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -15,6 +15,7 @@ const Delivery = () => {
   const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState("table");
 
   const navigate = useNavigate();
 
@@ -304,6 +305,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
               <option value={25}>Show 25</option>
               <option value={100}>Show 100</option>
             </select>
+
+            <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+              <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>
+              <button type="button" onClick={() => setViewMode("card")} className={`p-3 rounded-xl transition-all ${viewMode === "card" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`} aria-label="Card view" title="Card view"><FaThLarge /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -334,6 +340,34 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+        {viewMode === "card" ? (
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {currentOrders.length > 0 ? currentOrders.map((order, index) => (
+              <article key={order.id} className="border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 hover:underline">#{order.orderId}</button>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-2">{order.orderStatus}</p>
+                  </div>
+                  <span className="text-xs font-black text-slate-500">#{(currentPage - 1) * ordersPerPage + index + 1}</span>
+                </div>
+                <div className="mt-6 space-y-3 text-sm">
+                  <p className="font-black text-slate-800">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                  <p className="text-xs font-bold text-slate-500">{formatDate(order.date)}</p>
+                  <p className="text-xl font-black text-emerald-600">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-xl text-[9px] font-black uppercase">{order.paymentMethod || order.paymentMode || "-"}</span>
+                    <span className="px-3 py-1 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase">{order.customerType || "Online"}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-6 pt-4 border-t border-slate-100">
+                  <button onClick={() => handlePrint(order)} className="flex-1 py-3 bg-slate-50 text-slate-500 rounded-xl hover:text-emerald-600 font-black text-[10px] uppercase">Print</button>
+                  <button onClick={() => handleDelete(order)} className="flex-1 py-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase">Delete</button>
+                </div>
+              </article>
+            )) : <div className="md:col-span-2 xl:col-span-3 py-20 text-center text-slate-400 font-black uppercase tracking-widest">No delivered orders to display</div>}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -404,6 +438,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
             </tbody>
           </table>
         </div>
+        )}
         
         {/* Pagination Controls */}
         {totalPages > 1 && (
