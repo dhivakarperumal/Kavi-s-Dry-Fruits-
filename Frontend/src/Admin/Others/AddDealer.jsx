@@ -143,12 +143,41 @@ const AddDealer = () => {
   );
 
   const totalPages = Math.ceil(filteredDealers.length / itemsPerPage);
+   const totalDealers = dealers.length;
+   const activeDealers = dealers.filter(dealer => (dealer.status || "Active") === "Active").length;
+   const inactiveDealers = totalDealers - activeDealers;
+
+   const toggleDealerStatus = async (dealer) => {
+      const nextStatus = (dealer.status || "Active") === "Active" ? "Inactive" : "Active";
+      try {
+         await api.put(`/dealers/${dealer.id}`, { ...dealer, status: nextStatus });
+         toast.success(`Dealer marked ${nextStatus.toLowerCase()}.`);
+         fetchDealers();
+      } catch (error) {
+         console.error("Error updating dealer status:", error);
+         toast.error("Status update failed.");
+      }
+   };
 
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-8 animate-in fade-in duration-700">
      
 
       <div className="max-w-7xl mx-auto mt-7">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+               <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Dealers</p>
+                  <p className="text-3xl font-black text-slate-900 mt-2">{totalDealers}</p>
+               </div>
+               <div className="bg-emerald-50 rounded-3xl border border-emerald-100 shadow-sm p-6">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active Dealers</p>
+                  <p className="text-3xl font-black text-emerald-700 mt-2">{activeDealers}</p>
+               </div>
+               <div className="bg-rose-50 rounded-3xl border border-rose-100 shadow-sm p-6">
+                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Inactive Dealers</p>
+                  <p className="text-3xl font-black text-rose-700 mt-2">{inactiveDealers}</p>
+               </div>
+            </div>
         
         {/* Header Section */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-10">
@@ -230,8 +259,10 @@ const AddDealer = () => {
 
                    <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                         <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active Partner</span>
+                                     <div className={`w-2 h-2 rounded-full ${(dealer.status || "Active") === "Active" ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+                                     <button onClick={() => toggleDealerStatus(dealer)} className={`text-[10px] font-black uppercase tracking-widest ${(dealer.status || "Active") === "Active" ? "text-emerald-600" : "text-rose-600"}`}>
+                                        {dealer.status || "Active"}
+                                     </button>
                       </div>
                       <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
                          <FaChevronRight size={12} />
@@ -248,6 +279,7 @@ const AddDealer = () => {
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Partner Details</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Compliance (GST)</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                       <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Audit</th>
                    </tr>
                 </thead>
@@ -264,6 +296,11 @@ const AddDealer = () => {
                                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-tight">ID: {dealer.dealerId}</p>
                                </div>
                             </div>
+                         </td>
+                         <td className="px-8 py-6">
+                            <button onClick={() => toggleDealerStatus(dealer)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight ${(dealer.status || "Active") === "Active" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+                               {dealer.status || "Active"}
+                            </button>
                          </td>
                          <td className="px-8 py-6">
                             <div className="space-y-1">

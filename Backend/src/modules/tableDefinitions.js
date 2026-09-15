@@ -191,6 +191,7 @@ const tables = {
       dealerPhoneNumber VARCHAR(20) NOT NULL,
       dealerMail VARCHAR(255),
       dealerAddress TEXT,
+      status ENUM('Active', 'Inactive') DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
