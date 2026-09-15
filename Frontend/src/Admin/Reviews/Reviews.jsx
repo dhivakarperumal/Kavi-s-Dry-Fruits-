@@ -420,6 +420,7 @@ const Reviews = () => {
                       <div>
                         <p className="text-lg font-black text-gray-900 tracking-tight">{review.userName}</p>
                         <p className="text-[10px] text-green-600 font-black uppercase tracking-widest">Client Feedback</p>
+                        <p className="text-[10px] text-[#009669] font-black uppercase tracking-widest mt-1">{review.productName || review.productId || "Product Review"}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -437,6 +438,9 @@ const Reviews = () => {
                   <div className="bg-green-50/30 p-6 rounded-3xl italic text-gray-900 font-medium text-sm leading-relaxed mb-6 border border-green-50 transition-colors shadow-inner relative">
                     <span className="absolute -top-3 left-4 text-4xl text-green-200 opacity-50">“</span>
                     "{review.comment}"
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-50 text-[#009669] rounded-xl text-xs font-black">
+                    Rating: {Number(review.rating) || 0}/5
                   </div>
                 </div>
 
