@@ -411,7 +411,7 @@ const CreateBilling = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100">
+            <div className="w-12 h-12 bg-[#009669] rounded-2xl flex items-center justify-center shadow-xl shadow-emerald-100">
               <FiShoppingBag className="text-white text-2xl" />
             </div>
             <div>
@@ -425,13 +425,13 @@ const CreateBilling = () => {
               onClick={() => setShowCamera(true)}
               className="flex items-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-[900] bg-white text-slate-600 border border-slate-100 hover:bg-slate-50 transition-all shadow-sm uppercase tracking-wider"
             >
-              <FiCamera className="text-indigo-500" /> Scan QR/Barcode
+              <FiCamera className="text-[#009669]" /> Scan QR/Barcode
             </button>
             <button
               onClick={startVoiceSearch}
               className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-[900] transition-all shadow-sm uppercase tracking-wider ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-white text-slate-600 border border-slate-100 hover:bg-slate-50'}`}
             >
-              <FiMic className={isListening ? 'text-white' : 'text-indigo-500'} /> {isListening ? 'Listening...' : 'Voice Command'}
+              <FiMic className={isListening ? 'text-white' : 'text-[#009669]'} /> {isListening ? 'Listening...' : 'Voice Command'}
             </button>
           </div>
         </div>
@@ -444,7 +444,7 @@ const CreateBilling = () => {
                 <FiX size={20} />
               </button>
               <h3 className="text-xl font-[900] text-slate-800 mb-6 flex items-center gap-2">
-                <span className="w-2 h-2 bg-indigo-600 rounded-full"></span> Vision Scanner
+                <span className="w-2 h-2 bg-[#009669] rounded-full"></span> Vision Scanner
               </h3>
               <div id="reader" className="overflow-hidden rounded-3xl border-4 border-slate-50 bg-slate-50 aspect-square"></div>
               <p className="text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-6">Align barcode within the frame</p>
@@ -599,7 +599,7 @@ const CreateBilling = () => {
                     </select>
                   )}
                   {selectedProduct.category === "Combo" && (
-                    <div className="w-full px-6 py-5 bg-indigo-50 text-indigo-600 rounded-[1.5rem] font-black text-center text-xs uppercase tracking-widest">
+                    <div className="w-full px-6 py-5 bg-emerald-50 text-[#009669] rounded-[1.5rem] font-black text-center text-xs uppercase tracking-widest">
                       Combo Pack
                     </div>
                   )}
@@ -609,7 +609,7 @@ const CreateBilling = () => {
                   <button
                     onClick={addProductToInvoice}
                     disabled={!selectedProduct.id}
-                    className="w-full bg-indigo-600 text-white font-[900] py-5 rounded-[1.5rem] shadow-lg shadow-indigo-100 hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-30 uppercase tracking-widest text-[10px]"
+                    className="w-full bg-[#009669] text-white font-[900] py-5 rounded-[1.5rem] shadow-lg shadow-emerald-100 hover:bg-[#007a55] transition-all flex items-center justify-center gap-2 disabled:opacity-30 uppercase tracking-widest text-[10px]"
                   >
                     <FiPlus /> Add
                   </button>
@@ -621,7 +621,7 @@ const CreateBilling = () => {
             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
               <div className="p-8 border-b border-slate-50 flex items-center justify-between">
                 <h3 className="font-[900] text-slate-900 uppercase tracking-tight flex items-center gap-2">
-                  <FiShoppingBag className="text-indigo-600" /> Current Invoice
+                  <FiShoppingBag className="text-[#009669]" /> Current Invoice
                 </h3>
                 <span className="bg-slate-100 px-4 py-1.5 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   {invoiceItems.length} Products

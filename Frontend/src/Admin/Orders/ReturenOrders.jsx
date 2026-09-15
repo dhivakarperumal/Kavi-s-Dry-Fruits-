@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { FaTimes, FaBoxOpen, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import api from "../../services/api";
 
-const ReturnOrders = () => {
+export default function ReturnOrders() {
   const [returnOrders, setReturnOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -292,6 +292,4 @@ const ReturnOrders = () => {
       )}
     </div>
   );
-};
-
-export default ReturnOrders;
+}

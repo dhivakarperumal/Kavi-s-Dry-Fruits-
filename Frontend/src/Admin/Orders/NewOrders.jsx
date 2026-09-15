@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaChevronLeft, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
 import api from "../../services/api";
+import { io } from "socket.io-client";
 
 const NewOrders = ({ adminData }) => {
   const [orders, setOrders] = useState([]);
@@ -34,35 +35,44 @@ const NewOrders = ({ adminData }) => {
     setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
   };
 
-  const fetchOrders = async (forceApi = false) => {
-    // If we have adminData, use it instead of showing loading
-    if (!forceApi && adminData && adminData.allOrders && adminData.allOrders.length > 0) {
-      applyOrders(adminData.allOrders);
-      return;
-    }
-
-    setLoading(true);
+  // Always fetch fresh from API — never rely on stale adminData cache for New Orders
+  const fetchOrders = useCallback(async () => {
     try {
       const res = await api.get("/orders");
       applyOrders(res.data || []);
     } catch (error) {
+      console.error("fetchOrders error:", error);
+      // Fallback to adminData only if API fails
       if (adminData?.allOrders?.length > 0) {
         applyOrders(adminData.allOrders);
-        return;
       }
-      console.error("fetchOrders error:", error);
-      toast.error("Failed to load new orders.");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [adminData]);
 
   useEffect(() => {
-    fetchOrders(true);
-    // Keep the new-orders view synchronized with orders placed elsewhere.
-    const interval = setInterval(() => fetchOrders(true), 60000);
-    return () => clearInterval(interval);
-  }, [adminData]);
+    // Always fetch fresh data on mount
+    fetchOrders();
+
+    // Poll every 15 seconds for sync
+    const interval = setInterval(fetchOrders, 15000);
+
+    // Listen for real-time status updates via Socket.IO
+    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    socket.on('orderStatusUpdated', () => {
+      fetchOrders(); // Re-fetch immediately when any status changes
+    });
+    socket.on('newOrder', () => {
+      fetchOrders(); // Re-fetch when new order arrives
+    });
+    socket.on('connect', () => {
+      fetchOrders(); // Sync on reconnect
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
+  }, [fetchOrders]);
 
   useEffect(() => {
     let temp = [...orders];
