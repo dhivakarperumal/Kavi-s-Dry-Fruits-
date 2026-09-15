@@ -70,7 +70,7 @@ const Hero = () => {
   return (
 
     
-    <section className="h-[85vh] min-h-0 bg-green3 overflow-hidden flex items-center py-8 md:py-12 lg:py-16">
+    <section className="min-h-[80vh] h-auto md:h-[85vh] bg-green3 overflow-hidden flex items-center py-10 md:py-12 lg:py-16">
     <Helmet>
   <title>Kavi’s Dry Fruits – Premium Dry Fruits, Nuts, Seeds & Gift Boxes Online</title>
 
@@ -87,14 +87,14 @@ const Hero = () => {
   <link rel="canonical" href="https://kavisdryfruits.com/" />
 </Helmet>
 
-      <div className="w-full max-w-7xl mx-auto px-4 flex flex-col lg:flex-row items-center justify-between gap-10">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-10">
         {/* Text Content */}
-        <div className="w-full lg:w-2/3 space-y-6 text-center lg:text-left z-10">
-          <h1 className="text-2xl lg:text-4xl font-extrabold text-primary leading-snug">
+        <div className="w-full lg:w-2/3 space-y-4 md:space-y-6 text-center lg:text-left z-10">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary leading-tight break-words">
             {currentHero.title}
           </h1>
-          <p className="text-lg text-[#9c6b4d] font-medium">{currentHero.subtitle}</p>
-          <p className="text-sm text-slate-600 font-medium max-w-xl">{currentHero.description}</p>
+          <p className="text-base sm:text-lg text-[#009669] font-medium">{currentHero.subtitle}</p>
+          <p className="text-sm sm:text-base text-[#009669] font-medium max-w-xl mx-auto lg:mx-0">{currentHero.description}</p>
           
           <Link to={"/shop"} className="bg-green1 hover:bg-primary text-white px-6 py-3 rounded-md text-sm font-semibold transition">
             Shop Now
@@ -103,7 +103,7 @@ const Hero = () => {
 
         {/* Animated Image */}
         <div
-          className="w-[300px] h-[300px] md:w-[380px] md:h-[380px] md:mr-30 rounded-full overflow-hidden flex items-start justify-start relative"
+          className="w-56 h-56 sm:w-72 sm:h-72 md:w-[380px] md:h-[380px] lg:mr-30 rounded-full overflow-hidden flex items-start justify-start relative shrink-0"
           key={currentHero.id} // Re-run the slide animation for each complete banner
           data-aos="zoom-in"
           data-aos-easing="ease-in-out"
