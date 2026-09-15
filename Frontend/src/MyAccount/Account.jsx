@@ -26,6 +26,7 @@ const Account = () => {
     phone: "",
   });
   const [allOrders, setAllOrders] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({
     fullname: "",
@@ -116,6 +117,18 @@ const Account = () => {
       } catch (err) {
         console.error("Address fetch error:", err);
         setAddresses([]);
+      }
+
+      // 4. Fetch this user's reviews so each order can be reviewed only once
+      try {
+        const reviewsRes = await api.get("/reviews");
+        const reviews = Array.isArray(reviewsRes.data) ? reviewsRes.data : [];
+        setUserReviews(
+          reviews.filter((review) => String(review.userId) === userIdToUse)
+        );
+      } catch (err) {
+        console.error("Reviews fetch error:", err);
+        setUserReviews([]);
       }
     };
 
@@ -680,7 +693,11 @@ const Account = () => {
 
         toast.success("Review submitted successfully!");
         setMessage("");
-        onReviewSubmitted?.();
+        onReviewSubmitted?.({
+          orderId: order.orderId,
+          userId,
+          comment: message.trim(),
+        });
       } catch (error) {
         console.error("Error submitting review:", error);
         toast.error("Error submitting review. Try again.");
@@ -880,6 +897,9 @@ const Account = () => {
         );
       case "orders":
         const selectedOrder = allOrders.find((order) => order.orderId === selectedOrderId);
+        const selectedOrderReview = userReviews.find(
+          (review) => String(review.orderId) === String(selectedOrder?.orderId)
+        );
 
         return (
           <div className="bg-white min-h-screen py-6 px-2 md:px-6 rounded-xl">
@@ -1109,12 +1129,16 @@ const Account = () => {
                 order={selectedOrder}
                 onClose={() => setSelectedOrderId(null)}
                 onPrint={handlePrint}
+                existingReview={selectedOrderReview}
                 renderReviewForm={(onReviewSubmitted) => (
                   <AddReviewForm
                     order={selectedOrder}
                     userInfo={userInfo}
                     userId={userIdToUse}
-                    onReviewSubmitted={onReviewSubmitted}
+                    onReviewSubmitted={(review) => {
+                      setUserReviews((currentReviews) => [...currentReviews, review]);
+                      onReviewSubmitted(review);
+                    }}
                   />
                 )}
                 onCancel={(reason) => {

@@ -27,7 +27,7 @@ const getImageUrl = (value) => {
   return `${backendUrl}${value.startsWith("/") ? value : `/${value}`}`;
 };
 
-const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, renderReviewForm }) => {
+const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, existingReview, renderReviewForm }) => {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -229,25 +229,36 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, renderReview
 
           {isDelivered && renderReviewForm && (
             <section className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {existingReview ? (
                 <div>
-                  <h3 className="font-black text-green-800">How was your order?</h3>
-                  <p className="text-sm text-green-700">Share your feedback about this delivered order.</p>
+                  <h3 className="font-black text-green-800">Your Review</h3>
+                  <p className="mt-2 rounded-lg bg-white p-3 text-sm leading-relaxed text-gray-700">
+                    {existingReview.comment || "Review submitted."}
+                  </p>
                 </div>
-                {!showReviewForm && (
-                  <button
-                    type="button"
-                    onClick={() => setShowReviewForm(true)}
-                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-700"
-                  >
-                    Add Review
-                  </button>
-                )}
-              </div>
-              {showReviewForm && (
-                <div className="mt-4 rounded-lg bg-white p-4">
-                  {renderReviewForm(() => setShowReviewForm(false))}
-                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="font-black text-green-800">How was your order?</h3>
+                      <p className="text-sm text-green-700">Share your feedback about this delivered order.</p>
+                    </div>
+                    {!showReviewForm && (
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewForm(true)}
+                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-700"
+                      >
+                        Add Review
+                      </button>
+                    )}
+                  </div>
+                  {showReviewForm && (
+                    <div className="mt-4 rounded-lg bg-white p-4">
+                      {renderReviewForm(() => setShowReviewForm(false))}
+                    </div>
+                  )}
+                </>
               )}
             </section>
           )}
