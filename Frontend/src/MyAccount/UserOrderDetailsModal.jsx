@@ -19,6 +19,14 @@ const parseValue = (value, fallback) => {
   }
 };
 
+const getImageUrl = (value) => {
+  if (!value) return "/images/placeholder.png";
+  if (value.startsWith("data:") || value.startsWith("http")) return value;
+  if (value.startsWith("/images")) return value;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  return `${backendUrl}${value.startsWith("/") ? value : `/${value}`}`;
+};
+
 const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -79,34 +87,34 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
 
         <div className="overflow-y-auto p-4 sm:p-6">
           <div className="mb-6 rounded-xl border border-green-100 bg-green-50/60 p-4">
-            <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Current Status</p>
                 <p className="text-lg font-black text-green-800">{currentStatus}</p>
               </div>
               {canCancel && (
                 showCancelForm ? (
-                  <div className="flex w-full max-w-sm flex-col gap-2 sm:flex-row sm:items-start">
+                  <div className="flex w-full max-w-lg flex-col gap-2 sm:flex-row sm:items-end">
                     <textarea
                       value={cancelReason}
                       onChange={(event) => setCancelReason(event.target.value)}
                       placeholder="Cancellation reason..."
                       rows={2}
-                      className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                      className="min-h-[58px] w-full flex-1 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
                     />
                     <div className="flex gap-2 sm:flex-col">
                       <button
                         type="button"
                         disabled={!cancelReason.trim()}
                         onClick={() => onCancel(cancelReason.trim())}
-                        className="rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="w-24 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Confirm
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowCancelForm(false)}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+                        className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
                       >
                         Keep Order
                       </button>
@@ -184,8 +192,17 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
                 items.map((item, index) => {
                   const quantity = Number(item.quantity || item.qty || 1);
                   const price = Number(item.price || item.unitPrice || 0);
+                  const imageSource = item.image || item.imageUrl || (Array.isArray(item.images) ? item.images[0] : "");
                   return (
                     <div key={`${item.name || "item"}-${index}`} className="flex items-center gap-3 p-3">
+                      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
+                        <img
+                          src={getImageUrl(imageSource)}
+                          alt={item.name || item.productName || "Product"}
+                          className="h-full w-full object-contain"
+                          onError={(event) => { event.currentTarget.src = "/images/placeholder.png"; }}
+                        />
+                      </div>
                       <div className="flex-1">
                         <p className="font-bold text-gray-800">{item.name || item.productName || "Product"}</p>
                         <p className="text-xs text-gray-500">Qty: {quantity}{item.weight || item.selectedWeight ? ` | ${item.weight || item.selectedWeight}` : ""}</p>
