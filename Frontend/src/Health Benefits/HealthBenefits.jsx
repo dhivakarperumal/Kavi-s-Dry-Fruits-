@@ -22,7 +22,9 @@ import {
   FaCheckCircle, 
   FaArrowRight, 
   FaRedo,
-  FaImages
+  FaImages,
+  FaChevronLeft,
+  FaChevronRight
 } from 'react-icons/fa';
 import api from '../services/api';
 
@@ -163,6 +165,39 @@ const HealthBenefits = () => {
     });
   }, [healthData, searchQuery, selectedCategory, selectedGoal]);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(8); // Default to 8 (2 rows of 4)
+
+  // Reset to page 1 whenever filters or search query change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedGoal, selectedCategory, itemsPerPage]);
+
+  const totalItems = filteredData.length;
+  const effectiveItemsPerPage = itemsPerPage === 'all' ? totalItems : Number(itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / (effectiveItemsPerPage || 1)));
+
+  // Slice paginated items for current page view
+  const paginatedData = useMemo(() => {
+    if (itemsPerPage === 'all') return filteredData;
+    const startIndex = (currentPage - 1) * effectiveItemsPerPage;
+    return filteredData.slice(startIndex, startIndex + effectiveItemsPerPage);
+  }, [filteredData, currentPage, effectiveItemsPerPage, itemsPerPage]);
+
+  const startItemIndex = totalItems === 0 ? 0 : (currentPage - 1) * effectiveItemsPerPage + 1;
+  const endItemIndex = itemsPerPage === 'all' ? totalItems : Math.min(currentPage * effectiveItemsPerPage, totalItems);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      const el = document.getElementById('benefits-grid-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
   const openModal = (product, initialTab = 'benefits') => {
     setSelectedProduct(product);
     setActiveModalTab(initialTab);
@@ -283,24 +318,7 @@ const HealthBenefits = () => {
             </div>
           </div>
 
-          {/* Active Filter Indicators & Result Count */}
-          <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-xs text-stone-500 font-medium">
-            <span>
-              Showing <strong className="text-stone-900">{filteredData.length}</strong> of {healthData.length} superfoods
-            </span>
-            {(searchQuery || selectedGoal !== 'all' || selectedCategory !== 'All') && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedGoal('all');
-                  setSelectedCategory('All');
-                }}
-                className="inline-flex items-center gap-1.5 text-emerald-700 hover:text-emerald-800 font-bold cursor-pointer"
-              >
-                <FaRedo className="text-[10px]" /> Reset Filters
-              </button>
-            )}
-          </div>
+          
         </div>
 
         {/* Empty State */}
@@ -325,9 +343,10 @@ const HealthBenefits = () => {
             </button>
           </div>
         ) : (
-          /* Cards Grid - 4 Cards Per Row with Fully Viewable Images */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
-            {filteredData.map((item, idx) => {
+          <>
+            {/* Cards Grid - 4 Cards Per Row with Fully Viewable Images */}
+            <div id="benefits-grid-section" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+            {paginatedData.map((item, idx) => {
               const benefits = safeParse(item.benefits);
               const primaryImage = getPrimaryImage(item);
               const videos = safeParse(item.videos);
@@ -467,6 +486,102 @@ const HealthBenefits = () => {
               );
             })}
           </div>
+
+          {/* Bottom Pagination Bar */}
+          {totalPages > 1 && (
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-stone-200/80 shadow-xs">
+              {/* Page Summary */}
+              <p className="text-xs text-stone-500 font-medium">
+                Showing <strong className="text-stone-900">{startItemIndex} - {endItemIndex}</strong> of <strong className="text-stone-900">{totalItems}</strong> superfoods
+              </p>
+
+              {/* Numbered Page Buttons with Prev/Next */}
+              <div className="flex items-center gap-1.5">
+                {/* Prev Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
+                    currentPage === 1
+                      ? 'text-stone-300 bg-stone-100 cursor-not-allowed'
+                      : 'text-stone-700 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer'
+                  }`}
+                  title="Previous Page"
+                >
+                  <FaChevronLeft size={11} />
+                </button>
+
+                {/* Page Numbers */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                  if (
+                    totalPages <= 7 ||
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                  ) {
+                    const isActive = currentPage === pageNum;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-700/30 scale-105'
+                            : 'bg-stone-100 text-stone-700 hover:bg-stone-200/70'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (
+                    pageNum === currentPage - 2 ||
+                    pageNum === currentPage + 2
+                  ) {
+                    return (
+                      <span key={pageNum} className="px-1 text-stone-400 text-xs font-bold select-none">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
+                    currentPage === totalPages
+                      ? 'text-stone-300 bg-stone-100 cursor-not-allowed'
+                      : 'text-stone-700 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-700 cursor-pointer'
+                  }`}
+                  title="Next Page"
+                >
+                  <FaChevronRight size={11} />
+                </button>
+              </div>
+
+              {/* Items Per Page Selector (Bottom) */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Per Page:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(e.target.value === 'all' ? 'all' : Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-700 outline-none cursor-pointer hover:border-emerald-500"
+                >
+                  <option value={8}>8</option>
+                  <option value={12}>12</option>
+                  <option value={16}>16</option>
+                  <option value={24}>24</option>
+                  <option value="all">All</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
         )}
 
         {/* Bottom Banner: Shop & Combos Integration */}
@@ -508,68 +623,71 @@ const HealthBenefits = () => {
       {/* POPUP / MODAL: Where Key Health Benefits & Media Are Detailed */}
       {selectedProduct && (
         <div
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[1000] bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
           onClick={closeModal}
         >
           <div
-            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-stone-100 animate-in zoom-in-95 duration-200"
+            className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden border border-stone-100 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
-              <div className="pr-4 min-w-0">
+            <div className="p-4 sm:p-6 border-b border-stone-100 flex items-center justify-between bg-stone-50/80 shrink-0">
+              <div className="pr-2 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="text-[10px] sm:text-xs font-bold text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                     {selectedProduct.category || 'Superfood'}
                   </span>
-                  <span className="text-xs text-stone-400 font-medium hidden sm:inline">• Health & Nutritional Dossier</span>
+                  <span className="text-[11px] text-stone-400 font-medium hidden sm:inline">• Health & Nutritional Dossier</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight truncate">
+                <h2 className="text-xl sm:text-3xl font-black text-stone-900 tracking-tight truncate">
                   {selectedProduct.productName}
                 </h2>
               </div>
               <button
                 onClick={closeModal}
-                className="w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors shrink-0 cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-200/70 hover:bg-stone-300 text-stone-700 flex items-center justify-center transition-colors shrink-0 cursor-pointer ml-2"
                 title="Close"
               >
-                <FaTimes size={18} />
+                <FaTimes size={16} />
               </button>
             </div>
 
-            {/* Modal Navigation Tabs */}
-            <div className="px-6 border-b border-stone-100 flex items-center gap-6 bg-white overflow-x-auto">
+            {/* Modal Navigation Tabs (Responsive with whitespace-nowrap & scrollbar-hide) */}
+            <div className="px-3 sm:px-6 border-b border-stone-100 flex items-center gap-2 sm:gap-6 bg-white overflow-x-auto scrollbar-hide shrink-0">
               <button
                 onClick={() => setActiveModalTab('benefits')}
-                className={`py-3.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer ${
+                className={`py-3 sm:py-3.5 px-2.5 sm:px-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 shrink-0 whitespace-nowrap transition-all cursor-pointer ${
                   activeModalTab === 'benefits'
                     ? 'border-emerald-600 text-emerald-700'
                     : 'border-transparent text-stone-400 hover:text-stone-700'
                 }`}
               >
-                <FaHeartbeat className="text-rose-500" /> Key Health Benefits ({safeParse(selectedProduct.benefits).length})
+                <FaHeartbeat className="text-rose-500 text-xs shrink-0" />
+                <span>Key Health Benefits ({safeParse(selectedProduct.benefits).length})</span>
               </button>
 
               <button
                 onClick={() => setActiveModalTab('videos')}
-                className={`py-3.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer ${
+                className={`py-3 sm:py-3.5 px-2.5 sm:px-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 shrink-0 whitespace-nowrap transition-all cursor-pointer ${
                   activeModalTab === 'videos'
                     ? 'border-emerald-600 text-emerald-700'
                     : 'border-transparent text-stone-400 hover:text-stone-700'
                 }`}
               >
-                <FaVideo /> Video Guides ({safeParse(selectedProduct.videos).length})
+                <FaVideo className="text-xs shrink-0" />
+                <span>Video Guides ({safeParse(selectedProduct.videos).length})</span>
               </button>
 
               <button
                 onClick={() => setActiveModalTab('images')}
-                className={`py-3.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer ${
+                className={`py-3 sm:py-3.5 px-2.5 sm:px-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-1.5 shrink-0 whitespace-nowrap transition-all cursor-pointer ${
                   activeModalTab === 'images'
                     ? 'border-emerald-600 text-emerald-700'
                     : 'border-transparent text-stone-400 hover:text-stone-700'
                 }`}
               >
-                <FaImages /> Photo Gallery ({safeParse(selectedProduct.images).length})
+                <FaImages className="text-xs shrink-0" />
+                <span>Photo Gallery ({safeParse(selectedProduct.images).length})</span>
               </button>
             </div>
 
@@ -739,10 +857,10 @@ const HealthBenefits = () => {
             </div>
 
             {/* Modal Footer with Direct Shop Link */}
-            <div className="p-4 sm:p-5 border-t border-stone-100 bg-stone-50/70 flex items-center justify-between gap-4">
+            <div className="p-3 sm:p-5 border-t border-stone-100 bg-stone-50/80 flex items-center justify-between gap-3 shrink-0">
               <button
                 onClick={closeModal}
-                className="px-5 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 text-stone-700 text-xs font-bold tracking-wide transition-all cursor-pointer"
+                className="px-4 sm:px-5 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-stone-100 text-stone-700 text-xs font-bold tracking-wide transition-all cursor-pointer"
               >
                 Close
               </button>
@@ -750,11 +868,11 @@ const HealthBenefits = () => {
               <Link
                 to={selectedProduct.productId ? `/shop/${selectedProduct.productId}` : '/shop'}
                 onClick={closeModal}
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 sm:px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm shadow-emerald-600/20 transition-all cursor-pointer shrink-0"
               >
                 <FaShoppingBag className="text-xs" />
                 <span>Shop This Superfood</span>
-                <FaArrowRight className="text-xs" />
+                <FaArrowRight className="text-xs hidden sm:inline" />
               </Link>
             </div>
 
@@ -765,7 +883,7 @@ const HealthBenefits = () => {
       {/* Full-Screen Zoom Photo Modal */}
       {activePhoto && (
         <div
-          className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in zoom-in duration-200"
+          className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in zoom-in duration-200"
           onClick={() => setActivePhoto(null)}
         >
           <button
