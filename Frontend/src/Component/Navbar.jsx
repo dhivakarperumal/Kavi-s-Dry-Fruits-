@@ -219,14 +219,14 @@ const Navbar = () => {
               to="/"
               end
               onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => `flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
             >
               <FaHome className="text-base" /> Home
             </NavLink>
             <NavLink
               to="/shop"
               onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => `flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
             >
               <FaStore className="text-base" /> Shop
             </NavLink>
@@ -253,14 +253,14 @@ const Navbar = () => {
             <NavLink
               to="/combos"
               onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => `flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
             >
               <FaGift className="text-base" /> Combos
             </NavLink>
             <NavLink
               to="/offers"
               onClick={() => setMenuOpen(false)}
-              className={({ isActive }) => `flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
             >
               <FaTags className="text-base" /> Offers
             </NavLink>
