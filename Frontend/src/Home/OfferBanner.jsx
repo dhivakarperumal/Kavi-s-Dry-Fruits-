@@ -26,9 +26,9 @@ const OfferBanner = () => {
 
         {/* Coupon Code */}
         <div className="lg:w-1/2 text-center lg:text-right">
-          <p className="text-lg text-center font-bold mb-2 uppercase">Farst Delivery</p>
+          <p className="text-lg text-center font-bold mb-2 uppercase">Fast Delivery</p>
           <p className="text-xl text-center font-bold text-green1 px-4 py-2 rounded ">
-            With in 48 Hours
+            Within 48 Hours
           </p>
         </div>
       </div>

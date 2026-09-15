@@ -74,14 +74,6 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-green-100 shadow-sm">
-      {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed z-50 right-6 bottom-6 p-3 bg-green1 hover:bg-primary text-white rounded-full shadow-lg cursor-pointer"
-        >
-          <FaArrowUp size={20} />
-        </button>
-      )}
 
       <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/">
