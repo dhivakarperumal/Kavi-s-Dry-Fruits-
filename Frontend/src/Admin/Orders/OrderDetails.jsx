@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaPrint } from "react-icons/fa";
+import api from "../../services/api";
 import logo from "/images/Kavi_logo.png";
 
 const OrderDetails = () => {
@@ -19,9 +18,8 @@ const OrderDetails = () => {
     const fetchOrder = async () => {
       setLoading(true);
       try {
-        const ref = doc(db, "users", uid, "orders", orderId);
-        const snap = await getDoc(ref);
-        if (snap.exists()) setOrder({ id: snap.id, uid, ...snap.data() });
+        const response = await api.get(`/orders/${orderId}`);
+        if (response.data) setOrder({ ...response.data, uid: uid || response.data.userId || null });
       } catch (err) {
         console.error(err);
       } finally {

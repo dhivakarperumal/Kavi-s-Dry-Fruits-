@@ -74,6 +74,7 @@ const initializeDatabase = async () => {
   await syncColumns('stock_history', tableDefinitions.stock_history);
   await syncColumns('dealers', tableDefinitions.dealers);
   await syncColumns('invoices', tableDefinitions.invoices);
+  await syncColumns('banners', tableDefinitions.banners);
   await syncColumns('user_addresses', tableDefinitions.user_addresses);
   await syncColumns('health_benefits', tableDefinitions.health_benefits);
   await syncColumns('seo_keywords', tableDefinitions.seo_keywords);

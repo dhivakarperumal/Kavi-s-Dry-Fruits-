@@ -8,8 +8,6 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 import api from "../services/api";
 import { Helmet } from "react-helmet";
 import toast from "react-hot-toast";
-import { db } from "../firebase";
-import { doc, updateDoc } from "firebase/firestore";
 import OrderTracking from "../Shop/OrderTracking";
 import { FaTruck, FaShoppingCart, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase";
 import { FaArrowLeft } from "react-icons/fa";
+import api from "../../services/api";
 
 const OrderDetail = () => {
   const { uid, orderId } = useParams();
@@ -12,10 +11,9 @@ const OrderDetail = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const orderRef = doc(db, "users", uid, "orders", orderId);
-        const orderSnap = await getDoc(orderRef);
-        if (orderSnap.exists()) {
-          setOrder({ id: orderSnap.id, uid, ...orderSnap.data() });
+        const response = await api.get(`/orders/${orderId}`);
+        if (response.data) {
+          setOrder({ ...response.data, uid: uid || response.data.userId || null });
         } else {
           alert("Order not found");
           navigate("/orders");
