@@ -190,7 +190,7 @@ const SingleComboProduct = () => {
                 <img
                   src={selectedImage}
                   alt={product.name}
-                  className="w-full h-72 mt-1 md:mt-5 sm:h-96 object-contain rounded-lg cursor-zoom-in"
+                  className="w-full h-[26rem] mt-1 md:mt-5 sm:h-[32rem] object-contain rounded-lg bg-white cursor-zoom-in"
                   onMouseEnter={() => setZoomed(true)}
                   onMouseLeave={() => setZoomed(false)}
                   onMouseMove={handleMouseMove}
@@ -200,7 +200,7 @@ const SingleComboProduct = () => {
                 {/* Zoom pane (desktop only) */}
                 {zoomed && (
                   <div
-                    className="hidden md:block absolute top-0 left-full ml-4 w-[420px] h-72 sm:h-96 border rounded-lg overflow-hidden shadow-lg bg-white z-50"
+                    className="hidden md:block absolute top-0 left-full ml-10 w-[min(680px,calc(100vw-2rem))] h-[37.5rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
                     style={{
                       backgroundImage: `url(${selectedImage})`,
                       backgroundRepeat: "no-repeat",
