@@ -31,6 +31,7 @@ const NewOrders = ({ adminData }) => {
         ...o,
         cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
         date: o.created_at || o.date
       }));
       setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -46,6 +47,7 @@ const NewOrders = ({ adminData }) => {
         ...o,
         cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
         date: o.created_at || o.date
       }));
       setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -176,7 +178,7 @@ const NewOrders = ({ adminData }) => {
               <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
             </div>
             <div>
-              <p><strong>Payment:</strong> ${order.paymentMethod || "-"}</p>
+              <p><strong>Payment:</strong> ${order.paymentMode || order.paymentMethod || "-"}</p>
               <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
             </div>
           </div>
