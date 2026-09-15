@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import JsBarcode from "jsbarcode";
-import { 
-  FaBarcode, FaPrint, FaPlus, FaTrash, FaEdit, FaEye, 
+import {
+  FaBarcode, FaPrint, FaPlus, FaTrash, FaEdit, FaEye,
   FaThLarge, FaBars, FaSearch, FaTimes, FaLayerGroup, FaCheck, FaSyncAlt
 } from "react-icons/fa";
 
@@ -257,15 +257,15 @@ const Stickers = ({ adminData }) => {
           prev.map((item) =>
             item.id === editingId
               ? {
-                  ...item,
-                  productId: productId.trim() || "MANUAL",
-                  productName: productName.trim(),
-                  price: Number(price),
-                  barcode: barcode.trim(),
-                  barcodeImg: barcodeImgData,
-                  packingDate,
-                  printQty: Number(printQty),
-                }
+                ...item,
+                productId: productId.trim() || "MANUAL",
+                productName: productName.trim(),
+                price: Number(price),
+                barcode: barcode.trim(),
+                barcodeImg: barcodeImgData,
+                packingDate,
+                printQty: Number(printQty),
+              }
               : item
           )
         );
@@ -541,22 +541,20 @@ const Stickers = ({ adminData }) => {
             <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                  viewMode === "card"
+                className={`p-2.5 rounded-xl transition-all cursor-pointer ${viewMode === "card"
                     ? "bg-emerald-600 text-white shadow-lg"
                     : "text-slate-400 hover:text-emerald-600"
-                }`}
+                  }`}
                 title="Card View"
               >
                 <FaThLarge size={14} />
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                  viewMode === "table"
+                className={`p-2.5 rounded-xl transition-all cursor-pointer ${viewMode === "table"
                     ? "bg-emerald-600 text-white shadow-lg"
                     : "text-slate-400 hover:text-emerald-600"
-                }`}
+                  }`}
                 title="Table View"
               >
                 <FaBars size={14} />
@@ -564,7 +562,7 @@ const Stickers = ({ adminData }) => {
             </div>
 
             {/* Clear Queue Button */}
-            {stickersList.length > 0 && (
+            {/* {stickersList.length > 0 && (
               <button
                 onClick={handleClearAll}
                 className="flex items-center gap-2 px-5 py-3.5 bg-white border border-rose-200 text-rose-600 rounded-2xl font-black text-xs transition-all hover:bg-rose-50 shadow-sm uppercase tracking-widest cursor-pointer"
@@ -572,16 +570,16 @@ const Stickers = ({ adminData }) => {
               >
                 <FaTrash size={12} /> Clear
               </button>
-            )}
+            )} */}
 
             {/* Print All Barcodes Button */}
-            <button
+            {/* <button
               onClick={handlePrintAll}
               disabled={stickersList.length === 0 || loading}
               className="flex items-center gap-2 px-6 py-3.5 bg-white border border-emerald-200 text-emerald-600 rounded-2xl font-black text-xs transition-all hover:bg-emerald-50 shadow-sm uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <FaPrint size={12} /> {loading ? "Generating..." : `Barcodes (${totalLabelsCount})`}
-            </button>
+            </button> */}
 
             {/* Add Stickers Button */}
             <button
@@ -869,6 +867,18 @@ const Stickers = ({ adminData }) => {
           </div>
         )}
 
+        {/* Print Barcodes Button */}
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={handlePrintAll}
+            disabled={stickersList.length === 0 || loading}
+            className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <FaPrint size={13} />
+            {loading ? "Generating..." : `Print Barcodes (${totalLabelsCount})`}
+          </button>
+        </div>
+
         {/* Pagination (Reference: Allproduct.jsx Pagination) */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 mt-10 pb-10">
@@ -876,11 +886,10 @@ const Stickers = ({ adminData }) => {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`w-10 h-10 rounded-2xl font-black text-xs transition-all cursor-pointer ${
-                  currentPage === page
+                className={`w-10 h-10 rounded-2xl font-black text-xs transition-all cursor-pointer ${currentPage === page
                     ? "bg-emerald-600 text-white shadow-lg"
                     : "bg-white text-slate-400 border border-gray-100 hover:border-emerald-200"
-                }`}
+                  }`}
               >
                 {page}
               </button>
