@@ -107,12 +107,34 @@
       if (user) {
         setForm((prev) => ({
           ...prev,
-          fullname: prev.fullname || user.displayName || "",
+          fullname: prev.fullname || user.displayName || user.username || user.fullName || "",
           email: prev.email || user.email || "",
-          contact: prev.contact || user.phoneNumber || prev.contact || "",
+          contact: prev.contact || user.phoneNumber || user.phone || "",
         }));
       }
     }, [user]);
+
+    // Keep checkout contact details in sync with the profile shown in Account.
+    useEffect(() => {
+      if (!userIdToUse || userIdToUse === "undefined") return;
+
+      const fetchProfile = async () => {
+        try {
+          const response = await api.get(`/users/profile/${userIdToUse}`);
+          const profile = response.data || {};
+          setForm((prev) => ({
+            ...prev,
+            fullname: prev.fullname || profile.username || profile.fullName || "",
+            email: prev.email || profile.email || "",
+            contact: prev.contact || profile.phone || profile.phoneNumber || "",
+          }));
+        } catch (error) {
+          console.error("Checkout profile sync error:", error);
+        }
+      };
+
+      fetchProfile();
+    }, [userIdToUse]);
 
     // ---------------- Helpers ----------------
     const parsePrice = (p) => {
