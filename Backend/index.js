@@ -26,6 +26,7 @@ const seoRoutes = require('./src/routers/seoRoutes');
 const settingsRoutes = require('./src/routers/settingsRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const contactFormRoutes = require('./src/routers/contactFormRoutes');
+const bannerRoutes = require('./src/routers/bannerRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -56,6 +57,7 @@ app.use('/api/seo', seoRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact-form', contactFormRoutes);
+app.use('/api/banners', bannerRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {

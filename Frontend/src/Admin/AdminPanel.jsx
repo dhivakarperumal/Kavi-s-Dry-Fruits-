@@ -41,10 +41,11 @@ import SEOKeywords from "./SEOKeywords";
 import Settings from "./Settings/Settings";
 import Profile from "./Settings/Profile";
 import DeliverySettings from "./Settings/DeliverySettings";
-import OfferBanner from "../Home/OfferBanner";
+import BannerManagement from "./Bannermanagement/BannerManagement";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [visitedSections, setVisitedSections] = useState(["dashboard"]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
@@ -113,6 +114,14 @@ const AdminPanel = () => {
       setActiveSection(mappedSection);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    setVisitedSections((previousSections) => (
+      previousSections.includes(activeSection)
+        ? previousSections
+        : [...previousSections, activeSection]
+    ));
+  }, [activeSection]);
 
   const handleSectionChange = (newSection) => {
     setActiveSection(newSection);
@@ -223,8 +232,8 @@ const AdminPanel = () => {
     }
   };
 
-  const renderContent = () => {
-    switch (activeSection) {
+  const renderContent = (section) => {
+    switch (section) {
       case "dashboard": return <Dashboard adminData={collectionCounts} setActiveSection={handleSectionChange} />;
 
       // Users
@@ -249,7 +258,7 @@ const AdminPanel = () => {
 
       // Others
       case "Stickers": return <Stickers />;
-      case "Banner": return <OfferBanner />;
+      case "Banner": return <BannerManagement />;
       case "Dealer": return <AddDealer />;
       case "Reviews": return <Reviews />;
       case "Contact Form": return <ContactFormSubmissions />;
@@ -302,7 +311,11 @@ const AdminPanel = () => {
         />
 
         <main className="flex-1 overflow-y-auto custom-scrollbar p-2">
-          {renderContent()}
+          {visitedSections.map((section) => (
+            <div key={section} className={section === activeSection ? "block" : "hidden"}>
+              {renderContent(section)}
+            </div>
+          ))}
         </main>
 
         <footer className="text-center text-sm text-black py-3">

@@ -246,6 +246,22 @@ const tables = {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
+  banners: `
+    CREATE TABLE IF NOT EXISTS banners (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255),
+      subtitle VARCHAR(255),
+      description TEXT,
+      image VARCHAR(500),
+      mobile_image VARCHAR(500),
+      link TEXT,
+      type VARCHAR(50) DEFAULT 'hero',
+      active TINYINT(1) DEFAULT 1,
+      user_id VARCHAR(100),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
   app_settings: `
     CREATE TABLE IF NOT EXISTS app_settings (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
