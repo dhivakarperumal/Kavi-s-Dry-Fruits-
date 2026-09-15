@@ -342,6 +342,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Name</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Date</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Amount</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment Method</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Channel</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
               </tr>
@@ -371,6 +372,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                     <td className="px-8 py-6 text-center">
                        <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
                     </td>
+                      <td className="px-8 py-6 text-center">
+                        <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-xl text-[9px] font-black text-emerald-700 uppercase tracking-widest">
+                         {order.paymentMethod || order.paymentMode || "-"}
+                        </span>
+                      </td>
                     <td className="px-8 py-6 text-center">
                        <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest">
                          {order.customerType || "Online"}
@@ -386,7 +392,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <td colSpan="8" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
                     <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                        <FaPrint className="text-3xl opacity-20" />
                     </div>
