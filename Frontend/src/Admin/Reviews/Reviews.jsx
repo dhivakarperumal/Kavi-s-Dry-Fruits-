@@ -262,32 +262,7 @@ const Reviews = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto min-h-screen bg-transparent">
-      <button
-        onClick={() => navigate('/adminpanel/settings')}
-        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
-      >
-        <FiArrowLeft />
-        <span>Back to Settings</span>
-      </button>
-
-      {/* Header */}
-      <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-4xl font-black text-gray-900 tracking-tight">Reviews Wall</h2>
-          <p className="text-sm text-green-600 font-black uppercase tracking-widest mt-1 flex items-center gap-2">
-            <span className="w-8 h-1 bg-green-500 rounded-full"></span>
-            Customer Testimonials
-          </p>
-        </div>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-3 px-8 py-4 bg-[#009669] text-white font-black uppercase tracking-widest rounded-[2rem] hover:bg-[#007a55] shadow-xl shadow-emerald-100 transition-all hover:-translate-y-1 active:translate-y-0 border-b-4 border-[#006b4b]"
-        >
-          <FiPlus className="text-xl" />
-          Add Feedback
-        </button>
-      </div>
+     
 
       {/* Main Content Area */}
       <div className="animate-in fade-in duration-500">
@@ -350,6 +325,13 @@ const Reviews = () => {
               <option value="custom">📅 Range Pick</option>
             </select>
           </div>
+          <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-3 px-6 py-3 bg-[#009669] text-white font-black uppercase tracking-widest rounded-[2rem] hover:bg-[#007a55] shadow-xl shadow-emerald-100 transition-all hover:-translate-y-1 active:translate-y-0 border-b-4 border-[#006b4b]"
+        >
+          <FiPlus className="text-xl" />
+          Add Feedback
+        </button>
         </div>
 
         {loading ? (
@@ -627,7 +609,7 @@ const Reviews = () => {
                 <div className="flex gap-4 pt-8">
                   <button
                     type="submit"
-                    className="flex-1 py-5 bg-green-600 text-white font-black uppercase tracking-widest rounded-3xl hover:bg-green-700 shadow-xl shadow-green-100 transition-all border-b-4 border-green-800"
+                    className="flex-1 py-3 bg-[#009669] text-white font-black uppercase tracking-widest rounded-3xl hover:bg-[#007a55] shadow-xl shadow-emerald-100 transition-all border-b-4 border-[#006b4b]"
                   >
                     {editingReview ? "Save Changes" : "Publish Review"}
                   </button>

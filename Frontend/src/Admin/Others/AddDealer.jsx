@@ -146,15 +146,9 @@ const AddDealer = () => {
 
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-8 animate-in fade-in duration-700">
-      <button
-        onClick={() => navigate('/adminpanel/settings')}
-        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
-      >
-        <FaArrowLeft />
-        <span>Back to Settings</span>
-      </button>
+     
 
-      <div className="max-w-7xl mx-auto mt-20">
+      <div className="max-w-7xl mx-auto mt-7">
         
         {/* Header Section */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-10">
