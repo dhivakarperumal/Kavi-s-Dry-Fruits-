@@ -207,6 +207,7 @@ const Orders = () => {
     printWindow.onload = () => {
       printWindow.focus();
       printWindow.print();
+      printWindow.close();
     };
   };
 
