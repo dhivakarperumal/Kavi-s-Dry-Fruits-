@@ -3,18 +3,55 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 import {Link} from "react-router-dom"
 import { Helmet } from "react-helmet";
+import api from "../services/api";
 
+const fallbackImages = [
+  { id: 1, img: "https://kavisdryfruits.com/images/Home/bg1.png" },
+  { id: 2, img: "https://kavisdryfruits.com/images/Home/bg2.png" },
+  { id: 3, img: "https://kavisdryfruits.com/images/Home/bg3.png" },
+  { id: 4, img: "https://kavisdryfruits.com/images/Home/bg4.png" },
+];
+
+const fallbackContent = {
+  title: "Premium Quality Dry Fruits",
+  subtitle: "100% Natural & Fresh",
+  description: "Healthy choices, carefully selected for your family.",
+};
+
+const fallbackSlides = fallbackImages.map((slide) => ({
+  ...slide,
+  ...fallbackContent,
+}));
 
 
 const Hero = () => {
-  const imageList = [
-    { id: 1, img: "https://kavisdryfruits.com/images/Home/bg1.png" },
-    { id: 2, img: "https://kavisdryfruits.com/images/Home/bg2.png" },
-    { id: 3, img: "https://kavisdryfruits.com/images/Home/bg3.png" },
-    { id: 4, img: "https://kavisdryfruits.com/images/Home/bg4.png" },
-  ];
+  const [heroSlides, setHeroSlides] = useState(fallbackSlides);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  const [currentImage, setCurrentImage] = useState(0);
+  useEffect(() => {
+    let isMounted = true;
+
+    api.get("/banners")
+      .then(({ data }) => {
+        const heroSlidesFromApi = (Array.isArray(data) ? data : [])
+          .filter(banner => banner.active && banner.type === "hero" && banner.image)
+          .map((banner) => ({
+            id: banner.id,
+            img: banner.image,
+            title: banner.title || fallbackContent.title,
+            subtitle: banner.subtitle || fallbackContent.subtitle,
+            description: banner.description || fallbackContent.description,
+          }));
+
+        if (isMounted && heroSlidesFromApi.length > 0) {
+          setHeroSlides(heroSlidesFromApi);
+          setCurrentSlide(0);
+        }
+      })
+      .catch(error => console.error("Failed to load hero banners:", error));
+
+    return () => { isMounted = false; };
+  }, []);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: false }); // Reusable animations
@@ -22,16 +59,18 @@ const Hero = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % imageList.length);
-    }, 3000); // Image changes every 3 seconds
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000); // Change the complete hero slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, [imageList.length]);
+  }, [heroSlides.length]);
+
+  const currentHero = heroSlides[currentSlide] || fallbackSlides[0];
 
   return (
 
     
-    <section className="bg-green3 overflow-hidden flex items-center py-10 md:py-16 lg:py-20">
+    <section className="h-[85vh] min-h-0 bg-green3 overflow-hidden flex items-center py-8 md:py-12 lg:py-16">
     <Helmet>
   <title>Kavi’s Dry Fruits – Premium Dry Fruits, Nuts, Seeds & Gift Boxes Online</title>
 
@@ -52,13 +91,10 @@ const Hero = () => {
         {/* Text Content */}
         <div className="w-full lg:w-2/3 space-y-6 text-center lg:text-left z-10">
           <h1 className="text-2xl lg:text-4xl font-extrabold text-primary leading-snug">
-            Premium Quality Dry Fruits
-            <br />
-            100%  Natural &  Fresh
+            {currentHero.title}
           </h1>
-          {/* <p className="text-lg text-[#9c6b4d] font-medium">
-            Almonds, Cashews, Walnuts & More – Healthy & Tasty
-          </p> */}
+          <p className="text-lg text-[#9c6b4d] font-medium">{currentHero.subtitle}</p>
+          <p className="text-sm text-slate-600 font-medium max-w-xl">{currentHero.description}</p>
           
           <Link to={"/shop"} className="bg-green1 hover:bg-primary text-white px-6 py-3 rounded-md text-sm font-semibold transition">
             Shop Now
@@ -68,13 +104,13 @@ const Hero = () => {
         {/* Animated Image */}
         <div
           className="w-[300px] h-[300px] md:w-[380px] md:h-[380px] md:mr-30 rounded-full overflow-hidden flex items-start justify-start relative"
-          key={currentImage} // Forces re-render for animation
+          key={currentHero.id} // Re-run the slide animation for each complete banner
           data-aos="zoom-in"
           data-aos-easing="ease-in-out"
         >
           <img
-            src={imageList[currentImage].img}
-            alt="Dry Fruits Bowl"
+            src={currentHero.img}
+            alt={currentHero.title}
             className="object-cover w-full h-full transition duration-1000 ease-in-out"
           />
         </div>
