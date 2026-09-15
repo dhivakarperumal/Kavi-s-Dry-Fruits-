@@ -14,7 +14,7 @@ const Stickers = ({ adminData }) => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Sticker Queue State (persisted in localStorage)
+  // Sticker Queue State\
   const [stickersList, setStickersList] = useState(() => {
     try {
       const saved = localStorage.getItem("kavi_stickers_queue");
