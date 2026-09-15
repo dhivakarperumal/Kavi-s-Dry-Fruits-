@@ -1109,6 +1109,14 @@ const Account = () => {
                 order={selectedOrder}
                 onClose={() => setSelectedOrderId(null)}
                 onPrint={handlePrint}
+                renderReviewForm={(onReviewSubmitted) => (
+                  <AddReviewForm
+                    order={selectedOrder}
+                    userInfo={userInfo}
+                    userId={userIdToUse}
+                    onReviewSubmitted={onReviewSubmitted}
+                  />
+                )}
                 onCancel={(reason) => {
                   const orderIndex = allOrders.findIndex((item) => item.orderId === selectedOrder.orderId);
                   if (orderIndex >= 0 && window.confirm("Are you sure you want to cancel this order?")) {

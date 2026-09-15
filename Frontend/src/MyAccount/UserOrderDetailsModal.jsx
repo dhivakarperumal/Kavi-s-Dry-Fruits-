@@ -27,9 +27,10 @@ const getImageUrl = (value) => {
   return `${backendUrl}${value.startsWith("/") ? value : `/${value}`}`;
 };
 
-const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
+const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, renderReviewForm }) => {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   if (!order) return null;
   const address = parseValue(order.shippingAddress || order.client, {});
@@ -48,6 +49,7 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
   const customerPhone = address.contact || order.clientPhone || order.phone || "Not available";
   const shippingAmount = Number(order.shippingCharge || 0);
   const total = Number(order.totalAmount || order.total || 0);
+  const isDelivered = currentStatus === "Delivered";
 
   return (
     <div
@@ -224,6 +226,31 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
               </div>
             </div>
           </section>
+
+          {isDelivered && renderReviewForm && (
+            <section className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-black text-green-800">How was your order?</h3>
+                  <p className="text-sm text-green-700">Share your feedback about this delivered order.</p>
+                </div>
+                {!showReviewForm && (
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewForm(true)}
+                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-green-700"
+                  >
+                    Add Review
+                  </button>
+                )}
+              </div>
+              {showReviewForm && (
+                <div className="mt-4 rounded-lg bg-white p-4">
+                  {renderReviewForm(() => setShowReviewForm(false))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>
