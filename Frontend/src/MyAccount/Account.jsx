@@ -893,11 +893,11 @@ const Account = () => {
                 return (
                   <div
                     key={order.orderId}
-                    className="w-full mx-auto shadow-md mb-6 rounded-lg border border-yellow-300"
+                    className="w-full mx-auto shadow-md mb-6 rounded-lg border border-green-200"
                   >
                     <div
                       className={`${
-                        isOpen ? "bg-yellow-100" : "bg-yellow-400"
+                        isOpen ? "bg-green-100" : "bg-green-50"
                       } flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer`}
                       onClick={() => setSelectedOrderId(isOpen ? null : order.orderId)}
                     >
@@ -911,8 +911,8 @@ const Account = () => {
                             : "N/A"}
                         </p>
                         {order.docketNumber && (statusIndex >= 3 || order.orderStatus === "Shipped") && (
-                          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-lg border border-yellow-400 shadow-sm">
-                            <span className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Docket:</span>
+                          <div className="mt-2 inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-lg border border-green-200 shadow-sm">
+                            <span className="text-[10px] font-black uppercase text-green-700 tracking-wider">Docket:</span>
                             <span className="text-xs font-black text-black">{order.docketNumber}</span>
                           </div>
                         )}
