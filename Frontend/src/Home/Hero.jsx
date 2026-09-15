@@ -89,21 +89,21 @@ const Hero = () => {
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-10">
         {/* Text Content */}
-        <div className="w-full lg:w-2/3 space-y-4 md:space-y-6 text-center lg:text-left z-10">
+        <div className="order-2 lg:order-1 w-full lg:w-2/3 space-y-4 md:space-y-6 text-center lg:text-left z-10">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary leading-tight break-words">
             {currentHero.title}
           </h1>
           <p className="text-base sm:text-lg text-[#9c6b4d] font-medium">{currentHero.subtitle}</p>
           <p className="text-sm sm:text-base text-[#009669] font-medium max-w-xl mx-auto lg:mx-0">{currentHero.description}</p>
           
-          <Link to={"/shop"} className="bg-green1 hover:bg-primary text-white px-6 py-3 rounded-md text-sm font-semibold transition">
+          <Link to={"/shop"} className="inline-block mt-3 lg:mt-0 bg-green1 hover:bg-primary text-white px-6 py-3 rounded-md text-sm font-semibold transition">
             Shop Now
           </Link>
         </div>
 
         {/* Animated Image */}
         <div
-          className="w-56 h-56 sm:w-72 sm:h-72 md:w-[380px] md:h-[380px] lg:mr-30 rounded-full overflow-hidden flex items-start justify-start relative shrink-0"
+          className="order-1 lg:order-2 w-56 h-56 sm:w-72 sm:h-72 md:w-[380px] md:h-[380px] lg:mr-30 rounded-full overflow-hidden flex items-start justify-start relative shrink-0"
           key={currentHero.id} // Re-run the slide animation for each complete banner
           data-aos="zoom-in"
           data-aos-easing="ease-in-out"
