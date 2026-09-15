@@ -77,16 +77,6 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
 
   const categories = ["All", ...new Set(benefits.map(b => b.category).filter(Boolean))];
 
-  if (editItem || showAddView) {
-    return (
-      <AddHealthBenefit 
-        editItem={editItem} 
-        onCancel={() => { setEditItem(null); setShowAddView(false); }} 
-        onSuccess={() => { setEditItem(null); setShowAddView(false); fetchBenefits(); }} 
-      />
-    );
-  }
-
   return (
     <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-700">
       
@@ -140,7 +130,7 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
           </select>
 
           <button 
-            onClick={() => setActiveSection("Add Health Benefit")}
+            onClick={() => setShowAddView(true)}
             className="bg-emerald-600 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2"
           >
             <FaPlus /> New Profile
@@ -273,7 +263,7 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
                     <div className="flex flex-col items-center gap-4 text-gray-300">
                       <FaHeartbeat size={64} className="opacity-10" />
                       <p className="font-black uppercase tracking-[0.2em] text-sm">No health profiles found</p>
-                      <button onClick={() => setActiveSection("Add Health Benefit")} className="text-emerald-500 font-bold hover:underline text-xs">Create your first profile</button>
+                      <button onClick={() => setShowAddView(true)} className="text-emerald-500 font-bold hover:underline text-xs">Create your first profile</button>
                     </div>
                   </td>
                 </tr>
@@ -323,6 +313,21 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
           </div>
         )}
       </div>
+
+      {(editItem || showAddView) && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => { setEditItem(null); setShowAddView(false); }}
+        >
+          <div className="w-full max-w-6xl max-h-[95vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" onClick={(event) => event.stopPropagation()}>
+            <AddHealthBenefit
+              editItem={editItem}
+              onCancel={() => { setEditItem(null); setShowAddView(false); }}
+              onSuccess={() => { setEditItem(null); setShowAddView(false); fetchBenefits(); }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedBenefit && (
