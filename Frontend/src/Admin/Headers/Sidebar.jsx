@@ -63,13 +63,13 @@ const Sidebar = ({
     { label: "Stickers", icon: <FaStickyNote /> },
     { label: "Banner", icon: <FaImage /> },
     // { label: "Dealer", icon: <FaUsers /> },
-    // { label: "Reviews", icon: <MdPreview /> },
+    { label: "Reviews", icon: <MdPreview /> },
     { label: "SEO Keywords", icon: <FaSearch /> },
     { label: "Contact Form", icon: <FaUsers /> },
     // { label: "Invoice", icon: <FaFileInvoice /> },
     { label: "Billing", icon: <MdPrint /> },
 
-{ label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
+    { label: "View Health Benefits", icon: <MdOutlineInventory2 /> },
     
 
 
