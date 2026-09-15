@@ -13,7 +13,7 @@ import { FaTruck, FaShoppingCart, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
 import { useStore } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
-import OrderDetailsModal from "../Admin/Orders/OrderDetailsModal";
+import UserOrderDetailsModal from "./UserOrderDetailsModal";
 
 const Account = () => {
   const { user } = useAuth();
@@ -1099,10 +1099,16 @@ const Account = () => {
               })
             )}
             {selectedOrder && (
-              <OrderDetailsModal
+              <UserOrderDetailsModal
                 order={selectedOrder}
                 onClose={() => setSelectedOrderId(null)}
                 onPrint={handlePrint}
+                onCancel={() => {
+                  const orderIndex = allOrders.findIndex((item) => item.orderId === selectedOrder.orderId);
+                  if (orderIndex >= 0 && window.confirm("Are you sure you want to cancel this order?")) {
+                    cancelOrder(selectedOrder.orderId, "", orderIndex);
+                  }
+                }}
               />
             )}
           </div>
