@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { 
   FaEdit, FaTrash, FaEye, FaSearch, FaFilter, FaHeartbeat, 
   FaPlus, FaChevronLeft, FaChevronRight, FaBoxOpen, FaThList, FaVideo
+  , FaThLarge
 } from "react-icons/fa";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -16,6 +17,7 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
   const [selectedBenefit, setSelectedBenefit] = useState(null); // For Detail Modal
   const [editItem, setEditItem] = useState(null); // For Edit View
   const [showAddView, setShowAddView] = useState(false);
+  const [viewMode, setViewMode] = useState("table");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -107,7 +109,27 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-     
+          <div className="flex items-center gap-1 p-1.5 bg-white border border-gray-100 rounded-2xl shadow-sm">
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-emerald-600 text-white shadow-lg" : "text-gray-400 hover:text-emerald-600"}`}
+              aria-label="Table view"
+              title="Table view"
+            >
+              <FaThList size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("card")}
+              className={`p-3 rounded-xl transition-all ${viewMode === "card" ? "bg-emerald-600 text-white shadow-lg" : "text-gray-400 hover:text-emerald-600"}`}
+              aria-label="Card view"
+              title="Card view"
+            >
+              <FaThLarge size={16} />
+            </button>
+          </div>
+
           
           <select 
             value={categoryFilter}
@@ -126,8 +148,49 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Benefits Section */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
+        {viewMode === "card" ? (
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {loading ? (
+              [1, 2, 3].map((item) => (
+                <div key={item} className="h-72 rounded-3xl bg-gray-50 animate-pulse" />
+              ))
+            ) : currentItems.length > 0 ? (
+              currentItems.map((item) => (
+                <article key={item.id} className="border border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all">
+                  <div className="h-44 bg-emerald-50 flex items-center justify-center overflow-hidden">
+                    {item.images?.[0] ? (
+                      <img src={item.images[0]} alt={item.productName} className="w-full h-full object-cover" />
+                    ) : (
+                      <FaBoxOpen className="text-emerald-200" size={42} />
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{item.category || "Uncategorized"}</p>
+                    <h3 className="mt-2 text-lg font-black text-gray-900">{item.productName}</h3>
+                    <p className="mt-2 text-sm text-gray-500 line-clamp-2">{item.shortDescription}</p>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {item.benefits?.slice(0, 2).map((benefit, index) => (
+                        <span key={index} className="px-2.5 py-1 bg-pink-50 text-pink-600 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                          {benefit.title}
+                        </span>
+                      ))}
+                      {item.benefits?.length > 2 && <span className="text-[10px] text-gray-400 font-bold">+{item.benefits.length - 2} more</span>}
+                    </div>
+                    <div className="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100">
+                      <button onClick={() => setSelectedBenefit(item)} className="w-10 h-10 flex items-center justify-center bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-xl transition-all" title="View Details"><FaEye size={14} /></button>
+                      <button onClick={() => setEditItem(item)} className="w-10 h-10 flex items-center justify-center bg-amber-50 text-amber-500 hover:bg-amber-500 hover:text-white rounded-xl transition-all" title="Edit"><FaEdit size={14} /></button>
+                      <button onClick={() => handleDelete(item.id)} className="w-10 h-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all" title="Delete"><FaTrash size={13} /></button>
+                    </div>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="md:col-span-2 xl:col-span-3 px-8 py-20 text-center text-gray-400 font-black uppercase tracking-widest">No health profiles found</div>
+            )}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-emerald-50/50 text-emerald-800 uppercase font-black text-[10px] tracking-widest border-b border-emerald-100">
@@ -218,6 +281,7 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (

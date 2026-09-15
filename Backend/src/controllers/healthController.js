@@ -1,5 +1,27 @@
 const db = require('../config/db');
 
+const parseArray = (value) => {
+  if (Array.isArray(value)) return value;
+  try { return JSON.parse(value || '[]'); } catch (error) { return []; }
+};
+
+const uploadedUrl = (req, folder, filename) => `${req.protocol}://${req.get('host')}/uploads/health-benefits/${folder}/${filename}`;
+
+const getMediaFromRequest = (req, fieldName, folder) => (req.files?.[fieldName] || []).map(file => uploadedUrl(req, folder, file.filename));
+
+const mergeUploadedMedia = (req, images, videos) => {
+  const uploadedImages = getMediaFromRequest(req, 'images', 'images');
+  const uploadedVideos = getMediaFromRequest(req, 'videoFiles', 'videos');
+  const mergedVideos = videos.map(video => {
+    if (video.fileIndex !== undefined && uploadedVideos[video.fileIndex]) {
+      return { ...video, value: uploadedVideos[video.fileIndex], fileIndex: undefined };
+    }
+    const { fileIndex, ...videoWithoutFileIndex } = video;
+    return videoWithoutFileIndex;
+  });
+  return { images: [...images, ...uploadedImages], videos: mergedVideos };
+};
+
 const getHealthBenefits = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM health_benefits ORDER BY createdAt DESC');
@@ -19,18 +41,19 @@ const createHealthBenefit = async (req, res) => {
     const { 
       productId, productName, category, 
       shortDescription = '', detailedDescription = '', 
-      benefits = [], images = [], videos = [], 
+      benefits = [], images = [], videos = [],
       howToEat = '', howToStore = '' 
     } = req.body;
 
+    const media = mergeUploadedMedia(req, parseArray(images), parseArray(videos));
     const [result] = await db.query(
       'INSERT INTO health_benefits (productId, productName, category, shortDescription, detailedDescription, benefits, images, videos, howToEat, howToStore) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         productId, productName, category, 
         shortDescription, detailedDescription, 
         typeof benefits === 'string' ? benefits : JSON.stringify(benefits),
-        typeof images === 'string' ? images : JSON.stringify(images),
-        typeof videos === 'string' ? videos : JSON.stringify(videos),
+        JSON.stringify(media.images),
+        JSON.stringify(media.videos),
         howToEat, howToStore
       ]
     );
@@ -50,18 +73,19 @@ const updateHealthBenefit = async (req, res) => {
     const { 
       productId, productName, category, 
       shortDescription = '', detailedDescription = '', 
-      benefits = [], images = [], videos = [], 
+      benefits = [], images = [], videos = [],
       howToEat = '', howToStore = '' 
     } = req.body;
 
+    const media = mergeUploadedMedia(req, parseArray(images), parseArray(videos));
     const [result] = await db.query(
       'UPDATE health_benefits SET productId=?, productName=?, category=?, shortDescription=?, detailedDescription=?, benefits=?, images=?, videos=?, howToEat=?, howToStore=? WHERE id=?',
       [
         productId, productName, category, 
         shortDescription, detailedDescription, 
         typeof benefits === 'string' ? benefits : JSON.stringify(benefits),
-        typeof images === 'string' ? images : JSON.stringify(images),
-        typeof videos === 'string' ? videos : JSON.stringify(videos),
+        JSON.stringify(media.images),
+        JSON.stringify(media.videos),
         howToEat, howToStore, 
         req.params.id
       ]
