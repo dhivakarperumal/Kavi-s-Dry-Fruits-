@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FaCheck, FaMapMarkerAlt, FaPrint, FaTimes, FaTruck, FaUser } from "react-icons/fa";
 
 const statusSteps = [
@@ -19,8 +20,10 @@ const parseValue = (value, fallback) => {
 };
 
 const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
-  if (!order) return null;
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
+  if (!order) return null;
   const address = parseValue(order.shippingAddress || order.client, {});
   const items = parseValue(order.cartItems || order.items, []);
   const currentStatus = order.orderStatus || "Order Placed";
@@ -82,13 +85,42 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel }) => {
                 <p className="text-lg font-black text-green-800">{currentStatus}</p>
               </div>
               {canCancel && (
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
-                >
-                  Cancel Order
-                </button>
+                showCancelForm ? (
+                  <div className="flex w-full max-w-sm flex-col gap-2 sm:flex-row sm:items-start">
+                    <textarea
+                      value={cancelReason}
+                      onChange={(event) => setCancelReason(event.target.value)}
+                      placeholder="Cancellation reason..."
+                      rows={2}
+                      className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                    />
+                    <div className="flex gap-2 sm:flex-col">
+                      <button
+                        type="button"
+                        disabled={!cancelReason.trim()}
+                        onClick={() => onCancel(cancelReason.trim())}
+                        className="rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelForm(false)}
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+                      >
+                        Keep Order
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelForm(true)}
+                    className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
+                  >
+                    Cancel Order
+                  </button>
+                )
               )}
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">

@@ -589,14 +589,20 @@ const Account = () => {
       // Find the DB internal ID for this orderId string
       const orderToCancel = allOrders[index];
       if (!orderToCancel || !orderToCancel.id) return;
+      if (!reason || !reason.trim()) {
+        toast.error("Please enter a cancellation reason.");
+        return;
+      }
 
       await api.put(`/orders/${orderToCancel.id}`, {
-        orderStatus: "Cancelled"
+        orderStatus: "Cancelled",
+        cancelReason: reason.trim()
       });
 
       // Update local state
       const updated = [...allOrders];
       updated[index].orderStatus = "Cancelled";
+      updated[index].cancelReason = reason.trim();
       setAllOrders(updated);
 
       toast.success("Order cancelled!");
@@ -1103,10 +1109,10 @@ const Account = () => {
                 order={selectedOrder}
                 onClose={() => setSelectedOrderId(null)}
                 onPrint={handlePrint}
-                onCancel={() => {
+                onCancel={(reason) => {
                   const orderIndex = allOrders.findIndex((item) => item.orderId === selectedOrder.orderId);
                   if (orderIndex >= 0 && window.confirm("Are you sure you want to cancel this order?")) {
-                    cancelOrder(selectedOrder.orderId, "", orderIndex);
+                    cancelOrder(selectedOrder.orderId, reason, orderIndex);
                   }
                 }}
               />
