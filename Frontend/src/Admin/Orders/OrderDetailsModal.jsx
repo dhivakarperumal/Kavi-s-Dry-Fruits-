@@ -5,8 +5,17 @@ import logo from "/images/Kavi_logo.png";
 const OrderDetailsModal = ({ order, onClose = () => {}, onPrint = () => {} }) => {
   if (!order) return null;
 
-  const address = order.shippingAddress || order.client || {};
-  const items = order.cartItems || order.items || [];
+  const parseValue = (value, fallback) => {
+    if (typeof value !== "string") return value || fallback;
+    try {
+      return JSON.parse(value) || fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const address = parseValue(order.shippingAddress || order.client, {});
+  const items = parseValue(order.cartItems || order.items, []);
   const clientName = order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || address.name || address.contact || "Guest Customer";
 
   return (

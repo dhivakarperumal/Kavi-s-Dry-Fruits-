@@ -13,6 +13,7 @@ import { FaTruck, FaShoppingCart, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdRefresh } from "react-icons/md";
 import { useStore } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import OrderDetailsModal from "../Admin/Orders/OrderDetailsModal";
 
 const Account = () => {
   const { user } = useAuth();
@@ -872,6 +873,8 @@ const Account = () => {
           </div>
         );
       case "orders":
+        const selectedOrder = allOrders.find((order) => order.orderId === selectedOrderId);
+
         return (
           <div className="bg-white min-h-screen py-6 px-2 md:px-6 rounded-xl">
             {allOrders.length === 0 ? (
@@ -899,7 +902,7 @@ const Account = () => {
                       className={`${
                         isOpen ? "bg-green-100" : "bg-green-50"
                       } flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 cursor-pointer`}
-                      onClick={() => setSelectedOrderId(isOpen ? null : order.orderId)}
+                      onClick={() => setSelectedOrderId(order.orderId)}
                     >
                       <div className="flex-1">
                         <h2 className="font-bold text-base md:text-lg text-black">
@@ -970,7 +973,7 @@ const Account = () => {
                       </div>
                     </div>
 
-                    {isOpen && (
+                    {false && (
                       <div className="bg-white px-4 py-4">
                         <div className="mb-4">
                           <h3 className="font-semibold text-base mb-2">
@@ -1094,6 +1097,13 @@ const Account = () => {
                   </div>
                 );
               })
+            )}
+            {selectedOrder && (
+              <OrderDetailsModal
+                order={selectedOrder}
+                onClose={() => setSelectedOrderId(null)}
+                onPrint={handlePrint}
+              />
             )}
           </div>
         );
