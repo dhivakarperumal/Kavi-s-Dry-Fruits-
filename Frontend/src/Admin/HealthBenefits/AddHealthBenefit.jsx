@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import api from "../../services/api";
 import imageCompression from "browser-image-compression";
 
-const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
+const AddHealthBenefit = ({ editItem, onCancel, onSuccess, isModal = false }) => {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -222,7 +222,7 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
   );
 
   return (
-    <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-emerald-100 animate-in fade-in duration-500 max-w-6xl mx-auto my-8">
+    <div className={`bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-emerald-100 animate-in fade-in duration-500 max-w-6xl mx-auto ${isModal ? "my-0" : "my-8"}`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-400 p-8 text-white relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>

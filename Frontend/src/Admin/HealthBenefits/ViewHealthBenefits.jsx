@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   FaEdit, FaTrash, FaEye, FaSearch, FaFilter, FaHeartbeat, 
-  FaPlus, FaChevronLeft, FaChevronRight, FaBoxOpen, FaThList, FaVideo, FaUtensils , FaSave 
+  FaPlus, FaChevronLeft, FaChevronRight, FaBoxOpen, FaThList, FaVideo, FaUtensils, FaSave, FaTimes
   , FaThLarge
 } from "react-icons/fa";
 import api from "../../services/api";
@@ -319,9 +319,19 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
           className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={() => { setEditItem(null); setShowAddView(false); }}
         >
-          <div className="w-full max-w-6xl max-h-[95vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" onClick={(event) => event.stopPropagation()}>
+          <div className="relative w-full max-w-6xl max-h-[calc(100vh-2rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => { setEditItem(null); setShowAddView(false); }}
+              className="absolute top-6 right-6 z-20 w-11 h-11 flex items-center justify-center rounded-2xl bg-black/10 text-white hover:bg-black/25 transition-all"
+              aria-label="Close"
+              title="Close"
+            >
+              <FaTimes />
+            </button>
             <AddHealthBenefit
               editItem={editItem}
+              isModal
               onCancel={() => { setEditItem(null); setShowAddView(false); }}
               onSuccess={() => { setEditItem(null); setShowAddView(false); fetchBenefits(); }}
             />
