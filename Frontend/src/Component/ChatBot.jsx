@@ -32,6 +32,7 @@ const TRACK_KEYWORDS = ["track", "where is my order", "track order"];
 function detectIntent(text) {
   const lower = text.toLowerCase().trim();
   if (GREETING_KEYWORDS.some((k) => lower === k || lower.startsWith(k + " "))) return "greeting";
+  if (lower.includes("ord-") || lower.match(/order #?\s*\d+/i)) return "track_specific_order";
   if (TRACK_KEYWORDS.some((k) => lower.includes(k))) return "track";
   if (ORDER_KEYWORDS.some((k) => lower.includes(k))) return "order";
   if (SUPPORT_KEYWORDS.some((k) => lower.includes(k))) return "support";
@@ -41,7 +42,6 @@ function detectIntent(text) {
   if (CATEGORY_KEYWORDS.some((k) => lower.includes(k))) return "categories";
   if (ACCOUNT_KEYWORDS.some((k) => lower.includes(k))) return "account";
   if (ADDRESS_KEYWORDS.some((k) => lower.includes(k))) return "address";
-  if (lower.includes("ord-") || lower.match(/order #?\s*\d+/i)) return "track_specific_order";
   if (lower === "search products" || lower === "search") return "search_prompt";
   return "search";
 }
@@ -89,6 +89,9 @@ function getProductImage(product) {
     if (!rawImg && product?.images) {
       let imgs = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
       if (imgs && imgs.length > 0) rawImg = imgs[0];
+    }
+    if (!rawImg && product?.image) {
+      rawImg = typeof product.image === 'string' ? product.image : null;
     }
   } catch (e) {
     console.error("Error parsing product images:", e);
@@ -324,8 +327,15 @@ const ChatBot = ({ isOpen, onClose }) => {
     if (!query || query.trim().length < 2) return;
     setLoading(true);
     try {
-      const { data } = await api.get("/products");
-      const all = Array.isArray(data) ? data : data?.data || [];
+      const [{ data: prodData }, { data: comboData }] = await Promise.all([
+        api.get("/products"),
+        api.get("/combos").catch(() => ({ data: [] }))
+      ]);
+      const allProducts = Array.isArray(prodData) ? prodData : prodData?.data || [];
+      const allCombos = Array.isArray(comboData) ? comboData : comboData?.data || [];
+      
+      const all = [...allProducts, ...allCombos.map(c => ({ ...c, isCombo: true }))];
+      
       const q = query.toLowerCase();
       const results = all.filter(
         (p) =>
@@ -333,7 +343,8 @@ const ChatBot = ({ isOpen, onClose }) => {
           p.product_code?.toLowerCase().includes(q) ||
           p.category?.toLowerCase().includes(q) ||
           p.brand?.toLowerCase().includes(q) ||
-          p.sku?.toLowerCase().includes(q)
+          p.sku?.toLowerCase().includes(q) ||
+          (p.isCombo && "combo".includes(q))
       ).slice(0, 8);
 
       if (results.length === 0) {
@@ -341,7 +352,7 @@ const ChatBot = ({ isOpen, onClose }) => {
           from: "bot",
           type: "no_products",
           query,
-          text: `😕 No products found for "${query}". Try: Silk Saree, Cotton Saree, Kanjeevaram, Banarasi`,
+          text: `😕 No products found for "${query}". Try: almonds, cashews, dates, raisins`,
         });
       } else {
         addMessage({ from: "bot", type: "products", products: results, query });
@@ -392,7 +403,7 @@ const ChatBot = ({ isOpen, onClose }) => {
         break;
 
       case "cart":
-        addMessage({ from: "bot", type: "text", text: "🛒 Taking you to your cart!", action: { label: "Open Cart", href: "/checkout" } });
+        addMessage({ from: "bot", type: "text", text: "🛒 Taking you to your cart!", action: { label: "Open Cart", href: "/addtocart" } });
         break;
 
       case "wishlist":
@@ -400,7 +411,7 @@ const ChatBot = ({ isOpen, onClose }) => {
         break;
 
       case "offers":
-        addMessage({ from: "bot", type: "text", text: "🎁 Check out our latest offers and combos!", action: { label: "View Offers", href: "/combo" } });
+        addMessage({ from: "bot", type: "text", text: "🎁 Check out our latest offers and combos!", action: { label: "View Offers", href: "/offers" } });
         break;
 
       case "categories":
@@ -408,7 +419,7 @@ const ChatBot = ({ isOpen, onClose }) => {
         break;
 
       case "track":
-        addMessage({ from: "bot", type: "text", text: "📍 To track your order, please go to the Orders page and enter your Order ID at the top.", action: { label: "Track Order", href: "/ordersmain" } });
+        addMessage({ from: "bot", type: "text", text: "📍 Open your orders to view delivery status and track an order.", action: { label: "View Orders", href: "/orders" } });
         break;
 
       case "account":
@@ -462,12 +473,16 @@ const ChatBot = ({ isOpen, onClose }) => {
   };
 
   const handleProductClick = (product) => {
-    navigate(`/products/${product.id}`);
+    if (product.isCombo || product.category === "Combo" || product.type === "combo") {
+      navigate(`/combos/${product.id}`);
+    } else {
+      navigate(`/shop/${product.id}`);
+    }
     onClose();
   };
 
   const handleOrderClick = (order) => {
-    navigate("/ordersmain");
+    navigate(`/tracking/${order.order_id || order.orderId || order.id}`);
     onClose();
   };
 
@@ -651,8 +666,50 @@ const MessageBubble = ({ msg, onProductClick, onOrderClick, onActionClick, onSen
             <div className="products-grid">
               {msg.products.map((product) => {
                 const img = getProductImage(product);
-                const price = product.offer_price || product.price;
-                const originalPrice = product.offer_price ? product.price : null;
+                
+                let price = product.offer_price || product.price || 0;
+                let originalPrice = product.offer_price ? product.price : null;
+
+                try {
+                  const variants = typeof product.variants === 'string' ? JSON.parse(product.variants || '[]') : (product.variants || []);
+                  if (variants.length > 0) {
+                    const firstVariant = variants[0];
+                    originalPrice = Number(firstVariant.mrp) || null;
+                    price = Number(firstVariant.offerPrice) || originalPrice || 0;
+                  }
+                  
+                  if (product.isCombo) {
+                    const details = typeof product.comboDetails === 'string' ? JSON.parse(product.comboDetails || '{}') : (product.comboDetails || {});
+                    price = Number(product.offerPrice || product.price || details.offerPrice || details.mrp || 0);
+                    originalPrice = Number(product.mrp || details.mrp || price || 0);
+                  }
+                } catch (e) {
+                  // ignore
+                }
+
+                if (!price && product.prices && typeof product.prices === 'object') {
+                  const weight = (product.weights && product.weights.length > 0) ? product.weights[0] : Object.keys(product.prices)[0];
+                  if (weight && product.prices[weight]) {
+                    const priceObj = product.prices[weight];
+                    if (typeof priceObj === "object" && priceObj !== null) {
+                      originalPrice = Number(priceObj.mrp) || null;
+                      price = Number(priceObj.offerPrice) || originalPrice || 0;
+                    } else if (typeof priceObj === "number") {
+                      price = Number(priceObj);
+                      originalPrice = Math.round(price / 0.84);
+                    }
+                  }
+                }
+                
+                const offer = parseFloat(product.offer);
+                if (!isNaN(offer) && offer > 0) {
+                  let basePrice = price;
+                  price = Math.round(basePrice * (1 - offer / 100));
+                  if (!originalPrice) originalPrice = basePrice;
+                }
+
+                if (originalPrice <= price) originalPrice = null;
+
                 const discount = originalPrice
                   ? Math.round(((originalPrice - price) / originalPrice) * 100)
                   : null;
@@ -693,7 +750,7 @@ const MessageBubble = ({ msg, onProductClick, onOrderClick, onActionClick, onSen
             <div>{msg.text}</div>
             <div className="suggestions-label">Popular searches:</div>
             <div className="suggestion-chips">
-              {["Silk Saree", "Cotton Saree", "Banarasi", "Georgette", "Bridal Saree", "Kanjeevaram"].map((s) => (
+                {["Almonds", "Cashews", "Dates", "Raisins", "Pistachios", "Seeds"].map((s) => (
                 <span key={s} className="suggestion-chip" onClick={() => onSend && onSend(s)}>{s}</span>
               ))}
             </div>
@@ -711,15 +768,15 @@ const MessageBubble = ({ msg, onProductClick, onOrderClick, onActionClick, onSen
                   icon: <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
                 },
                 {
-                  label: "WhatsApp", href: "https://wa.me/919876543210", color: "#25d366", bg: "#f0fdf4",
+                  label: "WhatsApp", href: "https://wa.me/919489593504", color: "#25d366", bg: "#f0fdf4",
                   icon: <svg viewBox="0 0 32 32" width="22" height="22" fill="currentColor"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.492.658 4.833 1.806 6.857L2 30l7.338-1.788A13.94 13.94 0 0 0 16 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm6.29 19.89c-.345.172-2.04 1.006-2.356 1.12-.316.115-.546.172-.776-.172-.23-.345-.892-1.12-1.093-1.35-.2-.23-.4-.26-.746-.086-.345.172-1.457.537-2.775 1.713-1.025.916-1.717 2.047-1.918 2.392-.2.345-.022.531.15.703.155.155.345.402.518.603.172.2.23.345.345.575.115.23.057.431-.029.603-.086.172-.776 1.87-1.063 2.56-.28.673-.565.582-.776.593l-.66.012c-.23 0-.603-.086-.919-.431-.316-.345-1.207-1.18-1.207-2.876s1.236-3.337 1.408-3.567c.172-.23 2.432-3.712 5.892-5.207.823-.355 1.466-.567 1.967-.726.827-.263 1.58-.226 2.174-.137.663.099 2.04.834 2.328 1.638.287.804.287 1.492.2 1.638z"/></svg>,
                 },
                 {
-                  label: "Call Us", href: "tel:+919876543210", color: "#8b5cf6", bg: "#f5f3ff",
+                  label: "Call Us", href: "tel:+919489593504", color: "#8b5cf6", bg: "#f5f3ff",
                   icon: <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.78a16 16 0 0 0 6.29 6.29l1.64-1.64a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
                 },
                 {
-                  label: "Email", href: "mailto:support@store.com", color: "#f59e0b", bg: "#fffbeb",
+                  label: "Email", href: "mailto:kavidryfruits@gmail.com", color: "#f59e0b", bg: "#fffbeb",
                   icon: <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
                 },
                 {
@@ -727,11 +784,11 @@ const MessageBubble = ({ msg, onProductClick, onOrderClick, onActionClick, onSen
                   icon: <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
                 },
                 {
-                  label: "Return Request", href: "/ordersmain", color: "#10b981", bg: "#f0fdf4",
+                  label: "Return Request", href: "/return-policy", color: "#10b981", bg: "#f0fdf4",
                   icon: <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>,
                 },
                 {
-                  label: "Refund Help", href: "/ordersmain", color: "#240046", bg: "#f3e8ff",
+                  label: "Refund Help", href: "/contactus", color: "#240046", bg: "#f3e8ff",
                   icon: <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
                 },
                 {

@@ -7,6 +7,7 @@ import api from "../services/api";
 
 const Orders = () => {
   const { user } = useStore();
+  const navigate = useNavigate();
   const [allOrders, setAllOrders] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -1,12 +1,34 @@
 import { Link } from "react-router-dom";
-
+import { useEffect, useState } from "react";
+import api from "../services/api";
 
 const PageHeader = ({ title, subtitle, curpage }) => {
+  const [bgImage, setBgImage] = useState("https://kavisdryfruits.com/images/header-page-bg.jpg");
+
+  useEffect(() => {
+    let isMounted = true;
+    api.get("/banners")
+      .then(({ data }) => {
+        const heroBanner = (Array.isArray(data) ? data : [])
+          .find((item) => item.active && item.type === "hero");
+        if (isMounted && heroBanner?.image) {
+          setBgImage(heroBanner.image);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load hero banner:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div
       className="relative flex flex-col justify-center bg-cover bg-center px-4 py-16 sm:py-20 md:py-24"
       style={{
-        backgroundImage: `url('https://kavisdryfruits.com/images/header-page-bg.jpg')`,
+        backgroundImage: `url('${bgImage}')`,
         minHeight: "20vh",
         backgroundPosition: "bottom",
       }}
