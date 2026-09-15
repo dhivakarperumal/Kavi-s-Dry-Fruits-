@@ -31,6 +31,7 @@ const Delivery = () => {
           return {
             ...order,
             id: order.id,
+            paymentMethod: order.paymentMode || order.paymentMethod || "-",
             orderDateMs,
             cartItems: typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []),
             shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress) : (order.shippingAddress || {}),

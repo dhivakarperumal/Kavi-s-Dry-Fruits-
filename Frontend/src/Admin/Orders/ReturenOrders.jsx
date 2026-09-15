@@ -29,6 +29,7 @@ const ReturnOrders = () => {
           ...o,
           cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
           shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+          paymentMethod: o.paymentMode || o.paymentMethod || "-",
           date: o.created_at || o.date
         }));
       setReturnOrders(data);
