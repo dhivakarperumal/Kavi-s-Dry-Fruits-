@@ -233,6 +233,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
     setTimeout(() => {
       printWindow.focus();
       printWindow.print();
+      printWindow.close();
     }, 500);
   }, []);
 
