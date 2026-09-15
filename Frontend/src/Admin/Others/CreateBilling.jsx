@@ -513,7 +513,7 @@ const CreateBilling = () => {
 
                 <button
                   onClick={() => setExpandAddress(!expandAddress)}
-                  className="w-full flex items-center justify-between px-6 py-4 bg-slate-900 rounded-2xl hover:bg-black transition-all text-[11px] font-[900] text-white uppercase tracking-widest mt-2"
+                  className="w-full flex items-center justify-between px-6 py-4 bg-[#009669] rounded-2xl hover:bg-[#007a55] transition-all text-[11px] font-[900] text-white uppercase tracking-widest mt-2"
                 >
                   Shipping Details
                   {expandAddress ? <MdKeyboardArrowUp size={18} /> : <MdKeyboardArrowDown size={18} />}
@@ -538,7 +538,7 @@ const CreateBilling = () => {
             </div>
 
             {/* Product Quick Entry */}
-            <div className="bg-indigo-600 p-8 rounded-[2.5rem] shadow-xl shadow-indigo-200 text-white">
+            <div className="bg-[#009669] p-8 rounded-[2.5rem] shadow-xl shadow-emerald-200 text-white">
               <div className="flex items-center gap-2 mb-6">
                 <FiShoppingBag />
                 <h3 className="text-sm font-[900] uppercase tracking-widest">Quick Scan</h3>
@@ -701,24 +701,24 @@ const CreateBilling = () => {
               </div>
 
               {/* Summary Footer */}
-              <div className="p-10 bg-slate-950 text-white">
+              <div className="p-10 bg-white border-t border-emerald-100 text-slate-900">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
                   <div className="space-y-5">
-                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-white/40">Subtotal Amount</span>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Subtotal Amount</span>
                       <span className="font-bold">₹{totals.subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-white/40">GST (Calculated)</span>
-                      <span className="font-bold text-indigo-400">+ ₹{totals.gstTotal.toFixed(2)}</span>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">GST (Calculated)</span>
+                      <span className="font-bold text-[#009669]">+ ₹{totals.gstTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-white/40">Shipping Charge</span>
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-1">
-                        <span className="text-xs text-white/40 font-bold">₹</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Shipping Charge</span>
+                      <div className="flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-1">
+                        <span className="text-xs text-emerald-600 font-bold">₹</span>
                         <input
                           type="number"
-                          className="w-20 bg-transparent border-none text-right font-[900] text-white outline-none text-sm"
+                          className="w-20 bg-transparent border-none text-right font-[900] text-slate-900 outline-none text-sm"
                           value={shippingCharge}
                           onChange={(e) => setShippingCharge(parseFloat(e.target.value) || 0)}
                         />
@@ -728,14 +728,14 @@ const CreateBilling = () => {
 
                   <div className="flex flex-col gap-6">
                     <div className="text-right">
-                      <p className="text-[11px] font-black uppercase tracking-widest text-indigo-400 mb-1">Grand Total Payable</p>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-[#009669] mb-1">Grand Total Payable</p>
                       <h2 className="text-5xl font-[900] tracking-tighter">₹{totals.finalTotal.toFixed(2)}</h2>
                     </div>
                     
                     <button
                       onClick={handleSave}
                       disabled={isLoading || invoiceItems.length === 0}
-                      className="w-full bg-indigo-600 text-white font-[900] py-6 rounded-3xl shadow-2xl shadow-indigo-500/20 hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-4 disabled:opacity-30 disabled:hover:scale-100 uppercase tracking-widest text-sm"
+                      className="w-full bg-[#009669] text-white font-[900] py-6 rounded-3xl shadow-2xl shadow-emerald-500/20 hover:bg-[#007a55] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-4 disabled:opacity-30 disabled:hover:scale-100 uppercase tracking-widest text-sm"
                     >
                       {isLoading ? <ImSpinner8 className="animate-spin text-2xl" /> : <><FiPrinter className="text-xl" /> Generate Invoice & Save</>}
                     </button>
