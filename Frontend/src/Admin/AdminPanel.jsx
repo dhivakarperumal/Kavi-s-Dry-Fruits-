@@ -245,7 +245,7 @@ const AdminPanel = () => {
       case "Returned Orders": return <ReturenOrders adminData={collectionCounts} />;
 
       // Others
-      case "Stickers": return <Stickers />;
+      case "Stickers": return <Stickers adminData={collectionCounts} />;
       case "Dealer": return <AddDealer />;
       case "Reviews": return <Reviews />;
       case "Contact Form": return <ContactFormSubmissions />;
