@@ -439,26 +439,27 @@ const HealthBenefits = () => {
                       </div>
                     )}
 
-                    {/* Dual Action Footer: View Benefits in Popup + Shop CTA */}
+                    {/* Dual Action Footer: View Benefits + View Media */}
                     <div className="pt-1 flex items-center gap-2">
                       {/* View Health Benefits in Popup Button */}
                       <button
                         onClick={() => openModal(item, 'benefits')}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 hover:border-emerald-400 text-stone-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                        title="View detailed health benefits and media"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs shadow-emerald-700/20 cursor-pointer"
+                        title="View detailed health benefits"
                       >
-                        <FaHeartbeat className="text-rose-500 text-xs" />
+                        <FaHeartbeat className="text-white text-xs" />
                         <span>View Benefits</span>
                       </button>
 
-                      {/* Direct Shop CTA */}
-                      <Link
-                        to={item.productId ? `/shop/${item.productId}` : '/shop'}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs shadow-emerald-600/20 cursor-pointer"
+                      {/* View Media (Videos/Gallery) Button */}
+                      <button
+                        onClick={() => openModal(item, videos.length > 0 ? 'videos' : 'images')}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-stone-200 bg-white hover:bg-stone-50 hover:border-emerald-400 text-stone-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                        title="View video guides and photo gallery"
                       >
-                        <FaShoppingBag className="text-xs" />
-                        <span>Shop Product</span>
-                      </Link>
+                        <FaPlay className="text-emerald-600 text-xs" />
+                        <span>View Media</span>
+                      </button>
                     </div>
 
                   </div>
