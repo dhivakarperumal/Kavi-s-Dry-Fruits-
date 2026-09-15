@@ -1165,6 +1165,8 @@
                 >
                   <option value="India">India</option>
                 </select>
+                {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+              </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-1">ZIP *</label>
@@ -1177,8 +1179,6 @@
                   className="w-full border bg-white border-green-400 rounded-md px-3 py-2"
                 />
                 {errors.zip && <p className="text-red-600 text-xs mt-1">{errors.zip}</p>}
-              </div>
-                {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
               </div>
             </div>
 
