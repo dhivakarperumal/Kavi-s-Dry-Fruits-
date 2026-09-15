@@ -282,6 +282,8 @@ const tables = {
     CREATE TABLE IF NOT EXISTS reviews (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       reviewId VARCHAR(50) NOT NULL UNIQUE,
+      productId VARCHAR(100),
+      productName VARCHAR(255),
       userId VARCHAR(36),
       orderId VARCHAR(100),
       userName VARCHAR(255) NOT NULL,

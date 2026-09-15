@@ -16,6 +16,7 @@ import {
   FaThLarge,
   FaBars,
   FaChevronRight,
+   FaArrowLeft,
   FaMoneyBillWave
 } from "react-icons/fa";
 
