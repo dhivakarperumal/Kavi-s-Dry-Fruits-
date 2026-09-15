@@ -41,14 +41,14 @@ const App = () => {
       <Footer />
       
       {/* Floating Action Buttons */}
-      <div className="fixed z-[100] right-6 bottom-20 flex flex-col gap-3">
+      <div className="fixed z-[100] right-3 sm:right-6 bottom-4 sm:bottom-6 flex flex-col gap-2 sm:gap-3 items-center">
         {/* Call Button */}
         <a
           href="tel:+919489593504"
-          className="p-3.5 bg-green1 hover:bg-primary text-white rounded-full shadow-2xl cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
+          className="w-9 h-9 sm:w-12 sm:h-12 bg-green1 hover:bg-primary text-white rounded-full shadow-lg sm:shadow-2xl cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
           aria-label="Call Us"
         >
-          <FaPhoneAlt size={22} />
+          <FaPhoneAlt className="text-xs sm:text-base" />
         </a>
 
         {/* WhatsApp Button */}
@@ -56,29 +56,29 @@ const App = () => {
           href="https://wa.me/919489593504"
           target="_blank"
           rel="noopener noreferrer"
-          className="p-3.5 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
+          className="w-9 h-9 sm:w-12 sm:h-12 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg sm:shadow-2xl cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
           aria-label="WhatsApp"
         >
-          <FaWhatsapp size={24} />
+          <FaWhatsapp className="text-sm sm:text-xl" />
         </a>
 
         {/* ChatBot Button */}
         <button
           onClick={() => setIsChatOpen(true)}
-          className="p-3.5 bg-primary hover:bg-green-700 text-white rounded-full shadow-2xl cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
+          className="w-9 h-9 sm:w-12 sm:h-12 bg-primary hover:bg-green-700 text-white rounded-full shadow-lg sm:shadow-2xl cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
           aria-label="Open Chatbot"
         >
-          <FaCommentDots size={24} />
+          <FaCommentDots className="text-sm sm:text-xl" />
         </button>
 
         {/* Scroll To Top Button */}
         {showScrollTop && (
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="p-3 bg-green1 hover:bg-primary text-white rounded-full shadow-lg cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
+            className="w-8 h-8 sm:w-11 sm:h-11 bg-green1 hover:bg-primary text-white rounded-full shadow-md sm:shadow-lg cursor-pointer transition-transform hover:scale-110 flex justify-center items-center"
             aria-label="Scroll to top"
           >
-            <FaArrowUp size={20} />
+            <FaArrowUp className="text-xs sm:text-base" />
           </button>
         )}
       </div>
