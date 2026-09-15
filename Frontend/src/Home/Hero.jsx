@@ -93,7 +93,7 @@ const Hero = () => {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary leading-tight break-words">
             {currentHero.title}
           </h1>
-          <p className="text-base sm:text-lg text-[#009669] font-medium">{currentHero.subtitle}</p>
+          <p className="text-base sm:text-lg text-[#9c6b4d] font-medium">{currentHero.subtitle}</p>
           <p className="text-sm sm:text-base text-[#009669] font-medium max-w-xl mx-auto lg:mx-0">{currentHero.description}</p>
           
           <Link to={"/shop"} className="bg-green1 hover:bg-primary text-white px-6 py-3 rounded-md text-sm font-semibold transition">
