@@ -22,34 +22,34 @@ const NewOrders = ({ adminData }) => {
 
   const navigate = useNavigate();
 
-  const fetchOrders = async () => {
+  const applyOrders = (sourceOrders) => {
+    const parsed = sourceOrders.filter(o =>
+      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
+    ).map(o => ({
+      ...o,
+      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      date: o.created_at || o.date
+    }));
+    setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+  };
+
+  const fetchOrders = async (forceApi = false) => {
     // If we have adminData, use it instead of showing loading
-    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
-      const parsed = adminData.allOrders.filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-      ).map(o => ({
-        ...o,
-        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        date: o.created_at || o.date
-      }));
-      setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    if (!forceApi && adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+      applyOrders(adminData.allOrders);
       return;
     }
 
     setLoading(true);
     try {
       const res = await api.get("/orders");
-      const parsed = (res.data || []).filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-      ).map(o => ({
-        ...o,
-        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        date: o.created_at || o.date
-      }));
-      setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      applyOrders(res.data || []);
     } catch (error) {
+      if (adminData?.allOrders?.length > 0) {
+        applyOrders(adminData.allOrders);
+        return;
+      }
       console.error("fetchOrders error:", error);
       toast.error("Failed to load new orders.");
     } finally {
@@ -58,9 +58,9 @@ const NewOrders = ({ adminData }) => {
   };
 
   useEffect(() => {
-    fetchOrders();
-    // Only set interval if we don't have adminData or for background refresh
-    const interval = setInterval(fetchOrders, 60000);
+    fetchOrders(true);
+    // Keep the new-orders view synchronized with orders placed elsewhere.
+    const interval = setInterval(() => fetchOrders(true), 60000);
     return () => clearInterval(interval);
   }, [adminData]);
 

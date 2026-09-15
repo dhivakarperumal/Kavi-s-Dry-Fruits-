@@ -79,6 +79,28 @@ app.get('/', (req, res) => {
 })();
 
 // Start Server
-app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust appropriately for production
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Attach io to app to use in controllers
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

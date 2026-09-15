@@ -43,6 +43,8 @@ import Profile from "./Settings/Profile";
 import DeliverySettings from "./Settings/DeliverySettings";
 import BannerManagement from "./Bannermanagement/BannerManagement";
 
+import { io } from "socket.io-client";
+
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [visitedSections, setVisitedSections] = useState(["dashboard"]);
@@ -66,6 +68,76 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  // Socket.io connection for real-time order notifications
+  useEffect(() => {
+    if (!user) return;
+    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    
+    socket.on("newOrder", async (data) => {
+      // Play a notification sound
+      try {
+        const audio = new Audio("/notification.mp3"); // Ensure this path exists or use a default one
+        audio.play().catch(e => console.log("Audio play failed:", e));
+      } catch (err) {}
+      
+      toast.success(`New Order Received! #${data.orderId} - ₹${data.totalAmount}`);
+      
+      // Fetch fresh orders to keep full state consistent
+      try {
+        const ordersRes = await api.get("/orders");
+        const ordersList = ordersRes.data || [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayActiveOrdersList = ordersList.filter(o => 
+          o.orderStatus === "Order Placed" &&
+          (o.created_at || o.date || "").includes(todayStr)
+        );
+        
+        setCollectionCounts(prev => {
+          const newData = {
+            ...prev,
+            orders: ordersList.length,
+            "New Orders": todayActiveOrdersList,
+            allOrders: ordersList
+          };
+          adminDataService.setCache(newData);
+          return newData;
+        });
+      } catch (error) {
+        console.error("Failed to fetch fresh orders on socket event:", error);
+      }
+    });
+
+    socket.on("connect", async () => {
+      // Sync on reconnect to prevent missing orders
+      try {
+        const ordersRes = await api.get("/orders");
+        const ordersList = ordersRes.data || [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayActiveOrdersList = ordersList.filter(o => 
+          o.orderStatus === "Order Placed" &&
+          (o.created_at || o.date || "").includes(todayStr)
+        );
+        
+        setCollectionCounts(prev => {
+          const newData = {
+            ...prev,
+            orders: ordersList.length,
+            "New Orders": todayActiveOrdersList,
+            allOrders: ordersList
+          };
+          adminDataService.setCache(newData);
+          return newData;
+        });
+      } catch (error) {
+        console.error("Failed to sync orders on connect:", error);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
 
   // Sync URL Path with Active Section
   useEffect(() => {

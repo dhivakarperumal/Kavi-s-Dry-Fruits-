@@ -22,9 +22,9 @@ const AllOrders = ({ adminData }) => {
   const [statusFilter, setStatusFilter] = useState("All");
 
   // Fetch all orders from all users
-  const fetchOrders = async () => {
-    // Use adminData if available
-    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+  const fetchOrders = async (forceApi = false) => {
+    // Use the admin snapshot for the initial render, but fetch fresh data after a mutation.
+    if (!forceApi && adminData && adminData.allOrders && adminData.allOrders.length > 0) {
       const parsedOrders = adminData.allOrders.map(o => ({
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
@@ -116,8 +116,13 @@ const AllOrders = ({ adminData }) => {
       }
 
       await api.put(`/orders/${id}`, data);
+      setOrders((currentOrders) => currentOrders.map((order) => (
+        order.id === id
+          ? { ...order, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
+          : order
+      )));
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : "Status updated!");
-      fetchOrders();
+      await fetchOrders(true);
       setCancelReason("");
       setShowCancelInput(null);
     } catch (err) {

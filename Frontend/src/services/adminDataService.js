@@ -17,7 +17,11 @@ const adminDataService = {
   setCache: (data) => {
     adminCache.data = data;
     adminCache.timestamp = Date.now();
-    localStorage.setItem(storageKey, JSON.stringify(adminCache));
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(adminCache));
+    } catch (err) {
+      console.warn("Storage quota exceeded or error saving cache:", err);
+    }
   },
   isFresh: () => {
     // Cache for 5 minutes
