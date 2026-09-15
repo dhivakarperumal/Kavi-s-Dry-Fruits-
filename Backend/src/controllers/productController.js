@@ -1,15 +1,22 @@
 const db = require('../config/db');
 
+const parseJson = (value, fallback) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch (_error) { return fallback; }
+};
+const uploadedImages = (req) => (req.files || []).map(file => `${req.protocol}://${req.get('host')}/uploads/products/${file.filename}`);
+
 exports.getProducts = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM products ORDER BY created_at DESC');
     const products = rows.map(row => ({
       ...row,
-      images: JSON.parse(row.images || '[]'),
-      variants: JSON.parse(row.variants || '[]'),
-      healthBenefits: JSON.parse(row.healthBenefits || '[]'),
-      comboItems: JSON.parse(row.comboItems || '[]'),
-      comboDetails: JSON.parse(row.comboDetails || '{}'),
+      images: parseJson(row.images, []),
+      variants: parseJson(row.variants, []),
+      healthBenefits: parseJson(row.healthBenefits, []),
+      comboItems: parseJson(row.comboItems, []),
+      comboDetails: parseJson(row.comboDetails, {}),
     }));
     res.json(products);
   } catch (error) {
@@ -31,10 +38,10 @@ exports.addProduct = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId, name, description, 
-        JSON.stringify(healthBenefits || []),
+        JSON.stringify(parseJson(healthBenefits, [])),
         category, rating, barcode, barcodeValue,
-        JSON.stringify(images || []),
-        JSON.stringify(variants || []),
+        JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
+        JSON.stringify(parseJson(variants, [])),
         totalStock || 0,
         status || 'Active'
       ]
@@ -62,10 +69,10 @@ exports.updateProduct = async (req, res) => {
       WHERE id = ?`,
       [
         productId, name, description, 
-        JSON.stringify(healthBenefits || []),
+        JSON.stringify(parseJson(healthBenefits, [])),
         category, rating, barcode, barcodeValue,
-        JSON.stringify(images || []),
-        JSON.stringify(variants || []),
+        JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
+        JSON.stringify(parseJson(variants, [])),
         totalStock || 0,
         status || 'Active',
         id

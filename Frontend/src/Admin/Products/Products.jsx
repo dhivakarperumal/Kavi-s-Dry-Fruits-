@@ -156,6 +156,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     status: "Active",
   });
   const [loading, setLoading] = useState(false);
+  const [imageFiles, setImageFiles] = useState([]);
   const [manualWeight, setManualWeight] = useState(false);
   const barcodeRef = useRef();
 
@@ -174,6 +175,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
         images: safeParse(editItem.images),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
+      setImageFiles([]);
     } else {
       const maxId = products.reduce((max, p) => {
         const match = p.productId?.match(/\d+/);
@@ -186,6 +188,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
         name: "", description: "", healthBenefits: [""], images: [], variants: [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }], totalStock: "0",
         barcodeValue: "", barcode: "", status: "Active"
       }));
+      setImageFiles([]);
     }
   }, [editItem, products]);
 
@@ -219,16 +222,13 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     const rawFiles = Array.from(e.target.files);
     try {
       toast.loading("Compressing...", { id: "up-p" });
-      const base64 = await Promise.all(
+      const compressedFiles = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
-            return new Promise((res) => {
-              const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
-            });
-          }),
+          imageCompression(file, { maxSizeMB: 8, maxWidthOrHeight: 800, useWebWorker: true })
         ),
       );
-      setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
+      setImageFiles((prev) => [...prev, ...compressedFiles]);
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...compressedFiles.map(file => URL.createObjectURL(file))] }));
       toast.success("Ready!", { id: "up-p" });
     } catch { toast.error("Fail", { id: "up-p" }); }
     finally { e.target.value = ""; }
@@ -238,11 +238,20 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const formData = new FormData();
+      Object.entries({
+        ...form,
+        healthBenefits: JSON.stringify(form.healthBenefits),
+        images: JSON.stringify(form.images.filter(image => !image.startsWith("blob:"))),
+        variants: JSON.stringify(form.variants),
+      }).forEach(([key, value]) => formData.append(key, value ?? ""));
+      imageFiles.forEach(file => formData.append("images", file));
+
       if (editItem) {
-        await api.put(`/products/${editItem.id}`, form);
+        await api.put(`/products/${editItem.id}`, formData);
         toast.success("Inventory Pulse Updated");
       } else {
-        await api.post("/products", form);
+        await api.post("/products", formData);
         toast.success("Product Registered Successfully");
       }
       onSuccess();
@@ -355,7 +364,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                 </div>
                 {form.images.map((img, i) => (
                   <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-2 ring-white hover:ring-emerald-500 transition-all">
-                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
+                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => { if (img.startsWith("blob:")) setImageFiles((files) => files.filter((_, fileIndex) => fileIndex !== form.images.slice(0, i).filter(image => image.startsWith("blob:")).length)); setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) })); }} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
                   </div>
                 ))}
               </div>
@@ -419,6 +428,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     status: "Active",
   });
   const [loading, setLoading] = useState(false);
+  const [imageFiles, setImageFiles] = useState([]);
   const [manualWeight, setManualWeight] = useState(false);
   const [manualStock, setManualStock] = useState(false);
   const barcodeRef = useRef();
@@ -444,6 +454,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         totalWeight: Number(parsedDetails?.totalWeight || editItem.totalWeight || 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
+      setImageFiles([]);
     } else {
       const maxId = combos.reduce((max, c) => {
         const match = c.productId?.match(/\d+/);
@@ -455,6 +466,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
         name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, status: "Active"
       }));
+      setImageFiles([]);
     }
   }, [editItem, combos]);
 
@@ -496,16 +508,13 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     const rawFiles = Array.from(e.target.files);
     try {
       toast.loading("Uploading...", { id: "up-c" });
-      const base64 = await Promise.all(
+      const compressedFiles = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true }).then((blob) => {
-            return new Promise((res) => {
-              const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
-            });
-          }),
+          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true })
         ),
       );
-      setForm((prev) => ({ ...prev, images: [...prev.images, ...base64] }));
+      setImageFiles((prev) => [...prev, ...compressedFiles]);
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...compressedFiles.map(file => URL.createObjectURL(file))] }));
       toast.success("Ready!", { id: "up-c" });
     } catch { toast.error("Fail", { id: "up-c" }); }
     finally { e.target.value = ""; }
@@ -527,12 +536,21 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
           mrp: form.comboDetails.mrp || 0,
         },
       };
+      const formData = new FormData();
+      Object.entries({
+        ...submitData,
+        healthBenefits: JSON.stringify(submitData.healthBenefits),
+        images: JSON.stringify(submitData.images.filter(image => !image.startsWith("blob:"))),
+        comboItems: JSON.stringify(submitData.comboItems),
+        comboDetails: JSON.stringify(submitData.comboDetails),
+      }).forEach(([key, value]) => formData.append(key, value ?? ""));
+      imageFiles.forEach(file => formData.append("images", file));
 
       if (editItem) {
-        await api.put(`/combos/${editItem.id}`, submitData);
+        await api.put(`/combos/${editItem.id}`, formData);
         toast.success("Combo Registry Updated");
       } else {
-        await api.post("/combos", submitData);
+        await api.post("/combos", formData);
         toast.success("Pack Registered");
       }
       onSuccess();
@@ -655,7 +673,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                 </div>
                 {form.images.map((img, i) => (
                   <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-4 ring-white hover:ring-amber-500 transition-all">
-                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
+                    <img src={img} className="w-full h-full object-cover" alt="p" /><button type="button" onClick={() => { if (img.startsWith("blob:")) setImageFiles((files) => files.filter((_, fileIndex) => fileIndex !== form.images.slice(0, i).filter(image => image.startsWith("blob:")).length)); setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) })); }} className="absolute inset-0 bg-red-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><FaTrash /></button>
                   </div>
                 ))}
               </div>

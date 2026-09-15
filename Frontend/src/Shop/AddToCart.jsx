@@ -149,8 +149,14 @@ const AddToCart = () => {
       return NaN;
     }
 
-    // Helper to normalize strings (remove spaces, lowercase)
-    const normalize = (s) => String(s).toLowerCase().replace(/\s+/g, "");
+    // Compare weights by grams so 1000g and 1kg resolve to the same price.
+    const normalize = (value) => {
+      const normalized = String(value ?? "").toLowerCase().replace(/[()\s]/g, "");
+      const match = normalized.match(/^(\d+(?:\.\d+)?)(kg|k|g)?$/);
+      if (!match) return normalized;
+      const amount = Number(match[1]);
+      return `${match[2] === "kg" || match[2] === "k" ? amount * 1000 : amount}g`;
+    };
     const target = normalize(weightKey);
 
     // Direct lookup first
@@ -165,7 +171,12 @@ const AddToCart = () => {
       }
     }
 
-    // Convert to number
+    // Cart prices are usually variant objects: { mrp, offerPrice }.
+    if (price && typeof price === "object") {
+      price = price.offerPrice ?? price.price ?? price.mrp;
+    }
+
+    // Convert the selected price to a number.
     if (typeof price === "number") return price;
     if (typeof price === "string") {
       const cleaned = price.replace(/[^0-9.]+/g, "");
