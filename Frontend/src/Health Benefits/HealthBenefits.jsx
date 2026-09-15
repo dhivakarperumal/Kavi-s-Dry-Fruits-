@@ -205,7 +205,7 @@ const HealthBenefits = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         
         {/* Editorial Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-8 space-y-2">
+        {/* <div className="text-center max-w-3xl mx-auto mb-8 space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-[11px] font-extrabold uppercase tracking-widest">
             <FaLeaf className="text-emerald-600" /> 100% Pure & Nutritionist Backed
           </div>
@@ -215,7 +215,7 @@ const HealthBenefits = () => {
           <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
             Discover why daily portions of dry fruits are essential for your heart, mind, and energy. Click any card to explore full health benefits and video tutorials.
           </p>
-        </div>
+        </div> */}
 
         {/* Interactive Search & Filter Controls */}
         <div className="bg-white rounded-2xl p-5 shadow-xs border border-stone-200/80 mb-8 space-y-4">
@@ -325,8 +325,8 @@ const HealthBenefits = () => {
             </button>
           </div>
         ) : (
-          /* Cards Grid - Compact & Proportionate Height */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          /* Cards Grid - 4 Cards Per Row with Fully Viewable Images */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
             {filteredData.map((item, idx) => {
               const benefits = safeParse(item.benefits);
               const primaryImage = getPrimaryImage(item);
@@ -339,66 +339,59 @@ const HealthBenefits = () => {
                   key={item.id || idx}
                   className="group bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col hover:-translate-y-1"
                 >
-                  {/* Media Header with Overlay & Badges */}
+                  {/* Media Header - Fully Visible Image (No Cropping) */}
                   <div 
                     onClick={() => openModal(item, 'benefits')}
-                    className="relative h-48 sm:h-52 w-full overflow-hidden bg-emerald-50 cursor-pointer"
+                    className="relative h-48 sm:h-52 w-full bg-stone-50/80 border-b border-stone-100 flex items-center justify-center p-3 cursor-pointer overflow-hidden"
                   >
                     {primaryImage ? (
                       <img
                         src={primaryImage}
                         alt={item.productName || 'Health benefit'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-500 ease-out"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 text-emerald-500">
-                        <FaLeaf size={48} />
+                      <div className="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-500">
+                        <FaLeaf size={44} />
                       </div>
                     )}
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
                     {/* Top Badges */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-emerald-800 text-[11px] font-bold uppercase tracking-wider shadow-xs">
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-emerald-800 text-[10px] font-bold uppercase tracking-wider shadow-xs border border-stone-100">
                         <FaLeaf className="text-emerald-600 text-[9px]" /> {item.category || 'Superfood'}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-700/90 text-white text-[10px] font-semibold backdrop-blur-md shadow-xs">
-                        100% Natural
-                      </span>
-                    </div>
-
-                    {/* Bottom Image Info: Timing & Serving Pill */}
-                    <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white text-xs pointer-events-none">
-                      <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/20 font-medium text-[11px]">
-                        {timing.icon}
-                        <span>{timing.label}</span>
-                      </div>
                       {(videos.length > 0 || images.length > 0) && (
-                        <div className="inline-flex items-center gap-1.5 bg-emerald-950/70 backdrop-blur-md px-2 py-0.5 rounded-full border border-emerald-400/30 text-[10px] text-emerald-200">
+                        <span className="inline-flex items-center gap-1 bg-stone-900/75 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] text-white font-medium shadow-xs">
                           {videos.length > 0 && <span className="flex items-center gap-1"><FaVideo className="text-[9px]" /> {videos.length}</span>}
                           {images.length > 0 && <span className="flex items-center gap-1"><FaImage className="text-[9px]" /> {images.length}</span>}
-                        </div>
+                        </span>
                       )}
                     </div>
                   </div>
 
                   {/* Card Content - Compact & Clean */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-3.5">
+                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
                     
-                    {/* Title & Short Description */}
+                    {/* Timing Badge & Title & Short Description */}
                     <div>
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="mb-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-medium text-[10px]">
+                          {timing.icon}
+                          <span>{timing.label}</span>
+                        </span>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-1.5">
                         <h3 
                           onClick={() => openModal(item, 'benefits')}
-                          className="text-xl font-extrabold text-stone-900 tracking-tight line-clamp-1 group-hover:text-emerald-800 transition-colors cursor-pointer"
+                          className="text-lg font-extrabold text-stone-900 tracking-tight line-clamp-1 group-hover:text-emerald-800 transition-colors cursor-pointer"
                         >
                           {item.productName || 'Premium Superfood'}
                         </h3>
                         {benefits.length > 0 && (
-                          <span className="shrink-0 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md">
+                          <span className="shrink-0 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded-md">
                             {benefits.length} Benefits
                           </span>
                         )}
@@ -415,7 +408,7 @@ const HealthBenefits = () => {
                         className="flex flex-wrap items-center gap-1.5 cursor-pointer"
                         title="Click to view full clinical details"
                       >
-                        {benefits.slice(0, 3).map((b, i) => {
+                        {benefits.slice(0, 2).map((b, i) => {
                           const { title } = normalizeBenefit(b);
                           return (
                             <span 
