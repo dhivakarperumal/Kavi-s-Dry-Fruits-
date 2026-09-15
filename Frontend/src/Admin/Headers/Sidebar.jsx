@@ -40,7 +40,7 @@ const Sidebar = ({
       dropdown: [
         // { label: "Add Products", icon: <MdOutlineAddBox /> },
         { label: "All Products", icon: <MdOutlineInventory2 /> },
-        { label: "Add Category", icon: <MdCategory /> },
+        { label: "Categories", section: "Add Category", icon: <MdCategory /> },
         { label: "Stock Details", collection: "products", icon: <AiOutlineStock /> },
 
       ],
@@ -95,7 +95,7 @@ const Sidebar = ({
       // Toggle this dropdown; close if already open
       setOpenDropdown(openDropdown === item.label ? null : item.label);
     } else {
-      setActiveSection(item.label);
+      setActiveSection(item.section || item.label);
       setOpenDropdown(null); // close any open dropdown
       if (typeof setIsOpen === 'function') setIsOpen(false);
     }
@@ -106,7 +106,7 @@ const Sidebar = ({
       let active = activeSection === "Create Billing" ? "Billing" : activeSection;
       if (active === "Add Products") active = "All Products";
       return item.label === active ||
-      (item.dropdown && item.dropdown.some(sub => sub.label === active));
+      (item.dropdown && item.dropdown.some(sub => (sub.section || sub.label) === active));
     });
     if (parent && parent.dropdown) {
       // Open the parent dropdown of the active section
@@ -270,15 +270,15 @@ const Sidebar = ({
                     <button
                       key={subItem.label}
                       onClick={() => {
-                        setActiveSection(subItem.label);
+                        setActiveSection(subItem.section || subItem.label);
                         if (typeof setIsOpen === 'function') setIsOpen(false);
                       }}
-                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold text-sm transition-all cursor-pointer capitalize ${effectiveActiveSection === subItem.label
+                      className={`flex items-center gap-3 text-left px-4 py-3 font-bold text-sm transition-all cursor-pointer capitalize ${effectiveActiveSection === (subItem.section || subItem.label)
                         ? "bg-gradient-to-r from-white/20 to-transparent text-white shadow-md border-l-[3px] border-[#6ee7b7] rounded-r-lg mb-1"
                         : "text-emerald-200 hover:bg-white/10 hover:text-white rounded-lg mb-1"
                         }`}
                     >
-                      <span className={`text-[1.1rem] flex-shrink-0 p-1.5 rounded-md flex items-center justify-center transition-colors ${effectiveActiveSection === subItem.label
+                        <span className={`text-[1.1rem] flex-shrink-0 p-1.5 rounded-md flex items-center justify-center transition-colors ${effectiveActiveSection === (subItem.section || subItem.label)
                           ? "bg-white text-[#064e3b] shadow-sm"
                           : "bg-white/10 text-emerald-200 border border-white/5"
                         }`}>
