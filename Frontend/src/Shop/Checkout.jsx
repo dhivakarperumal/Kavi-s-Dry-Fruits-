@@ -1092,7 +1092,7 @@
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              {["fullname", "email", "contact", "zip", "city", "street"].map((field) => (
+              {["fullname", "email", "contact"].map((field) => (
                 <div key={field}>
                   <label className="block text-sm font-semibold mb-1">
                     {field.charAt(0).toUpperCase() + field.slice(1)} *
@@ -1108,6 +1108,32 @@
                   {errors[field] && <p className="text-red-600 text-xs mt-1">{errors[field]}</p>}
                 </div>
               ))}
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">Street *</label>
+                <input
+                  type="text"
+                  name="street"
+                  value={form.street}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className="w-full border bg-white border-green-400 rounded-md px-3 py-2"
+                />
+                {errors.street && <p className="text-red-600 text-xs mt-1">{errors.street}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">City *</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={form.city}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className="w-full border bg-white border-green-400 rounded-md px-3 py-2"
+                />
+                {errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
+              </div>
 
               <div>
                 <label className="block text-sm font-semibold mb-1">State *</label>
@@ -1139,6 +1165,19 @@
                 >
                   <option value="India">India</option>
                 </select>
+
+              <div>
+                <label className="block text-sm font-semibold mb-1">ZIP *</label>
+                <input
+                  type="text"
+                  name="zip"
+                  value={form.zip}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className="w-full border bg-white border-green-400 rounded-md px-3 py-2"
+                />
+                {errors.zip && <p className="text-red-600 text-xs mt-1">{errors.zip}</p>}
+              </div>
                 {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
               </div>
             </div>
