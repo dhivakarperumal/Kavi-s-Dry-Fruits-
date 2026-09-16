@@ -178,6 +178,25 @@ const ContactFormSubmissions = () => {
     { value: "contact form submission", label: "Contact Form Submission" },
   ];
 
+  // Summary stats (Based on Billing reference)
+  const totalSubmissions = submissions.length;
+  const todayInquiries = submissions.filter((item) => {
+    if (!item.created_at) return false;
+    const d = new Date(item.created_at);
+    const now = new Date();
+    return (
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  }).length;
+  const directInquiries = submissions.filter((s) => {
+    const subj = (s.subject || "").toLowerCase();
+    const src = (s.source || "").toLowerCase();
+    return !subj.includes("subscri") && !src.includes("subscri");
+  }).length;
+  const subscriptionsCount = totalSubmissions - directInquiries;
+
   return (
     <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto">
@@ -269,6 +288,74 @@ const ContactFormSubmissions = () => {
             </div>
 
            
+          </div>
+        </div>
+
+        {/* Contact Form Stats Cards (Billing Reference Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Total Submissions Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Inquiries</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {totalSubmissions}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FiMail />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-6 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredSubmissions.length} Matching Filters</span>
+            </div>
+          </div>
+
+          {/* Today's Activity Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Today's Activity</p>
+                <h3 className="text-5xl font-black text-white tracking-tighter">
+                  {todayInquiries}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FiCalendar />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+              Real-time Synchronized
+            </div>
+          </div>
+
+          {/* Direct Messages Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Direct Messages</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {directInquiries}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FiMessageSquare />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{subscriptionsCount} Subscriptions Received</span>
+            </div>
           </div>
         </div>
 
