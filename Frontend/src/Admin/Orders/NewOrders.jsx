@@ -161,8 +161,6 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
 
   const handlePrint = useCallback((order) => {
     if (!order) return;
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-    
     let address = order.shippingAddress || order.client || {};
     if (typeof address === 'string') {
       try { address = JSON.parse(address); } catch(e) { address = {}; }
@@ -170,16 +168,6 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
 
     const items = order.cartItems || order.items || [];
     const itemsList = items.map((item, index) => {
-      let img = "";
-      if (item.image) img = item.image;
-      else if (item.imageUrl) img = item.imageUrl;
-      else if (item.images && item.images.length) img = item.images[0];
-      
-      if (img && !img.startsWith('http') && !img.startsWith('data:')) {
-        const cleanPath = img.replace(/\\/g, '/');
-        img = `${backendUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
-      }
-      
       const name = item.name || item.productName || "-";
       const qty = Number(item.qty ?? item.quantity ?? 1);
       const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
@@ -189,17 +177,10 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
       return `
         <tr>
           <td>${index + 1}</td>
-          <td style="text-align: left; vertical-align: middle;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-              ${img ? `<img src="${img}" alt="product" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;" />` : ''}
-              <div>
-                <strong style="color: #333; font-size: 14px;">${name}</strong>
-                <div style="font-size: 11px; color: #777; margin-top: 4px;">Weight: ${weight}</div>
-              </div>
-            </div>
-          </td>
-          <td>${qty}</td>
+          <td style="text-align: center; vertical-align: middle;"><strong style="color: #333; font-size: 14px;">${name}</strong></td>
+          <td>${weight}</td>
           <td>₹${unitPrice.toFixed(2)}</td>
+          <td>${qty}</td>
           <td>₹${lineTotal}</td>
         </tr>`;
     }).join("");
@@ -217,12 +198,13 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
     printWindow.document.write(`
     <html>
       <head>
-        <title>Invoice ${order.orderId}</title>
+        <title></title>
         <style>
+          @page { size: A4; margin: 0; }
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
           body {
             font-family: 'Inter', sans-serif;
-            padding: 40px;
+            padding: 15mm;
             color: #333;
             max-width: 800px;
             margin: 0 auto;
@@ -231,12 +213,14 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 0;
           }
+          .logo { margin-top: 3px; }
           .logo img { max-width: 140px; }
           .invoice-title { text-align: right; }
           .invoice-title h1 { color: #2b5c92; font-size: 36px; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase; }
           .invoice-title p { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
+          .invoice-title .invoice-date { font-size: 11px; color: #666; margin-top: 8px; font-weight: 500; }
           .divider { height: 4px; background-color: #2b5c92; margin-bottom: 40px; }
           .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
           .info-block { width: 48%; }
@@ -245,8 +229,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
           .info-block p strong { color: #222; }
           .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
           .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-bottom: 5px; }
+          th, td { border: 1px solid #333; padding: 8px 12px; text-align: center; font-size: 13px; }
           th { background-color: #fcfcfc; font-weight: 700; color: #333; }
           .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
           .summary-table { width: 300px; }
@@ -262,11 +246,12 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
       <body>
         <div class="header">
           <div class="logo">
-            <img src="/images/Kavi_logo.png" alt="Kavi's Logo" />
+            <img src="${logo}" alt="Kavi's Logo" />
           </div>
           <div class="invoice-title">
             <h1>INVOICE</h1>
             <p>${order.orderId}</p>
+            <div class="invoice-date">${displayDate}</div>
           </div>
         </div>
         <div class="divider"></div>
@@ -284,9 +269,6 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
             <h3>Order Info</h3>
             <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
             <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
-            <p style="margin-top:15px"><strong>Status:</strong> <span class="status-badge">${order.orderStatus || "ORDER PLACED"}</span></p>
-            <p><strong>Payment:</strong> ${order.paymentMethod || "Online Payment"}</p>
-            <p><strong>Date:</strong> ${displayDate}</p>
           </div>
         </div>
 
@@ -294,11 +276,12 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
         <table>
           <thead>
             <tr>
-              <th style="width: 5%">S No</th>
-              <th style="width: 50%; text-align: left;">Product Details</th>
+              <th style="width: 8%">S.No</th>
+              <th style="width: 34%; text-align: center;">Product Name</th>
+              <th style="width: 16%">Weight</th>
+              <th style="width: 16%">Price</th>
               <th style="width: 10%">Qty</th>
-              <th style="width: 15%">Price</th>
-              <th style="width: 20%">Total</th>
+              <th style="width: 16%">Total</th>
             </tr>
           </thead>
           <tbody>
