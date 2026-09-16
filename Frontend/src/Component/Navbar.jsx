@@ -46,27 +46,21 @@ const Navbar = () => {
     {
       title: "Health Benefits",
       path: "/healthbenefits",
-      badge: "Wellness",
-      description: "Nutritional facts & wellness guides",
-      icon: <FaLeaf className="text-emerald-600 text-base" />,
+      icon: <FaLeaf className="text-emerald-600 text-lg" />,
       iconBg: "bg-emerald-50 border border-emerald-100",
       accent: "hover:border-emerald-200 hover:bg-emerald-50/60",
     },
     {
       title: "About Us",
       path: "/aboutus",
-      badge: "Story",
-      description: "Our heritage & quality promise",
-      icon: <FaInfoCircle className="text-amber-600 text-base" />,
+      icon: <FaInfoCircle className="text-amber-600 text-lg" />,
       iconBg: "bg-amber-50 border border-amber-100",
       accent: "hover:border-amber-200 hover:bg-amber-50/60",
     },
     {
       title: "Contact Us",
       path: "/contactus",
-      badge: "Support",
-      description: "Get in touch & customer care",
-      icon: <FaPhoneAlt className="text-blue-600 text-base" />,
+      icon: <FaPhoneAlt className="text-blue-600 text-lg" />,
       iconBg: "bg-blue-50 border border-blue-100",
       accent: "hover:border-blue-200 hover:bg-blue-50/60",
     },
@@ -282,12 +276,8 @@ const Navbar = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-slate-800 group-hover:text-green-700 truncate transition-colors">
+                            <span className="text-sm font-bold text-slate-800 group-hover:text-green-700 truncate transition-colors block">
                               {cat.name}
-                            </div>
-                            <span className="text-[10px] font-semibold text-slate-400 group-hover:text-green-600 flex items-center gap-1 mt-0.5 transition-colors">
-                              {cat.count ? `${cat.count} Products` : "Explore"}
-                              <FaArrowRight size={8} className="group-hover:translate-x-0.5 transition-transform" />
                             </span>
                           </div>
                         </Link>
@@ -299,8 +289,8 @@ const Navbar = () => {
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                         100% Farm Fresh & Natural
                       </span>
-                      <Link to="/combos" onClick={() => setCategoryOpen(false)} className="font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
-                        Combos <FaArrowRight size={8} />
+                      <Link to="/combos" onClick={() => setCategoryOpen(false)} className="font-bold text-amber-600 hover:text-amber-700">
+                        Combos
                       </Link>
                     </div>
                   </div>
@@ -330,37 +320,22 @@ const Navbar = () => {
               </button>
 
               {pagesOpen && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 w-80 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 w-64 animate-in fade-in zoom-in-95 duration-200">
                   <div className="bg-white rounded-3xl shadow-2xl border border-green-100 p-2.5 ring-1 ring-black/5">
-                    <div className="flex items-center justify-between px-3 py-1.5 mb-1 border-b border-gray-100">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Company & Resources</span>
-                    </div>
-
                     <div className="space-y-1.5">
                       {pagesCardList.map((page, idx) => (
                         <Link
                           key={idx}
                           to={page.path}
                           onClick={() => setPagesOpen(false)}
-                          className={`group flex items-center gap-3.5 p-2.5 rounded-2xl border border-slate-100/80 bg-slate-50/40 ${page.accent} transition-all duration-200 hover:shadow-sm`}
+                          className={`group flex items-center gap-3.5 p-3 rounded-2xl border border-slate-100/80 bg-slate-50/40 ${page.accent} transition-all duration-200 hover:shadow-sm`}
                         >
-                          <div className={`w-11 h-11 rounded-2xl ${page.iconBg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-xs`}>
+                          <div className={`w-10 h-10 rounded-2xl ${page.iconBg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-xs`}>
                             {page.icon}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-slate-800 group-hover:text-green-700 transition-colors">
-                                {page.title}
-                              </span>
-                              <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-green-100 group-hover:text-green-700 transition-colors">
-                                {page.badge}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
-                              {page.description}
-                            </p>
-                          </div>
-                          <FaArrowRight size={10} className="text-slate-300 group-hover:text-green-600 group-hover:translate-x-1 transition-all shrink-0" />
+                          <span className="text-sm font-bold text-slate-800 group-hover:text-green-700 transition-colors">
+                            {page.title}
+                          </span>
                         </Link>
                       ))}
                     </div>
@@ -493,7 +468,6 @@ const Navbar = () => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <span className="text-xs font-bold truncate block">{cat.name}</span>
-                      <span className="text-[9px] text-gray-400 font-semibold">{cat.count ? `${cat.count} items` : "Explore"}</span>
                     </div>
                   </Link>
                 ))}
@@ -531,13 +505,7 @@ const Navbar = () => {
                     <div className={`w-9 h-9 rounded-xl ${page.iconBg} flex items-center justify-center shrink-0`}>
                       {page.icon}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-gray-800">{page.title}</span>
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">{page.badge}</span>
-                      </div>
-                      <p className="text-[10px] text-gray-500 truncate">{page.description}</p>
-                    </div>
+                    <span className="text-xs font-bold text-gray-800">{page.title}</span>
                   </Link>
                 ))}
               </div>
