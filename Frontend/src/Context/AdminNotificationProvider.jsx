@@ -251,8 +251,7 @@ export const AdminNotificationProvider = ({ children }) => {
 
     const socketUrl = (api.defaults.baseURL || "http://localhost:5000").replace("/api", "");
     const socket = io(socketUrl, {
-      transports: ["polling", "websocket"],
-      upgrade: true,
+      transports: ["polling"],
       reconnectionAttempts: 10,
     });
     socketRef.current = socket;

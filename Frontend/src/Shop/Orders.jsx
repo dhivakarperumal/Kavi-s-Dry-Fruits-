@@ -33,7 +33,9 @@ const Orders = () => {
     fetchOrders();
 
     // Listen for real-time order updates for the user
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+      transports: ["polling"],
+    });
     socket.on('orderStatusUpdated', (data) => {
       // Refresh the orders if a change happens
       fetchOrders();

@@ -61,6 +61,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
     // Listen for real-time status updates via Socket.IO
     const socket = io(api.defaults.baseURL.replace('/api', ''), {
       auth: { token: localStorage.getItem("token") },
+      transports: ["polling"],
     });
     const handleIncomingOrder = (incomingOrder) => {
       const orderKey = incomingOrder?.orderId || incomingOrder?.id;

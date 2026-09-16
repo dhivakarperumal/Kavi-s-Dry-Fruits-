@@ -36,7 +36,9 @@ const OrderTracking = ({ orderId: propOrderId }) => {
     const interval = setInterval(fetchTrackingData, 15000); // reduced polling frequency
     
     // Listen for real-time updates
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+      transports: ["polling"],
+    });
     socket.on('orderStatusUpdated', (data) => {
       if (data.orderId === orderId) {
         fetchTrackingData();

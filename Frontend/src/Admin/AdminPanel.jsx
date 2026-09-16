@@ -139,7 +139,9 @@ const AdminPanel = () => {
   // Socket.io connection for real-time order notifications
   useEffect(() => {
     if (!user) return;
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+      transports: ["polling"],
+    });
     
     socket.on("newOrder", async (data) => {
       // Background synchronization for AdminPanel state

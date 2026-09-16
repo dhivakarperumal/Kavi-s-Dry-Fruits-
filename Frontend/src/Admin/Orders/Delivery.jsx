@@ -57,7 +57,9 @@ const Delivery = () => {
     const interval = setInterval(fetchDeliveredOrders, 15000);
 
     // Real-time: listen for new bills (created with Delivered status) and status updates
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+      transports: ["polling"],
+    });
     socket.on('newOrder', () => {
       fetchDeliveredOrders(); // New bill may be Delivered
     });
