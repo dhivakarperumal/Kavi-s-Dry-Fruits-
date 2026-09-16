@@ -444,6 +444,7 @@ const CreateBilling = () => {
       });
 
       toast.success("Bill saved successfully!");
+      window.dispatchEvent(new Event("billing-updated"));
       navigate("/adminpanel/billing");
     } catch (error) {
       toast.error("Failed to save bill!");

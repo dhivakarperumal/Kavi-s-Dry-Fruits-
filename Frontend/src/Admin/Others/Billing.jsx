@@ -28,6 +28,9 @@ const Billing = () => {
 
     useEffect(() => {
         fetchOrders();
+        const handleBillingUpdated = () => fetchOrders();
+        window.addEventListener("billing-updated", handleBillingUpdated);
+        return () => window.removeEventListener("billing-updated", handleBillingUpdated);
     }, []);
 
     const fetchOrders = async () => {
