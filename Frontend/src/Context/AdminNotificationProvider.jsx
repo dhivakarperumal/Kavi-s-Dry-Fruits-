@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "../PrivateRouter/AuthContext";
-import api from "../services/api";
+import api, { SOCKET_URL } from "../services/api";
 import adminDataService from "../services/adminDataService";
 import { playNotificationSound } from "../utils/notificationAudio";
 import WhatsAppNotificationContainer from "../Component/WhatsAppNotificationToast";
+import NotificationSoundModal from "../Component/NotificationSoundModal";
 
 const AdminNotificationContext = createContext(null);
 
@@ -17,16 +18,18 @@ export const AdminNotificationProvider = ({ children }) => {
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default"
   );
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [isSoundModalOpen, setIsSoundModalOpen] = useState(false);
   const socketRef = useRef(null);
   const titleIntervalRef = useRef(null);
+  const handledAlertKeysRef = useRef(new Set());
 
   const isAdmin = user && (user.role === "admin" || user.isAdmin === true);
 
   // Sync notification permission status
   useEffect(() => {
-    if (isAdmin && typeof window !== "undefined" && "Notification" in window) {
+    if (typeof window !== "undefined" && "Notification" in window) {
       setDesktopPermission(Notification.permission);
-      if (Notification.permission !== "granted") {
+      if (isAdmin && Notification.permission !== "granted") {
         setShowPermissionPrompt(true);
       } else {
         setShowPermissionPrompt(false);
@@ -77,57 +80,110 @@ export const AdminNotificationProvider = ({ children }) => {
     window.addEventListener("focus", onFocus);
   }, []);
 
-  // Trigger Windows OS / Browser Native Push Notification
-  const triggerDesktopNotification = useCallback((title, body, link) => {
+  // Trigger Windows OS / Browser Native Push Notification (SYNCHRONOUS, DOES NOT HANG)
+  const triggerDesktopNotification = useCallback(async (title, body, link, dedupeKey) => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
     const iconUrl = "/Kavi_logo.png";
-    const targetHash = link.startsWith("/") ? `#${link}` : `/#${link}`;
+    const notificationTag = dedupeKey ? `kavi-${dedupeKey}` : `kavi-${Date.now()}`;
 
-    // Prefer service worker showNotification (most robust for background tabs on Windows)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready
-        .then((registration) => {
-          registration.showNotification(title, {
-            body: body || "",
-            icon: iconUrl,
-            badge: iconUrl,
-            tag: `kavi-${Date.now()}`,
-            data: { url: targetHash },
-            vibrate: [200, 100, 200],
-            requireInteraction: true, // Keep notification pinned on Windows until user acts
-          });
-        })
-        .catch(() => {
-          fallbackNotification();
-        });
-    } else {
-      fallbackNotification();
-    }
-
-    function fallbackNotification() {
-      try {
-        const notif = new Notification(title, {
+    // Service-worker notifications are delivered by the browser even when this tab is hidden.
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      if (registration) {
+        await registration.showNotification(title, {
           body: body || "",
           icon: iconUrl,
           badge: iconUrl,
-          tag: `kavi-${Date.now()}`,
+          tag: notificationTag,
+          data: { url: link || "/#/adminpanel" },
           requireInteraction: true,
         });
-        notif.onclick = () => {
-          window.focus();
-          handleNavigate(link);
-          notif.close();
-        };
-      } catch (err) {
-        console.warn("Desktop notification error:", err);
+        return;
       }
+    } catch (err) {
+      console.warn("Service worker notification failed:", err);
+    }
+
+    // Fall back to the page notification if the service worker is unavailable.
+    try {
+      const notif = new Notification(title, {
+        body: body || "",
+        icon: iconUrl,
+        badge: iconUrl,
+        tag: notificationTag,
+        requireInteraction: true,
+      });
+
+      notif.onclick = () => {
+        window.focus();
+        handleNavigate(link);
+        notif.close();
+      };
+    } catch (err) {
+      console.warn("Direct Notification constructor failed:", err);
     }
   }, [handleNavigate]);
 
+  // Broadcast alert across other open Chrome tabs (e.g. user tab, shop tab)
+  const broadcastToOtherTabs = useCallback((alertData) => {
+    try {
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        const bc = new BroadcastChannel("kavi_admin_alerts_channel");
+        bc.postMessage(alertData);
+        bc.close();
+      }
+    } catch (e) {}
+  }, []);
+
+  // Listen to cross-tab broadcasts so user login tabs ALSO show the notification!
+  useEffect(() => {
+    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
+
+    const bc = new BroadcastChannel("kavi_admin_alerts_channel");
+    bc.onmessage = (event) => {
+      const alertData = event.data;
+      if (!alertData) return;
+
+      if (alertData.dedupeKey) {
+        if (handledAlertKeysRef.current.has(alertData.dedupeKey)) return;
+        handledAlertKeysRef.current.add(alertData.dedupeKey);
+      }
+
+      // Play sound on this tab too
+      playNotificationSound(alertData.type || "default");
+
+      // Flash tab title
+      flashTitle(alertData.title);
+
+      // Show bottom-right floating card on this tab!
+      setToasts((prev) => [
+        ...prev.slice(-3),
+        {
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
+          type: alertData.type || "contact",
+          title: alertData.title,
+          message: alertData.message,
+          secondary: alertData.secondary,
+          link: alertData.link,
+          duration: 8000,
+        },
+      ]);
+    };
+
+    return () => {
+      bc.close();
+    };
+  }, [flashTitle]);
+
   const addNotification = useCallback(
-    ({ type, title, message, secondary, link, sound = true }) => {
+    ({ type, title, message, secondary, link, sound = true, dedupeKey }) => {
+      if (dedupeKey) {
+        if (handledAlertKeysRef.current.has(dedupeKey)) return;
+        handledAlertKeysRef.current.add(dedupeKey);
+      }
+
       const id = Date.now().toString() + Math.random().toString(36).substring(2, 6);
 
       if (sound) {
@@ -137,23 +193,27 @@ export const AdminNotificationProvider = ({ children }) => {
       // Flash tab title in browser bar if tab is hidden
       flashTitle(title);
 
-      setToasts((prev) => [
-        ...prev.slice(-3), // keep maximum 4 notifications stacked
-        {
-          id,
-          type, // 'order' | 'lowStock' | 'contact'
-          title,
-          message,
-          secondary,
-          link,
-          duration: 8000,
-        },
-      ]);
+      const alertItem = {
+        id,
+        type, // 'order' | 'lowStock' | 'contact'
+        title,
+        message,
+        secondary,
+        link,
+        duration: 8000,
+        dedupeKey,
+      };
+
+      // Add to local state (renders in bottom-right corner of this tab)
+      setToasts((prev) => [...prev.slice(-3), alertItem]);
+
+      // Broadcast to other open Chrome tabs (e.g. user login tab)
+      broadcastToOtherTabs(alertItem);
 
       // Fire native Windows OS Action Center notification
-      triggerDesktopNotification(title, message, link);
+      triggerDesktopNotification(title, message, link, dedupeKey);
     },
-    [triggerDesktopNotification, flashTitle]
+    [triggerDesktopNotification, flashTitle, broadcastToOtherTabs]
   );
 
   // Request desktop notification permission and test immediately
@@ -168,7 +228,7 @@ export const AdminNotificationProvider = ({ children }) => {
           addNotification({
             type: "order",
             title: "🔔 Desktop Notifications Enabled!",
-            message: "You will now receive alerts here even when working in other tabs or minimized.",
+            message: "You will now receive alerts on your screen even when in other tabs or minimized.",
             secondary: "WhatsApp Web-style alerts are active.",
             link: "/adminpanel",
             sound: true,
@@ -204,9 +264,8 @@ export const AdminNotificationProvider = ({ children }) => {
       return;
     }
 
-    const socketUrl = (api.defaults.baseURL || "http://localhost:5000").replace("/api", "");
-    const socket = io(socketUrl, {
-      transports: ["websocket", "polling"],
+    const socket = io(SOCKET_URL, {
+      transports: ["polling"],
       reconnectionAttempts: 10,
     });
     socketRef.current = socket;
@@ -264,6 +323,7 @@ export const AdminNotificationProvider = ({ children }) => {
         message: preview.length > 90 ? preview.substring(0, 90) + "..." : preview,
         secondary: contactInfo ? `Contact: ${contactInfo}` : "Via Contact Form",
         link: "/adminpanel/contact-form",
+        dedupeKey: data.submissionId ? `contact-${data.submissionId}` : undefined,
       });
     });
 
@@ -282,12 +342,23 @@ export const AdminNotificationProvider = ({ children }) => {
         requestDesktopPermission,
         testDesktopNotification,
         desktopPermission,
+        openSoundSettings: () => setIsSoundModalOpen(true),
+        closeSoundSettings: () => setIsSoundModalOpen(false),
       }}
     >
       {children}
 
-      {/* WhatsApp Web styled bottom-right floating notifications */}
+      {/* Sound Settings Modal */}
       {isAdmin && (
+        <NotificationSoundModal
+          isOpen={isSoundModalOpen}
+          onClose={() => setIsSoundModalOpen(false)}
+          onTestNotification={testDesktopNotification}
+        />
+      )}
+
+      {/* WhatsApp Web styled bottom-right floating notifications (renders on ANY open tab that has an alert!) */}
+      {toasts.length > 0 && (
         <WhatsAppNotificationContainer
           toasts={toasts}
           onDismiss={dismissToast}

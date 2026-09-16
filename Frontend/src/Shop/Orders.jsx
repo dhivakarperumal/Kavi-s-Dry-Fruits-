@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PageHeader from "../Component/PageHeader";
 import { Helmet } from "react-helmet";
 import { useStore } from "../Context/StoreContext";
-import api from "../services/api";
+import api, { SOCKET_URL } from "../services/api";
 
 import { io } from "socket.io-client";
 
@@ -33,7 +33,9 @@ const Orders = () => {
     fetchOrders();
 
     // Listen for real-time order updates for the user
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(SOCKET_URL, {
+      transports: ["polling"],
+    });
     socket.on('orderStatusUpdated', (data) => {
       // Refresh the orders if a change happens
       fetchOrders();

@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
-import api from "../../services/api";
+import api, { SOCKET_URL } from "../../services/api";
 import { io } from "socket.io-client";
 
 const NewOrders = ({ adminData, onOrderUpdated }) => {
@@ -61,8 +61,9 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
     const interval = setInterval(fetchOrders, 15000);
 
     // Listen for real-time status updates via Socket.IO
-    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+    const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem("token") },
+      transports: ["polling"],
     });
     const handleIncomingOrder = (incomingOrder) => {
       const orderKey = incomingOrder?.orderId || incomingOrder?.id;

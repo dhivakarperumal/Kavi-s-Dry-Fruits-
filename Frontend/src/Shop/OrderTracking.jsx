@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import api from "../services/api";
+import api, { SOCKET_URL } from "../services/api";
 import { FaCheckCircle, FaBox, FaTruck, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import PageHeader from "../Component/PageHeader";
 
@@ -36,7 +36,9 @@ const OrderTracking = ({ orderId: propOrderId }) => {
     const interval = setInterval(fetchTrackingData, 15000); // reduced polling frequency
     
     // Listen for real-time updates
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(SOCKET_URL, {
+      transports: ["polling"],
+    });
     socket.on('orderStatusUpdated', (data) => {
       if (data.orderId === orderId) {
         fetchTrackingData();

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
-import api from "../services/api";
+import api, { SOCKET_URL } from "../services/api";
 import adminDataService from "../services/adminDataService";
 import LodingPage from "../Component/LoadingPage";
 
@@ -139,7 +139,9 @@ const AdminPanel = () => {
   // Socket.io connection for real-time order notifications
   useEffect(() => {
     if (!user) return;
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(SOCKET_URL, {
+      transports: ["polling"],
+    });
     
     socket.on("newOrder", async (data) => {
       // Background synchronization for AdminPanel state
