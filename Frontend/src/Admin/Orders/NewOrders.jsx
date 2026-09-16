@@ -577,9 +577,13 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                     <td className="px-8 py-6">
                       <button onClick={() => setSelectedOrder(order)} className="text-indigo-600 font-black text-sm hover:underline block mb-1">#{order.orderId}</button>
                       {order.docketNumber && (
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
-                          Docket: {order.docketNumber}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                            Docket: {order.docketNumber}
+                          </p>
+                          {order.deliveryMethod && <p className="text-[9px] font-black text-slate-500 uppercase">Method: {order.deliveryMethod}</p>}
+                          {order.courierName && <p className="text-[9px] font-black text-slate-500 uppercase">Courier: {order.courierName}</p>}
+                        </div>
                       )}
                       <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
                          <FaClock className="text-slate-300" />
@@ -638,7 +642,11 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                     <span className="text-[10px] font-black text-indigo-500 bg-indigo-50/50 px-2 py-1 rounded-lg uppercase tracking-widest mb-2 inline-block">Order Pending</span>
                     <h3 onClick={() => setSelectedOrder(order)} className="text-xl font-black text-slate-900 tracking-tighter cursor-pointer hover:text-indigo-600 transition-colors">#{order.orderId}</h3>
                     {order.docketNumber && (
-                      <p className="text-[9px] font-black text-emerald-600 uppercase mt-1">Docket: {order.docketNumber}</p>
+                      <div className="mt-1 space-y-1">
+                        <p className="text-[9px] font-black text-emerald-600 uppercase">Docket: {order.docketNumber}</p>
+                        {order.deliveryMethod && <p className="text-[9px] font-black text-slate-500 uppercase">Method: {order.deliveryMethod}</p>}
+                        {order.courierName && <p className="text-[9px] font-black text-slate-500 uppercase">Courier: {order.courierName}</p>}
+                      </div>
                     )}
                   </div>
                   <button onClick={() => handlePrint(order)} className="w-12 h-12 bg-slate-50 text-slate-300 border border-slate-100 rounded-2xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm">

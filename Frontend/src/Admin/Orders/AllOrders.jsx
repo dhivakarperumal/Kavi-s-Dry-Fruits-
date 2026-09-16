@@ -547,9 +547,13 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                       <td className="px-8 py-6">
                          <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 text-sm block mb-1 hover:underline decoration-2">#{order.orderId}</button>
                          {order.docketNumber && (
-                           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
-                             Docket: {order.docketNumber}
-                           </p>
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1 bg-emerald-50 w-fit px-2 py-0.5 rounded-md border border-emerald-100">
+                              Docket: {order.docketNumber}
+                            </p>
+                            {order.deliveryMethod && <p className="text-[9px] font-black text-slate-500 uppercase">Method: {order.deliveryMethod}</p>}
+                            {order.courierName && <p className="text-[9px] font-black text-slate-500 uppercase">Courier: {order.courierName}</p>}
+                          </div>
                          )}
                          <p className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">
                            {new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -620,7 +624,11 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                     }`}>{order.orderStatus}</span>
                     <h3 onClick={() => setSelectedOrder(order)} className="text-xl font-black text-slate-900 tracking-tighter cursor-pointer hover:text-indigo-600 transition-colors">#{order.orderId}</h3>
                     {order.docketNumber && (
-                      <p className="text-[9px] font-black text-emerald-600 uppercase mt-1 bg-emerald-50/50 w-fit px-2 py-0.5 rounded-md">Docket: {order.docketNumber}</p>
+                      <div className="mt-1 space-y-1">
+                        <p className="text-[9px] font-black text-emerald-600 uppercase bg-emerald-50/50 w-fit px-2 py-0.5 rounded-md">Docket: {order.docketNumber}</p>
+                        {order.deliveryMethod && <p className="text-[9px] font-black text-slate-500 uppercase">Method: {order.deliveryMethod}</p>}
+                        {order.courierName && <p className="text-[9px] font-black text-slate-500 uppercase">Courier: {order.courierName}</p>}
+                      </div>
                     )}
                   </div>
                   <div className="flex gap-2">

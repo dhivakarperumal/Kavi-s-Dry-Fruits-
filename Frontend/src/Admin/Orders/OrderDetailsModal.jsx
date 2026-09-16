@@ -86,6 +86,18 @@ const OrderDetailsModal = ({ order, onClose = () => {}, onPrint = () => {} }) =>
                   </span>
                 </div>
               </div>
+              {(order.deliveryMethod || order.courierName) && (
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200/50">
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Delivery Method</p>
+                    <p className="font-black text-slate-800 text-xs">{order.deliveryMethod || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Courier Name</p>
+                    <p className="font-black text-slate-800 text-xs">{order.courierName || "-"}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Card 2: Location */}
