@@ -1,7 +1,8 @@
 import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState } from "react";
-import { FaTimes, FaSearch, FaThLarge, FaThList, FaBan, FaRupeeSign, FaTimesCircle } from "react-icons/fa";
+import { FaTimes, FaSearch, FaThLarge, FaThList, FaBan, FaRupeeSign, FaTimesCircle, FaPrint } from "react-icons/fa";
 import api from "../../services/api";
+import logo from "/images/Kavi_logo.png";
 
 const CancelOrders = () => {
   const [cancelledOrders, setCancelledOrders] = useState([]);
@@ -92,6 +93,44 @@ const CancelOrders = () => {
     indexOfLastOrder
   );
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+  const handlePrint = (order) => {
+    const address = typeof order.shippingAddress === "string" ? JSON.parse(order.shippingAddress || "{}") : (order.shippingAddress || {});
+    const items = order.cartItems || order.items || [];
+    const itemsList = items.map((item, index) => {
+      const qty = Number(item.qty ?? item.quantity ?? 1);
+      const price = Number(item.price ?? item.unitPrice ?? 0) || 0;
+      return `<tr><td>${index + 1}</td><td>${item.name || item.productName || "-"}</td><td>${item.weight || item.selectedWeight || "-"}</td><td>₹${price.toFixed(2)}</td><td>${qty}</td><td>₹${(price * qty).toFixed(2)}</td></tr>`;
+    }).join("");
+    const shipping = Number(order.shippingCharge || 0);
+    const finalAmount = Number(order.totalAmount || order.total || 0);
+    const displayDate = order.date ? new Date(order.date).toLocaleString("en-IN") : new Date().toLocaleString("en-IN");
+    const printWindow = window.open("", "_blank", "width=850,height=750");
+    if (!printWindow) return alert("Pop-ups must be allowed.");
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><title></title><style>
+      @page { size: A4; margin: 0; }
+      body { font-family: Inter, Arial, sans-serif; padding: 15mm; color: #333; max-width: 800px; margin: 0 auto; }
+      .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0; }
+      .logo { margin-top:3px; } .logo img { max-width:140px; }
+      .invoice-title { text-align:right; } .invoice-title h1 { color:#2b5c92; font-size:36px; font-weight:800; margin:0; text-transform:uppercase; }
+      .invoice-title p { font-size:16px; color:#555; margin:5px 0 0; font-weight:600; }
+      .invoice-date { font-size:11px; color:#666; margin-top:8px; }
+      .divider { height:4px; background:#2b5c92; margin-bottom:40px; }
+      .info-section { display:flex; justify-content:space-between; margin-bottom:40px; } .info-block { width:48%; }
+      .info-block h3 { font-size:14px; color:#555; text-transform:uppercase; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:5px; }
+      .info-block p { font-size:13px; line-height:1.6; margin:4px 0; } .info-block p strong { color:#222; }
+      .manifest-title { font-size:14px; color:#555; text-transform:uppercase; margin-bottom:15px; font-weight:700; }
+      table { width:100%; border-collapse:collapse; border-spacing:0; margin-bottom:5px; } th,td { border:1px solid #333; padding:8px 12px; text-align:center; font-size:13px; } th { background:#fcfcfc; font-weight:700; }
+      .summary-section { display:flex; justify-content:flex-end; margin-bottom:50px; } .summary-table { width:300px; } .summary-table div { display:flex; justify-content:space-between; padding:8px 0; font-size:14px; } .total { font-size:18px; font-weight:800; border-top:2px solid #eee; padding-top:12px; margin-top:4px; } .total-val { color:#2b5c92; }
+      .footer { text-align:center; border-top:1px solid #eee; padding-top:20px; } .footer p { font-size:12px; color:#666; margin:5px 0; } @media print { body { padding:0; } }
+    </style></head><body><div class="header"><div class="logo"><img src="${logo}" alt="Kavi's Logo" /></div><div class="invoice-title"><h1>INVOICE</h1><p>${order.orderId || order.id}</p><div class="invoice-date">${displayDate}</div></div></div><div class="divider"></div>
+      <div class="info-section"><div class="info-block"><h3>Customer Info</h3><p><strong>Name:</strong> ${order.clientName || address.fullname || "-"}</p><p><strong>Email:</strong> ${order.email || address.email || "-"}</p><p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p><p><strong>Address:</strong> ${address.street || address.city || address.state || "-"}</p><p><strong>Country:</strong> ${address.country || "India"}</p></div><div class="info-block"><h3>Order Info</h3><p><strong>Shop:</strong> Kavi's Dry Fruits</p><p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p></div></div>
+      <div class="manifest-title">Item Manifest</div><table><thead><tr><th style="width:8%">S.No</th><th style="width:34%">Product Name</th><th style="width:16%">Weight</th><th style="width:16%">Price</th><th style="width:10%">Qty</th><th style="width:16%">Total</th></tr></thead><tbody>${itemsList}</tbody></table>
+      <div class="summary-section"><div class="summary-table"><div><span>Subtotal:</span><strong>₹${(finalAmount - shipping).toFixed(2)}</strong></div><div><span>Shipping:</span><strong>₹${shipping.toFixed(2)}</strong></div><div class="total"><span>Total Amount:</span><span class="total-val">₹${finalAmount.toFixed(2)}</span></div></div></div><div class="footer"><p><strong>Thank you for shopping with Kavi's Dry Fruits!</strong></p><p>For any support, please contact us at kavidryfruits@gmail.com</p></div></body></html>`);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
+  };
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
@@ -245,6 +284,9 @@ const CancelOrders = () => {
                     <FaTimes className="text-rose-400 text-xs mt-0.5" />
                     <p className="text-[11px] font-black text-rose-700 leading-snug">{order.cancelReason || "No formal reason provided"}</p>
                   </div>
+                  <button onClick={() => handlePrint(order)} className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white text-[10px] font-black uppercase py-3 rounded-xl tracking-widest">
+                    <FaPrint /> Print Invoice
+                  </button>
                 </div>
               </article>
             )) : <div className="md:col-span-2 xl:col-span-3 py-20 text-center text-slate-400 font-black uppercase tracking-widest">No cancelled orders found</div>}
@@ -260,6 +302,7 @@ const CancelOrders = () => {
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Loss/Refund</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Cancellation Reason</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -291,11 +334,16 @@ const CancelOrders = () => {
                           <p className="text-[11px] font-black text-rose-700 leading-snug">{order.cancelReason || "No formal reason provided"}</p>
                        </div>
                     </td>
+                    <td className="px-8 py-6 text-center">
+                      <button onClick={() => handlePrint(order)} className="p-3 bg-slate-900 text-white rounded-xl hover:bg-emerald-600 transition-all" title="Print invoice">
+                        <FaPrint size={13} />
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <td colSpan="7" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
                     <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                        <FaTimes className="text-3xl opacity-20" />
                     </div>
