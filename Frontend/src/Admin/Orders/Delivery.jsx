@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { FaPrint, FaTrash, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import logo from "/images/Kavi_logo.png";
@@ -377,26 +378,30 @@ const Delivery = () => {
           
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-            <select
+            <CustomSelect
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
-            >
-              <option value="all">Full Record</option>
-              <option value="today">Today's Batch</option>
-              <option value="week">Weekly Review</option>
-              <option value="month">Monthly Audit</option>
-              <option value="custom">Selection Range</option>
-            </select>
+              className="w-48"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-500/50 transition-colors"
+              options={[
+                { value: "all", label: "Full Record" },
+                { value: "today", label: "Today's Batch" },
+                { value: "week", label: "Weekly Review" },
+                { value: "month", label: "Monthly Audit" },
+                { value: "custom", label: "Selection Range" },
+              ]}
+            />
 
-            <select
+            <CustomSelect
               value={ordersPerPage}
               onChange={(e) => setOrdersPerPage(Number(e.target.value))}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-200 transition-colors"
-            >
-              <option value={25}>Show 25</option>
-              <option value={100}>Show 100</option>
-            </select>
+              className="w-32"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-500/50 transition-colors"
+              options={[
+                { value: 25, label: "Show 25" },
+                { value: 100, label: "Show 100" },
+              ]}
+            />
 
             <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
               <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>

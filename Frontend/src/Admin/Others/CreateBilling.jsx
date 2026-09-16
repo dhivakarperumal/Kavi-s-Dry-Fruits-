@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
@@ -488,26 +489,23 @@ const CreateBilling = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Type</label>
-                    <select
-                      className="w-full bg-slate-50 border-none rounded-2xl px-4 py-4 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold text-slate-900 text-xs cursor-pointer appearance-none"
+                    <CustomSelect
+                      className="w-full"
+                      buttonClassName="w-full bg-slate-50 border border-transparent rounded-2xl px-4 py-4 outline-none focus:bg-white focus:border-emerald-500/20 font-bold text-slate-900 text-xs cursor-pointer"
                       value={client.customerType}
                       onChange={(e) => setClient({ ...client, customerType: e.target.value })}
-                    >
-                      <option>Shop Customer</option>
-                      <option>Online Customer</option>
-                    </select>
+                      options={["Shop Customer", "Online Customer"]}
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Payment</label>
-                    <select
-                      className="w-full bg-slate-50 border-none rounded-2xl px-4 py-4 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold text-slate-900 text-xs cursor-pointer appearance-none"
+                    <CustomSelect
+                      className="w-full"
+                      buttonClassName="w-full bg-slate-50 border border-transparent rounded-2xl px-4 py-4 outline-none focus:bg-white focus:border-emerald-500/20 font-bold text-slate-900 text-xs cursor-pointer"
                       value={client.paymentMode}
                       onChange={(e) => setClient({ ...client, paymentMode: e.target.value })}
-                    >
-                      <option>Cash</option>
-                      <option>UPI / GPay</option>
-                      <option>Card</option>
-                    </select>
+                      options={["Cash", "UPI / GPay", "Card"]}
+                    />
                   </div>
                 </div>
 
@@ -524,13 +522,14 @@ const CreateBilling = () => {
                     <input placeholder="Street Address" className="w-full bg-slate-50 rounded-xl px-5 py-3.5 text-sm font-bold outline-none focus:bg-white border border-transparent focus:border-indigo-100" value={client.shippingAddress.street} onChange={(e) => setClient({ ...client, shippingAddress: { ...client.shippingAddress, street: e.target.value } })} />
                     <div className="grid grid-cols-2 gap-3">
                       <input placeholder="City" className="w-full bg-slate-50 rounded-xl px-5 py-3.5 text-sm font-bold outline-none focus:bg-white border border-transparent focus:border-indigo-100" value={client.shippingAddress.city} onChange={(e) => setClient({ ...client, shippingAddress: { ...client.shippingAddress, city: e.target.value } })} />
-                      <select
-                        className="w-full bg-slate-50 rounded-xl px-5 py-3.5 text-sm font-bold outline-none focus:bg-white border border-transparent focus:border-indigo-100 appearance-none"
+                      <CustomSelect
+                        className="w-full"
+                        buttonClassName="w-full bg-slate-50 rounded-xl px-5 py-3.5 text-sm font-bold outline-none focus:bg-white border border-transparent focus:border-emerald-500/20 cursor-pointer"
+                        searchable={true}
                         value={client.shippingAddress.state}
                         onChange={(e) => setClient({ ...client, shippingAddress: { ...client.shippingAddress, state: e.target.value } })}
-                      >
-                        {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                        options={indianStates}
+                      />
                     </div>
                   </div>
                 )}
@@ -568,35 +567,37 @@ const CreateBilling = () => {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                 <div className="md:col-span-7 relative group">
                   <FiSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-                  <select
-                    className="w-full pl-14 pr-10 py-5 bg-slate-50 border border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 font-[900] text-slate-900 text-sm appearance-none cursor-pointer transition-all"
+                  <CustomSelect
+                    className="w-full"
+                    buttonClassName="w-full pl-14 pr-10 py-5 bg-slate-50 border border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-emerald-500/20 font-[900] text-slate-900 text-sm cursor-pointer transition-all"
+                    placeholder="Search or Select Product..."
+                    searchable={true}
                     value={selectedProduct.id || ""}
                     onChange={(e) => handleProductSelect(e.target.value)}
-                  >
-                    <option value="">Search or Select Product...</option>
-                    {productList.map((p) => (
-                      <option key={p.id} value={p.productId}>
-                        {p.productId} — {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: "", label: "Search or Select Product..." },
+                      ...productList.map((p) => ({
+                        value: p.productId,
+                        label: `${p.productId} — ${p.name}`,
+                      })),
+                    ]}
+                  />
                 </div>
                 
                 <div className="md:col-span-3">
                   {selectedProduct.category !== "Combo" && selectedProduct.weights?.length > 0 && (
-                    <select
-                      className="w-full px-6 py-5 bg-slate-50 border border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-indigo-500/20 font-[900] text-slate-900 text-sm appearance-none cursor-pointer transition-all"
+                    <CustomSelect
+                      className="w-full"
+                      buttonClassName="w-full px-6 py-5 bg-slate-50 border border-transparent rounded-[1.5rem] outline-none focus:bg-white focus:border-emerald-500/20 font-[900] text-slate-900 text-sm cursor-pointer transition-all"
+                      placeholder="Select Weight"
                       value={selectedProduct.weight || ""}
                       onChange={(e) => {
                         const newWeight = e.target.value;
                         const newPrice = calculatePrice(selectedProduct.priceMap, newWeight, false);
                         setSelectedProduct({ ...selectedProduct, weight: newWeight, price: newPrice });
                       }}
-                    >
-                      {selectedProduct.weights?.map((w, idx) => (
-                        <option key={idx} value={w}>{w}</option>
-                      ))}
-                    </select>
+                      options={selectedProduct.weights?.map((w) => ({ value: w, label: w })) || []}
+                    />
                   )}
                   {selectedProduct.category === "Combo" && (
                     <div className="w-full px-6 py-5 bg-emerald-50 text-[#009669] rounded-[1.5rem] font-black text-center text-xs uppercase tracking-widest">

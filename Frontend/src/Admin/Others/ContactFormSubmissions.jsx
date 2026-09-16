@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
@@ -248,46 +249,24 @@ const ContactFormSubmissions = () => {
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative">
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="appearance-none bg-white border border-gray-100 shadow-sm rounded-2xl pl-4 pr-10 py-3 text-xs font-black uppercase tracking-wider text-slate-600 outline-none cursor-pointer hover:border-emerald-300 focus:border-emerald-500 transition-all"
-              >
-                {dateOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <FiCalendar
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none"
-                size={15}
-              />
-            </div>
+            <CustomSelect
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              icon={<FiCalendar size={14} />}
+              className="w-48"
+              buttonClassName="bg-white border border-gray-100 shadow-sm rounded-2xl px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-600 hover:border-emerald-300 transition-all"
+              options={dateOptions}
+            />
 
             {/* Subject Dropdown */}
-            <div className="relative">
-              <select
-                value={subjectFilter}
-                onChange={(e) => setSubjectFilter(e.target.value)}
-                className="appearance-none bg-white border border-gray-100 shadow-sm rounded-2xl pl-4 pr-10 py-3 text-xs font-black uppercase tracking-wider text-slate-600 outline-none cursor-pointer hover:border-emerald-300 focus:border-emerald-500 transition-all"
-              >
-                {subjectOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <FiMessageSquare
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none"
-                size={15}
-              />
-            </div>
-
-           
+            <CustomSelect
+              value={subjectFilter}
+              onChange={(e) => setSubjectFilter(e.target.value)}
+              icon={<FiMessageSquare size={14} />}
+              className="w-48"
+              buttonClassName="bg-white border border-gray-100 shadow-sm rounded-2xl px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-600 hover:border-emerald-300 transition-all"
+              options={subjectOptions}
+            />
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useState, useEffect } from "react";
 import { 
   FaEdit, FaTrash, FaEye, FaSearch, FaFilter, FaHeartbeat, 
@@ -126,13 +127,13 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
           </div>
 
           
-          <select 
+          <CustomSelect 
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm outline-none"
-          >
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+            className="w-48"
+            buttonClassName="px-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm outline-none hover:border-emerald-500/50"
+            options={categories.map(c => ({ value: c, label: c }))}
+          />
 
           <button 
             onClick={() => setShowAddView(true)}
