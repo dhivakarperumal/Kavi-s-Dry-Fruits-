@@ -72,6 +72,11 @@ svg {
 }
 
 /* Selected option style */
+option:checked,
+option:hover {
+  background: #009669 linear-gradient(0deg, #009669 0%, #009669 100%);
+  color: #ffffff;
+}
 
 
 /* Hide number input spinners */
