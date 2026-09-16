@@ -102,15 +102,7 @@ const AdminPanel = () => {
     const socket = io(api.defaults.baseURL.replace('/api', ''));
     
     socket.on("newOrder", async (data) => {
-      // Play a notification sound
-      try {
-        const audio = new Audio("/notification.mp3"); // Ensure this path exists or use a default one
-        audio.play().catch(e => console.log("Audio play failed:", e));
-      } catch (err) {}
-      
-      toast.success(`New Order Received! #${data.orderId} - ₹${data.totalAmount}`);
-      
-      // Fetch fresh orders to keep full state consistent
+      // Background synchronization for AdminPanel state
       try {
         const ordersRes = await api.get("/orders");
         const ordersList = ordersRes.data || [];
@@ -306,7 +298,7 @@ const AdminPanel = () => {
 
         const lowStockItems = productsList.filter(p => {
           const stock = parseFloat(p.totalStock || 0);
-          return stock <= 3000;
+          return stock <= 500;
         });
 
         const newData = {

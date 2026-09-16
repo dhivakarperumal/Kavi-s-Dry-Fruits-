@@ -32,6 +32,7 @@ import ViewInvoice from "./Admin/ViewInvoice.jsx";
 import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
 import OrderTracking from "./Shop/OrderTracking.jsx";
 import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
+import { AdminNotificationProvider } from "./Context/AdminNotificationProvider.jsx";
 
 const router = createHashRouter([
   {
@@ -134,19 +135,21 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <StoreProvider>
-          <RouterProvider router={router} />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "#333",
-              color: "#fff",
-              borderRadius: "10px",
-              fontSize: "14px",
-            },
-            duration: 2000,
-          }}
-        />
+          <AdminNotificationProvider>
+            <RouterProvider router={router} />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                style: {
+                  background: "#333",
+                  color: "#fff",
+                  borderRadius: "10px",
+                  fontSize: "14px",
+                },
+                duration: 2000,
+              }}
+            />
+          </AdminNotificationProvider>
         </StoreProvider>
       </AuthProvider>
     </GoogleOAuthProvider>

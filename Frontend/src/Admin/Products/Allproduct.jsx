@@ -567,7 +567,7 @@ const Allproduct = ({ adminData }) => {
                                  const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
                                  const price = details?.offerPrice || details?.price;
                                  const stockGrams = Number(item.totalStock || 0);
-                                 const isLowStock = stockGrams <= 3000; // 3 KG threshold
+                                 const isLowStock = stockGrams <= 500; // 500g threshold
 
                                  return (
                                      <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">

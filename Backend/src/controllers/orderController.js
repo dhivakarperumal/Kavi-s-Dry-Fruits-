@@ -164,6 +164,10 @@ const createOrder = async (req, res) => {
       String(a.productId || a.id || "").localeCompare(String(b.productId || b.id || ""))
     );
 
+    const affectedProductIds = new Set();
+    const affectedProductNames = new Set();
+    const affectedComboIds = new Set();
+
     for (const item of sortedItems) {
       const qty = parseInt(item.qty || item.quantity || 1, 10);
       const isCombo = (item.type === "combo") || 
@@ -182,6 +186,7 @@ const createOrder = async (req, res) => {
         let weightToSubtract = 0;
 
         if (isCombo) {
+          affectedComboIds.add(productData.id);
           const details = typeof productData.comboDetails === 'string' ? JSON.parse(productData.comboDetails || '{}') : (productData.comboDetails || {});
           const comboItems = typeof productData.comboItems === 'string' ? JSON.parse(productData.comboItems || '[]') : (productData.comboItems || []);
           
@@ -203,6 +208,7 @@ const createOrder = async (req, res) => {
 
           for (const subItem of sortedSubItems) {
             if (subItem.name) {
+              affectedProductNames.add(subItem.name.trim());
               const subWeightStr = String(subItem.weight || "").replace(/[()]/g, "").toLowerCase();
               let subWeightPerUnit = parseFloat(subWeightStr) || 0;
               if (subWeightStr.includes("kg") || subWeightStr.includes("k")) subWeightPerUnit *= 1000;
@@ -219,6 +225,7 @@ const createOrder = async (req, res) => {
             [weightToSubtract, productData.productId, productData.id]
           );
         } else {
+          affectedProductIds.add(productData.id);
           const weightStr = String(item.weight || item.selectedWeight || "").toLowerCase();
           let weightPerUnit = parseFloat(weightStr) || 0;
           if (weightStr.includes("kg") || weightStr.includes("k")) weightPerUnit *= 1000;
@@ -241,8 +248,54 @@ const createOrder = async (req, res) => {
         orderId,
         clientName,
         totalAmount,
-        orderStatus
+        orderStatus,
+        paymentMethod: paymentMethod || 'Online',
+        itemsCount: (parsedItems || []).length,
+        createdAt: new Date()
       });
+
+      // Check for low stock (<= 500g threshold) on affected items
+      try {
+        const lowStockAlerts = [];
+        if (affectedProductIds.size > 0) {
+          const [lowProds] = await db.query(
+            `SELECT productId, name, totalStock, category FROM products WHERE id IN (?) AND CAST(totalStock AS SIGNED) <= 500`,
+            [[...affectedProductIds]]
+          );
+          lowStockAlerts.push(...lowProds);
+        }
+        if (affectedProductNames.size > 0) {
+          const [lowNamedProds] = await db.query(
+            `SELECT productId, name, totalStock, category FROM products WHERE TRIM(name) IN (?) AND CAST(totalStock AS SIGNED) <= 500`,
+            [[...affectedProductNames]]
+          );
+          for (const p of lowNamedProds) {
+            if (!lowStockAlerts.some(a => String(a.productId) === String(p.productId))) {
+              lowStockAlerts.push(p);
+            }
+          }
+        }
+        if (affectedComboIds.size > 0) {
+          const [lowCombos] = await db.query(
+            `SELECT productId, name, totalStock, category FROM combos WHERE id IN (?) AND CAST(totalStock AS SIGNED) <= 500`,
+            [[...affectedComboIds]]
+          );
+          lowStockAlerts.push(...lowCombos);
+        }
+
+        for (const item of lowStockAlerts) {
+          io.emit('lowStockAlert', {
+            productId: item.productId,
+            name: item.name,
+            remainingStock: Number(item.totalStock || 0),
+            category: item.category || 'Product',
+            isOutOfStock: Number(item.totalStock || 0) <= 0,
+            createdAt: new Date()
+          });
+        }
+      } catch (stockCheckErr) {
+        console.error('Error checking low stock alerts:', stockCheckErr.message);
+      }
     }
 
     res.json({ id: result.insertId, message: 'Order created and stock updated' });
