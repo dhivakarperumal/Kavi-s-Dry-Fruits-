@@ -7,7 +7,7 @@ import OrderDetailsModal from "./OrderDetailsModal";
 import api from "../../services/api";
 import { io } from "socket.io-client";
 
-const NewOrders = ({ adminData }) => {
+const NewOrders = ({ adminData, onOrderUpdated }) => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -137,6 +137,14 @@ const NewOrders = ({ adminData }) => {
       ));
 
       await api.put(`/orders/${id}`, data);
+      const updatedOrder = orders.find((order) => order.id === id);
+      onOrderUpdated?.({
+        ...updatedOrder,
+        id,
+        orderStatus: newStatus,
+        ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}),
+        ...(data.cancelReason ? { cancelReason: data.cancelReason } : {}),
+      });
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);

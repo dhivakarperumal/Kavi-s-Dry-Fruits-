@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -68,6 +68,26 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  const handleOrderUpdated = useCallback((updatedOrder) => {
+    setCollectionCounts((previousData) => {
+      const allOrders = (previousData.allOrders || []).map((order) => (
+        order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
+      ));
+      const todayStr = new Date().toISOString().split("T")[0];
+      const todayActiveOrders = allOrders.filter((order) =>
+        order.orderStatus === "Order Placed" &&
+        (order.created_at || order.date || "").includes(todayStr)
+      );
+      const nextData = {
+        ...previousData,
+        allOrders,
+        "New Orders": todayActiveOrders,
+      };
+      adminDataService.setCache(nextData);
+      return nextData;
+    });
+  }, []);
 
   // Socket.io connection for real-time order notifications
   useEffect(() => {
@@ -322,8 +342,8 @@ const AdminPanel = () => {
 
       // Orders
       case "Orders": return <Orders adminData={collectionCounts} />;
-      case "New Orders": return <NewOrders adminData={collectionCounts} />;
-      case "All Orders": return <AllOrders adminData={collectionCounts} />;
+      case "New Orders": return <NewOrders adminData={collectionCounts} onOrderUpdated={handleOrderUpdated} />;
+      case "All Orders": return <AllOrders adminData={collectionCounts} onOrderUpdated={handleOrderUpdated} />;
       case "Delivered Orders": return <Delivery adminData={collectionCounts} />;
       case "Cancel Orders": return <CancelOrders adminData={collectionCounts} />;
       case "Returned Orders": return <ReturenOrders adminData={collectionCounts} />;

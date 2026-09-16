@@ -6,7 +6,7 @@ import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
 import { useNavigate } from "react-router-dom";
 
-const AllOrders = ({ adminData }) => {
+const AllOrders = ({ adminData, onOrderUpdated }) => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [cancelReason, setCancelReason] = useState("");
@@ -118,6 +118,13 @@ const AllOrders = ({ adminData }) => {
       }
 
       await api.put(`/orders/${id}`, data);
+      const updatedOrder = orders.find((order) => order.id === id);
+      onOrderUpdated?.({
+        ...updatedOrder,
+        id,
+        orderStatus: newStatus,
+        ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}),
+      });
       setOrders((currentOrders) => currentOrders.map((order) => (
         order.id === id
           ? { ...order, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
