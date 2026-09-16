@@ -37,6 +37,18 @@ async function migrate() {
       else throw e;
     }
 
+    try {
+      await connection.query('UPDATE products SET totalStock = totalWeight WHERE (totalStock IS NULL OR totalStock = 0) AND totalWeight IS NOT NULL');
+      await connection.query('ALTER TABLE products DROP COLUMN totalWeight');
+      console.log('Moved totalWeight values to totalStock and removed totalWeight');
+    } catch (e) {
+      if (e.code === 'ER_BAD_FIELD_ERROR' || e.code === 'ER_CANT_DROP_FIELD_OR_KEY') {
+        console.log('No products.totalWeight column to remove');
+      } else {
+        throw e;
+      }
+    }
+
     console.log('Migration successful!');
   } catch (err) {
     console.error('Migration failed:', err);

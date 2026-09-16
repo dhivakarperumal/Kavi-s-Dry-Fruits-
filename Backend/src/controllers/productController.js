@@ -6,6 +6,12 @@ const parseJson = (value, fallback) => {
   try { return JSON.parse(value); } catch (_error) { return fallback; }
 };
 const uploadedImages = (req) => (req.files || []).map(file => `${req.protocol}://${req.get('host')}/uploads/products/${file.filename}`);
+const normalizeWeight = (value) => {
+  const raw = String(value ?? '').trim().toLowerCase().replace(/,/g, '');
+  const amount = parseFloat(raw);
+  if (!Number.isFinite(amount)) return 0;
+  return amount * 1000;
+};
 
 exports.getProducts = async (req, res) => {
   try {
@@ -29,8 +35,10 @@ exports.addProduct = async (req, res) => {
   try {
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, variants, totalStock, status
+      images, variants, totalWeight, totalStock, status
     } = req.body;
+    const normalizedTotalWeight = normalizeWeight(totalWeight);
+    const storedTotalStock = Number(totalStock) > 0 ? totalStock : normalizedTotalWeight;
 
     const [result] = await db.query(
       `INSERT INTO products 
@@ -42,7 +50,7 @@ exports.addProduct = async (req, res) => {
         category, rating, barcode, barcodeValue,
         JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
         JSON.stringify(parseJson(variants, [])),
-        totalStock || 0,
+        storedTotalStock,
         status || 'Active'
       ]
     );
@@ -59,8 +67,10 @@ exports.updateProduct = async (req, res) => {
     const { id } = req.params;
     const {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
-      images, variants, totalStock, status
+      images, variants, totalWeight, totalStock, status
     } = req.body;
+    const normalizedTotalWeight = normalizeWeight(totalWeight);
+    const storedTotalStock = Number(totalStock) > 0 ? totalStock : normalizedTotalWeight;
 
     await db.query(
       `UPDATE products SET 
@@ -73,7 +83,7 @@ exports.updateProduct = async (req, res) => {
         category, rating, barcode, barcodeValue,
         JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
         JSON.stringify(parseJson(variants, [])),
-        totalStock || 0,
+        storedTotalStock,
         status || 'Active',
         id
       ]

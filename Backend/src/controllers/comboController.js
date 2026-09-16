@@ -6,6 +6,12 @@ const parseJson = (value, fallback) => {
   try { return JSON.parse(value); } catch (_error) { return fallback; }
 };
 const uploadedImages = (req) => (req.files || []).map(file => `${req.protocol}://${req.get('host')}/uploads/combos/${file.filename}`);
+const normalizeWeight = (value) => {
+  const raw = String(value ?? '').trim().toLowerCase().replace(/,/g, '');
+  const amount = parseFloat(raw);
+  if (!Number.isFinite(amount)) return 0;
+  return amount * 1000;
+};
 
 exports.getCombos = async (req, res) => {
   try {
@@ -34,6 +40,7 @@ exports.addCombo = async (req, res) => {
     } = req.body;
     const parsedComboItems = parseJson(comboItems, []);
     const parsedComboDetails = parseJson(comboDetails, {});
+    parsedComboDetails.totalWeight = normalizeWeight(parsedComboDetails.totalWeight);
 
     const [result] = await connection.query(
       `INSERT INTO combos 
@@ -45,7 +52,7 @@ exports.addCombo = async (req, res) => {
         category, rating, barcode, barcodeValue,
         JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
         JSON.stringify(parseJson(comboItems, [])),
-        JSON.stringify(parseJson(comboDetails, {})),
+        JSON.stringify(parsedComboDetails),
         totalStock || 0,
         status || 'Active'
       ]
@@ -99,6 +106,7 @@ exports.updateCombo = async (req, res) => {
     } = req.body;
     const parsedComboItems = parseJson(comboItems, []);
     const parsedComboDetails = parseJson(comboDetails, {});
+    parsedComboDetails.totalWeight = normalizeWeight(parsedComboDetails.totalWeight);
 
     // Get old stock to calculate delta
     const [oldRows] = await connection.query(`SELECT totalStock FROM combos WHERE id = ?`, [id]);

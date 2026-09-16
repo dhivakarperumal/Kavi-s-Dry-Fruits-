@@ -157,7 +157,6 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   });
   const [loading, setLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState([]);
-  const [manualWeight, setManualWeight] = useState(false);
   const barcodeRef = useRef();
 
   const safeParse = (data) => {
@@ -191,20 +190,6 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       setImageFiles([]);
     }
   }, [editItem, products]);
-
-  useEffect(() => {
-    if (manualWeight) return; // user is manually controlling weight
-    const totalW = form.variants.reduce((sum, v) => {
-      const wStr = String(v.weight || "").toLowerCase();
-      const val = parseFloat(wStr) || 0;
-      const factor = wStr.includes("kg") ? 1000 : 1;
-      return sum + (val * factor);
-    }, 0);
-
-    if (String(totalW) !== form.totalStock || totalW !== form.totalWeight) {
-      setForm(prev => ({ ...prev, totalStock: String(totalW), totalWeight: totalW }));
-    }
-  }, [form.variants, manualWeight]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -285,33 +270,21 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                 </div>
                 <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
-                      Total Weight
-                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-emerald-100 text-emerald-600'}`}>
-                        {manualWeight ? 'Manual' : 'Auto'}
-                      </span>
+                      Total Weight (kg) *
+                      <span className="text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-orange-100 text-orange-500">Manual</span>
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
-                        type="number"
+                        type="text"
                         value={form.totalWeight}
-                        onChange={(e) => { setManualWeight(true); setForm({ ...form, totalWeight: Number(e.target.value) }); }}
-                        className={`w-full rounded-2xl px-6 py-4 font-black border-2 shadow-sm outline-none transition-all ${
-                          manualWeight
-                            ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500'
-                            : 'bg-emerald-50 border-emerald-100 text-emerald-700 focus:border-emerald-400'
-                        }`}
-                        placeholder="Enter grams"
+                        onChange={(e) => setForm({ ...form, totalWeight: e.target.value })}
+                        required
+                        min="1"
+                        className="w-full rounded-2xl px-6 py-4 font-black border-2 bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500 shadow-sm outline-none transition-all"
+                        placeholder="Enter kilograms, e.g. 50"
                       />
-                      {manualWeight && (
-                        <button
-                          type="button"
-                          title="Reset to Auto"
-                          onClick={() => { setManualWeight(false); }}
-                          className="flex-shrink-0 w-11 h-11 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-md transition-all"
-                        >↺</button>
-                      )}
                     </div>
-                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">{manualWeight ? 'Type to override · click ↺ to sync from variants' : 'Auto-summed from variant weights'}</p>
+                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">Stored as grams: 50 kg = 50000 g.</p>
                   </div>
                 {/* <div className="bg-emerald-50/30 p-6 rounded-[2rem] border border-emerald-100">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 flex items-center gap-2">Studio Status Radar</h4>
@@ -429,7 +402,6 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   });
   const [loading, setLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState([]);
-  const [manualWeight, setManualWeight] = useState(false);
   const [manualStock, setManualStock] = useState(false);
   const barcodeRef = useRef();
 
@@ -469,28 +441,6 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       setImageFiles([]);
     }
   }, [editItem, combos]);
-
-  useEffect(() => {
-    if (manualWeight) return;
-
-    const totalW = form.comboItems.reduce((sum, item) => {
-      const wStr = String(item.weight || "").toLowerCase().trim();
-      const val = parseFloat(wStr) || 0;
-      const factor = wStr.includes("kg") ? 1000 : 1;
-      return sum + (val * factor);
-    }, 0);
-
-    // Always update via functional updater — avoids stale closure of form.totalWeight
-    setForm(prev => {
-      if (prev.totalWeight === totalW && (manualStock || prev.totalStock === String(totalW))) return prev; 
-      return {
-        ...prev,
-        totalWeight: totalW,
-        comboDetails: { ...prev.comboDetails, totalWeight: totalW },
-        totalStock: manualStock ? prev.totalStock : String(totalW),
-      };
-    });
-  }, [form.comboItems, manualWeight]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -622,42 +572,24 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      Total Weight
-                      <span className={`text-[8px] px-2 py-0.5 rounded-full font-black uppercase ${manualWeight ? 'bg-orange-100 text-orange-500' : 'bg-amber-100 text-amber-600'}`}>
-                        {manualWeight ? 'Manual' : 'Auto'}
-                      </span>
+                      Total Weight (kg) *
+                      <span className="text-[8px] px-2 py-0.5 rounded-full font-black uppercase bg-orange-100 text-orange-500">Manual</span>
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
-                        type="number"
+                        type="text"
                         value={form.totalWeight}
-                        onChange={(e) => { 
-                          const val = Number(e.target.value);
-                          setManualWeight(true); 
-                          setForm({ 
-                            ...form, 
-                            totalWeight: val,
-                            // Keep comboDetails in sync so DB receives the override
-                            comboDetails: { ...form.comboDetails, totalWeight: val },
-                          }); 
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setForm({ ...form, totalWeight: value, comboDetails: { ...form.comboDetails, totalWeight: value } });
                         }}
-                        className={`w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm ${
-                          manualWeight
-                            ? 'bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400'
-                            : 'bg-white border-amber-100 text-amber-700 focus:border-amber-400'
-                        }`}
-                        placeholder="Enter grams"
+                        required
+                        min="1"
+                        className="w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400"
+                        placeholder="Enter kilograms, e.g. 50"
                       />
-                      {manualWeight && (
-                        <button
-                          type="button"
-                          title="Reset to Auto"
-                          onClick={() => setManualWeight(false)}
-                          className="flex-shrink-0 w-9 h-9 bg-amber-500 hover:bg-amber-600 text-white rounded-xl flex items-center justify-center shadow-md transition-all text-sm"
-                        >↺</button>
-                      )}
                     </div>
-                    <p className="text-[8px] text-gray-400 font-medium mt-1">{manualWeight ? 'Overriding · click ↺ to sync from items' : 'Auto-summed from combo items'}</p>
+                    <p className="text-[8px] text-gray-400 font-medium mt-1">Stored as grams: 50 kg = 50000 g.</p>
                   </div>
                 </div>
               </div>
