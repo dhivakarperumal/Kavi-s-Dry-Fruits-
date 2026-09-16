@@ -5,6 +5,7 @@ import api from "../services/api";
 import adminDataService from "../services/adminDataService";
 import { playNotificationSound } from "../utils/notificationAudio";
 import WhatsAppNotificationContainer from "../Component/WhatsAppNotificationToast";
+import NotificationSoundModal from "../Component/NotificationSoundModal";
 
 const AdminNotificationContext = createContext(null);
 
@@ -17,6 +18,7 @@ export const AdminNotificationProvider = ({ children }) => {
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default"
   );
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [isSoundModalOpen, setIsSoundModalOpen] = useState(false);
   const socketRef = useRef(null);
   const titleIntervalRef = useRef(null);
 
@@ -282,9 +284,20 @@ export const AdminNotificationProvider = ({ children }) => {
         requestDesktopPermission,
         testDesktopNotification,
         desktopPermission,
+        openSoundSettings: () => setIsSoundModalOpen(true),
+        closeSoundSettings: () => setIsSoundModalOpen(false),
       }}
     >
       {children}
+
+      {/* Sound Settings Modal */}
+      {isAdmin && (
+        <NotificationSoundModal
+          isOpen={isSoundModalOpen}
+          onClose={() => setIsSoundModalOpen(false)}
+          onTestNotification={testDesktopNotification}
+        />
+      )}
 
       {/* WhatsApp Web styled bottom-right floating notifications */}
       {isAdmin && (

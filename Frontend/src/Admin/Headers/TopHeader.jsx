@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaBars, FaBell, FaBoxOpen, FaSignOutAlt, FaUserCircle, FaSearch, FaCog, FaUsers, FaFileInvoice } from "react-icons/fa";
 import { MdWarning } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { useAdminNotification } from "../../Context/AdminNotificationProvider";
 
 const Topbar = ({
   setIsSidebarOpen,
@@ -28,6 +29,7 @@ const Topbar = ({
   const stockRef   = useRef();
   const profileRef = useRef();
   const navigate   = useNavigate();
+  const adminNotif = useAdminNotification();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -165,6 +167,25 @@ const Topbar = ({
           }`}
         >
           <FaSearch size={14} />
+        </button>
+
+        {/* 🎵 Notification Sound Settings */}
+        <button
+          onClick={() => {
+            if (adminNotif?.openSoundSettings) {
+              adminNotif.openSoundSettings();
+            }
+          }}
+          title="Notification Sound Settings (Choose Sound & Volume)"
+          className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition shadow-sm cursor-pointer"
+        >
+          <span className="text-base leading-none">🎵</span>
+          {adminNotif?.desktopPermission !== "granted" && (
+            <span
+              className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-white animate-pulse"
+              title="Desktop notifications disabled"
+            />
+          )}
         </button>
 
         {/* 🔔 Orders Bell */}

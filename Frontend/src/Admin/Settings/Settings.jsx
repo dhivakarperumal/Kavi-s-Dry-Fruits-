@@ -1,9 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUsers, FaStar, FaStore, FaFileInvoiceDollar, FaTicketAlt, FaTruck } from "react-icons/fa";
+import { FaUsers, FaStar, FaStore, FaFileInvoiceDollar, FaTicketAlt, FaTruck, FaVolumeUp } from "react-icons/fa";
+import { useAdminNotification } from "../../Context/AdminNotificationProvider";
 
 const Settings = () => {
   const navigate = useNavigate();
+  const adminNotif = useAdminNotification();
 
   const settingsCards = [
     {
@@ -54,6 +56,14 @@ const Settings = () => {
       bgColor: "bg-orange-50",
       borderColor: "border-orange-100",
     },
+    {
+      title: "Notification & Sound Settings",
+      description: "Choose incoming alert sounds (WhatsApp, Cash Register, Bell), volume, and test desktop popups.",
+      icon: <FaVolumeUp size={28} className="text-teal-500" />,
+      action: () => adminNotif?.openSoundSettings?.(),
+      bgColor: "bg-teal-50",
+      borderColor: "border-teal-100",
+    },
   ];
 
   /* Add FaTruck to imports if not there */
@@ -66,11 +76,11 @@ const Settings = () => {
         {settingsCards.map((card, index) => (
           <div
             key={index}
-            onClick={() => navigate(card.path)}
+            onClick={() => (card.action ? card.action() : navigate(card.path))}
             className={`group relative overflow-hidden p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-xl shadow-slate-200/50 cursor-pointer hover:-translate-x-2 transition-all duration-500`}
           >
             {/* Bright Gradient Background on Hover */}
-            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${card.path.includes('users') ? 'from-emerald-500 to-teal-600' : card.path.includes('reviews') ? 'from-amber-400 to-orange-500' : card.path.includes('dealer') ? 'from-blue-500 to-indigo-600' : card.path.includes('invoice') ? 'from-indigo-500 to-purple-600' : 'from-rose-500 to-pink-600'}`}></div>
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${(card.path || '').includes('users') ? 'from-emerald-500 to-teal-600' : (card.path || '').includes('reviews') ? 'from-amber-400 to-orange-500' : (card.path || '').includes('dealer') ? 'from-blue-500 to-indigo-600' : (card.path || '').includes('invoice') ? 'from-indigo-500 to-purple-600' : 'from-teal-500 to-emerald-600'}`}></div>
 
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
               <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:bg-white group-hover:shadow-white/20 ${card.bgColor} border border-white/50 backdrop-blur-sm`}>
