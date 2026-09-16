@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import { 
@@ -18,11 +17,12 @@ import {
   FaBuilding,
   FaUserTie,
   FaBoxOpen,
-  FaMapMarkedAlt
+   FaMapMarkedAlt,
+   FaEdit,
+   FaEye
 } from "react-icons/fa";
 
 const AddDealer = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     dealerName: "",
     dealerGSTNumber: "",
@@ -35,6 +35,8 @@ const AddDealer = () => {
   const [dealerId, setDealerId] = useState("");
   const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [showModal, setShowModal] = useState(false);
+   const [editingDealer, setEditingDealer] = useState(null);
+   const [viewingDealer, setViewingDealer] = useState(null);
   const [dealers, setDealers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,12 +97,19 @@ const AddDealer = () => {
 
     setLoading(true);
     try {
-      await api.post("/dealers", {
-        dealerId,
-        ...formData,
-      });
+         if (editingDealer) {
+            await api.put(`/dealers/${editingDealer.id}`, {
+               ...formData,
+               status: editingDealer.status || "Active",
+            });
+         } else {
+            await api.post("/dealers", {
+               dealerId,
+               ...formData,
+            });
+         }
 
-      toast.success("Dealer added successfully!");
+         toast.success(editingDealer ? "Dealer updated successfully!" : "Dealer added successfully!");
       setFormData({
         dealerName: "",
         dealerGSTNumber: "",
@@ -109,6 +118,7 @@ const AddDealer = () => {
         dealerAddress: "",
       });
       setShowModal(false);
+      setEditingDealer(null);
       generateDealerId();
       fetchDealers();
     } catch (error) {
@@ -119,13 +129,37 @@ const AddDealer = () => {
     }
   };
 
+   const openEditDealer = (dealer) => {
+      setEditingDealer(dealer);
+      setFormData({
+         dealerName: dealer.dealerName || "",
+         dealerGSTNumber: dealer.dealerGSTNumber || "",
+         dealerPhoneNumber: dealer.dealerPhoneNumber || "",
+         dealerMail: dealer.dealerMail || "",
+         dealerAddress: dealer.dealerAddress || "",
+      });
+      setShowModal(true);
+   };
+
+   const closeDealerModal = () => {
+      setShowModal(false);
+      setEditingDealer(null);
+      setFormData({
+         dealerName: "",
+         dealerGSTNumber: "",
+         dealerPhoneNumber: "",
+         dealerMail: "",
+         dealerAddress: "",
+      });
+   };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to remove this partner?")) return;
     try {
       await api.delete(`/dealers/${id}`);
       toast.success("Partner removed.");
       fetchDealers();
-    } catch (error) {
+      } catch {
       toast.error("Deletion failed.");
     }
   };
@@ -210,8 +244,8 @@ const AddDealer = () => {
                 </button>
              </div>
 
-             <button
-               onClick={() => setShowModal(true)}
+                   <button
+                      onClick={() => { setEditingDealer(null); setShowModal(true); }}
                className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
              >
                <FaPlus size={12} /> Add Partner
@@ -264,8 +298,13 @@ const AddDealer = () => {
                                         {dealer.status || "Active"}
                                      </button>
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                         <FaChevronRight size={12} />
+                      <div className="flex items-center gap-2">
+                         <button onClick={() => setViewingDealer(dealer)} className="p-3 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-900 hover:text-white transition-all" title="View dealer">
+                            <FaEye size={12} />
+                         </button>
+                         <button onClick={() => openEditDealer(dealer)} className="p-3 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all" title="Edit dealer">
+                            <FaEdit size={12} />
+                         </button>
                       </div>
                    </div>
                 </div>
@@ -318,9 +357,17 @@ const AddDealer = () => {
                             </span>
                          </td>
                          <td className="px-8 py-6 text-center">
-                            <button onClick={() => handleDelete(dealer.id)} className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                               <FaTrash size={14} />
-                            </button>
+                            <div className="flex justify-center gap-2">
+                               <button onClick={() => setViewingDealer(dealer)} className="p-3 bg-slate-50 text-slate-500 rounded-2xl hover:bg-slate-900 hover:text-white transition-all shadow-sm" title="View dealer">
+                                  <FaEye size={14} />
+                               </button>
+                               <button onClick={() => openEditDealer(dealer)} className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Edit dealer">
+                                  <FaEdit size={14} />
+                               </button>
+                               <button onClick={() => handleDelete(dealer.id)} className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Delete dealer">
+                                  <FaTrash size={14} />
+                               </button>
+                            </div>
                          </td>
                       </tr>
                    ))}
@@ -360,10 +407,10 @@ const AddDealer = () => {
                    <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl opacity-50" />
                    <div className="relative flex items-center justify-between">
                       <div>
-                         <h3 className="text-2xl font-[900] tracking-tight uppercase">Partner Registry</h3>
-                         <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1">Onboard New Business Dealer</p>
+                         <h3 className="text-2xl font-[900] tracking-tight uppercase">{editingDealer ? "Edit Dealer" : "Partner Registry"}</h3>
+                         <p className="text-[10px] font-black opacity-80 uppercase tracking-widest mt-1">{editingDealer ? "Update Business Dealer Details" : "Onboard New Business Dealer"}</p>
                       </div>
-                      <button onClick={() => setShowModal(false)} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all">
+                      <button onClick={closeDealerModal} className="p-3 bg-black/10 hover:bg-black/20 rounded-2xl transition-all">
                         <FaTimes size={18} />
                       </button>
                    </div>
@@ -414,11 +461,48 @@ const AddDealer = () => {
                          </div>
                       </div>
                    </div>
-                   <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-[900] py-5 rounded-2xl shadow-xl shadow-emerald-100 transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50">{loading ? 'Processing Registry...' : 'Onboard Partner Dealer'}</button>
+                            <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-[900] py-5 rounded-2xl shadow-xl shadow-emerald-100 transition-all uppercase tracking-[0.2em] text-xs disabled:opacity-50">{loading ? 'Processing Registry...' : editingDealer ? 'Update Dealer' : 'Onboard Partner Dealer'}</button>
                 </form>
              </div>
           </div>
         )}
+
+            {viewingDealer && (
+               <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-emerald-950/20 backdrop-blur-md" onClick={() => setViewingDealer(null)} />
+                  <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative z-10 overflow-hidden">
+                     <div className="bg-[#009669] p-6 text-white flex items-center justify-between">
+                        <div>
+                           <h3 className="text-xl font-black uppercase">Dealer Details</h3>
+                           <p className="text-xs opacity-80 mt-1">{viewingDealer.dealerId}</p>
+                        </div>
+                        <button onClick={() => setViewingDealer(null)} className="p-3 bg-black/10 hover:bg-black/20 rounded-xl" title="Close">
+                           <FaTimes size={16} />
+                        </button>
+                     </div>
+                     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {[
+                           ["Dealer Name", viewingDealer.dealerName],
+                           ["Phone", viewingDealer.dealerPhoneNumber],
+                           ["Email", viewingDealer.dealerMail || "Not provided"],
+                           ["GST Number", viewingDealer.dealerGSTNumber || "Not provided"],
+                           ["Status", viewingDealer.status || "Active"],
+                           ["Address", viewingDealer.dealerAddress || "Not provided"],
+                        ].map(([label, value]) => (
+                           <div key={label}>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</p>
+                              <p className="mt-1 text-sm font-bold text-slate-900 break-words">{value}</p>
+                           </div>
+                        ))}
+                     </div>
+                     <div className="px-6 pb-6">
+                        <button onClick={() => { setViewingDealer(null); openEditDealer(viewingDealer); }} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold">
+                           Edit Dealer
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            )}
       </div>
     </div>
   );
