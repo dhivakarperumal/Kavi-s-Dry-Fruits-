@@ -68,7 +68,7 @@ const DashboardStats = ({ stats }) => (
     {stats.map((stat, i) => (
       <div
         key={i}
-        className={`group relative overflow-hidden rounded-xl p-6 min-h-[150px] shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
+        className={`group relative overflow-hidden rounded-xl p-6 min-h-[190px] shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
       >
         {/* Background Decorative Circles */}
         <div className={`absolute -bottom-8 -right-8 w-40 h-40 ${stat.round1} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150`}></div>
@@ -85,6 +85,11 @@ const DashboardStats = ({ stats }) => (
             {stat.icon}
           </div>
         </div>
+        {stat.footer && (
+          <div className="relative z-10 mt-5 inline-flex max-w-full items-center rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white/95 backdrop-blur-sm">
+            {stat.footer}
+          </div>
+        )}
       </div>
     ))}
   </div>
@@ -136,6 +141,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     todayOrders: 0,
     todayRevenue: 0,
     todayUsers: 0,
+    pendingOrders: 0,
   });
 
   const [productsData, setProductsData] = useState([]);
@@ -156,6 +162,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
       let deliveryCount = 0;
       let cancelledCount = 0;
       let returnedCount = 0;
+      let pendingCount = 0;
       let totalRevenue = 0;
       let todayRevenue = 0;
 
@@ -190,6 +197,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
           cancelledByMonth[month] = (cancelledByMonth[month] || 0) + 1;
         }
         if (status === "returned") returnedCount++;
+        if (!["delivered", "cancelled", "returned", "refunded"].includes(status)) pendingCount++;
 
         revenueByMonth[month] = (revenueByMonth[month] || 0) + total;
         ordersByMonth[month] = (ordersByMonth[month] || 0) + 1;
@@ -252,6 +260,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
         todayOrders: todayOrdersList.length,
         todayRevenue,
         todayUsers: users.filter((user) => isToday(user.createdAt || user.created_at || user.date)).length,
+        pendingOrders: pendingCount,
       });
 
       setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
@@ -310,6 +319,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Users",
       value: stats.users,
+      footer: "+12% from last month",
       icon: <FaUsers />,
       bgColor: "bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-500/40",
       iconBg: "bg-white/20 text-white",
@@ -319,6 +329,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Products",
       value: stats.products,
+      footer: `${productCategories.length} categories`,
       icon: <FaBoxOpen />,
       bgColor: "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/40",
       iconBg: "bg-white/20 text-white",
@@ -328,6 +339,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Delivery Orders",
       value: stats.deliveryOrders,
+      footer: `${stats.pendingOrders} pending orders`,
       icon: <FaTruck />,
       bgColor: "bg-gradient-to-br from-purple-500 to-purple-700 shadow-purple-500/40",
       iconBg: "bg-white/20 text-white",
@@ -337,6 +349,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Cancelled Orders",
       value: stats.cancelledOrders,
+      footer: `${stats.returnedOrders} returned orders`,
       icon: <FaTimesCircle />,
       bgColor: "bg-gradient-to-br from-red-500 to-red-700 shadow-red-500/40",
       iconBg: "bg-white/20 text-white",
@@ -346,6 +359,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Total Revenue",
       value: formatCompactIndianCurrency(stats.revenue),
+      footer: "All-time sales",
       icon: <FaDollarSign />,
       bgColor: "bg-gradient-to-br from-amber-400 to-orange-500 shadow-orange-500/40",
       iconBg: "bg-white/20 text-white",
@@ -355,6 +369,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Today Orders",
       value: stats.todayOrders,
+      footer: "Orders placed today",
       icon: <FaShoppingCart />,
       bgColor: "bg-gradient-to-br from-cyan-400 to-cyan-600 shadow-cyan-500/40",
       iconBg: "bg-white/20 text-white",
@@ -364,6 +379,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Today Revenue",
       value: formatCompactIndianCurrency(stats.todayRevenue),
+      footer: "Sales generated today",
       icon: <FaDollarSign />,
       bgColor: "bg-gradient-to-br from-lime-400 to-green-600 shadow-green-500/40",
       iconBg: "bg-white/20 text-white",
@@ -373,6 +389,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Today User Count",
       value: stats.todayUsers,
+      footer: "New users today",
       icon: <FaUsers />,
       bgColor: "bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-indigo-500/40",
       iconBg: "bg-white/20 text-white",
@@ -382,6 +399,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     {
       title: "Low Stock",
       value: lowStockCount,
+      footer: "Items need restocking",
       icon: <FaBoxOpen />,
       bgColor: "bg-gradient-to-br from-rose-400 to-rose-600 shadow-rose-500/40",
       iconBg: "bg-white/20 text-white",
