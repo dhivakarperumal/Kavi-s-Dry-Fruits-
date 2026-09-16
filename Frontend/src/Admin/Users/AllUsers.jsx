@@ -1,3 +1,4 @@
+import CustomSelect from '../Common/CustomSelect';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -164,7 +165,7 @@ const Users = () => {
         <span>Back to Settings</span>
       </button>
 
-      <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-6 space-y-4">
+      <div className="relative z-20 bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-6 space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="relative w-full md:w-1/3">
             <input
@@ -194,17 +195,19 @@ const Users = () => {
               </button>
             </div>
 
-            <select
+            <CustomSelect
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="border-none bg-gray-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer"
-            >
-              <option value="all">Total Users</option>
-              <option value="today">Joined Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="custom">Custom Range</option>
-            </select>
+              className="w-48"
+              buttonClassName="border-none bg-gray-100 rounded-2xl px-5 py-3 text-sm font-bold outline-none cursor-pointer hover:bg-gray-200 transition-colors"
+              options={[
+                { value: "all", label: "Total Users" },
+                { value: "today", label: "Joined Today" },
+                { value: "week", label: "This Week" },
+                { value: "month", label: "This Month" },
+                { value: "custom", label: "Custom Range" },
+              ]}
+            />
 
             <button onClick={handleAddUser} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-green-100 active:scale-95">
               <FaPlus className="text-xs" /> Add New
@@ -405,11 +408,18 @@ const Users = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Authorization Role</label>
-                <select value={selectedUser.role || ""} onChange={(e) => setSelectedUser(p => ({ ...p, role: e.target.value }))} disabled={!editMode} className={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none appearance-none transition-all cursor-pointer ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500"} ${!selectedUser.role ? "text-gray-400 font-normal" : "text-gray-800 font-bold"}`}>
-                  <option value="" disabled>Select Role (Admin / User)</option>
-                  <option value="User">Standard User</option>
-                  <option value="Admin">System Administrator</option>
-                </select>
+                <CustomSelect
+                  value={selectedUser.role || ""}
+                  onChange={(e) => setSelectedUser(p => ({ ...p, role: e.target.value }))}
+                  disabled={!editMode}
+                  placeholder="Select Role (Admin / User)"
+                  className="w-full"
+                  buttonClassName={`w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none transition-all cursor-pointer ${!editMode ? "border-transparent font-bold text-gray-800" : "focus:ring-4 focus:ring-emerald-500/10 focus:bg-white border-2 border-transparent focus:border-emerald-500"}`}
+                  options={[
+                    { value: "User", label: "Standard User" },
+                    { value: "Admin", label: "System Administrator" },
+                  ]}
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Verification</label>

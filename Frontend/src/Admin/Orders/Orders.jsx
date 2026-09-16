@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState } from "react";
 import { FaPrint, FaTimes } from "react-icons/fa";
 import { toast } from "react-hot-toast";
@@ -253,7 +254,7 @@ const Orders = () => {
                   ₹ {order.totalAmount}
                 </td>
                 <td className="p-3 border ">
-                  <select
+                  <CustomSelect
                     value={order.orderStatus}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -263,18 +264,20 @@ const Orders = () => {
                         handleStatusUpdate(order.id, value);
                       }
                     }}
-                    className="border p-1 rounded cursor-pointer"
-                  >
-                    <option value="Order Placed">Order Placed</option>
-                    <option value="Order Confirmed">Order Confirmed</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Out for Delivery">Out for Delivery</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                    <option value="Returned">Returned</option>
-                    <option value="Refunded">Refunded</option>
-                  </select>
+                    badgeVariant={true}
+                    className="w-40"
+                    options={[
+                      "Order Placed",
+                      "Order Confirmed",
+                      "Processing",
+                      "Shipped",
+                      "Out for Delivery",
+                      "Delivered",
+                      "Cancelled",
+                      "Returned",
+                      "Refunded"
+                    ]}
+                  />
 
                   {showCancelInput === order.id && (
                     <div className="mt-2">

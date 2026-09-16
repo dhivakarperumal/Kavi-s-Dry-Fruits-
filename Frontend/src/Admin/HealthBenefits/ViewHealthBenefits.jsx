@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useState, useEffect } from "react";
 import { 
   FaEdit, FaTrash, FaEye, FaSearch, FaFilter, FaHeartbeat, 
@@ -86,7 +87,7 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
     <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-700">
       
       {/* Header Section */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white/60 backdrop-blur-md p-8 rounded-[3rem] border border-white shadow-xl">
+      <div className="relative z-30 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white/60 backdrop-blur-md p-8 rounded-[3rem] border border-white shadow-xl">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 bg-gradient-to-tr from-emerald-600 to-green-400 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
             <FaHeartbeat size={32} />
@@ -126,13 +127,13 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
           </div>
 
           
-          <select 
+          <CustomSelect 
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm outline-none"
-          >
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+            className="w-48"
+            buttonClassName="px-6 py-4 bg-white border border-gray-100 rounded-2xl text-sm font-bold shadow-sm outline-none hover:border-emerald-500/50"
+            options={categories.map(c => ({ value: c, label: c }))}
+          />
 
           <button 
             onClick={() => setShowAddView(true)}

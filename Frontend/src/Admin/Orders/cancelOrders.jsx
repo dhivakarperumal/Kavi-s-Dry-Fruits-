@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState } from "react";
 import { FaTimes, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import api from "../../services/api";
@@ -94,7 +95,7 @@ const CancelOrders = () => {
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
-      <div className="mb-8">
+      <div className="relative z-20 mb-8">
         <div className="mb-6">
           <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Voided Orders</h1>
           <p className="text-sm font-bold text-slate-400 mt-1">Reviewing {filteredOrders.length} cancelled transactions</p>
@@ -115,26 +116,30 @@ const CancelOrders = () => {
           
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-            <select
+            <CustomSelect
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-            >
-              <option value="all">Full Log</option>
-              <option value="today">Today's Voids</option>
-              <option value="week">Weekly Review</option>
-              <option value="month">Monthly Audit</option>
-              <option value="custom">Custom Filter</option>
-            </select>
+              className="w-48"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-rose-300 transition-colors"
+              options={[
+                { value: "all", label: "Full Log" },
+                { value: "today", label: "Today's Voids" },
+                { value: "week", label: "Weekly Review" },
+                { value: "month", label: "Monthly Audit" },
+                { value: "custom", label: "Custom Filter" },
+              ]}
+            />
             
-            <select
+            <CustomSelect
               value={ordersPerPage}
               onChange={(e) => setOrdersPerPage(Number(e.target.value))}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-            >
-              <option value={25}>Show 25</option>
-              <option value={100}>Show 100</option>
-            </select>
+              className="w-32"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-rose-300 transition-colors"
+              options={[
+                { value: 25, label: "Show 25" },
+                { value: 100, label: "Show 100" },
+              ]}
+            />
 
             <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
               <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-rose-500 text-white shadow-lg" : "text-slate-400 hover:text-rose-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>

@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState, useMemo } from "react";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -929,18 +930,21 @@ const Stickers = ({ adminData }) => {
                   <label className="text-[11px] font-black text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <FaBarcode size={12} className="text-emerald-600" /> Auto-Fill from Products / Combos
                   </label>
-                  <select
+                  <CustomSelect
                     value=""
                     onChange={handleSelectExistingProduct}
-                    className="w-full bg-emerald-50/50 border border-emerald-100 hover:border-emerald-300 focus:border-emerald-500 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-sm text-gray-900"
-                  >
-                    <option value="">-- Choose Existing Product or Combo --</option>
-                    {productsList.map((p, index) => (
-                      <option key={`${p.type}-${p.id}-${index}`} value={index}>
-                        {p.productId ? `[${p.productId}] ` : ""}{p.name} ({p.type})
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="-- Choose Existing Product or Combo --"
+                    searchable={true}
+                    className="w-full"
+                    buttonClassName="w-full bg-emerald-50/50 border border-emerald-100 hover:border-emerald-300 focus:border-emerald-500 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-sm text-gray-900 shadow-sm"
+                    options={[
+                      { value: "", label: "-- Choose Existing Product or Combo --" },
+                      ...productsList.map((p, index) => ({
+                        value: index,
+                        label: `${p.productId ? `[${p.productId}] ` : ""}${p.name} (${p.type})`,
+                      })),
+                    ]}
+                  />
                 </div>
               )}
 

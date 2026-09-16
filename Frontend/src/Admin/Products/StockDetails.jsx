@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as pdfjs from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+import CustomSelect from "../Common/CustomSelect";
 
 // Set worker for PDF.js using local worker from node_modules (Vite way)
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
@@ -449,20 +450,23 @@ const StockDetail = () => {
                 <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                    <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Select Catalog Item *</label>
-                       <select
-                         name="productId"
-                         value={form.productId}
-                         onChange={handleProductIdChange}
-                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
-                         required
-                       >
-                         <option value="">Choose a Product ID</option>
-                         {liveStocks.map((item) => (
-                           <option key={item.id} value={item.productId}>
-                             {item.productId} — {item.name}
-                           </option>
-                         ))}
-                       </select>
+                       <CustomSelect
+                          name="productId"
+                          value={form.productId}
+                          onChange={handleProductIdChange}
+                          placeholder="Choose a Product ID"
+                          searchable={true}
+                          className="w-full"
+                          buttonClassName="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
+                          options={[
+                            { value: "", label: "Choose a Product ID" },
+                            ...liveStocks.map((item) => ({
+                              value: item.productId,
+                              label: `${item.productId} — ${item.name}`,
+                            })),
+                          ]}
+                          required
+                        />
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -512,18 +516,23 @@ const StockDetail = () => {
                        </div>
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Reference Invoice *</label>
-                          <select
+                          <CustomSelect
                             name="invoiceNumber"
                             value={form.invoiceNumber}
                             onChange={handleChange}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm cursor-pointer"
+                            placeholder="Select Invoice"
+                            searchable={true}
+                            className="w-full"
+                            buttonClassName="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
+                            options={[
+                              { value: "", label: "Select Invoice" },
+                              ...invoiceNumbers.map((inv) => ({
+                                value: inv.invoiceNo,
+                                label: inv.invoiceNo,
+                              })),
+                            ]}
                             required
-                          >
-                            <option value="">Select Invoice</option>
-                            {invoiceNumbers.map((inv) => (
-                              <option key={inv.id} value={inv.invoiceNo}>{inv.invoiceNo}</option>
-                            ))}
-                          </select>
+                          />
                        </div>
                    </div>
 
@@ -778,17 +787,21 @@ const StockDetail = () => {
 
                         <div className="space-y-2">
                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Reference Invoice for this Batch *</label>
-                           <select
+                           <CustomSelect
                              value={importInvoice}
                              onChange={(e) => setImportInvoice(e.target.value)}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-indigo-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
-                             required
-                           >
-                             <option value="">Select Invoice</option>
-                             {invoiceNumbers.map((inv) => (
-                               <option key={inv.id} value={inv.invoiceNo}>{inv.invoiceNo}</option>
-                             ))}
-                           </select>
+                             searchable={true}
+                             placeholder="Select Invoice"
+                             className="w-full"
+                             buttonClassName="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
+                             options={[
+                               { value: "", label: "Select Invoice" },
+                               ...invoiceNumbers.map((inv) => ({
+                                 value: inv.invoiceNo,
+                                 label: inv.invoiceNo,
+                               })),
+                             ]}
+                           />
                         </div>
 
                         <button

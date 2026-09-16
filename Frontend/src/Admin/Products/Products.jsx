@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -265,8 +266,35 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               </div>
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="">Select Category</option>{categories.map((c) => (<option key={c.id} value={c.cname}>{c.cname}</option>))}</select></div>
-                  <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category *</label>
+                    <CustomSelect
+                      value={form.category}
+                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      placeholder="Select Category"
+                      className="w-full"
+                      buttonClassName="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"
+                      options={[
+                        { value: "", label: "Select Category" },
+                        ...categories.map((c) => ({ value: c.cname, label: c.cname })),
+                      ]}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label>
+                    <CustomSelect
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })}
+                      placeholder="Status"
+                      className="w-full"
+                      buttonClassName="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-6 py-4 outline-none font-black text-emerald-800 shadow-sm"
+                      options={[
+                        { value: "Active", label: "Active" },
+                        { value: "Inactive", label: "Inactive" },
+                      ]}
+                    />
+                  </div>
                 </div>
                 <div>
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
@@ -567,7 +595,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-amber-800 shadow-sm text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                    <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><CustomSelect value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full" buttonClassName="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-4 py-2.5 outline-none font-black text-emerald-800 shadow-sm text-sm" options={[{ value: "Active", label: "Active" }, { value: "Inactive", label: "Inactive" }]} /></div>
                     <div className="hidden"></div>
                   </div>
                   <div>
@@ -678,7 +706,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                     <div className="flex-1 relative">
                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
                       <div className="relative">
-                        <select 
+                        <CustomSelect 
                           value={item.name} 
                           onChange={(e) => { 
                             const val = e.target.value;
@@ -695,17 +723,19 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                             }
                             setForm({ ...form, comboItems: u }); 
                           }} 
-                          className="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs appearance-none pr-6"
-                        >
-                          <option value="">Choose Existing Product</option>
-                          {products.map((p) => (
-                            <option key={p.id} value={p.name}>
-                              {p.name} — {p.productId}
-                            </option>
-                          ))}
-                          <option value="custom">-- Custom Item --</option>
-                        </select>
-                        <MdKeyboardArrowDown className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                          className="w-full"
+                          buttonClassName="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                          placeholder="Choose Existing Product"
+                          searchable={true}
+                          options={[
+                            { value: "", label: "Choose Existing Product" },
+                            ...products.map((p) => ({
+                              value: p.name,
+                              label: `${p.name} — ${p.productId}`,
+                            })),
+                            { value: "custom", label: "-- Custom Item --" },
+                          ]}
+                        />
                       </div>
                     </div>
                     <div className="w-30 border-l border-gray-100 pl-5 flex flex-col">
@@ -717,21 +747,21 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         if (variants.length > 0) {
                           return (
                             <div className="relative">
-                              <select 
+                              <CustomSelect 
                                 value={item.weight}
                                 onChange={(e) => {
                                   const u = [...form.comboItems];
                                   u[i].weight = e.target.value;
                                   setForm({ ...form, comboItems: u });
                                 }}
-                                className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs appearance-none pr-6"
-                              >
-                                {!item.weight && <option value="">Select</option>}
-                                {variants.map((v, idx) => (
-                                  <option key={idx} value={v.weight}>{v.weight}</option>
-                                ))}
-                              </select>
-                              <MdKeyboardArrowDown className="absolute right-0 top-1/2 -translate-y-1/2 text-blue-400 pointer-events-none" size={14} />
+                                className="w-full"
+                                buttonClassName="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                                placeholder="Select"
+                                options={variants.map((v) => ({
+                                  value: v.weight,
+                                  label: v.weight,
+                                }))}
+                              />
                             </div>
                           );
                         }

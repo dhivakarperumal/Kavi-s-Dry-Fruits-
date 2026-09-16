@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import api from "../../services/api";
@@ -181,7 +182,7 @@ const BannerManagement = () => {
                     <div><p className="text-xs text-gray-400 font-medium">Hero Section</p><h3 className="text-3xl font-black text-slate-800 leading-none my-0.5">{heroBanners.toLocaleString()}</h3><p className="text-[10px] text-gray-400">Primary page banners</p></div>
                 </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div className="relative z-20 bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div className="relative w-full xl:max-w-md">
                     <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
@@ -193,20 +194,31 @@ const BannerManagement = () => {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="relative">
-                        <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={15} />
-                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="appearance-none pl-9 pr-8 py-2.5 w-full sm:w-32 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#4b0b78]">
-                            <option value="all">All Types</option>
-                            <option value="hero">Hero</option>
-                            <option value="offer">Offers</option>
-                        </select>
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none">▼</span>
+                    <div className="relative w-full sm:w-36">
+                        <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={15} />
+                        <CustomSelect
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            className="w-full"
+                            buttonClassName="pl-9 pr-8 py-2.5 w-full bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none hover:border-emerald-500 transition-colors shadow-sm"
+                            options={[
+                                { value: 'all', label: 'All Types' },
+                                { value: 'hero', label: 'Hero' },
+                                { value: 'offer', label: 'Offers' },
+                            ]}
+                        />
                     </div>
-                    <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)} className="appearance-none px-4 py-2.5 w-full sm:w-32 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#4b0b78]">
-                        <option value="all">All Status</option>
-                        <option value="active">Published</option>
-                        <option value="inactive">Draft</option>
-                    </select>
+                    <CustomSelect
+                        value={activeFilter}
+                        onChange={(e) => setActiveFilter(e.target.value)}
+                        className="w-full sm:w-36"
+                        buttonClassName="px-4 py-2.5 w-full bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none hover:border-emerald-500 transition-colors shadow-sm"
+                        options={[
+                            { value: 'all', label: 'All Status' },
+                            { value: 'active', label: 'Published' },
+                            { value: 'inactive', label: 'Draft' },
+                        ]}
+                    />
                     <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
                         <button type="button" onClick={() => setViewMode("table")} className={`p-2 rounded-md transition-colors ${viewMode === "table" ? "bg-white text-[#4b0b78] shadow-sm" : "text-gray-500 hover:text-[#4b0b78]"}`} aria-label="Table mode" title="Table mode"><FiList size={16} /></button>
                         <button type="button" onClick={() => setViewMode("card")} className={`p-2 rounded-md transition-colors ${viewMode === "card" ? "bg-white text-[#4b0b78] shadow-sm" : "text-gray-500 hover:text-[#4b0b78]"}`} aria-label="Card mode" title="Card mode"><FiGrid size={16} /></button>
@@ -462,34 +474,30 @@ const BannerManagement = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Target Section</label>
-                                        <div className="grid grid-cols-2 gap-3 p-1.5 bg-gray-50 rounded-2xl border border-gray-100">
-                                            <button
-                                                type="button"
-                                                onClick={() => setCurrentBanner({ ...currentBanner, type: 'hero' })}
-                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${currentBanner.type === 'hero' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:bg-white/50'}`}
-                                            >
-                                                Hero Sec
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setCurrentBanner({ ...currentBanner, type: 'offer' })}
-                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${currentBanner.type === 'offer' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-400 hover:bg-white/50'}`}
-                                            >
-                                                Offers
-                                            </button>
-                                        </div>
+                                        <CustomSelect
+                                            value={currentBanner.type || 'hero'}
+                                            onChange={(e) => setCurrentBanner({ ...currentBanner, type: e.target.value })}
+                                            className="w-full"
+                                            buttonClassName="w-full px-6 py-4 bg-gray-50/50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-emerald-500/20 text-slate-800 font-bold shadow-inner text-sm"
+                                            options={[
+                                                { value: 'hero', label: 'Hero Section' },
+                                                { value: 'offer', label: 'Offers Section' },
+                                            ]}
+                                        />
                                     </div>
 
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Visibility</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCurrentBanner({ ...currentBanner, active: !currentBanner.active })}
-                                            className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 flex items-center justify-center gap-3 ${currentBanner.active ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-gray-50 text-gray-400 border-transparent'}`}
-                                        >
-                                            <div className={`w-2 h-2 rounded-full ${currentBanner.active ? 'bg-indigo-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                            {currentBanner.active ? 'Published on Website' : 'Held as Draft'}
-                                        </button>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Visibility Status</label>
+                                        <CustomSelect
+                                            value={currentBanner.active ? 'active' : 'inactive'}
+                                            onChange={(e) => setCurrentBanner({ ...currentBanner, active: e.target.value === 'active' })}
+                                            className="w-full"
+                                            buttonClassName="w-full px-6 py-4 bg-gray-50/50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-emerald-500/20 text-slate-800 font-bold shadow-inner text-sm"
+                                            options={[
+                                                { value: 'active', label: 'Published on Website' },
+                                                { value: 'inactive', label: 'Held as Draft' },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
                             </div>

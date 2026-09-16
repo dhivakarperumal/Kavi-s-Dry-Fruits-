@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../services/api";
 import { FaPrint, FaEye, FaSearch, FaTable, FaThLarge } from "react-icons/fa";
@@ -355,7 +356,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
 
   return (
     <div className="p-4 sm:p-8  min-h-screen">
-      <div className="mb-8">
+      <div className="relative z-20 mb-8">
        
 
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
@@ -373,34 +374,38 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
           
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto mt-4 lg:mt-0">
-            <select
+            <CustomSelect
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-            >
-              <option value="All">All</option>
-              <option value="Today">Today's Log</option>
-              <option value="This Week">Weekly View</option>
-              <option value="This Month">Monthly View</option>
-              <option value="Custom">Custom Range</option>
-            </select>
+              className="w-44"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-500/50 transition-colors"
+              options={[
+                { value: "All", label: "All" },
+                { value: "Today", label: "Today's Log" },
+                { value: "This Week", label: "Weekly View" },
+                { value: "This Month", label: "Monthly View" },
+                { value: "Custom", label: "Custom Range" },
+              ]}
+            />
 
-            <select
+            <CustomSelect
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-            >
-              <option value="All">All Status</option>
-              <option value="Order Placed">Placed</option>
-              <option value="Order Confirmed">Confirmed</option>
-              <option value="Processing">Processing</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Out for Delivery">Out for Delivery</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Returned">Returned</option>
-              <option value="Refunded">Refunded</option>
-            </select>
+              className="w-44"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-emerald-500/50 transition-colors"
+              options={[
+                { value: "All", label: "All Status" },
+                { value: "Order Placed", label: "Placed" },
+                { value: "Order Confirmed", label: "Confirmed" },
+                { value: "Processing", label: "Processing" },
+                { value: "Shipped", label: "Shipped" },
+                { value: "Out for Delivery", label: "Out for Delivery" },
+                { value: "Delivered", label: "Delivered" },
+                { value: "Cancelled", label: "Cancelled" },
+                { value: "Returned", label: "Returned" },
+                { value: "Refunded", label: "Refunded" },
+              ]}
+            />
 
       
             
@@ -479,22 +484,17 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                         <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
                       </td>
                       <td className="px-8 py-6 text-center">
-                        <select
+                        <CustomSelect
                           value={order.orderStatus}
                           onChange={(e) => {
                             const v = e.target.value;
                             if (v === "Cancelled") setShowCancelInput(order.id);
                             else handleStatusUpdate(order.id, v);
                           }}
-                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer outline-none ${
-                            order.orderStatus === 'Order Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' :
-                            order.orderStatus === 'Delivered' ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 
-                            'bg-slate-50 border-slate-100 text-slate-600'}`}
-                        >
-                          {getStatusOptions(order.orderStatus).map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
+                          badgeVariant={true}
+                          className="w-40"
+                          options={getStatusOptions(order.orderStatus)}
+                        />
                         {showCancelInput === order.id && (
                            <div className="mt-2 flex flex-col gap-2">
                               <textarea className="w-full text-xs p-2 border border-rose-100 rounded-xl bg-rose-50" placeholder="Reason..." onChange={e => setCancelReason(e.target.value)} />
@@ -567,19 +567,17 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                 </div>
 
                 <div className="pt-6 border-t border-slate-50">
-                  <select
+                  <CustomSelect
                     value={order.orderStatus}
                     onChange={(e) => {
                       const v = e.target.value;
                       if (v === "Cancelled") setShowCancelInput(order.id);
                       else handleStatusUpdate(order.id, v);
                     }}
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all appearance-none cursor-pointer"
-                  >
-                    {getStatusOptions(order.orderStatus).map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                    badgeVariant={true}
+                    className="w-full"
+                    options={getStatusOptions(order.orderStatus)}
+                  />
                   
                   {showCancelInput === order.id && (
                     <div className="mt-4 animate-in slide-in-from-top-2">
