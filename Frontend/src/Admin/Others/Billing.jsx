@@ -132,14 +132,14 @@ const Billing = () => {
                             <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 ml-4">
                                 <button
                                     onClick={() => setViewMode("table")}
-                                    className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                                    className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-[#009669] text-white shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                                     title="Table View"
                                 >
                                     <FiList size={16} />
                                 </button>
                                 <button
                                     onClick={() => setViewMode("card")}
-                                    className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                                    className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-[#009669] text-white shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                                     title="Card View"
                                 >
                                     <FiGrid size={16} />
@@ -248,7 +248,7 @@ const Billing = () => {
                     {!searchTerm && (
                         <Link
                             to="/adminpanel/billing/create"
-                            className="flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-black text-white rounded-2xl text-[10px] font-black transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest mt-4"
+                            className="flex items-center gap-2 px-8 py-4 bg-[#009669] hover:bg-[#0b7152] text-white rounded-2xl text-[10px] font-black transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest mt-4"
                         >
                             <FiPlus size={16} /> Create First Bill
                         </Link>
