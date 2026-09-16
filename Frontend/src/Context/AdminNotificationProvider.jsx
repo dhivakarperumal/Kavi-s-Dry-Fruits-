@@ -85,7 +85,7 @@ export const AdminNotificationProvider = ({ children }) => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 6);
 
     if (sound) {
-      playNotificationSound();
+      playNotificationSound(type);
     }
 
     setToasts((prev) => [
