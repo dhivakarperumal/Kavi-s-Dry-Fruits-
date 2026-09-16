@@ -22,13 +22,14 @@ const AllOrders = ({ adminData }) => {
   const [statusFilter, setStatusFilter] = useState("All");
 
   // Fetch all orders from all users
-  const fetchOrders = async () => {
-    // Use adminData if available
-    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+  const fetchOrders = async (forceApi = false) => {
+    // Use the admin snapshot for the initial render, but fetch fresh data after a mutation.
+    if (!forceApi && adminData && adminData.allOrders && adminData.allOrders.length > 0) {
       const parsedOrders = adminData.allOrders.map(o => ({
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
         date: o.created_at || o.date
       }));
       setOrders(parsedOrders);
@@ -41,6 +42,7 @@ const AllOrders = ({ adminData }) => {
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
         date: o.created_at || o.date
       }));
       setOrders(parsedOrders);
@@ -116,8 +118,13 @@ const AllOrders = ({ adminData }) => {
       }
 
       await api.put(`/orders/${id}`, data);
+      setOrders((currentOrders) => currentOrders.map((order) => (
+        order.id === id
+          ? { ...order, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
+          : order
+      )));
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : "Status updated!");
-      fetchOrders();
+      await fetchOrders(true);
       setCancelReason("");
       setShowCancelInput(null);
     } catch (err) {
@@ -165,108 +172,179 @@ const AllOrders = ({ adminData }) => {
 
   // Print Invoice
   const handlePrint = useCallback((order) => {
-     if (!order) return;
- 
-     const address = order.shippingAddress || order.client || {};
-     const items = order.cartItems || order.items || [];
- 
-     const itemsList = items
-       .map((item) => {
-        const sno= items.indexOf(item)+1;
-         const name = item.name || item.productName || "-";
-         const qty = Number(item.qty ?? item.quantity ?? 1);
-         const price = Number(item.price ?? item.unitPrice ?? 0) || 0;
-         const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
-         const unitPrice =
-           Number(item.price ?? item.unitPrice ?? (item.total && qty ? item.total / qty : 0)) || 0;
-         const lineTotal = (unitPrice * qty).toFixed(2);
-         const gst = Number(item.gst ?? 0).toFixed(2);
-         return `
-       <tr>
-          <td>${sno}</td>
-         <td>${name}</td>
-         <td>${weight}</td>
-         <td>₹${price.toFixed(2)}</td>
-         <td>${qty}</td>
-         <td>₹${gst}</td>
-         <td>₹${lineTotal}</td>
-       </tr>`;
-       })
-       .join("");
- 
-     const gstTotal = Number(order.gstAmount ?? 0);
-     const shipping = Number(order.shippingCharge ?? 0);
-     const finalAmount = Number(order.totalAmount ?? order.total ?? 0);
-     const deliveryDate = new Date(order.deliveryDate || order.date).toLocaleString();
- 
-     const printWindow = window.open("", "_blank", "width=900,height=800");
-     if (!printWindow) return alert("Please allow pop-ups to print the invoice.");
- 
-     const htmlContent = `
-       <html>
-         <head>
-           <title>Invoice ${order.orderId || order.id}</title>
-           <style>
-             body { font-family: Arial, sans-serif; padding: 24px; color: #000; }
-             h2 { text-align: center; margin-bottom: 8px; }
-             table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-              th, td { border: 2px solid #3a3838ff; padding: 8px; text-align: center; font-size: 13px; }
-             th { background-color: #f6f6f6; }
-             .summary { margin-top: 12px; font-size: 15px; float: right; }
-             .note { margin-top: 24px; font-style: italic; color: #555; text-align: center;position: absolute; bottom: 0; width: 100%; }
-             .info p { margin: 4px 0; font-size: 14px;line-height: 1.4; }
-             .top-header { text-align: right; font-size: 12px; margin-bottom: 6px; }
-             img.logo { max-width: 140px; display: block; margin: 0 auto 8px; }
-           </style>
-         </head>
-         <body>
-          <div class="top-header">Order Booking Date: ${deliveryDate}</div>
-           <img src="${logo}" alt="Logo" class="logo" />
-          
-           <h2>Kavi's Dry Fruits</h2>
-           <div class="info">
-              <p><strong>Order ID:</strong> ${order.orderId}</p>
-              <p><strong>Client Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
-              <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
-              <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
-              <p><strong>Payment Mode:</strong> ${order.paymentMethod || order.paymentMode || "-"}</p>
-              <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+    if (!order) return;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    
+    let address = order.shippingAddress || order.client || {};
+    if (typeof address === 'string') {
+      try { address = JSON.parse(address); } catch(e) { address = {}; }
+    }
+
+    const items = order.cartItems || order.items || [];
+    const itemsList = items.map((item, index) => {
+      let img = "";
+      if (item.image) img = item.image;
+      else if (item.imageUrl) img = item.imageUrl;
+      else if (item.images && item.images.length) img = item.images[0];
+      
+      if (img && !img.startsWith('http') && !img.startsWith('data:')) {
+        const cleanPath = img.replace(/\\/g, '/');
+        img = `${backendUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+      }
+      
+      const name = item.name || item.productName || "-";
+      const qty = Number(item.qty ?? item.quantity ?? 1);
+      const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
+      const unitPrice = Number(item.price ?? item.unitPrice ?? (item.total && qty ? item.total / qty : 0)) || 0;
+      const lineTotal = (unitPrice * qty).toFixed(2);
+      
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td style="text-align: left; vertical-align: middle;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              ${img ? `<img src="${img}" alt="product" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;" />` : ''}
+              <div>
+                <strong style="color: #333; font-size: 14px;">${name}</strong>
+                <div style="font-size: 11px; color: #777; margin-top: 4px;">Weight: ${weight}</div>
+              </div>
             </div>
-           <table style="margin-top:20px;">
-             <thead>
-               <tr>
-                 <th>S.No</th>
-                 <th>Product Name</th>
-                 <th>Weight</th>
-                 <th>Price</th>
-                 <th>Qty</th>
-                 
-                 <th>GST</th>
-                 <th>Total</th>
-               </tr>
-             </thead>
-             <tbody>
-               ${itemsList}
-             </tbody>
-           </table>
-           <div class="summary">
-             <p><strong>GST Total:</strong> ₹${gstTotal.toFixed(2)}</p>
-             <p><strong>Shipping Charge:</strong> ₹${shipping.toFixed(2)}</p>
-             <p><strong>Final Amount:</strong> ₹${finalAmount.toFixed(2)}</p>
-           </div>
-           <div class="note">Thank you for shopping at Kavi's Dry Fruits!
-We truly appreciate your trust in us. Enjoy your purchase, and we look forward to serving you again!</div>
-         </body>
-       </html>`;
- 
-     printWindow.document.open();
-     printWindow.document.write(htmlContent);
-     printWindow.document.close();
-     setTimeout(() => {
-       printWindow.focus();
-       printWindow.print();
-     }, 500);
-   }, []);
+          </td>
+          <td>${qty}</td>
+          <td>₹${unitPrice.toFixed(2)}</td>
+          <td>₹${lineTotal}</td>
+        </tr>`;
+    }).join("");
+
+    const shipping = Number(order.shippingCharge || 0);
+    const finalAmount = Number(order.totalAmount || order.total || 0);
+    const subtotal = finalAmount - shipping;
+    
+    const orderDate = (order.deliveryDate || order.created_at || order.date);
+    const displayDate = orderDate ? new Date(orderDate).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
+
+    const printWindow = window.open("", "_blank", "width=850,height=750");
+    if (!printWindow) return alert("Pop-ups must be allowed.");
+
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Invoice ${order.orderId || order.id}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body {
+            font-family: 'Inter', sans-serif;
+            padding: 40px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+          .logo img { max-width: 140px; }
+          .invoice-title { text-align: right; }
+          .invoice-title h1 { color: #2b5c92; font-size: 36px; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+          .invoice-title p { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
+          .divider { height: 4px; background-color: #2b5c92; margin-bottom: 40px; }
+          .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .info-block { width: 48%; }
+          .info-block h3 { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .info-block p { font-size: 13px; line-height: 1.6; margin: 4px 0; color: #444; }
+          .info-block p strong { color: #222; }
+          .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
+          .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; font-size: 13px; }
+          th { background-color: #fcfcfc; font-weight: 700; color: #333; }
+          .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
+          .summary-table { width: 300px; }
+          .summary-table div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #444; }
+          .summary-table .total { font-size: 18px; font-weight: 800; color: #222; border-top: 2px solid #eee; padding-top: 12px; margin-top: 4px; }
+          .total-val { color: #2b5c92; }
+          .footer { text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+          .footer p { font-size: 12px; color: #666; margin: 5px 0; }
+          .footer p strong { color: #333; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="${logo}" alt="Kavi's Logo" />
+          </div>
+          <div class="invoice-title">
+            <h1>INVOICE</h1>
+            <p>${order.orderId || order.id}</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+
+        <div class="info-section">
+          <div class="info-block">
+            <h3>Customer Info</h3>
+            <p><strong>Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
+            <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+            <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+            <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+            <p><strong>Country:</strong> ${address.country || "India"}</p>
+          </div>
+          <div class="info-block">
+            <h3>Order Info</h3>
+            <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
+            <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
+            <p style="margin-top:15px"><strong>Status:</strong> <span class="status-badge">${order.orderStatus || "ORDER PLACED"}</span></p>
+            <p><strong>Payment:</strong> ${order.paymentMethod || order.paymentMode || "Online Payment"}</p>
+            <p><strong>Date:</strong> ${displayDate}</p>
+          </div>
+        </div>
+
+        <div class="manifest-title">Item Manifest</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%">S No</th>
+              <th style="width: 50%; text-align: left;">Product Details</th>
+              <th style="width: 10%">Qty</th>
+              <th style="width: 15%">Price</th>
+              <th style="width: 20%">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsList}
+          </tbody>
+        </table>
+
+        <div class="summary-section">
+          <div class="summary-table">
+            <div>
+              <span>Subtotal:</span>
+              <strong>₹${subtotal.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>Shipping:</span>
+              <strong>₹${shipping.toFixed(2)}</strong>
+            </div>
+            <div class="total">
+              <span>Total Amount:</span>
+              <span class="total-val">₹${finalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>Thank you for shopping with Kavi's Dry Fruits!</strong></p>
+          <p>For any support, please contact us at kavidryfruits@gmail.com</p>
+        </div>
+      </body>
+    </html>
+    `);
+    printWindow.document.close();
+    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
+  }, []);
 
   return (
     <div className="p-4 sm:p-8  min-h-screen">

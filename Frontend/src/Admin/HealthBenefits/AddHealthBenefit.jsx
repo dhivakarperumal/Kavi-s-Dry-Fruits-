@@ -7,11 +7,12 @@ import { toast } from "react-hot-toast";
 import api from "../../services/api";
 import imageCompression from "browser-image-compression";
 
-const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
+const AddHealthBenefit = ({ editItem, onCancel, onSuccess, isModal = false }) => {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [imageFiles, setImageFiles] = useState([]);
 
   const [form, setForm] = useState({
     productId: "",
@@ -35,6 +36,7 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
         images: editItem.images || [],
         videos: editItem.videos || [{ type: "link", value: "" }],
       });
+      setImageFiles([]);
     }
   }, [editItem]);
 
@@ -95,19 +97,15 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
 
       const compressedImages = await Promise.all(
         files.map(async (file) => {
-          const compressedFile = await imageCompression(file, options);
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(compressedFile);
-            reader.onloadend = () => resolve(reader.result);
-          });
+          return imageCompression(file, options);
         })
       );
 
       setForm((prev) => ({
         ...prev,
-        images: [...prev.images, ...compressedImages],
+        images: [...prev.images, ...compressedImages.map(file => URL.createObjectURL(file))],
       }));
+      setImageFiles((prev) => [...prev, ...compressedImages]);
       toast.success("Images added successfully!", { id: toastId });
     } catch (error) {
       console.error("Image compression error:", error);
@@ -131,15 +129,11 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
     const toastId = toast.loading("Processing video file...");
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = () => {
-        const updated = [...form.videos];
-        updated[index].value = reader.result;
-        setForm({ ...form, videos: updated });
-        toast.success("Video file uploaded!", { id: toastId });
-        setLoading(false);
-      };
+      const updated = [...form.videos];
+      updated[index] = { ...updated[index], value: URL.createObjectURL(file), file };
+      setForm({ ...form, videos: updated });
+      toast.success("Video file uploaded!", { id: toastId });
+      setLoading(false);
     } catch (err) {
       toast.error("Failed to process video", { id: toastId });
       setLoading(false);
@@ -167,20 +161,33 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
     const toastId = toast.loading(editItem ? "Updating Health Benefit..." : "Saving Health Benefit...");
 
     try {
-      const dataToSave = {
-        ...form,
-        updatedAt: new Date().toISOString(),
-      };
+      const formData = new FormData();
+      formData.append("productId", form.productId);
+      formData.append("productName", form.productName);
+      formData.append("category", form.category);
+      formData.append("shortDescription", form.shortDescription);
+      formData.append("detailedDescription", form.detailedDescription);
+      formData.append("benefits", JSON.stringify(form.benefits));
+      formData.append("images", JSON.stringify(form.images.filter(image => !image.startsWith("blob:"))));
+      formData.append("videos", JSON.stringify(form.videos.map(({ file, ...video }, index) => ({
+        ...video,
+        ...(file ? { fileIndex: form.videos.slice(0, index).filter(videoItem => videoItem.file).length } : {})
+      }))));
+      formData.append("howToEat", form.howToEat);
+      formData.append("howToStore", form.howToStore);
+      formData.append("updatedAt", new Date().toISOString());
+      imageFiles.forEach(file => formData.append("images", file));
+      form.videos.forEach(video => {
+        if (video.file) formData.append("videoFiles", video.file);
+      });
 
       if (editItem) {
-        await api.put(`/health-benefits/${editItem.id}`, dataToSave);
+        await api.put(`/health-benefits/${editItem.id}`, formData);
         toast.success("Health Benefit updated successfully!", { id: toastId });
         if (onSuccess) onSuccess();
       } else {
-        await api.post("/health-benefits", {
-          ...dataToSave,
-          createdAt: new Date().toISOString(),
-        });
+        formData.append("createdAt", new Date().toISOString());
+        await api.post("/health-benefits", formData);
         toast.success("Health Benefit saved successfully!", { id: toastId });
         if (onSuccess) {
           onSuccess();
@@ -215,7 +222,7 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess }) => {
   );
 
   return (
-    <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-emerald-100 animate-in fade-in duration-500 max-w-6xl mx-auto my-8">
+    <div className={`bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-emerald-100 animate-in fade-in duration-500 max-w-6xl mx-auto ${isModal ? "my-0" : "my-8"}`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-green-400 p-8 text-white relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>

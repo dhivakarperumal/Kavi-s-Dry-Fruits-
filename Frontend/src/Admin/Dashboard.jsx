@@ -231,7 +231,13 @@ const Dashboard = ({ adminData, setActiveSection }) => {
       setTodayOrders(todayOrdersList);
     };
 
-    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
+    if (
+      adminData &&
+      Array.isArray(adminData.allUsers) &&
+      Array.isArray(adminData.allProducts) &&
+      Array.isArray(adminData.allCombos) &&
+      Array.isArray(adminData.allOrders)
+    ) {
       processData(adminData.allUsers || [], adminData.allProducts || [], adminData.allCombos || [], adminData.allOrders || []);
     } else {
       // Fallback if no data passed

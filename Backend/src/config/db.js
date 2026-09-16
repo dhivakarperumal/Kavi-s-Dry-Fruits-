@@ -45,16 +45,17 @@ const initializeDatabase = async () => {
   // Column Sync Logic - handles types with precision like DECIMAL(10, 8), VARCHAR(255)
   const syncColumns = async (table, definitionSql) => {
     try {
-      // Regex captures: columnName + full type (including parentheses with commas/spaces inside)
-      const columnMatches = definitionSql.matchAll(/^\s*([a-zA-Z0-9_]+)\s+([a-zA-Z0-9_]+(?:\([^)]+\))?)/gm);
+      // Regex captures the full column definition, including DEFAULT and ON UPDATE clauses.
+      const columnMatches = definitionSql.matchAll(/^\s*([a-zA-Z0-9_]+)\s+(.+?)(?=\s*,\s*$|\s*$)/gm);
       for (const match of columnMatches) {
         const columnName = match[1];
-        const columnType = match[2]; // e.g. DECIMAL(10, 8) or VARCHAR(255) or INT
+        const columnDefinition = match[2].trim();
+        const columnType = columnDefinition.replace(/\s+(?:NOT NULL|NULL|DEFAULT|AUTO_INCREMENT|UNIQUE|PRIMARY|KEY|COMMENT|ON UPDATE|REFERENCES).*$/i, '').trim();
         if (['CREATE', 'TABLE', 'IF', 'NOT', 'EXISTS', 'PRIMARY', 'UNIQUE', 'DEFAULT', 'ENGINE', 'CHARSET', 'KEY', 'CONSTRAINT', 'FOREIGN', 'INDEX'].includes(columnName.toUpperCase())) continue;
         const [cols] = await promisePool.query(`SHOW COLUMNS FROM \`${table}\` LIKE ?`, [columnName]);
         if (cols.length === 0) {
-          console.log(`[Sync] Adding missing column: ${table}.${columnName} (${columnType})`);
-          await promisePool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${columnName}\` ${columnType}`);
+          console.log(`[Sync] Adding missing column: ${table}.${columnName} (${columnDefinition})`);
+          await promisePool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
         }
       }
     } catch (err) { console.warn(`[Sync-Warn] ${table} sync failed:`, err.message); }
@@ -75,6 +76,7 @@ const initializeDatabase = async () => {
   await syncColumns('stock_history', tableDefinitions.stock_history);
   await syncColumns('dealers', tableDefinitions.dealers);
   await syncColumns('invoices', tableDefinitions.invoices);
+  await syncColumns('banners', tableDefinitions.banners);
   await syncColumns('user_addresses', tableDefinitions.user_addresses);
   await syncColumns('health_benefits', tableDefinitions.health_benefits);
   await syncColumns('seo_keywords', tableDefinitions.seo_keywords);

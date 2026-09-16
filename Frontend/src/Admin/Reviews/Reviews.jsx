@@ -11,15 +11,21 @@ const Reviews = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("card"); // "table" or "card"
   const [showModal, setShowModal] = useState(false);
+  const [products, setProducts] = useState([]);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 10;
   
   const [formData, setFormData] = useState({
+    productId: "",
+    productName: "",
     userName: "",
     comment: "",
+    rating: 5,
     image: null,
     selected: false,
   });
@@ -46,8 +52,32 @@ const Reviews = () => {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const [productsResponse, combosResponse] = await Promise.all([
+        api.get("/products"),
+        api.get("/combos")
+      ]);
+      const productsList = (productsResponse.data || []).map(product => ({
+        ...product,
+        itemType: "Product",
+        selectorId: product.productId || product.id
+      }));
+      const combosList = (combosResponse.data || []).map(combo => ({
+        ...combo,
+        itemType: "Combo",
+        selectorId: combo.productId || combo.id
+      }));
+      setProducts([...productsList, ...combosList]);
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      toast.error("Failed to load products.");
+    }
+  };
+
   useEffect(() => {
     fetchReviews();
+    fetchProducts();
   }, []);
 
   useEffect(() => {
@@ -92,7 +122,14 @@ const Reviews = () => {
     });
 
     setFilteredReviews(temp);
+    setCurrentPage(1);
   }, [searchQuery, timeFilter, customFrom, customTo, reviews]);
+
+  const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
+  const currentReviews = filteredReviews.slice(
+    (currentPage - 1) * reviewsPerPage,
+    currentPage * reviewsPerPage
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -159,13 +196,13 @@ const Reviews = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingReview(null);
-    setFormData({ userName: "", comment: "", image: null, selected: false });
+    setFormData({ productId: "", productName: "", userName: "", comment: "", rating: 5, image: null, selected: false });
   };
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    if (!formData.userName || !formData.comment) {
-      toast.error("Please fill in all fields");
+    if (!formData.productId || !formData.userName || !formData.comment || !formData.rating) {
+      toast.error("Please select a product, rating, name, and review");
       return;
     }
 
@@ -201,8 +238,11 @@ const Reviews = () => {
   const handleEditReview = (review) => {
     setEditingReview(review);
     setFormData({ 
+      productId: review.productId || "",
+      productName: review.productName || "",
       userName: review.userName, 
       comment: review.comment, 
+      rating: Number(review.rating) || 5,
       image: review.image,
       selected: review.selected 
     });
@@ -222,32 +262,7 @@ const Reviews = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto min-h-screen bg-transparent">
-      <button
-        onClick={() => navigate('/adminpanel/settings')}
-        className="mb-6 flex items-center gap-2 text-slate-600 hover:text-emerald-600 transition-colors font-semibold"
-      >
-        <FiArrowLeft />
-        <span>Back to Settings</span>
-      </button>
-
-      {/* Header */}
-      <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-4xl font-black text-gray-900 tracking-tight">Reviews Wall</h2>
-          <p className="text-sm text-green-600 font-black uppercase tracking-widest mt-1 flex items-center gap-2">
-            <span className="w-8 h-1 bg-green-500 rounded-full"></span>
-            Customer Testimonials
-          </p>
-        </div>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-3 px-8 py-4 bg-green-600 text-white font-black uppercase tracking-widest rounded-[2rem] hover:bg-green-700 shadow-xl shadow-green-100 transition-all hover:-translate-y-1 active:translate-y-0 border-b-4 border-green-800"
-        >
-          <FiPlus className="text-xl" />
-          Add Feedback
-        </button>
-      </div>
+     
 
       {/* Main Content Area */}
       <div className="animate-in fade-in duration-500">
@@ -310,6 +325,13 @@ const Reviews = () => {
               <option value="custom">📅 Range Pick</option>
             </select>
           </div>
+          <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-3 px-6 py-3 bg-[#009669] text-white font-black uppercase tracking-widest rounded-[2rem] hover:bg-[#007a55] shadow-xl shadow-emerald-100 transition-all hover:-translate-y-1 active:translate-y-0 border-b-4 border-[#006b4b]"
+        >
+          <FiPlus className="text-xl" />
+          Add Feedback
+        </button>
         </div>
 
         {loading ? (
@@ -338,7 +360,7 @@ const Reviews = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
-                  {filteredReviews.map((review, index) => (
+                  {currentReviews.map((review, index) => (
                     <tr key={review.id} className="hover:bg-green-50/40 transition-colors group">
                       <td className="p-6 text-gray-500 font-black">{index + 1}</td>
                       <td className="p-6">
@@ -364,7 +386,7 @@ const Reviews = () => {
                       <td className="p-6">
                         <div onClick={() => toggleFeatured(review)} className="cursor-pointer">
                           {review.selected ? (
-                            <span className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-yellow-950 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-yellow-500 shadow-sm">⭐ Featured</span>
+                            <span className="flex items-center gap-2 px-4 py-2 bg-[#009669] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-[#007a55] shadow-sm">⭐ Featured</span>
                           ) : (
                             <span className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 border border-transparent hover:border-gray-300">Standard</span>
                           )}
@@ -387,7 +409,7 @@ const Reviews = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredReviews.map((review) => (
+            {currentReviews.map((review) => (
               <div key={review.id} className="bg-white p-8 rounded-[3rem] shadow-sm border border-gray-100 flex flex-col justify-between group hover:shadow-2xl hover:shadow-green-100 transition-all duration-300 h-full">
                 <div>
                   <div className="flex justify-between items-start mb-8">
@@ -398,6 +420,7 @@ const Reviews = () => {
                       <div>
                         <p className="text-lg font-black text-gray-900 tracking-tight">{review.userName}</p>
                         <p className="text-[10px] text-green-600 font-black uppercase tracking-widest">Client Feedback</p>
+                        <p className="text-[10px] text-[#009669] font-black uppercase tracking-widest mt-1">{review.productName || review.productId || "Product Review"}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -415,6 +438,9 @@ const Reviews = () => {
                   <div className="bg-green-50/30 p-6 rounded-3xl italic text-gray-900 font-medium text-sm leading-relaxed mb-6 border border-green-50 transition-colors shadow-inner relative">
                     <span className="absolute -top-3 left-4 text-4xl text-green-200 opacity-50">“</span>
                     "{review.comment}"
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-50 text-[#009669] rounded-xl text-xs font-black">
+                    Rating: {Number(review.rating) || 0}/5
                   </div>
                 </div>
 
@@ -436,6 +462,36 @@ const Reviews = () => {
           </div>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Showing {(currentPage - 1) * reviewsPerPage + 1}-{Math.min(currentPage * reviewsPerPage, filteredReviews.length)} of {filteredReviews.length} reviews
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-black text-gray-500 hover:text-[#009669] disabled:opacity-30"
+            >Previous</button>
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+              <button
+                type="button"
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 rounded-xl text-xs font-black ${currentPage === page ? "bg-[#009669] text-white" : "border border-gray-200 text-gray-500 hover:text-[#009669]"}`}
+              >{page}</button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-black text-gray-500 hover:text-[#009669] disabled:opacity-30"
+            >Next</button>
+          </div>
+        </div>
+      )}
 
       {/* Modal / Popup Form */}
       {showModal && (
@@ -459,6 +515,23 @@ const Reviews = () => {
 
                 <div className="space-y-4">
                   <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Product</label>
+                    <select
+                      required
+                      value={formData.productId}
+                      onChange={(e) => {
+                        const product = products.find(item => String(item.selectorId) === e.target.value);
+                        setFormData(prev => ({ ...prev, productId: e.target.value, productName: product?.name || "" }));
+                      }}
+                      className="w-full bg-gray-50 border-2 border-transparent focus:border-green-500 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-gray-900 shadow-inner"
+                    >
+                      <option value="">Select product</option>
+                      {products.map(product => (
+                        <option key={`${product.itemType}-${product.selectorId}`} value={product.selectorId}>{product.name} ({product.itemType})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Customer Name</label>
                     <input
                       type="text"
@@ -469,6 +542,23 @@ const Reviews = () => {
                       className="w-full bg-gray-50 border-2 border-transparent focus:border-green-500 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-gray-900 shadow-inner"
                       placeholder="e.g. Enter Name"
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Rating</label>
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-2xl px-5 py-3.5 shadow-inner">
+                      {[1, 2, 3, 4, 5].map(ratingValue => (
+                        <button
+                          key={ratingValue}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, rating: ratingValue }))}
+                          aria-label={`${ratingValue} out of 5 rating`}
+                          className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${ratingValue <= formData.rating ? "bg-[#009669] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-200 hover:border-[#009669] hover:text-[#009669]"}`}
+                        >
+                          {ratingValue}
+                        </button>
+                      ))}
+                      <span className="ml-2 text-xs font-black text-gray-500">{formData.rating}/5</span>
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Testimonial</label>
@@ -523,7 +613,7 @@ const Reviews = () => {
                 <div className="flex gap-4 pt-8">
                   <button
                     type="submit"
-                    className="flex-1 py-5 bg-green-600 text-white font-black uppercase tracking-widest rounded-3xl hover:bg-green-700 shadow-xl shadow-green-100 transition-all border-b-4 border-green-800"
+                    className="flex-1 py-3 bg-[#009669] text-white font-black uppercase tracking-widest rounded-3xl hover:bg-[#007a55] shadow-xl shadow-emerald-100 transition-all border-b-4 border-[#006b4b]"
                   >
                     {editingReview ? "Save Changes" : "Publish Review"}
                   </button>

@@ -45,9 +45,9 @@ const Allproduct = ({ adminData }) => {
     }
   };
 
-  const fetchItems = async () => {
+  const fetchItems = async (forceRefresh = false) => {
     // Use adminData if available
-    if (adminData && adminData.allProducts && adminData.allProducts.length > 0) {
+    if (!forceRefresh && adminData && adminData.allProducts && adminData.allProducts.length > 0) {
       const products = adminData.allProducts || [];
       const combos = adminData.allCombos || [];
 
@@ -151,7 +151,15 @@ const Allproduct = ({ adminData }) => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchItems(); }, [adminData]);
+  useEffect(() => {
+    const hasCachedData =
+      adminData &&
+      Array.isArray(adminData.allProducts) &&
+      Array.isArray(adminData.allCombos);
+
+    if (hasCachedData) fetchItems(false);
+    fetchItems(true);
+  }, [adminData]);
 
   useEffect(() => {
     let filtered = [...items];

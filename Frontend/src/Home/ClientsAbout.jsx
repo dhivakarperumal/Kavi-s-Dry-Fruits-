@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { db } from "../firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { Helmet } from "react-helmet";
+import api from "../services/api";
 
 
 const ClientsAbout = () => {
@@ -12,14 +11,8 @@ const ClientsAbout = () => {
   // Fetch only selected reviews from Firestore
   const fetchReviews = async () => {
     try {
-      const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      const fetched = snapshot.docs
-        .map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }))
-        .filter((doc) => doc.selected === true); 
+      const response = await api.get("/reviews");
+      const fetched = (response.data || []).filter((item) => item.selected === true || item.selected === 1);
       setReviews(fetched);
     } catch (err) {
       console.error("Error fetching reviews:", err);

@@ -26,6 +26,7 @@ const seoRoutes = require('./src/routers/seoRoutes');
 const settingsRoutes = require('./src/routers/settingsRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const contactFormRoutes = require('./src/routers/contactFormRoutes');
+const bannerRoutes = require('./src/routers/bannerRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -56,6 +57,7 @@ app.use('/api/seo', seoRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact-form', contactFormRoutes);
+app.use('/api/banners', bannerRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -77,6 +79,28 @@ app.get('/', (req, res) => {
 })();
 
 // Start Server
-app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust appropriately for production
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
+
+// Attach io to app to use in controllers
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -10,6 +10,7 @@ import Subscribe from './Subscribe'
 import { Helmet } from "react-helmet";
 import imagePreloadManager from '../services/imagePreloadManager';
 import { useStore } from '../Context/StoreContext';
+// import OfferBanner from './OfferBanner';
 
 const Home = () => {
   const { allProducts } = useStore();
@@ -67,7 +68,8 @@ const Home = () => {
         <Hero/>
         <Category/>
         <FestiveGiftPack/> 
-        <PopularProduct/>              
+        <PopularProduct/>
+        {/* <OfferBanner/> */}
         <NewArrived/>
         <ClientsAbout/>        
         <Subscribe/>

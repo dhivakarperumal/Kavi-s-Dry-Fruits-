@@ -4,6 +4,8 @@ import api from "../services/api";
 import { FaCheckCircle, FaBox, FaTruck, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import PageHeader from "../Component/PageHeader";
 
+import { io } from "socket.io-client";
+
 const OrderTracking = ({ orderId: propOrderId }) => {
   const { orderId: paramOrderId } = useParams();
   const orderId = propOrderId || paramOrderId;
@@ -31,8 +33,24 @@ const OrderTracking = ({ orderId: propOrderId }) => {
 
   useEffect(() => {
     fetchTrackingData();
-    const interval = setInterval(fetchTrackingData, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchTrackingData, 15000); // reduced polling frequency
+    
+    // Listen for real-time updates
+    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    socket.on('orderStatusUpdated', (data) => {
+      if (data.orderId === orderId) {
+        fetchTrackingData();
+      }
+    });
+
+    socket.on('connect', () => {
+      fetchTrackingData(); // Sync on reconnect
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, [orderId]);
 
   if (loading) return <div className="p-10 text-center">Loading Tracking...</div>;

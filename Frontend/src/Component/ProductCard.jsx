@@ -42,6 +42,8 @@ const ProductCard = React.memo(({
     if (mrp === 0) mrp = offerPrice; // Set MRP if not set
   }
 
+  const formatPrice = (value) => `₹${Number(value || 0).toFixed(2)}`;
+
   const avgRating = product.rating || 4.5;
 
   const handleAddToFav = (e) => {
@@ -109,9 +111,9 @@ const ProductCard = React.memo(({
       <p className="text-center text-gray-600 text-sm mb-2">
         MRP:{" "}
         <span className="line-through text-gray-400">
-          ₹{mrp}
+          {formatPrice(mrp)}
         </span>{" "}
-        <span className="font-bold text-green-700 text-lg">₹{offerPrice}</span>
+        <span className="font-bold text-green-700 text-lg">{formatPrice(finalPrice)}</span>
       </p>
       <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
       <div className="flex justify-between items-center mt-auto px-1">

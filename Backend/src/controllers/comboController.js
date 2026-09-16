@@ -1,14 +1,21 @@
 const db = require('../config/db');
 
+const parseJson = (value, fallback) => {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch (_error) { return fallback; }
+};
+const uploadedImages = (req) => (req.files || []).map(file => `${req.protocol}://${req.get('host')}/uploads/combos/${file.filename}`);
+
 exports.getCombos = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM combos ORDER BY created_at DESC');
     const combos = rows.map(row => ({
       ...row,
-      images: JSON.parse(row.images || '[]'),
-      comboItems: JSON.parse(row.comboItems || '[]'),
-      healthBenefits: JSON.parse(row.healthBenefits || '[]'),
-      comboDetails: JSON.parse(row.comboDetails || '{}'),
+      images: parseJson(row.images, []),
+      comboItems: parseJson(row.comboItems, []),
+      healthBenefits: parseJson(row.healthBenefits, []),
+      comboDetails: parseJson(row.comboDetails, {}),
     }));
     res.json(combos);
   } catch (error) {
@@ -25,6 +32,8 @@ exports.addCombo = async (req, res) => {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
       images, comboItems, comboDetails, totalStock, status
     } = req.body;
+    const parsedComboItems = parseJson(comboItems, []);
+    const parsedComboDetails = parseJson(comboDetails, {});
 
     const [result] = await connection.query(
       `INSERT INTO combos 
@@ -32,11 +41,11 @@ exports.addCombo = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         productId, name, description, 
-        JSON.stringify(healthBenefits || []),
+        JSON.stringify(parseJson(healthBenefits, [])),
         category, rating, barcode, barcodeValue,
-        JSON.stringify(images || []),
-        JSON.stringify(comboItems || []),
-        JSON.stringify(comboDetails || {}),
+        JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
+        JSON.stringify(parseJson(comboItems, [])),
+        JSON.stringify(parseJson(comboDetails, {})),
         totalStock || 0,
         status || 'Active'
       ]
@@ -44,11 +53,11 @@ exports.addCombo = async (req, res) => {
 
     // Reduce constituent products stock
     const addedStock = Number(totalStock || 0);
-    if (addedStock > 0 && comboItems && comboItems.length > 0) {
-      const details = typeof comboDetails === 'string' ? JSON.parse(comboDetails || '{}') : (comboDetails || {});
+    if (addedStock > 0 && parsedComboItems.length > 0) {
+      const details = parsedComboDetails;
       const totalWeight = Number(details.totalWeight || 1); // avoid division by zero
 
-      for (const item of comboItems) {
+      for (const item of parsedComboItems) {
         if (item.name && item.weight) {
           const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
           let itemWeight = parseFloat(itemWeightStr) || 0;
@@ -88,6 +97,8 @@ exports.updateCombo = async (req, res) => {
       productId, name, description, healthBenefits, category, rating, barcode, barcodeValue,
       images, comboItems, comboDetails, totalStock, status
     } = req.body;
+    const parsedComboItems = parseJson(comboItems, []);
+    const parsedComboDetails = parseJson(comboDetails, {});
 
     // Get old stock to calculate delta
     const [oldRows] = await connection.query(`SELECT totalStock FROM combos WHERE id = ?`, [id]);
@@ -102,11 +113,11 @@ exports.updateCombo = async (req, res) => {
       WHERE id = ?`,
       [
         productId, name, description, 
-        JSON.stringify(healthBenefits || []),
+        JSON.stringify(parseJson(healthBenefits, [])),
         category, rating, barcode, barcodeValue,
-        JSON.stringify(images || []),
-        JSON.stringify(comboItems || []),
-        JSON.stringify(comboDetails || {}),
+        JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
+        JSON.stringify(parsedComboItems),
+        JSON.stringify(parsedComboDetails),
         totalStock || 0,
         status || 'Active',
         id
@@ -114,11 +125,11 @@ exports.updateCombo = async (req, res) => {
     );
 
     // If stock increased, reduce components
-    if (delta > 0 && comboItems && comboItems.length > 0) {
-      const details = typeof comboDetails === 'string' ? JSON.parse(comboDetails || '{}') : (comboDetails || {});
+    if (delta > 0 && parsedComboItems.length > 0) {
+      const details = parsedComboDetails;
       
       // Calculate real total weight from items if missing or set to 1
-      let calculatedTotalWeight = comboItems.reduce((sum, ci) => {
+      let calculatedTotalWeight = parsedComboItems.reduce((sum, ci) => {
         const wStr = String(ci.weight || "").toLowerCase();
         let w = parseFloat(wStr) || 0;
         if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
@@ -129,7 +140,7 @@ exports.updateCombo = async (req, res) => {
       const numUnitsDelta = delta / totalWeight;
 
       // SORT to prevent deadlocks
-      const sortedItems = [...comboItems].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      const sortedItems = [...parsedComboItems].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
       for (const item of sortedItems) {
         if (item.name && item.weight) {

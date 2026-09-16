@@ -191,6 +191,7 @@ const tables = {
       dealerPhoneNumber VARCHAR(20) NOT NULL,
       dealerMail VARCHAR(255),
       dealerAddress TEXT,
+      status ENUM('Active', 'Inactive') DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
@@ -246,6 +247,22 @@ const tables = {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `,
+  banners: `
+    CREATE TABLE IF NOT EXISTS banners (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255),
+      subtitle VARCHAR(255),
+      description TEXT,
+      image VARCHAR(500),
+      mobile_image VARCHAR(500),
+      link TEXT,
+      type VARCHAR(50) DEFAULT 'hero',
+      active TINYINT(1) DEFAULT 1,
+      user_id VARCHAR(100),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `,
   app_settings: `
     CREATE TABLE IF NOT EXISTS app_settings (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -266,6 +283,8 @@ const tables = {
     CREATE TABLE IF NOT EXISTS reviews (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       reviewId VARCHAR(50) NOT NULL UNIQUE,
+      productId VARCHAR(100),
+      productName VARCHAR(255),
       userId VARCHAR(36),
       orderId VARCHAR(100),
       userName VARCHAR(255) NOT NULL,

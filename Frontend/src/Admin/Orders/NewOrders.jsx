@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaChevronLeft, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
 import api from "../../services/api";
+import { io } from "socket.io-client";
 
 const NewOrders = ({ adminData }) => {
   const [orders, setOrders] = useState([]);
@@ -22,47 +23,56 @@ const NewOrders = ({ adminData }) => {
 
   const navigate = useNavigate();
 
-  const fetchOrders = async () => {
-    // If we have adminData, use it instead of showing loading
-    if (adminData && adminData.allOrders && adminData.allOrders.length > 0) {
-      const parsed = adminData.allOrders.filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-      ).map(o => ({
-        ...o,
-        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        date: o.created_at || o.date
-      }));
-      setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await api.get("/orders");
-      const parsed = (res.data || []).filter(o => 
-        o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-      ).map(o => ({
-        ...o,
-        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        date: o.created_at || o.date
-      }));
-      setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
-    } catch (error) {
-      console.error("fetchOrders error:", error);
-      toast.error("Failed to load new orders.");
-    } finally {
-      setLoading(false);
-    }
+  const applyOrders = (sourceOrders) => {
+    const parsed = sourceOrders.filter(o =>
+      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
+    ).map(o => ({
+      ...o,
+      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      date: o.created_at || o.date
+    }));
+    setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
   };
 
-  useEffect(() => {
-    fetchOrders();
-    // Only set interval if we don't have adminData or for background refresh
-    const interval = setInterval(fetchOrders, 60000);
-    return () => clearInterval(interval);
+  // Always fetch fresh from API — never rely on stale adminData cache for New Orders
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await api.get("/orders");
+      applyOrders(res.data || []);
+    } catch (error) {
+      console.error("fetchOrders error:", error);
+      // Fallback to adminData only if API fails
+      if (adminData?.allOrders?.length > 0) {
+        applyOrders(adminData.allOrders);
+      }
+    }
   }, [adminData]);
+
+  useEffect(() => {
+    // Always fetch fresh data on mount
+    fetchOrders();
+
+    // Poll every 15 seconds for sync
+    const interval = setInterval(fetchOrders, 15000);
+
+    // Listen for real-time status updates via Socket.IO
+    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    socket.on('orderStatusUpdated', () => {
+      fetchOrders(); // Re-fetch immediately when any status changes
+    });
+    socket.on('newOrder', () => {
+      fetchOrders(); // Re-fetch when new order arrives
+    });
+    socket.on('connect', () => {
+      fetchOrders(); // Sync on reconnect
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
+  }, [fetchOrders]);
 
   useEffect(() => {
     let temp = [...orders];
@@ -119,81 +129,200 @@ const NewOrders = ({ adminData }) => {
         data.docketNumber = generateDocketNumber();
       }
 
+      // ✅ Optimistic update: immediately reflect change in the UI
+      setOrders(prev => prev.map(o =>
+        o.id === id
+          ? { ...o, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
+          : o
+      ));
+
       await api.put(`/orders/${id}`, data);
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);
-      fetchOrders();
+
+      // Background sync to confirm DB state (no loading spinner)
+      fetchOrders(true);
     } catch (err) {
       toast.error("Failed to update status!");
+      // Revert optimistic update on failure
+      fetchOrders(true);
     }
   };
 
   const handlePrint = useCallback((order) => {
     if (!order) return;
-    const address = order.shippingAddress || order.client || {};
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    
+    let address = order.shippingAddress || order.client || {};
+    if (typeof address === 'string') {
+      try { address = JSON.parse(address); } catch(e) { address = {}; }
+    }
+
     const items = order.cartItems || order.items || [];
-    const itemsList = items.map((item) => {
+    const itemsList = items.map((item, index) => {
+      let img = "";
+      if (item.image) img = item.image;
+      else if (item.imageUrl) img = item.imageUrl;
+      else if (item.images && item.images.length) img = item.images[0];
+      
+      if (img && !img.startsWith('http') && !img.startsWith('data:')) {
+        const cleanPath = img.replace(/\\/g, '/');
+        img = `${backendUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+      }
+      
       const name = item.name || item.productName || "-";
       const qty = Number(item.qty ?? item.quantity ?? 1);
       const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
       const unitPrice = Number(item.price ?? item.unitPrice ?? (item.total && qty ? item.total / qty : 0)) || 0;
       const lineTotal = (unitPrice * qty).toFixed(2);
-      const gst = Number(item.gst ?? 0).toFixed(2);
-      return `<tr><td>${name}</td><td>${qty}</td><td>${weight}</td><td>₹${gst}</td><td>₹${lineTotal}</td></tr>`;
+      
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td style="text-align: left; vertical-align: middle;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              ${img ? `<img src="${img}" alt="product" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;" />` : ''}
+              <div>
+                <strong style="color: #333; font-size: 14px;">${name}</strong>
+                <div style="font-size: 11px; color: #777; margin-top: 4px;">Weight: ${weight}</div>
+              </div>
+            </div>
+          </td>
+          <td>${qty}</td>
+          <td>₹${unitPrice.toFixed(2)}</td>
+          <td>₹${lineTotal}</td>
+        </tr>`;
     }).join("");
 
-    const deliveryDate = new Date(order.date).toLocaleString('en-IN');
-    const printWindow = window.open("", "_blank");
+    const shipping = Number(order.shippingCharge || 0);
+    const finalAmount = Number(order.totalAmount || 0);
+    const subtotal = finalAmount - shipping;
+    
+    const orderDate = (order.created_at || order.date);
+    const displayDate = orderDate ? new Date(orderDate).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
+
+    const printWindow = window.open("", "_blank", "width=850,height=750");
     if (!printWindow) return alert("Pop-ups must be allowed.");
 
     printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${order.orderId}</title>
-          <style>
-            body { font-family: 'Segoe UI', sans-serif; padding: 40px; }
-            .logo { max-width: 120px; display: block; margin: 0 auto 20px; }
-            h2 { text-align: center; color: #10b981; margin-bottom: 30px; }
-            .info { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px; }
-            .info div { flex: 1; min-width: 200px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: center; }
-            th { background: #f8fafc; font-weight: 700; }
-            .summary { margin-top: 30px; text-align: right; }
-            .summary p { margin: 5px 0; font-size: 14px; }
-            .total { font-size: 18px; font-weight: 900; color: #10b981; }
-          </style>
-        </head>
-        <body>
-          <img src="${logo}" class="logo" />
-          <p style="text-align: right; font-size: 10px;">${deliveryDate}</p>
-          <h2>KAVI'S DRY FRUITS</h2>
-          <div class="info">
+    <html>
+      <head>
+        <title>Invoice ${order.orderId}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body {
+            font-family: 'Inter', sans-serif;
+            padding: 40px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+          .logo img { max-width: 140px; }
+          .invoice-title { text-align: right; }
+          .invoice-title h1 { color: #2b5c92; font-size: 36px; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+          .invoice-title p { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
+          .divider { height: 4px; background-color: #2b5c92; margin-bottom: 40px; }
+          .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .info-block { width: 48%; }
+          .info-block h3 { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .info-block p { font-size: 13px; line-height: 1.6; margin: 4px 0; color: #444; }
+          .info-block p strong { color: #222; }
+          .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
+          .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; font-size: 13px; }
+          th { background-color: #fcfcfc; font-weight: 700; color: #333; }
+          .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
+          .summary-table { width: 300px; }
+          .summary-table div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #444; }
+          .summary-table .total { font-size: 18px; font-weight: 800; color: #222; border-top: 2px solid #eee; padding-top: 12px; margin-top: 4px; }
+          .total-val { color: #2b5c92; }
+          .footer { text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+          .footer p { font-size: 12px; color: #666; margin: 5px 0; }
+          .footer p strong { color: #333; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="/images/Kavi_logo.png" alt="Kavi's Logo" />
+          </div>
+          <div class="invoice-title">
+            <h1>INVOICE</h1>
+            <p>${order.orderId}</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+
+        <div class="info-section">
+          <div class="info-block">
+            <h3>Customer Info</h3>
+            <p><strong>Name:</strong> ${order.clientName || address.fullname || "-"}</p>
+            <p><strong>Email:</strong> ${order.clientEmail || address.email || "-"}</p>
+            <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+            <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+            <p><strong>Country:</strong> ${address.country || "India"}</p>
+          </div>
+          <div class="info-block">
+            <h3>Order Info</h3>
+            <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
+            <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
+            <p style="margin-top:15px"><strong>Status:</strong> <span class="status-badge">${order.orderStatus || "ORDER PLACED"}</span></p>
+            <p><strong>Payment:</strong> ${order.paymentMethod || "Online Payment"}</p>
+            <p><strong>Date:</strong> ${displayDate}</p>
+          </div>
+        </div>
+
+        <div class="manifest-title">Item Manifest</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%">S No</th>
+              <th style="width: 50%; text-align: left;">Product Details</th>
+              <th style="width: 10%">Qty</th>
+              <th style="width: 15%">Price</th>
+              <th style="width: 20%">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsList}
+          </tbody>
+        </table>
+
+        <div class="summary-section">
+          <div class="summary-table">
             <div>
-              <p><strong>Order ID:</strong> ${order.orderId}</p>
-              <p><strong>Name:</strong> ${order.clientName || address.fullname || "-"}</p>
-              <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+              <span>Subtotal:</span>
+              <strong>₹${subtotal.toFixed(2)}</strong>
             </div>
             <div>
-              <p><strong>Payment:</strong> ${order.paymentMethod || "-"}</p>
-              <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+              <span>Shipping:</span>
+              <strong>₹${shipping.toFixed(2)}</strong>
+            </div>
+            <div class="total">
+              <span>Total Amount:</span>
+              <span class="total-val">₹${finalAmount.toFixed(2)}</span>
             </div>
           </div>
-          <table>
-            <thead><tr><th>Item</th><th>Qty</th><th>Weight</th><th>GST</th><th>Total</th></tr></thead>
-            <tbody>${itemsList}</tbody>
-          </table>
-          <div class="summary">
-            <p>GST Total: ₹${Number(order.gstAmount || 0).toFixed(2)}</p>
-            <p>Shipping: ₹${Number(order.shippingCharge || 0).toFixed(2)}</p>
-            <p class="total">Final Total: ₹${Number(order.totalAmount || 0).toFixed(2)}</p>
-          </div>
-        </body>
-      </html>
+        </div>
+
+        <div class="footer">
+          <p><strong>Thank you for shopping with Kavi's Dry Fruits!</strong></p>
+          <p>For any support, please contact us at kavidryfruits@gmail.com</p>
+        </div>
+      </body>
+    </html>
     `);
     printWindow.document.close();
-    setTimeout(() => { printWindow.focus(); printWindow.print(); }, 500);
+    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
   }, []);
 
   const statusOptions = [

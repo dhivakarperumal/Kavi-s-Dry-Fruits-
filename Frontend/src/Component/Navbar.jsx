@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
-import { FaHeart, FaUser, FaBars, FaTimes, FaArrowUp, FaBoxOpen  } from "react-icons/fa";
+import { FaHeart, FaUser, FaBars, FaTimes, FaArrowUp, FaBoxOpen, FaHome, FaStore, FaLayerGroup, FaGift, FaTags, FaFileAlt, FaChevronDown } from "react-icons/fa";
 import { RiAdminLine } from "react-icons/ri";
 import { IoCartOutline } from "react-icons/io5";
 import { FiLogIn, FiLogOut } from "react-icons/fi";
@@ -74,14 +74,6 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-green-100 shadow-sm">
-      {showScrollTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed z-50 right-6 bottom-6 p-3 bg-green1 hover:bg-primary text-white rounded-full shadow-lg cursor-pointer"
-        >
-          <FaArrowUp size={20} />
-        </button>
-      )}
 
       <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
         <Link to="/">
@@ -221,44 +213,77 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="lg:hidden pl-10 px-5 py-4 bg-white shadow text-sm space-y-4">
-          <NavLink to="/" end onClick={() => setMenuOpen(false)} className={navLinkClass}>Home</NavLink>
-          <NavLink to="/shop" onClick={() => setMenuOpen(false)} className={navLinkClass}>Shop</NavLink>
-          <div>
-            <button onClick={() => setCategoryOpen(!categoryOpen)} className="w-full text-left pb-2">Category</button>
+        <div className="lg:hidden max-h-[calc(100dvh-6.5rem)] overflow-y-auto overscroll-contain border-t border-green-100 bg-[#f7fbf7] px-4 py-4 shadow-inner">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <NavLink
+              to="/"
+              end
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+            >
+              <FaHome className="text-base" /> Home
+            </NavLink>
+            <NavLink
+              to="/shop"
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+            >
+              <FaStore className="text-base" /> Shop
+            </NavLink>
+            <div className="col-span-2 rounded-xl border border-green-100 bg-white p-3 shadow-sm">
+              <button onClick={() => setCategoryOpen(!categoryOpen)} className="flex w-full items-center justify-between font-semibold text-gray-700">
+                <span className="flex items-center gap-3"><FaLayerGroup className="text-green-700" /> Category</span>
+                <FaChevronDown className={`text-xs text-green-700 transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
+              </button>
             {categoryOpen && (
-              <div className="pl-15 space-y-3 ">
+              <div className="mt-3 grid grid-cols-2 gap-2 border-t border-green-100 pt-3">
                 {filterCategory.map((item, idx) => (
                   <Link
                     key={idx}
                     to={`/category/${item.toLowerCase().replace(/\s+/g, "")}`}
                     onClick={() => setMenuOpen(false)}
-                    className="block"
+                    className="rounded-lg bg-green-50 px-3 py-2 text-gray-700 transition-colors hover:bg-green-100 hover:text-green-800"
                   >
                     {item}
                   </Link>
                 ))}
               </div>
             )}
-          </div>
-          <NavLink to="/combos" onClick={() => setMenuOpen(false)} className={navLinkClass}>Combos</NavLink>
-          <NavLink to="/offers" onClick={() => setMenuOpen(false)} className={navLinkClass}>Offers</NavLink>
-          <div>
-            <button onClick={() => setPagesOpen(!pagesOpen)} className="w-full text-left pb-2">Pages</button>
+            </div>
+            <NavLink
+              to="/combos"
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+            >
+              <FaGift className="text-base" /> Combos
+            </NavLink>
+            <NavLink
+              to="/offers"
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) => `col-span-2 flex items-center gap-3 rounded-xl border px-3 py-3 font-semibold transition-all ${isActive ? "border-green-600 bg-green-700 text-white shadow-md" : "border-green-100 bg-white text-gray-700 hover:border-green-400 hover:bg-green-50"}`}
+            >
+              <FaTags className="text-base" /> Offers
+            </NavLink>
+            <div className="col-span-2 rounded-xl border border-green-100 bg-white p-3 shadow-sm">
+              <button onClick={() => setPagesOpen(!pagesOpen)} className="flex w-full items-center justify-between font-semibold text-gray-700">
+                <span className="flex items-center gap-3"><FaFileAlt className="text-green-700" /> Pages</span>
+                <FaChevronDown className={`text-xs text-green-700 transition-transform ${pagesOpen ? "rotate-180" : ""}`} />
+              </button>
             {pagesOpen && (
-              <div className="pl-10 space-y-3">
+              <div className="mt-3 grid grid-cols-1 gap-2 border-t border-green-100 pt-3">
                 {pagesItems.map((item, idx) => (
                   <Link
                     key={idx}
                     to={`/${item.toLowerCase().replace(/\s+/g, "")}`}
                     onClick={() => setMenuOpen(false)}
-                    className="block"
+                    className="rounded-lg bg-green-50 px-3 py-2 text-gray-700 transition-colors hover:bg-green-100 hover:text-green-800"
                   >
                     {item}
                   </Link>
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
       )}

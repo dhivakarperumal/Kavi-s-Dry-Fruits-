@@ -34,7 +34,7 @@ exports.getDealers = async (req, res) => {
 // Add new dealer
 exports.addDealer = async (req, res) => {
   try {
-    const { dealerName, dealerGSTNumber, dealerPhoneNumber, dealerMail, dealerAddress } = req.body;
+    const { dealerName, dealerGSTNumber, dealerPhoneNumber, dealerMail, dealerAddress, status = 'Active' } = req.body;
 
     // Validate required fields
     if (!dealerName || !dealerPhoneNumber) {
@@ -44,9 +44,9 @@ exports.addDealer = async (req, res) => {
     const dealerId = await generateDealerId();
 
     const [result] = await db.query(
-      `INSERT INTO dealers (dealerId, dealerName, dealerGSTNumber, dealerPhoneNumber, dealerMail, dealerAddress) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [dealerId, dealerName, dealerGSTNumber || '', dealerPhoneNumber, dealerMail || '', dealerAddress || '']
+      `INSERT INTO dealers (dealerId, dealerName, dealerGSTNumber, dealerPhoneNumber, dealerMail, dealerAddress, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [dealerId, dealerName, dealerGSTNumber || '', dealerPhoneNumber, dealerMail || '', dealerAddress || '', status === 'Inactive' ? 'Inactive' : 'Active']
     );
 
     res.status(201).json({ id: result.insertId, dealerId, message: 'Dealer added successfully' });
@@ -60,16 +60,16 @@ exports.addDealer = async (req, res) => {
 exports.updateDealer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { dealerName, dealerGSTNumber, dealerPhoneNumber, dealerMail, dealerAddress } = req.body;
+    const { dealerName, dealerGSTNumber, dealerPhoneNumber, dealerMail, dealerAddress, status } = req.body;
 
     if (!dealerName || !dealerPhoneNumber) {
       return res.status(400).json({ message: 'Please fill all required fields.' });
     }
 
     const [result] = await db.query(
-      `UPDATE dealers SET dealerName = ?, dealerGSTNumber = ?, dealerPhoneNumber = ?, dealerMail = ?, dealerAddress = ? 
+      `UPDATE dealers SET dealerName = ?, dealerGSTNumber = ?, dealerPhoneNumber = ?, dealerMail = ?, dealerAddress = ?, status = ?
        WHERE id = ?`,
-      [dealerName, dealerGSTNumber || '', dealerPhoneNumber, dealerMail || '', dealerAddress || '', id]
+      [dealerName, dealerGSTNumber || '', dealerPhoneNumber, dealerMail || '', dealerAddress || '', status === 'Inactive' ? 'Inactive' : 'Active', id]
     );
 
     if (result.affectedRows === 0) {

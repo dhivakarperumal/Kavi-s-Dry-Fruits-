@@ -17,14 +17,27 @@ exports.getReviews = async (req, res) => {
 
 exports.addReview = async (req, res) => {
     try {
-        const { userName, user, comment: bodyComment, image, selected, userId, orderId, rating } = req.body;
+        const { productId, productName, userName, user, comment: bodyComment, image, selected, userId, orderId, rating } = req.body;
         const finalUserName = userName || user || 'Anonymous';
         const finalComment = bodyComment || req.body.comment || 'No comment provided';
         const reviewId = createReviewId();
 
+        if (userId && orderId) {
+            const [existingReviews] = await db.query(
+                'SELECT id, reviewId, comment FROM reviews WHERE userId = ? AND orderId = ? LIMIT 1',
+                [userId, orderId]
+            );
+            if (existingReviews.length > 0) {
+                return res.status(409).json({
+                    message: 'You have already reviewed this order.',
+                    review: existingReviews[0]
+                });
+            }
+        }
+
         const [result] = await db.query(
-            'INSERT INTO reviews (reviewId, userName, comment, image, selected, userId, orderId, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [reviewId, finalUserName, finalComment, image || null, Boolean(selected) || false, userId || null, orderId || null, Number(rating) || 0]
+            'INSERT INTO reviews (reviewId, productId, productName, userName, comment, image, selected, userId, orderId, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [reviewId, productId || null, productName || null, finalUserName, finalComment, image || null, Boolean(selected) || false, userId || null, orderId || null, Number(rating) || 0]
         );
 
         res.status(201).json({ id: result.insertId, reviewId, message: 'Review added' });
@@ -37,11 +50,11 @@ exports.addReview = async (req, res) => {
 exports.updateReview = async (req, res) => {
     try {
         const { id } = req.params;
-        const { userName, comment, image, selected, rating } = req.body;
+        const { productId, productName, userName, comment, image, selected, rating } = req.body;
 
         await db.query(
-            'UPDATE reviews SET userName = ?, comment = ?, image = ?, selected = ?, rating = ? WHERE id = ?',
-            [userName, comment, image || null, selected || false, rating || 0, id]
+            'UPDATE reviews SET productId = ?, productName = ?, userName = ?, comment = ?, image = ?, selected = ?, rating = ? WHERE id = ?',
+            [productId || null, productName || null, userName, comment, image || null, selected || false, rating || 0, id]
         );
 
         res.json({ message: 'Review updated' });

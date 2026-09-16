@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FaPrint, FaTrash, FaSearch } from "react-icons/fa";
+import { FaPrint, FaTrash, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import logo from "/images/Kavi_logo.png";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { io } from "socket.io-client";
 
 const Delivery = () => {
   const [deliveredOrders, setDeliveredOrders] = useState([]);
@@ -15,12 +16,12 @@ const Delivery = () => {
   const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState("table");
 
   const navigate = useNavigate();
 
   // ========== Fetch Delivered Orders From MySQL ==========
-  const fetchDeliveredOrders = async () => {
-    setLoading(true);
+  const fetchDeliveredOrders = useCallback(async () => {
     try {
       const res = await api.get("/orders");
       const deliveries = (res.data || [])
@@ -31,6 +32,7 @@ const Delivery = () => {
           return {
             ...order,
             id: order.id,
+            paymentMethod: order.paymentMode || order.paymentMethod || "-",
             orderDateMs,
             cartItems: typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []),
             shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress) : (order.shippingAddress || {}),
@@ -43,14 +45,33 @@ const Delivery = () => {
       setDeliveredOrders(deliveries);
     } catch (error) {
       console.error("fetchDeliveredOrders error:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // Fetch immediately on mount
     fetchDeliveredOrders();
-  }, []);
+
+    // Poll every 15 seconds as fallback
+    const interval = setInterval(fetchDeliveredOrders, 15000);
+
+    // Real-time: listen for new bills (created with Delivered status) and status updates
+    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    socket.on('newOrder', () => {
+      fetchDeliveredOrders(); // New bill may be Delivered
+    });
+    socket.on('orderStatusUpdated', () => {
+      fetchDeliveredOrders(); // Status changed to Delivered
+    });
+    socket.on('connect', () => {
+      fetchDeliveredOrders(); // Sync on reconnect
+    });
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
+  }, [fetchDeliveredOrders]);
 
   // ========== Debounce search input (reduce frequent re-filtering) ==========
   useEffect(() => {
@@ -137,103 +158,177 @@ const Delivery = () => {
   // ====== Stable callbacks ======
   const handlePrint = useCallback((order) => {
     if (!order) return;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
-    const address = order.shippingAddress || order.client || {};
+    let address = order.shippingAddress || order.client || {};
+    if (typeof address === 'string') {
+      try { address = JSON.parse(address); } catch(e) { address = {}; }
+    }
+
     const items = order.cartItems || order.items || [];
+    const itemsList = items.map((item, index) => {
+      let img = "";
+      if (item.image) img = item.image;
+      else if (item.imageUrl) img = item.imageUrl;
+      else if (item.images && item.images.length) img = item.images[0];
 
-    const itemsList = items
-      .map((item) => {
-        const S_no = items.indexOf(item) + 1;
-        const name = item.name || item.productName || "-";
-        const qty = Number(item.qty ?? item.quantity ?? 1);
-        const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
-        const unitPrice =
-          Number(item.price ?? item.unitPrice ?? (item.total && qty ? item.total / qty : 0)) || 0;
-        const lineTotal = (unitPrice * qty).toFixed(2);
-        const gst = Number(item.gst ?? 0).toFixed(2);
-        return `
-      <tr>
-        <td>${S_no}</td>
-        <td>${name}</td>
-        <td>${weight}</td>
-        <td>₹${unitPrice.toFixed(2)}</td>
-        <td>${qty}</td>
-        <td>₹${lineTotal}</td>
+      if (img && !img.startsWith('http') && !img.startsWith('data:')) {
+        const cleanPath = img.replace(/\\/g, '/');
+        img = `${backendUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
+      }
+
+      const name = item.name || item.productName || "-";
+      const qty = Number(item.qty ?? item.quantity ?? 1);
+      const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
+      const unitPrice = Number(item.price ?? item.unitPrice ?? (item.total && qty ? item.total / qty : 0)) || 0;
+      const lineTotal = (unitPrice * qty).toFixed(2);
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td style="text-align: left; vertical-align: middle;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+              ${img ? `<img src="${img}" alt="product" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;" />` : ''}
+              <div>
+                <strong style="color: #333; font-size: 14px;">${name}</strong>
+                <div style="font-size: 11px; color: #777; margin-top: 4px;">Weight: ${weight}</div>
+              </div>
+            </div>
+          </td>
+          <td>${qty}</td>
+          <td>₹${unitPrice.toFixed(2)}</td>
+          <td>₹${lineTotal}</td>
         </tr>`;
-      })
-      .join("");
+    }).join("");
 
-    const gstTotal = Number(order.gstAmount ?? 0);
-    const shipping = Number(order.shippingCharge ?? 0);
-    const finalAmount = Number(order.totalAmount ?? order.total ?? 0);
-    const deliveryDate = new Date(order.deliveryDate || order.date).toLocaleString();
+    const shipping = Number(order.shippingCharge || 0);
+    const finalAmount = Number(order.totalAmount || order.total || 0);
+    const subtotal = finalAmount - shipping;
 
-    const printWindow = window.open("", "_blank", "width=900,height=800");
-    if (!printWindow) return alert("Please allow pop-ups to print the invoice.");
+    const orderDate = order.created_at || order.date;
+    const displayDate = orderDate ? new Date(orderDate).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
 
-    const htmlContent = `
-      <html>
-        <head>
-          <title>Invoice ${order.orderId || order.id}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; color: #000; }
-            h2 { text-align: center; margin-bottom: 8px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 35px; }
-            th, td { border: 2px solid #3a3838ff; padding: 8px; text-align: center; font-size: 13px; }
-            th { background-color: #f6f6f6; }
-            .summary { margin-top: 12px; font-size: 14px;float: right; text-align: right; }
-            .note { margin-top: 24px; font-style: italic; color: #555; text-align: center;position: fixed; bottom: 20px; width: 90%; }
-            .info p { margin: 4px 0; font-size: 14px; line-height: 1.6; }
-            .top-header { text-align: right; font-size: 12px; margin-bottom: 6px; }
-            img.logo { max-width: 140px; display: block; margin: 0 auto 8px; }
-          </style>
-        </head>
-        <body>
-         <div class="top-header">Billing Date: ${deliveryDate}</div>
-          <img src="${logo}" alt="Logo" class="logo" />
-         
-          <h2>Kavi's Dry Fruits</h2>
-          <div class="info">
-          <p><strong>Order ID:</strong> ${order.orderId}</p>
-          <p><strong>Client Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
-          <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
-          <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
-          <p><strong>Payment Mode:</strong> ${order.paymentMethod || order.paymentMode || "-"}</p>
-          <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
-        </div>
-          <table>
-            <thead>
-              <tr>
-              <th>S.No</th>
-                <th>Product Name</th>                
-                <th>Weight</th>
-                <th>Price</th>
-                <th>Qty</th>
-                <th>Total</th>
-                
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsList}
-            </tbody>
-          </table>
-          <div class="summary">
-            <p><strong>GST Total:</strong> ₹${gstTotal.toFixed(2)}</p>
-            <p><strong>Shipping Charge:</strong> ₹${shipping.toFixed(2)}</p>
-            <p><strong>Final Amount:</strong> ₹${finalAmount.toFixed(2)}</p>
+    const printWindow = window.open("", "_blank", "width=850,height=750");
+    if (!printWindow) return alert("Pop-ups must be allowed.");
+
+    printWindow.document.write(`
+    <html>
+      <head>
+        <title>Invoice ${order.orderId || order.id}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+          body {
+            font-family: 'Inter', sans-serif;
+            padding: 40px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+          .logo img { max-width: 140px; }
+          .invoice-title { text-align: right; }
+          .invoice-title h1 { color: #2b5c92; font-size: 36px; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+          .invoice-title p { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
+          .divider { height: 4px; background-color: #2b5c92; margin-bottom: 40px; }
+          .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .info-block { width: 48%; }
+          .info-block h3 { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .info-block p { font-size: 13px; line-height: 1.6; margin: 4px 0; color: #444; }
+          .info-block p strong { color: #222; }
+          .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
+          .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; font-size: 13px; }
+          th { background-color: #fcfcfc; font-weight: 700; color: #333; }
+          .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
+          .summary-table { width: 300px; }
+          .summary-table div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #444; }
+          .summary-table .total { font-size: 18px; font-weight: 800; color: #222; border-top: 2px solid #eee; padding-top: 12px; margin-top: 4px; }
+          .total-val { color: #2b5c92; }
+          .footer { text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+          .footer p { font-size: 12px; color: #666; margin: 5px 0; }
+          .footer p strong { color: #333; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <img src="/images/Kavi_logo.png" alt="Kavi's Logo" />
           </div>
-          <div class="note">Thank you for shopping at Kavi's Dry Fruits!
-We truly appreciate your trust in us. Enjoy your purchase, and we look forward to serving you again!</div>
-        </body>
-      </html>`;
+          <div class="invoice-title">
+            <h1>INVOICE</h1>
+            <p>${order.orderId || order.id}</p>
+          </div>
+        </div>
+        <div class="divider"></div>
 
-    printWindow.document.open();
-    printWindow.document.write(htmlContent);
+        <div class="info-section">
+          <div class="info-block">
+            <h3>Customer Info</h3>
+            <p><strong>Name:</strong> ${order.clientName || order.fullname || order.client_name || address.fullname || "-"}</p>
+            <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+            <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+            <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+            <p><strong>Country:</strong> ${address.country || "India"}</p>
+          </div>
+          <div class="info-block">
+            <h3>Order Info</h3>
+            <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
+            <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
+            <p style="margin-top:15px"><strong>Status:</strong> <span class="status-badge">${order.orderStatus || "DELIVERED"}</span></p>
+            <p><strong>Payment:</strong> ${order.paymentMethod || order.paymentMode || "Online Payment"}</p>
+            <p><strong>Date:</strong> ${displayDate}</p>
+          </div>
+        </div>
+
+        <div class="manifest-title">Item Manifest</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%">S No</th>
+              <th style="width: 50%; text-align: left;">Product Details</th>
+              <th style="width: 10%">Qty</th>
+              <th style="width: 15%">Price</th>
+              <th style="width: 20%">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsList}
+          </tbody>
+        </table>
+
+        <div class="summary-section">
+          <div class="summary-table">
+            <div>
+              <span>Subtotal:</span>
+              <strong>₹${subtotal.toFixed(2)}</strong>
+            </div>
+            <div>
+              <span>Shipping:</span>
+              <strong>₹${shipping.toFixed(2)}</strong>
+            </div>
+            <div class="total">
+              <span>Total Amount:</span>
+              <span class="total-val">₹${finalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>Thank you for shopping with Kavi's Dry Fruits!</strong></p>
+          <p>For any support, please contact us at kavidryfruits@gmail.com</p>
+        </div>
+      </body>
+    </html>
+    `);
     printWindow.document.close();
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 500);
+    setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
   }, []);
 
   // Delete handler
@@ -302,6 +397,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
               <option value={25}>Show 25</option>
               <option value={100}>Show 100</option>
             </select>
+
+            <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+              <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>
+              <button type="button" onClick={() => setViewMode("card")} className={`p-3 rounded-xl transition-all ${viewMode === "card" ? "bg-emerald-600 text-white shadow-lg" : "text-slate-400 hover:text-emerald-600"}`} aria-label="Card view" title="Card view"><FaThLarge /></button>
+            </div>
           </div>
         </div>
       </div>
@@ -332,6 +432,34 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in duration-700 text-left">
+        {viewMode === "card" ? (
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {currentOrders.length > 0 ? currentOrders.map((order, index) => (
+              <article key={order.id} className="border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <button onClick={() => setSelectedOrder(order)} className="font-black text-indigo-600 hover:underline">#{order.orderId}</button>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-2">{order.orderStatus}</p>
+                  </div>
+                  <span className="text-xs font-black text-slate-500">#{(currentPage - 1) * ordersPerPage + index + 1}</span>
+                </div>
+                <div className="mt-6 space-y-3 text-sm">
+                  <p className="font-black text-slate-800">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                  <p className="text-xs font-bold text-slate-500">{formatDate(order.date)}</p>
+                  <p className="text-xl font-black text-emerald-600">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-xl text-[9px] font-black uppercase">{order.paymentMethod || order.paymentMode || "-"}</span>
+                    <span className="px-3 py-1 bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase">{order.customerType || "Online"}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-6 pt-4 border-t border-slate-100">
+                  <button onClick={() => handlePrint(order)} className="flex-1 py-3 bg-slate-50 text-slate-500 rounded-xl hover:text-emerald-600 font-black text-[10px] uppercase">Print</button>
+                  <button onClick={() => handleDelete(order)} className="flex-1 py-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white font-black text-[10px] uppercase">Delete</button>
+                </div>
+              </article>
+            )) : <div className="md:col-span-2 xl:col-span-3 py-20 text-center text-slate-400 font-black uppercase tracking-widest">No delivered orders to display</div>}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -341,6 +469,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client Name</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Date</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Amount</th>
+                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Payment Method</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Channel</th>
                 <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
               </tr>
@@ -370,6 +499,11 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                     <td className="px-8 py-6 text-center">
                        <p className="text-base font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
                     </td>
+                      <td className="px-8 py-6 text-center">
+                        <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 rounded-xl text-[9px] font-black text-emerald-700 uppercase tracking-widest">
+                         {order.paymentMethod || order.paymentMode || "-"}
+                        </span>
+                      </td>
                     <td className="px-8 py-6 text-center">
                        <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest">
                          {order.customerType || "Online"}
@@ -385,7 +519,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
+                  <td colSpan="8" className="px-8 py-32 text-center text-slate-400 font-black uppercase tracking-[0.2em]">
                     <div className="w-20 h-20 bg-slate-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
                        <FaPrint className="text-3xl opacity-20" />
                     </div>
@@ -396,6 +530,7 @@ We truly appreciate your trust in us. Enjoy your purchase, and we look forward t
             </tbody>
           </table>
         </div>
+        )}
         
         {/* Pagination Controls */}
         {totalPages > 1 && (

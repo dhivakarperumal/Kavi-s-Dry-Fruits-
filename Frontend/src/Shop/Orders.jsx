@@ -5,8 +5,11 @@ import { Helmet } from "react-helmet";
 import { useStore } from "../Context/StoreContext";
 import api from "../services/api";
 
+import { io } from "socket.io-client";
+
 const Orders = () => {
   const { user } = useStore();
+  const navigate = useNavigate();
   const [allOrders, setAllOrders] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,6 +31,21 @@ const Orders = () => {
       }
     };
     fetchOrders();
+
+    // Listen for real-time order updates for the user
+    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    socket.on('orderStatusUpdated', (data) => {
+      // Refresh the orders if a change happens
+      fetchOrders();
+    });
+
+    socket.on('connect', () => {
+      fetchOrders(); // Sync on reconnect
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [user, navigate]);
 
   const handlePrint = (order, e) => {

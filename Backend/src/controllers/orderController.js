@@ -3,22 +3,39 @@ const db = require('../config/db');
 const getOrders = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
-    const parsedRows = await Promise.all(rows.map(async (row) => {
-      const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [row.orderId]);
-      const normalizedItems = items.map(it => ({
-        ...it,
-        productId: it.product_id,
-        qty: it.quantity,
-        id: it.product_id,
-        weight: it.weight
-      }));
+    const orderIds = rows.map(row => row.orderId);
+    const itemsByOrderId = new Map();
+
+    if (orderIds.length > 0) {
+      const placeholders = orderIds.map(() => '?').join(',');
+      const [items] = await db.query(
+        `SELECT * FROM order_items WHERE order_id IN (${placeholders})`,
+        orderIds
+      );
+
+      for (const item of items) {
+        const normalizedItem = {
+          ...item,
+          productId: item.product_id,
+          qty: item.quantity,
+          id: item.product_id,
+          weight: item.weight
+        };
+        const orderItems = itemsByOrderId.get(item.order_id) || [];
+        orderItems.push(normalizedItem);
+        itemsByOrderId.set(item.order_id, orderItems);
+      }
+    }
+
+    const parsedRows = rows.map(row => {
+      const normalizedItems = itemsByOrderId.get(row.orderId) || [];
       return {
         ...row,
         shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
         items: normalizedItems,
         cartItems: normalizedItems
       };
-    }));
+    });
     res.json(parsedRows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -216,6 +233,18 @@ const createOrder = async (req, res) => {
     }
 
     await connection.commit();
+    
+    // Emit real-time event to connected admins
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('newOrder', {
+        orderId,
+        clientName,
+        totalAmount,
+        orderStatus
+      });
+    }
+
     res.json({ id: result.insertId, message: 'Order created and stock updated' });
   } catch (error) {
     try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
@@ -248,6 +277,20 @@ const updateOrder = async (req, res) => {
     }
 
     await connection.commit();
+    
+    const io = req.app.get('io');
+    if (io) {
+      // Find the specific order to get its orderId
+      const [updatedRows] = await db.query('SELECT orderId FROM orders WHERE id = ?', [id]);
+      if (updatedRows.length > 0) {
+        io.emit('orderStatusUpdated', {
+          orderId: updatedRows[0].orderId,
+          orderStatus,
+          docketNumber
+        });
+      }
+    }
+
     res.json({ message: 'Order updated' });
   } catch (error) {
     await connection.rollback();
