@@ -310,7 +310,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
   }, [adminData]);
 
   const lowStockCount = productsData.filter(
-    (item) => (Number(item.totalStock) || 0) <= 3000
+    (item) => (Number(item.totalStock) || 0) <= 500
   ).length;
 
   const profit = stats.revenue * 0.2;

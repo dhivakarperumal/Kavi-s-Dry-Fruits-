@@ -89,6 +89,18 @@ exports.updateProduct = async (req, res) => {
       ]
     );
 
+    const io = req.app.get('io');
+    if (io && Number(storedTotalStock) <= 500) {
+      io.emit('lowStockAlert', {
+        productId,
+        name,
+        remainingStock: Number(storedTotalStock || 0),
+        category: category || 'Product',
+        isOutOfStock: Number(storedTotalStock || 0) <= 0,
+        createdAt: new Date()
+      });
+    }
+
     res.json({ message: 'Product updated successfully' });
   } catch (error) {
     console.error(error);

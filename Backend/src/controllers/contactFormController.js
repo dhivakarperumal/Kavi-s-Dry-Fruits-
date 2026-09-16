@@ -75,6 +75,20 @@ exports.createContactSubmission = async (req, res) => {
       ]
     );
 
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('newContactMessage', {
+        submissionId,
+        name,
+        email,
+        phone,
+        subject,
+        message,
+        source,
+        createdAt: new Date()
+      });
+    }
+
     res.status(201).json({
       id: result.insertId,
       submissionId,
