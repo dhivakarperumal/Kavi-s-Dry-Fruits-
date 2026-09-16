@@ -38,7 +38,12 @@ exports.addProduct = async (req, res) => {
       images, variants, totalWeight, totalStock, status
     } = req.body;
     const normalizedTotalWeight = normalizeWeight(totalWeight);
-    const storedTotalStock = Number(totalStock) > 0 ? totalStock : normalizedTotalWeight;
+    const [existingRows] = await db.query('SELECT totalStock FROM products WHERE id = ?', [id]);
+    const existingStock = existingRows.length > 0 ? Number(existingRows[0].totalStock || 0) : 0;
+    const requestedStock = Number(totalStock);
+    const storedTotalStock = Number.isFinite(requestedStock) && requestedStock > 0
+      ? requestedStock
+      : existingStock || normalizedTotalWeight;
 
     const [result] = await db.query(
       `INSERT INTO products 

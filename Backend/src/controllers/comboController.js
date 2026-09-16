@@ -111,7 +111,8 @@ exports.updateCombo = async (req, res) => {
     // Get old stock to calculate delta
     const [oldRows] = await connection.query(`SELECT totalStock FROM combos WHERE id = ?`, [id]);
     const oldStock = oldRows.length > 0 ? Number(oldRows[0].totalStock || 0) : 0;
-    const newStock = Number(totalStock || 0);
+    const requestedStock = Number(totalStock);
+    const newStock = Number.isFinite(requestedStock) && requestedStock > 0 ? requestedStock : oldStock;
     const delta = newStock - oldStock;
 
     await connection.query(
@@ -126,7 +127,7 @@ exports.updateCombo = async (req, res) => {
         JSON.stringify([...parseJson(images, []), ...uploadedImages(req)]),
         JSON.stringify(parsedComboItems),
         JSON.stringify(parsedComboDetails),
-        totalStock || 0,
+        newStock,
         status || 'Active',
         id
       ]

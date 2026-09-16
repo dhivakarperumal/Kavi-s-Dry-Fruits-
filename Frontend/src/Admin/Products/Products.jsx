@@ -170,11 +170,16 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
 
   useEffect(() => {
     if (editItem) {
+      const savedStock = Number(editItem.totalStock);
+      const savedWeightKg = Number.isFinite(savedStock) && savedStock > 0
+        ? savedStock / 1000
+        : Number(editItem.totalWeight || 0);
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
         variants: safeParse(editItem.variants),
         images: safeParse(editItem.images),
+        totalWeight: savedWeightKg,
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
       setImageFiles([]);
