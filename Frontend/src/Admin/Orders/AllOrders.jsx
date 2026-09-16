@@ -181,8 +181,6 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
   // Print Invoice
   const handlePrint = useCallback((order) => {
     if (!order) return;
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-    
     let address = order.shippingAddress || order.client || {};
     if (typeof address === 'string') {
       try { address = JSON.parse(address); } catch(e) { address = {}; }
@@ -190,16 +188,6 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
 
     const items = order.cartItems || order.items || [];
     const itemsList = items.map((item, index) => {
-      let img = "";
-      if (item.image) img = item.image;
-      else if (item.imageUrl) img = item.imageUrl;
-      else if (item.images && item.images.length) img = item.images[0];
-      
-      if (img && !img.startsWith('http') && !img.startsWith('data:')) {
-        const cleanPath = img.replace(/\\/g, '/');
-        img = `${backendUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
-      }
-      
       const name = item.name || item.productName || "-";
       const qty = Number(item.qty ?? item.quantity ?? 1);
       const weight = item.weight || item.selectedWeight || item.weightDisplay || "-";
@@ -209,17 +197,12 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
       return `
         <tr>
           <td>${index + 1}</td>
-          <td style="text-align: left; vertical-align: middle;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-              ${img ? `<img src="${img}" alt="product" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:4px;" />` : ''}
-              <div>
-                <strong style="color: #333; font-size: 14px;">${name}</strong>
-                <div style="font-size: 11px; color: #777; margin-top: 4px;">Weight: ${weight}</div>
-              </div>
-            </div>
+          <td style="text-align: center; vertical-align: middle;">
+            <strong style="color: #333; font-size: 14px;">${name}</strong>
           </td>
-          <td>${qty}</td>
+          <td>${weight}</td>
           <td>₹${unitPrice.toFixed(2)}</td>
+          <td>${qty}</td>
           <td>₹${lineTotal}</td>
         </tr>`;
     }).join("");
@@ -266,8 +249,8 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
           .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
           .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: center; font-size: 13px; }
-          th { background-color: #fcfcfc; font-weight: 700; color: #333; }
+          th, td { border: 2px solid #333; padding: 12px; text-align: center; font-size: 13px; }
+          th { background-color: #fcfcfc; font-weight: 800; color: #333; }
           .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
           .summary-table { width: 300px; }
           .summary-table div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #444; }
@@ -314,11 +297,12 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
         <table>
           <thead>
             <tr>
-              <th style="width: 5%">S No</th>
-              <th style="width: 50%; text-align: left;">Product Details</th>
+              <th style="width: 8%">S.No</th>
+              <th style="width: 34%; text-align: center;">Product Name</th>
+              <th style="width: 16%">Weight</th>
+              <th style="width: 16%">Price</th>
               <th style="width: 10%">Qty</th>
-              <th style="width: 15%">Price</th>
-              <th style="width: 20%">Total</th>
+              <th style="width: 16%">Total</th>
             </tr>
           </thead>
           <tbody>
