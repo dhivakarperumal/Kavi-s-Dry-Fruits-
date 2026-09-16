@@ -41,6 +41,7 @@ const CreateBilling = () => {
   });
 
   const [shippingCharge, setShippingCharge] = useState(0);
+  const [taxAmount, setTaxAmount] = useState("");
   const [selectedProduct, setSelectedProduct] = useState({
     id: "",
     name: "",
@@ -65,10 +66,11 @@ const CreateBilling = () => {
   // ---------------- Calculations ----------------
   const totals = useMemo(() => {
     const subtotal = invoiceItems.reduce((acc, item) => acc + item.total, 0);
-    const gstTotal = invoiceItems.reduce((acc, item) => acc + (item.gst || 0), 0);
+    const calculatedTax = invoiceItems.reduce((acc, item) => acc + (item.gst || 0), 0);
+    const gstTotal = taxAmount === "" ? calculatedTax : Math.max(0, Number(taxAmount) || 0);
     const finalTotal = subtotal + gstTotal + Number(shippingCharge);
     return { subtotal, gstTotal, finalTotal };
-  }, [invoiceItems, shippingCharge]);
+  }, [invoiceItems, shippingCharge, taxAmount]);
 
   // ---------------- Order ID generation ----------------
   const generateOrderId = async () => {
@@ -415,7 +417,9 @@ const CreateBilling = () => {
   };
 
   const handleSave = async () => {
-    if (!client.name || invoiceItems.length === 0) return toast.error("Please fill client details and add products");
+    if (!client.name || !/^\d{10}$/.test(client.phone) || invoiceItems.length === 0) {
+      return toast.error("Enter a valid 10-digit phone number, client name, and add products.");
+    }
 
     setIsLoading(true);
     try {
@@ -512,10 +516,15 @@ const CreateBilling = () => {
                 <div className="relative group">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Phone Number</label>
                   <input
+                    type="tel"
                     placeholder="Search by mobile..."
+                    inputMode="numeric"
+                    maxLength={10}
+                    pattern="[0-9]{10}"
                     className="w-full bg-slate-50 border border-transparent rounded-2xl px-5 py-4 outline-none focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold text-slate-900 text-sm"
                     value={client.phone}
-                    onChange={(e) => setClient({ ...client, phone: e.target.value })}
+                    onChange={(e) => setClient({ ...client, phone: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+                    required
                   />
                 </div>
 
@@ -748,7 +757,7 @@ const CreateBilling = () => {
                         </td>
                         <td className="px-4 py-6 text-right">
                           <p className="font-[900] text-slate-900 text-base">₹{(item.total + item.gst).toFixed(2)}</p>
-                          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">incl. tax</p>
+                          
                         </td>
                         <td className="px-8 py-6 text-center">
                           <button onClick={() => removeInvoiceItem(index)} className="p-3 bg-red-50 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
@@ -780,7 +789,19 @@ const CreateBilling = () => {
                     </div>
                     <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                       <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tax</span>
-                      <span className="font-bold text-[#009669]">+ ₹{totals.gstTotal.toFixed(2)}</span>
+                      <div className="flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-1">
+                        <span className="text-xs text-emerald-600 font-bold">₹</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={taxAmount}
+                          onChange={(e) => setTaxAmount(e.target.value)}
+                          placeholder={totals.gstTotal.toFixed(2)}
+                          className="w-24 bg-transparent border-none text-right font-[900] text-slate-900 outline-none text-sm"
+                          aria-label="Tax amount"
+                        />
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Shipping Charge</span>
