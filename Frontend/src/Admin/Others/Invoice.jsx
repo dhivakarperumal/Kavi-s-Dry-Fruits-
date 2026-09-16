@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../services/api";
 import { 
-  FaFileInvoiceDollar, 
+  FaFileInvoiceDollar, FaReceipt, FaStore, 
   FaPlus, 
   FaCalendarAlt, 
   FaCalculator, 
@@ -230,8 +230,76 @@ const Invoice = () => {
         <span>Back to Settings</span>
       </button>
 
-      <div className="max-w-7xl mx-auto mt-20">
+      <div className="max-w-7xl mx-auto mt-7">
         
+        {/* Invoice Stats Cards (Dealer Reference Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Total Invoices Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Invoices Issued</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {invoices.length}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaFileInvoiceDollar />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-6 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{invoices.length} Generated Tax Invoices</span>
+            </div>
+          </div>
+
+          {/* Total Invoiced Amount Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Invoiced Amount</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  ₹{Math.round(invoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0)).toLocaleString()}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaReceipt />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+              Gross B2B Wholesale Billing Volume
+            </div>
+          </div>
+
+          {/* Active Wholesale Partners Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Billed Partners</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {new Set(invoices.map(inv => inv.dealerName).filter(Boolean)).size}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaStore />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredInvoices.length} Invoices in Current Filter</span>
+            </div>
+          </div>
+        </div>
+
         {/* Header Section */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-10">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 pr-4">

@@ -198,18 +198,71 @@ const AddDealer = () => {
      
 
       <div className="max-w-7xl mx-auto mt-7">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-               <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Dealers</p>
-                  <p className="text-3xl font-black text-slate-900 mt-2">{totalDealers}</p>
+            {/* Dealer Stats Cards (Contact Form Reference Style) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+               {/* Total Dealers Card */}
+               <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+                  <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                  <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                  <div className="flex items-center justify-between relative z-10">
+                     <div>
+                        <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Wholesale Partners</p>
+                        <h3 className="text-4xl font-black text-white tracking-tighter">
+                           {totalDealers}
+                        </h3>
+                     </div>
+                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                        <FaStore />
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-6 relative z-10">
+                     <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                     <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{activeDealers} Registered Networks</span>
+                  </div>
                </div>
-               <div className="bg-emerald-50 rounded-3xl border border-emerald-100 shadow-sm p-6">
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Active Dealers</p>
-                  <p className="text-3xl font-black text-emerald-700 mt-2">{activeDealers}</p>
+
+               {/* Active Dealers Card */}
+               <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+                  <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                  <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                  <div className="flex items-center justify-between relative z-10">
+                     <div>
+                        <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Active Dealers</p>
+                        <h3 className="text-5xl font-black text-white tracking-tighter">
+                           {activeDealers}
+                        </h3>
+                     </div>
+                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                        <FaUserTie />
+                     </div>
+                  </div>
+                  <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+                     Operational Wholesale Partnerships
+                  </div>
                </div>
-               <div className="bg-rose-50 rounded-3xl border border-rose-100 shadow-sm p-6">
-                  <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Inactive Dealers</p>
-                  <p className="text-3xl font-black text-rose-700 mt-2">{inactiveDealers}</p>
+
+               {/* Inactive Dealers Card */}
+               <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+                  <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                  <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                  <div className="flex items-center justify-between relative z-10">
+                     <div>
+                        <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Inactive Accounts</p>
+                        <h3 className="text-4xl font-black text-white tracking-tighter">
+                           {inactiveDealers}
+                        </h3>
+                     </div>
+                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                        <FaBuilding />
+                     </div>
+                  </div>
+                  <div className="mt-8 flex items-center gap-2 relative z-10">
+                     <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+                     <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{inactiveDealers} Suspended / Pending Verification</span>
+                  </div>
                </div>
             </div>
         
