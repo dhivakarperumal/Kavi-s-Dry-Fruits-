@@ -787,17 +787,21 @@ const StockDetail = () => {
 
                         <div className="space-y-2">
                            <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Reference Invoice for this Batch *</label>
-                           <select
+                           <CustomSelect
                              value={importInvoice}
                              onChange={(e) => setImportInvoice(e.target.value)}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-indigo-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
-                             required
-                           >
-                             <option value="">Select Invoice</option>
-                             {invoiceNumbers.map((inv) => (
-                               <option key={inv.id} value={inv.invoiceNo}>{inv.invoiceNo}</option>
-                             ))}
-                           </select>
+                             searchable={true}
+                             placeholder="Select Invoice"
+                             className="w-full"
+                             buttonClassName="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 outline-none focus:bg-white focus:border-emerald-600 transition-all font-black text-black text-sm cursor-pointer shadow-sm"
+                             options={[
+                               { value: "", label: "Select Invoice" },
+                               ...invoiceNumbers.map((inv) => ({
+                                 value: inv.invoiceNo,
+                                 label: inv.invoiceNo,
+                               })),
+                             ]}
+                           />
                         </div>
 
                         <button

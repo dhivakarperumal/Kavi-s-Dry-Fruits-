@@ -1,3 +1,4 @@
+import CustomSelect from '../Common/CustomSelect';
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaTicketAlt, FaTrash, FaPlus, FaPercentage, FaRegCalendarAlt, FaToggleOn, FaToggleOff, FaArrowLeft } from "react-icons/fa";
@@ -187,14 +188,16 @@ const OffersAndCoupons = () => {
 
                                     <div>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Discount Type</label>
-                                        <select 
+                                        <CustomSelect 
                                             value={form.discountType} 
                                             onChange={e => setForm({...form, discountType: e.target.value})}
-                                            className="w-full bg-slate-50 border border-slate-100 focus:border-indigo-500 rounded-2xl px-6 py-4 font-black shadow-inner outline-none transition-all"
-                                        >
-                                            <option value="percentage">Percentage (%)</option>
-                                            <option value="fixed">Fixed Amount (₹)</option>
-                                        </select>
+                                            className="w-full"
+                                            buttonClassName="w-full bg-slate-50 border border-slate-100 focus:border-emerald-500 rounded-2xl px-6 py-4 font-black shadow-inner outline-none transition-all"
+                                            options={[
+                                                { value: "percentage", label: "Percentage (%)" },
+                                                { value: "fixed", label: "Fixed Amount (₹)" }
+                                            ]}
+                                        />
                                     </div>
 
                                     <div>

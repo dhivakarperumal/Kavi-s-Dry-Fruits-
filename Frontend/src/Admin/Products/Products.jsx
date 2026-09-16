@@ -645,7 +645,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full bg-gray-50 border-2 border-transparent focus:border-amber-500 rounded-2xl px-4 py-2.5 outline-none font-black text-amber-800 shadow-sm text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
+                    <div><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Status *</label><CustomSelect value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full" buttonClassName="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 rounded-2xl px-4 py-2.5 outline-none font-black text-emerald-800 shadow-sm text-sm" options={[{ value: "Active", label: "Active" }, { value: "Inactive", label: "Inactive" }]} /></div>
                     <div className="hidden"></div>
                   </div>
                   <div>

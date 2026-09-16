@@ -194,20 +194,31 @@ const BannerManagement = () => {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="relative">
-                        <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={15} />
-                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="appearance-none pl-9 pr-8 py-2.5 w-full sm:w-32 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#4b0b78]">
-                            <option value="all">All Types</option>
-                            <option value="hero">Hero</option>
-                            <option value="offer">Offers</option>
-                        </select>
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none">▼</span>
+                    <div className="relative w-full sm:w-36">
+                        <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={15} />
+                        <CustomSelect
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            className="w-full"
+                            buttonClassName="pl-9 pr-8 py-2.5 w-full bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none hover:border-emerald-500 transition-colors shadow-sm"
+                            options={[
+                                { value: 'all', label: 'All Types' },
+                                { value: 'hero', label: 'Hero' },
+                                { value: 'offer', label: 'Offers' },
+                            ]}
+                        />
                     </div>
-                    <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)} className="appearance-none px-4 py-2.5 w-full sm:w-32 bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none focus:border-[#4b0b78]">
-                        <option value="all">All Status</option>
-                        <option value="active">Published</option>
-                        <option value="inactive">Draft</option>
-                    </select>
+                    <CustomSelect
+                        value={activeFilter}
+                        onChange={(e) => setActiveFilter(e.target.value)}
+                        className="w-full sm:w-36"
+                        buttonClassName="px-4 py-2.5 w-full bg-white border border-gray-200 rounded-lg text-sm font-medium outline-none hover:border-emerald-500 transition-colors shadow-sm"
+                        options={[
+                            { value: 'all', label: 'All Status' },
+                            { value: 'active', label: 'Published' },
+                            { value: 'inactive', label: 'Draft' },
+                        ]}
+                    />
                     <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
                         <button type="button" onClick={() => setViewMode("table")} className={`p-2 rounded-md transition-colors ${viewMode === "table" ? "bg-white text-[#4b0b78] shadow-sm" : "text-gray-500 hover:text-[#4b0b78]"}`} aria-label="Table mode" title="Table mode"><FiList size={16} /></button>
                         <button type="button" onClick={() => setViewMode("card")} className={`p-2 rounded-md transition-colors ${viewMode === "card" ? "bg-white text-[#4b0b78] shadow-sm" : "text-gray-500 hover:text-[#4b0b78]"}`} aria-label="Card mode" title="Card mode"><FiGrid size={16} /></button>
