@@ -21,6 +21,7 @@ export const AdminNotificationProvider = ({ children }) => {
   const [isSoundModalOpen, setIsSoundModalOpen] = useState(false);
   const socketRef = useRef(null);
   const titleIntervalRef = useRef(null);
+  const handledAlertKeysRef = useRef(new Set());
 
   const isAdmin = user && (user.role === "admin" || user.isAdmin === true);
 
@@ -142,6 +143,11 @@ export const AdminNotificationProvider = ({ children }) => {
       const alertData = event.data;
       if (!alertData) return;
 
+      if (alertData.dedupeKey) {
+        if (handledAlertKeysRef.current.has(alertData.dedupeKey)) return;
+        handledAlertKeysRef.current.add(alertData.dedupeKey);
+      }
+
       // Play sound on this tab too
       playNotificationSound(alertData.type || "default");
 
@@ -169,7 +175,12 @@ export const AdminNotificationProvider = ({ children }) => {
   }, [flashTitle]);
 
   const addNotification = useCallback(
-    ({ type, title, message, secondary, link, sound = true }) => {
+    ({ type, title, message, secondary, link, sound = true, dedupeKey }) => {
+      if (dedupeKey) {
+        if (handledAlertKeysRef.current.has(dedupeKey)) return;
+        handledAlertKeysRef.current.add(dedupeKey);
+      }
+
       const id = Date.now().toString() + Math.random().toString(36).substring(2, 6);
 
       if (sound) {
@@ -187,6 +198,7 @@ export const AdminNotificationProvider = ({ children }) => {
         secondary,
         link,
         duration: 8000,
+        dedupeKey,
       };
 
       // Add to local state (renders in bottom-right corner of this tab)
@@ -308,6 +320,7 @@ export const AdminNotificationProvider = ({ children }) => {
         message: preview.length > 90 ? preview.substring(0, 90) + "..." : preview,
         secondary: contactInfo ? `Contact: ${contactInfo}` : "Via Contact Form",
         link: "/adminpanel/contact-form",
+        dedupeKey: data.submissionId ? `contact-${data.submissionId}` : undefined,
       });
     });
 
