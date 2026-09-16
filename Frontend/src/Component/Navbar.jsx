@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
 import { FaHeart, FaUser, FaBars, FaTimes, FaArrowUp, FaBoxOpen, FaHome, FaStore, FaLayerGroup, FaGift, FaTags, FaFileAlt, FaChevronDown } from "react-icons/fa";
 import { RiAdminLine } from "react-icons/ri";
@@ -12,6 +12,7 @@ import Search from "./Search";
 const Navbar = () => {
   const { favItems, cartItems, allProducts } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [pagesOpen, setPagesOpen] = useState(false);
@@ -20,6 +21,9 @@ const Navbar = () => {
   const [role, setRole] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  const headerRef = useRef(null);
+  const userDropdownRef = useRef(null);
 
   useEffect(() => {
     const storedUserStr = localStorage.getItem("user");
@@ -41,10 +45,55 @@ const Navbar = () => {
   filterCategory.sort((a, b) => a.length - b.length);
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      if (window.innerWidth >= 1024) {
+        setMenuOpen(false);
+      }
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Close menus on route change
+  useEffect(() => {
+    setMenuOpen(false);
+    setUserDropdownOpen(false);
+  }, [location.pathname]);
+
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  // Close when clicking outside header or dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpen && headerRef.current && !headerRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+      if (userDropdownOpen && userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    if (menuOpen || userDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [menuOpen, userDropdownOpen]);
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 200);
@@ -73,143 +122,164 @@ const Navbar = () => {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-green-100 shadow-sm">
+    <>
+      {/* Mobile Menu Backdrop */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-[105] bg-black/40 backdrop-blur-[1px] lg:hidden cursor-pointer transition-opacity duration-200"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
-        <Link to="/">
-          <img src={logo} alt="logo" className="w-20" />
-        </Link>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center space-x-6 text-base font-medium text-black">
-          <NavLink to="/" end className={navLinkClass}>Home</NavLink>
-          <NavLink to="/shop" className={navLinkClass}>Shop</NavLink>
-
-          {/* Category Dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => !isMobile && setCategoryOpen(true)}
-            onMouseLeave={() => !isMobile && setCategoryOpen(false)}
-          >
-            <button onClick={() => isMobile && setCategoryOpen(!categoryOpen)} className="hover:text-green-600">
-              Category
-            </button>
-            {categoryOpen && (
-              <div className="absolute top-full left-0 w-30 py-3 bg-white shadow z-50">
-                {filterCategory.map((item, idx) => (
-                  <Link
-                    key={idx}
-                    to={`/category/${item.toLowerCase().replace(/\s+/g, "")}`}
-                    className="block px-4 py-1 text-sm hover:text-green-600"
-                    onClick={() => isMobile && setCategoryOpen(false)}
-                  >
-                    {item}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <NavLink to="/combos" className={navLinkClass}>Combos</NavLink>
-          <NavLink to="/offers" className={navLinkClass}>Offers</NavLink>
-
-          {/* Pages Dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => !isMobile && setPagesOpen(true)}
-            onMouseLeave={() => !isMobile && setPagesOpen(false)}
-          >
-            <button onClick={() => isMobile && setPagesOpen(!pagesOpen)} className="hover:text-green-600">
-              Pages
-            </button>
-            {pagesOpen && (
-              <div className="absolute top-full left-0 w-36 py-3 bg-white shadow z-50">
-                {pagesItems.map((item, idx) => (
-                  <Link
-                    key={idx}
-                    to={`/${item.toLowerCase().replace(/\s+/g, "")}`}
-                    className="block px-4 py-1 text-sm hover:text-green-600"
-                    onClick={() => isMobile && setPagesOpen(false)}
-                  >
-                    {item}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </nav>
-
-        {/* Icons & User */}
-        <div className="flex items-center space-x-4 relative">
-          <div className="hidden sm:flex items-center border-2 border-green2 rounded-md shadow-sm">
-            <Search />
-          </div>
-
-          <Link to="/addtofav" className="relative border border-green1 rounded-full p-2 text-green-700 hover:bg-primary hover:text-white">
-            <FaHeart size={18} />
-            <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-              {favItems?.length || 0}
-            </span>
+      <header
+        ref={headerRef}
+        className={`sticky top-0 ${menuOpen ? "z-[110] bg-white" : "z-50 bg-white/90"} backdrop-blur-sm border-b border-green-100 shadow-sm`}
+      >
+        <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 py-3">
+          <Link to="/" onClick={() => setMenuOpen(false)}>
+            <img src={logo} alt="logo" className="w-20" />
           </Link>
 
-          <Link to="/addtocart" className="relative border border-green1 rounded-full p-2 text-primary hover:bg-primary hover:text-white">
-            <IoCartOutline size={18} />
-            <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-              {cartItems?.length || 0}
-            </span>
-          </Link>
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-6 text-base font-medium text-black">
+            <NavLink to="/" end className={navLinkClass}>Home</NavLink>
+            <NavLink to="/shop" className={navLinkClass}>Shop</NavLink>
 
-          {/* User Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="border border-green1 rounded-full p-2 text-white bg-primary font-bold hover:bg-primary hover:text-white w-8 h-8 flex items-center justify-center text-lg uppercase cursor-pointer"
+            {/* Category Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => !isMobile && setCategoryOpen(true)}
+              onMouseLeave={() => !isMobile && setCategoryOpen(false)}
             >
-              {user ? userFirstLetter : <FaUser size={18} />}
-            </button>
-
-            {userDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-50 bg-white shadow rounded-md text-sm text-center py-2 z-50">
-                {user ? (
-                  <>
-                    <Link to="/account" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-4 py-3 font-bold hover:text-green-600">
-                      <CgProfile size={15} /> My Account
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        navigate("/account", { state: { goToOrders: true } });
-                      }}
-                      className="flex items-center gap-2 w-full px-4 py-3 font-bold hover:text-green-600 cursor-pointer"
+              <button onClick={() => isMobile && setCategoryOpen(!categoryOpen)} className="hover:text-green-600">
+                Category
+              </button>
+              {categoryOpen && (
+                <div className="absolute top-full left-0 w-30 py-3 bg-white shadow z-50">
+                  {filterCategory.map((item, idx) => (
+                    <Link
+                      key={idx}
+                      to={`/category/${item.toLowerCase().replace(/\s+/g, "")}`}
+                      className="block px-4 py-1 text-sm hover:text-green-600"
+                      onClick={() => isMobile && setCategoryOpen(false)}
                     >
-                      <FaBoxOpen  size={15} /> My Orders
-                    </button>
-                    {role === "admin" && (
-                      <Link to="/adminpanel" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-4 py-3 font-bold hover:text-green-600">
-                        <RiAdminLine  size={15} /> Admin Dashboard
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <NavLink to="/combos" className={navLinkClass}>Combos</NavLink>
+            <NavLink to="/offers" className={navLinkClass}>Offers</NavLink>
+
+            {/* Pages Dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => !isMobile && setPagesOpen(true)}
+              onMouseLeave={() => !isMobile && setPagesOpen(false)}
+            >
+              <button onClick={() => isMobile && setPagesOpen(!pagesOpen)} className="hover:text-green-600">
+                Pages
+              </button>
+              {pagesOpen && (
+                <div className="absolute top-full left-0 w-36 py-3 bg-white shadow z-50">
+                  {pagesItems.map((item, idx) => (
+                    <Link
+                      key={idx}
+                      to={`/${item.toLowerCase().replace(/\s+/g, "")}`}
+                      className="block px-4 py-1 text-sm hover:text-green-600"
+                      onClick={() => isMobile && setPagesOpen(false)}
+                    >
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </nav>
+
+          {/* Icons & User */}
+          <div className="flex items-center space-x-4 relative">
+            <div className="hidden sm:flex items-center border-2 border-green2 rounded-md shadow-sm">
+              <Search />
+            </div>
+
+            <Link to="/addtofav" onClick={() => setMenuOpen(false)} className="relative border border-green1 rounded-full p-2 text-green-700 hover:bg-primary hover:text-white">
+              <FaHeart size={18} />
+              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                {favItems?.length || 0}
+              </span>
+            </Link>
+
+            <Link to="/addtocart" onClick={() => setMenuOpen(false)} className="relative border border-green1 rounded-full p-2 text-primary hover:bg-primary hover:text-white">
+              <IoCartOutline size={18} />
+              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                {cartItems?.length || 0}
+              </span>
+            </Link>
+
+            {/* User Dropdown */}
+            <div className="relative" ref={userDropdownRef}>
+              <button
+                onClick={() => {
+                  setUserDropdownOpen(!userDropdownOpen);
+                  setMenuOpen(false);
+                }}
+                className="border border-green1 rounded-full p-2 text-white bg-primary font-bold hover:bg-primary hover:text-white w-8 h-8 flex items-center justify-center text-lg uppercase cursor-pointer"
+              >
+                {user ? userFirstLetter : <FaUser size={18} />}
+              </button>
+
+              {userDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-50 bg-white shadow rounded-md text-sm text-center py-2 z-50">
+                  {user ? (
+                    <>
+                      <Link to="/account" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-4 py-3 font-bold hover:text-green-600">
+                        <CgProfile size={15} /> My Account
                       </Link>
-                    )}
-                    <button onClick={handleLogout} className="flex items-center gap-2 w-full px-4 py-3 font-bold text-red-600 cursor-pointer">
-                      <FiLogOut /> Logout
-                    </button>
-                  </>
-                ) : (
-                  <Link to="/login" onClick={() => setUserDropdownOpen(false)} className="flex items-center justify-center gap-2 px-4 py-1 hover:text-green-600">
-                    <FiLogIn /> Login
-                  </Link>
-                )}
-              </div>
-            )}
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          navigate("/account", { state: { goToOrders: true } });
+                        }}
+                        className="flex items-center gap-2 w-full px-4 py-3 font-bold hover:text-green-600 cursor-pointer"
+                      >
+                        <FaBoxOpen  size={15} /> My Orders
+                      </button>
+                      {role === "admin" && (
+                        <Link to="/adminpanel" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-4 py-3 font-bold hover:text-green-600">
+                          <RiAdminLine  size={15} /> Admin Dashboard
+                        </Link>
+                      )}
+                      <button onClick={handleLogout} className="flex items-center gap-2 w-full px-4 py-3 font-bold text-red-600 cursor-pointer">
+                        <FiLogOut /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <Link to="/login" onClick={() => setUserDropdownOpen(false)} className="flex items-center justify-center gap-2 px-4 py-1 hover:text-green-600">
+                      <FiLogIn /> Login
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Menu Icon */}
+          <div className="lg:hidden">
+            <button
+              onClick={() => {
+                setMenuOpen(!menuOpen);
+                setUserDropdownOpen(false);
+              }}
+              className="text-green-600 text-xl ml-2"
+            >
+              {menuOpen ? <FaTimes /> : <FaBars />}
+            </button>
           </div>
         </div>
-
-        {/* Mobile Menu Icon */}
-        <div className="lg:hidden">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="text-green-600 text-xl ml-2">
-            {menuOpen ? <FaTimes /> : <FaBars />}
-          </button>
-        </div>
-      </div>
 
       {/* Mobile Menu */}
       {menuOpen && (
@@ -287,7 +357,8 @@ const Navbar = () => {
           </div>
         </div>
       )}
-    </header>
+      </header>
+    </>
   );
 };
 

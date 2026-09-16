@@ -54,15 +54,15 @@ const Topbar = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-4.5 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-8 py-3.5 sm:py-4 bg-white border-b border-gray-200 shadow-sm min-h-[64px] sm:min-h-[72px]">
 
       {/* ── LEFT: Hamburger + Title ── */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3.5 sm:gap-4">
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="md:hidden p-2 rounded-lg hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition"
+          className="md:hidden w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 hover:bg-emerald-50 hover:border-emerald-300 text-gray-600 hover:text-emerald-700 transition shadow-sm cursor-pointer"
         >
-          <FaBars size={18} />
+          <FaBars size={17} />
         </button>
 
         <div className="hidden sm:flex flex-col leading-tight">
@@ -73,7 +73,7 @@ const Topbar = ({
 
 
       {/* ── RIGHT: Icons ── */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 sm:gap-4">
 
         {/* 🔍 Expanding search input — appears LEFT of the search icon */}
         <div
@@ -158,10 +158,10 @@ const Topbar = ({
         {/* 🔍 Search icon toggle */}
         <button
           onClick={() => { setShowSearch(!showSearch); setSearchQuery(""); }}
-          className={`w-9 h-9 flex items-center justify-center rounded-xl transition shadow-sm ${
+          className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition shadow-sm cursor-pointer border ${
             showSearch
-              ? "bg-emerald-600 text-white"
-              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+              ? "bg-emerald-600 text-white border-emerald-700"
+              : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300"
           }`}
         >
           <FaSearch size={14} />
@@ -171,7 +171,7 @@ const Topbar = ({
         <div className="relative" ref={orderRef}>
           <button
             onClick={() => { setIsOrderDropdown(!isOrderDropdown); setIsStockDropdown(false); setIsProfileDropdown(false); }}
-            className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition shadow-sm"
+            className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition shadow-sm cursor-pointer"
           >
             <FaBell size={16} />
             {todayOrdersCount > 0 && (
@@ -181,7 +181,7 @@ const Topbar = ({
             )}
           </button>
           {isOrderDropdown && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
               <div className="px-4 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
                 <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">New Orders</span>
                 <span className="bg-emerald-200 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full">{todayOrdersCount} Today</span>
@@ -243,10 +243,10 @@ const Topbar = ({
         <div className="relative" ref={stockRef}>
           <button
             onClick={() => { setIsStockDropdown(!isStockDropdown); setIsOrderDropdown(false); setIsProfileDropdown(false); }}
-            className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition shadow-sm ${
+            className={`relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition shadow-sm cursor-pointer border ${
               lowStockCount > 0
-                ? "bg-amber-50 text-amber-500 hover:bg-amber-100"
-                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                ? "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 hover:border-amber-300"
+                : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300"
             }`}
           >
             <MdWarning size={18} />
@@ -257,7 +257,7 @@ const Topbar = ({
             )}
           </button>
           {isStockDropdown && (
-            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
               <div className="px-4 py-3 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
                 <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Stock Alerts</span>
                 <span className="bg-amber-200 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full">{lowStockCount} Items</span>
@@ -317,12 +317,12 @@ const Topbar = ({
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => { setIsProfileDropdown(!isProfileDropdown); setIsOrderDropdown(false); setIsStockDropdown(false); }}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[15px] shadow-md shadow-emerald-200 transition cursor-pointer"
+            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[15px] border border-emerald-700 shadow-md shadow-emerald-200 transition cursor-pointer"
           >
             {(adminName || "A").charAt(0).toUpperCase()}
           </button>
           {isProfileDropdown && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+            <div className="absolute right-0 mt-3 w-52 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
               {/* Profile card */}
               <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
                 <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
