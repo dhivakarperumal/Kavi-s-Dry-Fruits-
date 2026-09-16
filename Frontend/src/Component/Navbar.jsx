@@ -1,7 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import logo from "/images/Kavi_logo.png";
-import { FaHeart, FaUser, FaBars, FaTimes, FaArrowUp, FaBoxOpen, FaHome, FaStore, FaLayerGroup, FaGift, FaTags, FaFileAlt, FaChevronDown } from "react-icons/fa";
+import { 
+  FaHeart, FaUser, FaBars, FaTimes, FaArrowUp, FaBoxOpen, FaHome, FaStore, 
+  FaLayerGroup, FaGift, FaTags, FaFileAlt, FaChevronDown, FaLeaf, 
+  FaInfoCircle, FaPhoneAlt, FaArrowRight 
+} from "react-icons/fa";
 import { RiAdminLine } from "react-icons/ri";
 import { IoCartOutline } from "react-icons/io5";
 import { FiLogIn, FiLogOut } from "react-icons/fi";
@@ -10,7 +14,7 @@ import { useStore } from "../Context/StoreContext";
 import Search from "./Search";
 
 const Navbar = () => {
-  const { favItems, cartItems, allProducts } = useStore();
+  const { favItems, cartItems, allProducts, allCategories } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -37,6 +41,90 @@ const Navbar = () => {
       setRole("");
     }
   }, []);
+
+  const pagesCardList = [
+    {
+      title: "Health Benefits",
+      path: "/healthbenefits",
+      badge: "Wellness",
+      description: "Nutritional facts & wellness guides",
+      icon: <FaLeaf className="text-emerald-600 text-base" />,
+      iconBg: "bg-emerald-50 border border-emerald-100",
+      accent: "hover:border-emerald-200 hover:bg-emerald-50/60",
+    },
+    {
+      title: "About Us",
+      path: "/aboutus",
+      badge: "Story",
+      description: "Our heritage & quality promise",
+      icon: <FaInfoCircle className="text-amber-600 text-base" />,
+      iconBg: "bg-amber-50 border border-amber-100",
+      accent: "hover:border-amber-200 hover:bg-amber-50/60",
+    },
+    {
+      title: "Contact Us",
+      path: "/contactus",
+      badge: "Support",
+      description: "Get in touch & customer care",
+      icon: <FaPhoneAlt className="text-blue-600 text-base" />,
+      iconBg: "bg-blue-50 border border-blue-100",
+      accent: "hover:border-blue-200 hover:bg-blue-50/60",
+    },
+  ];
+
+  const categoryCardList = useMemo(() => {
+    const catMap = new Map();
+
+    (allCategories || []).forEach((c) => {
+      const name = c.name || c.cname;
+      if (!name || name === "Combo") return;
+      const slug = name.toLowerCase().replace(/\s+/g, "");
+
+      let img = "";
+      if (c.images?.default) {
+        img = c.images.default;
+      } else if (Array.isArray(c.cimgs) && c.cimgs[0]) {
+        img = c.cimgs[0];
+      } else if (typeof c.cimgs === "string") {
+        try {
+          const parsed = JSON.parse(c.cimgs);
+          img = Array.isArray(parsed) ? parsed[0] : (parsed.default || "");
+        } catch {
+          img = "";
+        }
+      }
+
+      catMap.set(slug, {
+        name,
+        slug,
+        image: img,
+        count: 0,
+      });
+    });
+
+    (allProducts || []).forEach((p) => {
+      const catName = p.category;
+      if (!catName || catName === "Combo") return;
+      const slug = catName.toLowerCase().replace(/\s+/g, "");
+
+      if (!catMap.has(slug)) {
+        catMap.set(slug, {
+          name: catName,
+          slug,
+          image: p.image || p.imageUrl || (Array.isArray(p.images) ? p.images[0] : "") || "",
+          count: 1,
+        });
+      } else {
+        const item = catMap.get(slug);
+        item.count = (item.count || 0) + 1;
+        if (!item.image) {
+          item.image = p.image || p.imageUrl || (Array.isArray(p.images) ? p.images[0] : "") || "";
+        }
+      }
+    });
+
+    return Array.from(catMap.values());
+  }, [allCategories, allProducts]);
 
   const uniqueCategories = [
     ...new Set(allProducts.map((item) => item.category)),
@@ -146,27 +234,76 @@ const Navbar = () => {
             <NavLink to="/" end className={navLinkClass}>Home</NavLink>
             <NavLink to="/shop" className={navLinkClass}>Shop</NavLink>
 
-            {/* Category Dropdown */}
+            {/* Category Dropdown (Cards Design) */}
             <div
               className="relative"
               onMouseEnter={() => !isMobile && setCategoryOpen(true)}
               onMouseLeave={() => !isMobile && setCategoryOpen(false)}
             >
-              <button onClick={() => isMobile && setCategoryOpen(!categoryOpen)} className="hover:text-green-600">
-                Category
+              <button 
+                onClick={() => isMobile && setCategoryOpen(!categoryOpen)} 
+                className={`flex items-center gap-1.5 py-2 font-medium transition-colors duration-200 cursor-pointer ${
+                  categoryOpen || location.pathname.startsWith("/category")
+                    ? "text-green-700 font-semibold"
+                    : "text-black hover:text-green-600"
+                }`}
+              >
+                <span>Category</span>
+                <FaChevronDown className={`text-[10px] transition-transform duration-200 ${categoryOpen ? "rotate-180 text-green-700" : "text-gray-400"}`} />
               </button>
+
               {categoryOpen && (
-                <div className="absolute top-full left-0 w-30 py-3 bg-white shadow z-50">
-                  {filterCategory.map((item, idx) => (
-                    <Link
-                      key={idx}
-                      to={`/category/${item.toLowerCase().replace(/\s+/g, "")}`}
-                      className="block px-4 py-1 text-sm hover:text-green-600"
-                      onClick={() => isMobile && setCategoryOpen(false)}
-                    >
-                      {item}
-                    </Link>
-                  ))}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 w-[450px] animate-in fade-in zoom-in-95 duration-200">
+                  <div className="bg-white rounded-3xl shadow-2xl border border-green-100 p-4 ring-1 ring-black/5">
+                    <div className="flex items-center justify-between px-2 pb-3 mb-2 border-b border-gray-100">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Categories</span>
+                      <Link 
+                        to="/shop" 
+                        onClick={() => setCategoryOpen(false)}
+                        className="text-xs font-bold text-green-700 hover:text-green-800 hover:underline flex items-center gap-1"
+                      >
+                        All Products <FaArrowRight size={9} />
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto custom-scrollbar pr-1">
+                      {categoryCardList.map((cat, idx) => (
+                        <Link
+                          key={idx}
+                          to={`/category/${cat.slug}`}
+                          onClick={() => setCategoryOpen(false)}
+                          className="group flex items-center gap-3 p-2.5 rounded-2xl border border-slate-100 hover:border-green-300 bg-slate-50/50 hover:bg-green-50/60 transition-all duration-200 shadow-xs hover:shadow-md"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-white p-1 border border-slate-100 shadow-xs flex items-center justify-center shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                            {cat.image ? (
+                              <img src={cat.image} alt={cat.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <FaLayerGroup className="text-green-600 text-lg" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-slate-800 group-hover:text-green-700 truncate transition-colors">
+                              {cat.name}
+                            </div>
+                            <span className="text-[10px] font-semibold text-slate-400 group-hover:text-green-600 flex items-center gap-1 mt-0.5 transition-colors">
+                              {cat.count ? `${cat.count} Products` : "Explore"}
+                              <FaArrowRight size={8} className="group-hover:translate-x-0.5 transition-transform" />
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between px-2 text-[11px] text-slate-500">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        100% Farm Fresh & Natural
+                      </span>
+                      <Link to="/combos" onClick={() => setCategoryOpen(false)} className="font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1">
+                        Combos <FaArrowRight size={8} />
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -174,27 +311,60 @@ const Navbar = () => {
             <NavLink to="/combos" className={navLinkClass}>Combos</NavLink>
             <NavLink to="/offers" className={navLinkClass}>Offers</NavLink>
 
-            {/* Pages Dropdown */}
+            {/* Pages Dropdown (Cards Design: Health Benefits first, About Us next, Contact Us then) */}
             <div
               className="relative"
               onMouseEnter={() => !isMobile && setPagesOpen(true)}
               onMouseLeave={() => !isMobile && setPagesOpen(false)}
             >
-              <button onClick={() => isMobile && setPagesOpen(!pagesOpen)} className="hover:text-green-600">
-                Pages
+              <button 
+                onClick={() => isMobile && setPagesOpen(!pagesOpen)} 
+                className={`flex items-center gap-1.5 py-2 font-medium transition-colors duration-200 cursor-pointer ${
+                  pagesOpen || ["/healthbenefits", "/aboutus", "/contactus"].includes(location.pathname)
+                    ? "text-green-700 font-semibold"
+                    : "text-black hover:text-green-600"
+                }`}
+              >
+                <span>Pages</span>
+                <FaChevronDown className={`text-[10px] transition-transform duration-200 ${pagesOpen ? "rotate-180 text-green-700" : "text-gray-400"}`} />
               </button>
+
               {pagesOpen && (
-                <div className="absolute top-full left-0 w-36 py-3 bg-white shadow z-50">
-                  {pagesItems.map((item, idx) => (
-                    <Link
-                      key={idx}
-                      to={`/${item.toLowerCase().replace(/\s+/g, "")}`}
-                      className="block px-4 py-1 text-sm hover:text-green-600"
-                      onClick={() => isMobile && setPagesOpen(false)}
-                    >
-                      {item}
-                    </Link>
-                  ))}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 w-80 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="bg-white rounded-3xl shadow-2xl border border-green-100 p-2.5 ring-1 ring-black/5">
+                    <div className="flex items-center justify-between px-3 py-1.5 mb-1 border-b border-gray-100">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Company & Resources</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {pagesCardList.map((page, idx) => (
+                        <Link
+                          key={idx}
+                          to={page.path}
+                          onClick={() => setPagesOpen(false)}
+                          className={`group flex items-center gap-3.5 p-2.5 rounded-2xl border border-slate-100/80 bg-slate-50/40 ${page.accent} transition-all duration-200 hover:shadow-sm`}
+                        >
+                          <div className={`w-11 h-11 rounded-2xl ${page.iconBg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-xs`}>
+                            {page.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-800 group-hover:text-green-700 transition-colors">
+                                {page.title}
+                              </span>
+                              <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-green-100 group-hover:text-green-700 transition-colors">
+                                {page.badge}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                              {page.description}
+                            </p>
+                          </div>
+                          <FaArrowRight size={10} className="text-slate-300 group-hover:text-green-600 group-hover:translate-x-1 transition-all shrink-0" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -307,14 +477,24 @@ const Navbar = () => {
               </button>
             {categoryOpen && (
               <div className="mt-3 grid grid-cols-2 gap-2 border-t border-green-100 pt-3">
-                {filterCategory.map((item, idx) => (
+                {categoryCardList.map((cat, idx) => (
                   <Link
                     key={idx}
-                    to={`/category/${item.toLowerCase().replace(/\s+/g, "")}`}
+                    to={`/category/${cat.slug}`}
                     onClick={() => setMenuOpen(false)}
-                    className="rounded-lg bg-green-50 px-3 py-2 text-gray-700 transition-colors hover:bg-green-100 hover:text-green-800"
+                    className="flex items-center gap-2.5 rounded-xl border border-green-100 bg-green-50/40 p-2 text-gray-800 transition-all hover:bg-green-100 hover:text-green-800 shadow-xs"
                   >
-                    {item}
+                    <div className="w-9 h-9 rounded-lg bg-white p-0.5 flex items-center justify-center shrink-0 overflow-hidden border border-green-100">
+                      {cat.image ? (
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <FaLayerGroup className="text-green-600 text-xs" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-bold truncate block">{cat.name}</span>
+                      <span className="text-[9px] text-gray-400 font-semibold">{cat.count ? `${cat.count} items` : "Explore"}</span>
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -341,14 +521,23 @@ const Navbar = () => {
               </button>
             {pagesOpen && (
               <div className="mt-3 grid grid-cols-1 gap-2 border-t border-green-100 pt-3">
-                {pagesItems.map((item, idx) => (
+                {pagesCardList.map((page, idx) => (
                   <Link
                     key={idx}
-                    to={`/${item.toLowerCase().replace(/\s+/g, "")}`}
+                    to={page.path}
                     onClick={() => setMenuOpen(false)}
-                    className="rounded-lg bg-green-50 px-3 py-2 text-gray-700 transition-colors hover:bg-green-100 hover:text-green-800"
+                    className="flex items-center gap-3 rounded-xl border border-green-100 bg-white p-2.5 text-gray-800 transition-all hover:bg-green-50 shadow-xs"
                   >
-                    {item}
+                    <div className={`w-9 h-9 rounded-xl ${page.iconBg} flex items-center justify-center shrink-0`}>
+                      {page.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-800">{page.title}</span>
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700">{page.badge}</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 truncate">{page.description}</p>
+                    </div>
                   </Link>
                 ))}
               </div>
