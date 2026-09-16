@@ -252,9 +252,12 @@ const createOrder = async (req, res) => {
     // Notify only authenticated admin sockets after the transaction commits.
     const io = req.app.get('io');
     if (io) {
+      console.log("Order created:", newOrder);
+      console.log("Emitting new-order:", newOrder);
       io.to('admins').emit('new-order', newOrder);
       io.to('admins').emit('newOrder', newOrder);
     }
+    console.log("Sending push notification...");
     sendNewOrderPush(newOrder).catch((error) => console.error('Push notification error:', error));
 
     res.json({ id: result.insertId, message: 'Order created and stock updated' });

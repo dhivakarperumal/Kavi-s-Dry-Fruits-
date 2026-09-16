@@ -99,6 +99,8 @@ const AdminPanel = () => {
   }, []);
 
   const handleNewOrder = useCallback((incomingOrder) => {
+    console.log("New order received:", incomingOrder);
+    console.log("Notification permission:", Notification.permission);
     const orderKey = incomingOrder?.orderId || incomingOrder?.id;
     if (!orderKey || seenOrderIds.current.has(orderKey)) return;
     seenOrderIds.current.add(orderKey);
@@ -139,11 +141,13 @@ const AdminPanel = () => {
     if (!user) return;
     const socket = io(api.defaults.baseURL.replace('/api', ''), {
       auth: { token: localStorage.getItem("token") },
+      withCredentials: true
     });
     socket.on("new-order", handleNewOrder);
     socket.on("newOrder", handleNewOrder);
 
     socket.on("connect", async () => {
+      console.log("Socket connected:", socket.id);
       // Sync on reconnect to prevent missing orders
       try {
         const ordersRes = await api.get("/orders");
