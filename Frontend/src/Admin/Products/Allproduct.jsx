@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   FaStar, FaPlus, FaFilter, FaEdit, FaTrash, FaEye, 
   FaBoxOpen, FaLayerGroup, FaThLarge, FaListUl, FaSearch,
-  FaBarcode, FaPrint, FaChevronRight, FaImage,FaBars
+  FaBarcode, FaPrint, FaChevronRight, FaImage, FaBars, FaWarehouse
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import api from "../../services/api";
@@ -272,6 +272,19 @@ const Allproduct = ({ adminData }) => {
     waitForLoad();
   };
 
+  // Summary stats (Based on Billing reference)
+  const totalProducts = items.length;
+  const singleCount = items.filter((i) => i.type === "single").length;
+  const comboCount = items.filter((i) => i.type === "combo").length;
+  const totalCategories = categories.length;
+  const totalStockKg = items.reduce((sum, item) => sum + (Number(item.totalStock) || 0), 0) / 1000;
+  const totalVariants = items.reduce((sum, item) => {
+    if (item.type === "single") {
+      return sum + (safeParse(item.variants).length || 1);
+    }
+    return sum + 1;
+  }, 0);
+
   return (
     <div className="min-h-screen  p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto mt-0">
@@ -329,6 +342,74 @@ const Allproduct = ({ adminData }) => {
              >
                <FaPlus size={12} /> Add New
              </button>
+          </div>
+        </div>
+
+        {/* Products Stats Cards (Billing Reference Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Catalog Inventory Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Catalog Inventory</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {totalProducts}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaBoxOpen />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-6 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{singleCount} Singles • {comboCount} Combos</span>
+            </div>
+          </div>
+
+          {/* Active Categories Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Active Categories</p>
+                <h3 className="text-5xl font-black text-white tracking-tighter">
+                  {totalCategories}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaLayerGroup />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+              {filteredItems.length} Products in Current View
+            </div>
+          </div>
+
+          {/* Stock Volume Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Stock Volume</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {totalStockKg > 0 ? `${totalStockKg.toLocaleString("en-IN", { maximumFractionDigits: 1 })} KG` : totalVariants}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaWarehouse />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{totalVariants} Active SKU Variants</span>
+            </div>
           </div>
         </div>
 
