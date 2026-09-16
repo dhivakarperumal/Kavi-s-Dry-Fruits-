@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import api from "../../services/api";
 import { FaBars, FaThLarge } from "react-icons/fa";
+import { io } from "socket.io-client";
 
 const ContactFormSubmissions = () => {
   const navigate = useNavigate();
@@ -128,6 +129,35 @@ const ContactFormSubmissions = () => {
 
   useEffect(() => {
     fetchSubmissions();
+  }, []);
+
+  useEffect(() => {
+    const socket = io(api.defaults.baseURL.replace("/api", ""), {
+      auth: { token: localStorage.getItem("token") },
+    });
+
+    const handleNewContactMessage = (submission) => {
+      const submissionKey = submission?.submissionId || submission?.id;
+      if (!submissionKey) return;
+
+      setSubmissions((currentSubmissions) => {
+        if (currentSubmissions.some((item) => (item.submissionId || item.id) === submissionKey)) {
+          return currentSubmissions;
+        }
+
+        return [{
+          ...submission,
+          created_at: submission.created_at || submission.createdAt || new Date().toISOString(),
+        }, ...currentSubmissions];
+      });
+    };
+
+    socket.on("newContactMessage", handleNewContactMessage);
+
+    return () => {
+      socket.off("newContactMessage", handleNewContactMessage);
+      socket.disconnect();
+    };
   }, []);
 
   useEffect(() => {

@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import api from "../../services/api";
 import JsBarcode from "jsbarcode";
 
-const Allproduct = ({ adminData }) => {
+const Allproduct = ({ adminData, onInventoryChanged }) => {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [viewMode, setViewMode] = useState("table");
@@ -198,8 +198,11 @@ const Allproduct = ({ adminData }) => {
     if (!window.confirm(`Delete ${item.name}?`)) return;
     try {
       await api.delete(`${item.type === 'single' ? "/products" : "/combos"}/${item.id}`);
+      setItems((currentItems) => currentItems.filter((currentItem) => (
+        currentItem.type !== item.type || currentItem.id !== item.id
+      )));
       toast.success("Deleted");
-      fetchItems();
+      if (onInventoryChanged) await onInventoryChanged();
     } catch { toast.error("Delete failed"); }
   };
 
