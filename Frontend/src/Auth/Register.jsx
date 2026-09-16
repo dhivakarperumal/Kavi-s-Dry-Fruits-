@@ -95,9 +95,9 @@ const Register = () => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <div className="mb-4 sm:mb-6">
-            <img src="/images/Kavi_logo.png" alt="Logo" className="w-20 h-auto mb-2" />
-            <h2 className="text-3xl font-bold text-green-700">Register</h2>
-            <p className="text-sm text-gray-600">Create your account below.</p>
+            <img src="/images/Kavi_logo.png" alt="Logo" className="mx-auto w-20 h-auto mb-2" />
+            <h2 className="text-center text-3xl font-bold text-green-700">Register</h2>
+            <p className="text-center text-sm text-gray-600">Create your account below.</p>
           </div>
 
           {message && (
@@ -113,26 +113,6 @@ const Register = () => {
           )}
 
           <form onSubmit={handleRegister} className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700">Need a test user?</h3>
-                <p className="text-xs text-gray-500">Click below to fill the register form.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setFirstName('TestUser');
-                  setEmail('testuser@example.com');
-                  setPhone('9999999999');
-                  setPassword('Test@1234');
-                  setConfirmPassword('Test@1234');
-                  setAgreed(true);
-                }}
-                className="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-              >
-                Fill Test User
-              </button>
-            </div>
             {/* Name */}
             <div>
               <label htmlFor="register-first-name" className="mb-1 block text-xs font-semibold text-gray-700">First Name</label>
@@ -142,7 +122,7 @@ const Register = () => {
                 placeholder="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border border-green-400 rounded-md px-4 py-2"
+                className="w-full border border-gray-200 rounded-md px-4 py-2 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
               />
             </div>
 
@@ -155,7 +135,7 @@ const Register = () => {
                 placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-green-400 rounded-md px-4 py-2"
+                className="w-full border border-gray-200 rounded-md px-4 py-2 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
               />
             </div>
 
@@ -168,46 +148,54 @@ const Register = () => {
                 placeholder="Phone Number (10 digits)"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full border border-green-400 rounded-md px-4 py-2"
+                className="w-full border border-gray-200 rounded-md px-4 py-2 outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
               />
             </div>
 
             {/* Password */}
-            <div className="relative">
+            <div>
               <label htmlFor="register-password" className="mb-1 block text-xs font-semibold text-gray-700">Password</label>
-              <input
-                id="register-password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-green-400 rounded-md px-4 py-2"
-              />
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
+              <div className="relative">
+                <input
+                  id="register-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-gray-200 rounded-md px-4 py-2 pr-10 shadow-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center justify-center text-gray-500"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
 
             {/* Confirm Password */}
-            <div className="relative">
+            <div>
               <label htmlFor="register-confirm-password" className="mb-1 block text-xs font-semibold text-gray-700">Confirm Password</label>
-              <input
-                id="register-confirm-password"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border border-green-400 rounded-md px-4 py-2"
-              />
-              <span
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-              >
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
+              <div className="relative">
+                <input
+                  id="register-confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full border border-gray-200 rounded-md px-4 py-2 pr-10 shadow-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                />
+                <button
+                  type="button"
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center justify-center text-gray-500"
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
 
             {/* Terms */}
@@ -240,7 +228,7 @@ const Register = () => {
 
           <p className="text-sm mt-6 text-center">
             Already have an account?{" "}
-            <a href="/login" className="text-green-600 underline">Log In</a>
+            <a href="/login#/login" className="text-green-600 underline">Log In</a>
           </p>
         </div>
       </div>

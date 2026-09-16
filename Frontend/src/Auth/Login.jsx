@@ -270,11 +270,11 @@ const Login = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "16px" }}>
+    <div style={{ height: "100vh", minHeight: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "16px", boxSizing: "border-box" }}>
       <div style={{
         display: "flex", flexDirection: "row", maxWidth: "960px", width: "100%",
         boxShadow: "0 4px 24px rgba(0,0,0,0.1)", border: "1.5px solid #86efac",
-        borderRadius: "16px", overflow: "hidden", minHeight: "560px",
+        borderRadius: "16px", overflow: "hidden", height: "calc(100vh - 32px)", maxHeight: "calc(100vh - 32px)", minHeight: 0,
       }}>
 
         {/* ── Left image (hidden on mobile) ── */}
@@ -287,7 +287,7 @@ const Login = () => {
         </div>
 
         {/* ── Right form panel ── */}
-        <div style={{ flex: 1, padding: "36px 32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ flex: 1, minHeight: 0, padding: "36px 32px", display: "flex", flexDirection: "column", justifyContent: "center", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
 
           {/* Logo */}
           <div style={{ marginBottom: "16px" }}>
@@ -556,6 +556,27 @@ const Login = () => {
               Sign Up
             </Link>
           </p>
+
+          <Link
+            to="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              marginTop: "12px",
+              padding: "10px 16px",
+             
+              borderRadius: "8px",
+              color: "#16a34a",
+              background: "#fff",
+              fontSize: "13px",
+              fontWeight: "600",
+              textDecoration: "none",
+            }}
+          >
+           Back To Home
+          </Link>
         </div>
       </div>
 
