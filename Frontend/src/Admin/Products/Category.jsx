@@ -294,12 +294,12 @@ const Category = () => {
              <table className="w-full text-left">
                 <thead className="bg-[#009669] border-b border-emerald-700">
                    <tr>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Description</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Description</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
