@@ -75,17 +75,26 @@ const Register = () => {
   // -----------------------------------------------------------
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white font-sans">
-      <div className="flex max-w-6xl w-full h-[650px] p-2 bg-white rounded-xl border border-green-600 shadow-xl overflow-hidden">
+    <div className="h-screen min-h-screen overflow-hidden flex items-center justify-center bg-white font-sans p-2 sm:p-4">
+      <div className="flex max-w-6xl w-full h-full max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] p-2 bg-white rounded-xl border border-green-600 shadow-2xl shadow-green-900/15 overflow-hidden">
 
         {/* LEFT IMAGE */}
-        <div className="w-1/2 hidden md:block">
-          <img src="https://kavisdryfruits.com/images/Register.jpg" alt="Register" className="h-full w-full object-cover rounded-3xl" style={{ width: '100%', height: '100%' }} />
+        <div className="w-1/2 h-full hidden md:block min-h-0 self-stretch">
+          <img
+            src="/images/Register.jpg"
+            alt="Register"
+            loading="eager"
+            fetchPriority="high"
+            className="block h-full min-h-full w-full object-cover rounded-3xl"
+          />
         </div>
 
         {/* FORM */}
-        <div className="w-full md:w-1/2 p-8 overflow-y-auto">
-          <div className="mb-6">
+        <div
+          className="w-full md:w-1/2 p-4 sm:p-6 md:p-8 overflow-y-auto"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <div className="mb-4 sm:mb-6">
             <img src="/images/Kavi_logo.png" alt="Logo" className="w-20 h-auto mb-2" />
             <h2 className="text-3xl font-bold text-green-700">Register</h2>
             <p className="text-sm text-gray-600">Create your account below.</p>
