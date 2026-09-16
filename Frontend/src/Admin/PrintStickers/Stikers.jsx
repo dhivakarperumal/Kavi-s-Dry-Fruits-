@@ -392,16 +392,17 @@ const Stickers = ({ adminData }) => {
             .sticker-grid {
               display: grid;
               grid-template-columns: repeat(10, minmax(0, 1fr));
-              gap: 4px;
+              column-gap: 12px;
+              row-gap: 2px;
               justify-content: center;
             }
             .sticker-card {
               width: 100%;
               min-width: 0;
               text-align: center;
-              padding: 4px 3px;
-              border: 0.5px solid #eaeaea;
-              border-radius: 4px;
+              padding: 0;
+              border: none;
+              border-radius: 0;
               background: #fff;
               page-break-inside: avoid;
             }
@@ -439,7 +440,7 @@ const Stickers = ({ adminData }) => {
               white-space: nowrap;
             }
             .date-tag {
-              font-size: 8px;
+              font-size: 10px;
               color: #111;
               margin-top: 1px;
               font-weight: 500;
