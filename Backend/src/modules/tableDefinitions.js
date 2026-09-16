@@ -139,6 +139,8 @@ const tables = {
       totalAmount DECIMAL(10,2),
       items JSON,
       docketNumber VARCHAR(255),
+      deliveryMethod VARCHAR(50),
+      courierName VARCHAR(255),
       cancelReason TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

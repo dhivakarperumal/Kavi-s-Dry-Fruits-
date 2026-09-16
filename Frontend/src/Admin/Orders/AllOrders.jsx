@@ -21,6 +21,8 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState("table"); // "table" or "card"
   const [statusFilter, setStatusFilter] = useState("All");
+  const [shippingOrderId, setShippingOrderId] = useState(null);
+  const [shippingForm, setShippingForm] = useState({ deliveryMethod: "Track Hand", courierName: "" });
 
   // Fetch all orders from all users
   const fetchOrders = async (forceApi = false) => {
@@ -111,11 +113,13 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
   };
 
   // Status Update Logic
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus, shipmentDetails = {}) => {
     try {
       const data = { orderStatus: newStatus };
       if (newStatus === "Shipped") {
         data.docketNumber = generateDocketNumber();
+        data.deliveryMethod = shipmentDetails.deliveryMethod;
+        data.courierName = shipmentDetails.courierName.trim();
       }
 
       await api.put(`/orders/${id}`, data);
@@ -125,20 +129,48 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
         id,
         orderStatus: newStatus,
         ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}),
+        ...(data.deliveryMethod ? { deliveryMethod: data.deliveryMethod } : {}),
+        ...(data.courierName ? { courierName: data.courierName } : {}),
       });
       setOrders((currentOrders) => currentOrders.map((order) => (
         order.id === id
-          ? { ...order, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
+          ? { ...order, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}), ...(data.deliveryMethod ? { deliveryMethod: data.deliveryMethod } : {}), ...(data.courierName ? { courierName: data.courierName } : {}) }
           : order
       )));
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : "Status updated!");
       await fetchOrders(true);
       setCancelReason("");
       setShowCancelInput(null);
+      setShippingOrderId(null);
     } catch (err) {
       console.error(err);
       toast.error("Status update failed!");
     }
+  };
+
+  const handleStatusSelection = (orderId, newStatus) => {
+    if (newStatus === "Shipped") {
+      setShippingForm({ deliveryMethod: "Track Hand", courierName: "" });
+      setShippingOrderId(orderId);
+      return;
+    }
+
+    if (newStatus === "Cancelled") {
+      setShowCancelInput(orderId);
+      return;
+    }
+
+    handleStatusUpdate(orderId, newStatus);
+  };
+
+  const submitShippingDetails = async (event) => {
+    event.preventDefault();
+    if (!shippingForm.courierName.trim()) {
+      toast.error("Please enter the courier name");
+      return;
+    }
+
+    await handleStatusUpdate(shippingOrderId, "Shipped", shippingForm);
   };
 
   // Filtered status options
@@ -539,9 +571,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                         <CustomSelect
                           value={order.orderStatus}
                           onChange={(e) => {
-                            const v = e.target.value;
-                            if (v === "Cancelled") setShowCancelInput(order.id);
-                            else handleStatusUpdate(order.id, v);
+                            handleStatusSelection(order.id, e.target.value);
                           }}
                           badgeVariant={true}
                           className="w-40"
@@ -622,9 +652,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                   <CustomSelect
                     value={order.orderStatus}
                     onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "Cancelled") setShowCancelInput(order.id);
-                      else handleStatusUpdate(order.id, v);
+                      handleStatusSelection(order.id, e.target.value);
                     }}
                     badgeVariant={true}
                     className="w-full"
@@ -695,6 +723,43 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
           )}
         </div>
       </div>
+
+      {shippingOrderId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-md">
+          <form onSubmit={submitShippingDetails} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Dispatch details</p>
+                <h2 className="mt-1 text-2xl font-black text-slate-900">Mark order as shipped</h2>
+              </div>
+              <button type="button" onClick={() => setShippingOrderId(null)} className="text-2xl leading-none text-slate-400 hover:text-slate-700" aria-label="Close shipping details">&times;</button>
+            </div>
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Delivery method</label>
+            <select
+              value={shippingForm.deliveryMethod}
+              onChange={(e) => setShippingForm((current) => ({ ...current, deliveryMethod: e.target.value }))}
+              className="mb-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
+            >
+              <option value="Track Hand">Track Hand</option>
+              <option value="Courier">Courier</option>
+            </select>
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Courier name</label>
+            <input
+              value={shippingForm.courierName}
+              onChange={(e) => setShippingForm((current) => ({ ...current, courierName: e.target.value }))}
+              placeholder="Enter courier name"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
+              autoFocus
+            />
+
+            <button type="submit" className="mt-6 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700">
+              Submit and mark shipped
+            </button>
+          </form>
+        </div>
+      )}
 
       <OrderDetailsModal
         order={selectedOrder}

@@ -21,6 +21,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [shippingOrderId, setShippingOrderId] = useState(null);
+  const [shippingForm, setShippingForm] = useState({ deliveryMethod: "Track Hand", courierName: "" });
   const seenIncomingOrderIds = useRef(new Set());
 
   const navigate = useNavigate();
@@ -137,7 +139,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
     return `AA${randomDigits}IN`;
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus, shipmentDetails = {}) => {
     if (!newStatus) return;
     try {
       const data = { orderStatus: newStatus };
@@ -148,6 +150,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
 
       if (newStatus === "Shipped") {
         data.docketNumber = generateDocketNumber();
+        data.deliveryMethod = shipmentDetails.deliveryMethod;
+        data.courierName = shipmentDetails.courierName.trim();
       }
 
       // ✅ Optimistic update: immediately reflect change in the UI
@@ -164,11 +168,15 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
         id,
         orderStatus: newStatus,
         ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}),
+        ...(data.deliveryMethod ? { deliveryMethod: data.deliveryMethod } : {}),
+        ...(data.courierName ? { courierName: data.courierName } : {}),
         ...(data.cancelReason ? { cancelReason: data.cancelReason } : {}),
       });
       toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);
+      setShippingOrderId(null);
+      return true;
 
       // Background sync to confirm DB state (no loading spinner)
       fetchOrders(true);
@@ -176,7 +184,33 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
       toast.error("Failed to update status!");
       // Revert optimistic update on failure
       fetchOrders(true);
+      return false;
     }
+  };
+
+  const handleStatusSelection = (orderId, newStatus) => {
+    if (newStatus === "Shipped") {
+      setShippingForm({ deliveryMethod: "Track Hand", courierName: "" });
+      setShippingOrderId(orderId);
+      return;
+    }
+
+    if (newStatus === "Cancelled") {
+      setShowCancelInput(orderId);
+      return;
+    }
+
+    handleStatusUpdate(orderId, newStatus);
+  };
+
+  const submitShippingDetails = async (event) => {
+    event.preventDefault();
+    if (!shippingForm.courierName.trim()) {
+      toast.error("Please enter the courier name");
+      return;
+    }
+
+    await handleStatusUpdate(shippingOrderId, "Shipped", shippingForm);
   };
 
   const handlePrint = useCallback((order) => {
@@ -564,7 +598,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                       <div className="flex flex-col gap-2">
                          <CustomSelect
                           value={order.orderStatus}
-                          onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
+                          onChange={(e) => handleStatusSelection(order.id, e.target.value)}
                           badgeVariant={true}
                           className="w-44"
                           options={getFilteredStatusOptions(order.orderStatus)}
@@ -633,7 +667,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                   <label className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] block mb-3 pl-1">Update Pipeline</label>
                   <CustomSelect
                     value={order.orderStatus}
-                    onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
+                    onChange={(e) => handleStatusSelection(order.id, e.target.value)}
                     badgeVariant={true}
                     className="w-full"
                     options={getFilteredStatusOptions(order.orderStatus)}
@@ -695,6 +729,43 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
               <FaChevronRight size={14} />
             </button>
           </div>
+        </div>
+      )}
+
+      {shippingOrderId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-md">
+          <form onSubmit={submitShippingDetails} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Dispatch details</p>
+                <h2 className="mt-1 text-2xl font-black text-slate-900">Mark order as shipped</h2>
+              </div>
+              <button type="button" onClick={() => setShippingOrderId(null)} className="text-2xl leading-none text-slate-400 hover:text-slate-700" aria-label="Close shipping details">&times;</button>
+            </div>
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Delivery method</label>
+            <select
+              value={shippingForm.deliveryMethod}
+              onChange={(e) => setShippingForm((current) => ({ ...current, deliveryMethod: e.target.value }))}
+              className="mb-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
+            >
+              <option value="Track Hand">Track Hand</option>
+              <option value="Courier">Courier</option>
+            </select>
+
+            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Courier name</label>
+            <input
+              value={shippingForm.courierName}
+              onChange={(e) => setShippingForm((current) => ({ ...current, courierName: e.target.value }))}
+              placeholder="Enter courier name"
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
+              autoFocus
+            />
+
+            <button type="submit" className="mt-6 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700">
+              Submit and mark shipped
+            </button>
+          </form>
         </div>
       )}
 

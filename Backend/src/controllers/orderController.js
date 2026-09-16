@@ -318,7 +318,7 @@ const updateOrder = async (req, res) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const { orderStatus, docketNumber, cancelReason } = req.body;
+    const { orderStatus, docketNumber, deliveryMethod, courierName, cancelReason } = req.body;
     const { id } = req.params;
 
     // Get orderId first
@@ -328,8 +328,8 @@ const updateOrder = async (req, res) => {
       
       // Update the order with new status and optional tracking/cancel info
       await connection.query(
-        'UPDATE orders SET orderStatus = ?, docketNumber = COALESCE(?, docketNumber), cancelReason = COALESCE(?, cancelReason) WHERE id = ?', 
-        [orderStatus, docketNumber || null, cancelReason || null, id]
+        'UPDATE orders SET orderStatus = ?, docketNumber = COALESCE(?, docketNumber), deliveryMethod = COALESCE(?, deliveryMethod), courierName = COALESCE(?, courierName), cancelReason = COALESCE(?, cancelReason) WHERE id = ?', 
+        [orderStatus, docketNumber || null, deliveryMethod || null, courierName || null, cancelReason || null, id]
       );
       
       await connection.query('INSERT INTO order_tracking (order_id, status) VALUES (?, ?)', [orderId, orderStatus]);
@@ -345,7 +345,9 @@ const updateOrder = async (req, res) => {
         io.emit('orderStatusUpdated', {
           orderId: updatedRows[0].orderId,
           orderStatus,
-          docketNumber
+          docketNumber,
+          deliveryMethod,
+          courierName
         });
       }
     }
