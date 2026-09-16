@@ -371,7 +371,7 @@ const Category = ({ adminData }) => {
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">ID</th>
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
-                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Description</th>
+                      {/* <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Description</th> */}
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
                    </tr>
@@ -395,16 +395,16 @@ const Category = ({ adminData }) => {
                            <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
                               {(currentPage - 1) * itemsPerPage + index + 1}
                            </td>
-                           <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
+                           <td className="px-8 py-6 font-black text-slate-900 text-xs">{cat.catId}</td>
                            <td className="px-8 py-6">
                               <div className="flex items-center gap-4">
                                  
                                  <span className="font-black text-slate-800 text-sm">{cat.cname}</span>
                               </div>
                            </td>
-                           <td className="px-8 py-6 max-w-xs">
+                           {/* <td className="px-8 py-6 max-w-xs">
                               <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.cdescription}"</p>
-                           </td>
+                           </td> */}
                            <td className="px-8 py-6 text-center">
                               <div className="flex items-center justify-center -space-x-2">
                                  {(cat.cimgs || []).map((img, i) => (

@@ -577,7 +577,7 @@ const Allproduct = ({ adminData }) => {
                                         <td className="px-8 py-4 md:py-5">
                                            <div 
                                               onClick={() => setViewProduct(item)}
-                                              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-slate-50 p-2 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm cursor-pointer hover:shadow-md hover:border-emerald-200 hover:scale-105 transition-all duration-300 shrink-0"
+                                              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm cursor-pointer hover:shadow-md hover:border-emerald-200 hover:scale-105 transition-all duration-300 shrink-0"
                                               title="Click to view product details"
                                            >
                                               {safeParse(item.images)[0] ? (
