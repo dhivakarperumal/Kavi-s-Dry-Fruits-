@@ -72,14 +72,14 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, existingRevi
             <button
               type="button"
               onClick={() => onPrint(order)}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-700"
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-700"
             >
               <FaPrint /> <span className="hidden sm:inline">Print</span>
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-white p-2 text-gray-500 shadow-sm transition hover:bg-green-100 hover:text-green-700"
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-white p-2 text-gray-500 shadow-sm transition hover:bg-green-100 hover:text-green-700"
               aria-label="Close order details"
             >
               <FaTimes />
@@ -94,44 +94,7 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, existingRevi
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Current Status</p>
                 <p className="text-lg font-black text-green-800">{currentStatus}</p>
               </div>
-              {canCancel && (
-                showCancelForm ? (
-                  <div className="flex w-full max-w-lg flex-col gap-2 sm:flex-row sm:items-end">
-                    <textarea
-                      value={cancelReason}
-                      onChange={(event) => setCancelReason(event.target.value)}
-                      placeholder="Cancellation reason..."
-                      rows={2}
-                      className="min-h-[58px] w-full flex-1 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                    />
-                    <div className="flex gap-2 sm:flex-col">
-                      <button
-                        type="button"
-                        disabled={!cancelReason.trim()}
-                        onClick={() => onCancel(cancelReason.trim())}
-                        className="w-24 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Confirm
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowCancelForm(false)}
-                        className="w-24 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
-                      >
-                        Keep Order
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowCancelForm(true)}
-                    className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50"
-                  >
-                    Cancel Order
-                  </button>
-                )
-              )}
+              
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
               {statusSteps.map((step, index) => {
