@@ -31,6 +31,10 @@ const Products = ({ onInventoryChanged }) => {
   const [loadingList, setLoadingList] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  useEffect(() => {
+    setActiveTab(editItem?.type === "combo" ? "combo" : "single");
+  }, [editItem]);
+
   const fetchData = async () => {
     setLoadingList(true);
     try {
