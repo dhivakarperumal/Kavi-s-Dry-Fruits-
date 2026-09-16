@@ -34,6 +34,12 @@ import OrderTracking from "./Shop/OrderTracking.jsx";
 import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
 import { AdminNotificationProvider } from "./Context/AdminNotificationProvider.jsx";
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js").catch((error) => {
+    console.warn("Service worker registration failed:", error);
+  });
+}
+
 const router = createHashRouter([
   {
     path: "/",
