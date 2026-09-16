@@ -44,11 +44,10 @@ const Sidebar = ({
       icon: <MdOutlineProductionQuantityLimits />,
       dropdown: [
         // { label: "Add Products", icon: <MdOutlineAddBox /> },
-        { label: "All Products", icon: <MdOutlineInventory2 /> },
-        { label: "Categories", section: "Add Category", icon: <MdCategory /> },
+        { label: "All Products", collection: "products", icon: <MdOutlineInventory2 /> },
+        { label: "Categories", section: "Add Category", collection: "categories", icon: <MdCategory /> },
         {
           label: "Stock Details",
-          collection: "products",
           icon: <AiOutlineStock />,
         },
       ],
@@ -64,7 +63,7 @@ const Sidebar = ({
           collection: "New Orders",
           icon: <MdDeliveryDining />,
         },
-        { label: "All Orders", icon: <FaDropbox /> },
+        { label: "All Orders", collection: "orders", icon: <FaDropbox /> },
         { label: "Delivered Orders", icon: <MdDeliveryDining /> },
         { label: "Cancel Orders", icon: <MdOutlineCancelPresentation /> },
         { label: "Returned Orders", icon: <MdOutlineCancelPresentation /> },
@@ -235,7 +234,7 @@ const Sidebar = ({
           const rawCount =
             item.label === "Stock Details"
               ? lowStockCount
-              : collectionCounts[item.label] || 0;
+              : collectionCounts[item.collection || item.label] || 0;
           const count = Array.isArray(rawCount) ? rawCount.length : rawCount;
           const showBadge =
             item.collection &&
@@ -327,13 +326,13 @@ const Sidebar = ({
                       )}
                       {!isCollapsed &&
                         subItem.collection &&
-                        (Array.isArray(collectionCounts[subItem.label])
-                          ? collectionCounts[subItem.label].length
-                          : collectionCounts[subItem.label]) > 0 && (
+                        (Array.isArray(collectionCounts[subItem.collection])
+                          ? collectionCounts[subItem.collection].length
+                          : collectionCounts[subItem.collection]) > 0 && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white cursor-pointer font-bold ml-2 shadow-sm">
-                            {Array.isArray(collectionCounts[subItem.label])
-                              ? collectionCounts[subItem.label].length
-                              : collectionCounts[subItem.label]}
+                            {Array.isArray(collectionCounts[subItem.collection])
+                              ? collectionCounts[subItem.collection].length
+                              : collectionCounts[subItem.collection]}
                           </span>
                         )}
                     </button>

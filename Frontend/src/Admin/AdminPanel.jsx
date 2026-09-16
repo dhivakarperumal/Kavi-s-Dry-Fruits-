@@ -62,7 +62,8 @@ const AdminPanel = () => {
     allProducts: [],
     allOrders: [],
     allUsers: [],
-    allCombos: []
+    allCombos: [],
+    categories: 0
   });
 
   const navigate = useNavigate();
@@ -267,16 +268,18 @@ const AdminPanel = () => {
       }
 
       try {
-        const [usersRes, productsRes, combosRes, ordersRes] = await Promise.allSettled([
+        const [usersRes, productsRes, combosRes, categoriesRes, ordersRes] = await Promise.allSettled([
           api.get("/users"),
           api.get("/products"),
           api.get("/combos"),
+          api.get("/categories"),
           api.get("/orders"),
         ]);
 
         const usersList = usersRes.status === "fulfilled" ? (usersRes.value.data?.users || usersRes.value.data || []) : [];
         const productsList = productsRes.status === "fulfilled" ? (productsRes.value.data || []) : [];
         const combosList = combosRes.status === "fulfilled" ? (combosRes.value.data || []) : [];
+        const categoriesList = categoriesRes.status === "fulfilled" ? (categoriesRes.value.data || []) : [];
         const ordersList = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
         
         const todayStr = new Date().toISOString().split('T')[0];
@@ -299,7 +302,8 @@ const AdminPanel = () => {
           allProducts: productsList,
           allOrders: ordersList,
           allUsers: usersList,
-          allCombos: combosList
+          allCombos: combosList,
+          categories: categoriesList.length
         };
 
         setCollectionCounts(newData);

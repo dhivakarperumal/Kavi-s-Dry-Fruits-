@@ -152,12 +152,6 @@ const Allproduct = ({ adminData }) => {
   };
 
   useEffect(() => {
-    const hasCachedData =
-      adminData &&
-      Array.isArray(adminData.allProducts) &&
-      Array.isArray(adminData.allCombos);
-
-    if (hasCachedData) fetchItems(false);
     fetchItems(true);
   }, [adminData]);
 
