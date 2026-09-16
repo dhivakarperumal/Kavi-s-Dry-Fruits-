@@ -478,7 +478,9 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       const parsedDetails = typeof editItem.comboDetails === 'string' 
         ? JSON.parse(editItem.comboDetails || '{}') 
         : editItem.comboDetails;
-      const resolvedWeight = Number(parsedDetails?.totalWeight || editItem.totalWeight || 0);
+      const storedWeight = Number(parsedDetails?.totalWeight || editItem.totalWeight || 0);
+      // Older combo records stored the kilogram input as grams one extra time.
+      const resolvedWeight = storedWeight >= 1000000 ? storedWeight / 1000 : storedWeight;
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
@@ -665,6 +667,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         className="w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400"
                         placeholder="Enter kilograms, e.g. 50"
                       />
+                      <span className="-ml-16 mr-4 pointer-events-none font-black text-sm text-orange-500">kg</span>
                     </div>
                     <p className="text-[8px] text-gray-400 font-medium mt-1">Stored as grams: 50 kg = 50000 g.</p>
                   </div>
