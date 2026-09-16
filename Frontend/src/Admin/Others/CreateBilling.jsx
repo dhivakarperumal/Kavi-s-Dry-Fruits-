@@ -59,6 +59,8 @@ const CreateBilling = () => {
   const [isListening, setIsListening] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [manualBarcode, setManualBarcode] = useState("");
+  const [editingPriceIndex, setEditingPriceIndex] = useState(null);
+  const [editingPrice, setEditingPrice] = useState("");
 
   // ---------------- Calculations ----------------
   const totals = useMemo(() => {
@@ -364,6 +366,48 @@ const CreateBilling = () => {
       gst: newTotal * gstRatio
     };
     setInvoiceItems(updated);
+  };
+
+  const startPriceEdit = (index) => {
+    setEditingPriceIndex(index);
+    setEditingPrice(String(invoiceItems[index].price ?? 0));
+  };
+
+  const savePriceEdit = () => {
+    if (editingPriceIndex === null) return;
+
+    const nextPrice = Number(editingPrice);
+    if (!Number.isFinite(nextPrice) || nextPrice < 0) {
+      toast.error("Enter a valid price.");
+      return;
+    }
+
+    setInvoiceItems((currentItems) => currentItems.map((item, index) => {
+      if (index !== editingPriceIndex) return item;
+      const newTotal = nextPrice * item.quantity;
+      const gstRatio = item.total > 0 ? item.gst / item.total : 0;
+      return {
+        ...item,
+        price: nextPrice,
+        total: newTotal,
+        gst: newTotal * gstRatio,
+      };
+    }));
+    setEditingPriceIndex(null);
+    setEditingPrice("");
+  };
+
+  const updatePriceWhileEditing = (value) => {
+    setEditingPrice(value);
+    const nextPrice = Number(value);
+    if (!Number.isFinite(nextPrice) || nextPrice < 0 || editingPriceIndex === null) return;
+
+    setInvoiceItems((currentItems) => currentItems.map((item, index) => {
+      if (index !== editingPriceIndex) return item;
+      const newTotal = nextPrice * item.quantity;
+      const gstRatio = item.total > 0 ? item.gst / item.total : 0;
+      return { ...item, price: nextPrice, total: newTotal, gst: newTotal * gstRatio };
+    }));
   };
 
   const removeInvoiceItem = (index) => {
@@ -675,7 +719,33 @@ const CreateBilling = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="px-4 py-6 text-right font-bold text-slate-500">₹{item.price.toFixed(2)}</td>
+                        <td
+                          className="px-4 py-6 text-right font-bold text-slate-500"
+                          onDoubleClick={() => startPriceEdit(index)}
+                          title="Double-click to edit price"
+                        >
+                          {editingPriceIndex === index ? (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={editingPrice}
+                              onChange={(e) => updatePriceWhileEditing(e.target.value)}
+                              onBlur={savePriceEdit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") savePriceEdit();
+                                if (e.key === "Escape") {
+                                  setEditingPriceIndex(null);
+                                  setEditingPrice("");
+                                }
+                              }}
+                              autoFocus
+                              className="w-28 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-right font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-200"
+                            />
+                          ) : (
+                            <>₹{Number(item.price || 0).toFixed(2)}</>
+                          )}
+                        </td>
                         <td className="px-4 py-6 text-right">
                           <p className="font-[900] text-slate-900 text-base">₹{(item.total + item.gst).toFixed(2)}</p>
                           <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">incl. tax</p>
@@ -709,7 +779,7 @@ const CreateBilling = () => {
                       <span className="font-bold">₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">GST (Calculated)</span>
+                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Tax</span>
                       <span className="font-bold text-[#009669]">+ ₹{totals.gstTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center justify-between">
