@@ -570,47 +570,59 @@ const Allproduct = ({ adminData }) => {
                                  const isLowStock = stockGrams <= 3000; // 3 KG threshold
 
                                  return (
-                                    <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
-                                       <td className="px-8 py-6 font-black text-slate-400 text-[10px] text-center">
-                                          {(currentPage - 1) * itemsPerPage + index + 1}
-                                       </td>
-                                       <td className="px-8 py-6">
-                                          <div className="w-12 h-12 rounded-xl bg-slate-50 p-1.5 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm">
-                                             {safeParse(item.images)[0] ? <img src={safeParse(item.images)[0]} className="h-full w-full object-contain" alt="" /> : <FaImage size={16} className="text-slate-200" />}
-                                          </div>
-                                       </td>
-                                       <td className="px-8 py-6">
-                                          <div className="max-w-[200px]">
-                                             <p className="font-black text-slate-950 text-sm mb-0.5 truncate">{item.name}</p>
-                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
-                                          </div>
-                                       </td>
-                                       <td className="px-8 py-6">
-                                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isCombo ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
-                                             {item.category || item.type}
-                                          </span>
-                                       </td>
-                                       <td className="px-8 py-6 font-black text-slate-900 text-sm">₹ {price || '—'}</td>
-                                       <td className="px-8 py-6">
-                                          <div className={`flex flex-col ${isLowStock ? 'text-amber-600' : 'text-slate-700'}`}>
-                                             <span className="font-black text-sm">
-                                                {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(2) + " KG" : stockGrams + " G"}
-                                             </span>
-                                             {isLowStock && (
-                                                <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest animate-pulse">
-                                                   <FaBoxOpen size={8} /> Low Stock
-                                                </span>
-                                             )}
-                                          </div>
-                                       </td>
-                                       <td className="px-8 py-6">
-                                          <div className="flex justify-center items-center gap-2">
-                                             <button onClick={() => setViewProduct(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-emerald-200"><FaEye size={11} /></button>
-                                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-blue-200"><FaEdit size={11} /></button>
-                                             <button onClick={() => handleDelete(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-red-200"><FaTrash size={11} /></button>
-                                          </div>
-                                       </td>
-                                    </tr>
+                                     <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
+                                        <td className="px-8 py-4 md:py-5 font-black text-slate-400 text-[10px] text-center">
+                                           {(currentPage - 1) * itemsPerPage + index + 1}
+                                        </td>
+                                        <td className="px-8 py-4 md:py-5">
+                                           <div 
+                                              onClick={() => setViewProduct(item)}
+                                              className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-slate-50 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm cursor-pointer hover:shadow-md hover:border-emerald-200 hover:scale-105 transition-all duration-300 shrink-0"
+                                              title="Click to view product details"
+                                           >
+                                              {safeParse(item.images)[0] ? (
+                                                 <img 
+                                                    src={safeParse(item.images)[0]} 
+                                                    className="h-full w-full object-contain" 
+                                                    alt={item.name || ""} 
+                                                 />
+                                              ) : (
+                                                 <FaImage size={28} className="text-slate-200" />
+                                              )}
+                                           </div>
+                                        </td>
+                                        <td className="px-8 py-4 md:py-5">
+                                           <div className="max-w-[200px]">
+                                              <p className="font-black text-slate-950 text-sm mb-0.5 truncate">{item.name}</p>
+                                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
+                                           </div>
+                                        </td>
+                                        <td className="px-8 py-4 md:py-5">
+                                           <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isCombo ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                              {item.category || item.type}
+                                           </span>
+                                        </td>
+                                        <td className="px-8 py-4 md:py-5 font-black text-slate-900 text-sm">₹ {price || '—'}</td>
+                                        <td className="px-8 py-4 md:py-5">
+                                           <div className={`flex flex-col ${isLowStock ? 'text-amber-600' : 'text-slate-700'}`}>
+                                              <span className="font-black text-sm">
+                                                 {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(2) + " KG" : stockGrams + " G"}
+                                              </span>
+                                              {isLowStock && (
+                                                 <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                                    <FaBoxOpen size={8} /> Low Stock
+                                                 </span>
+                                              )}
+                                           </div>
+                                        </td>
+                                        <td className="px-8 py-4 md:py-5">
+                                           <div className="flex justify-center items-center gap-2">
+                                              <button onClick={() => setViewProduct(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-emerald-200"><FaEye size={11} /></button>
+                                              <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-blue-200"><FaEdit size={11} /></button>
+                                              <button onClick={() => handleDelete(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-red-200"><FaTrash size={11} /></button>
+                                           </div>
+                                        </td>
+                                     </tr>
                                  );
                               })
                             )}

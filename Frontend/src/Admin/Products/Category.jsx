@@ -371,7 +371,7 @@ const Category = ({ adminData }) => {
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">ID</th>
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
-                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Description</th>
+                      {/* <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Description</th> */}
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
                       <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
                    </tr>
@@ -392,27 +392,40 @@ const Category = ({ adminData }) => {
                    ) : (
                      currentItems.map((cat, index) => (
                         <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
-                           <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
+                           <td className="px-8 py-4 md:py-5 font-black text-slate-900 text-xs text-center">
                               {(currentPage - 1) * itemsPerPage + index + 1}
                            </td>
-                           <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
-                           <td className="px-8 py-6">
+                           <td className="px-8 py-4 md:py-5 font-black text-slate-900 text-xs">{cat.catId}</td>
+                           <td className="px-8 py-4 md:py-5">
                               <div className="flex items-center gap-4">
                                  
                                  <span className="font-black text-slate-800 text-sm">{cat.cname}</span>
                               </div>
                            </td>
-                           <td className="px-8 py-6 max-w-xs">
+                           {/* <td className="px-8 py-4 md:py-5 max-w-xs">
                               <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.cdescription}"</p>
+                           </td> */}
+                           <td className="px-8 py-4 md:py-5 text-center">
+                              {cat.cimgs && cat.cimgs.length > 0 ? (
+                                 <div className="flex items-center justify-center gap-2.5 flex-wrap">
+                                    {cat.cimgs.map((img, i) => (
+                                      <div 
+                                         key={i} 
+                                         className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-slate-50 p-1.5 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm hover:scale-105 hover:border-emerald-200 transition-all duration-300 shrink-0"
+                                      >
+                                         <img 
+                                            src={img} 
+                                            className="w-full h-full object-contain rounded-xl" 
+                                            alt={`${cat.cname} ${i + 1}`} 
+                                         />
+                                      </div>
+                                    ))}
+                                 </div>
+                              ) : (
+                                 <span className="text-xs text-slate-300 font-bold italic">No images</span>
+                              )}
                            </td>
-                           <td className="px-8 py-6 text-center">
-                              <div className="flex items-center justify-center -space-x-2">
-                                 {(cat.cimgs || []).map((img, i) => (
-                                   <img key={i} src={img} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
-                                 ))}
-                              </div>
-                           </td>
-                           <td className="px-8 py-6 text-right">
+                           <td className="px-8 py-4 md:py-5 text-right">
                               <div className="flex justify-end gap-2">
                                  <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                    <FaEdit size={14} />

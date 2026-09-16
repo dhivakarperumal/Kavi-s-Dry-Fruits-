@@ -475,7 +475,7 @@ const AddHealthBenefit = ({ editItem, onCancel, onSuccess, isModal = false }) =>
         {/* How to Eat & Store Section */}
         <section className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-50/50 space-y-8">
           <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight flex items-center gap-3">
-            <div className="w-2 h-8 bg-teal-500 rounded-full"></div> 5. Usage & Storage
+            <div className="w-2 h-8 bg-teal-500 rounded-full"></div> 4. Usage & Storage
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
