@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import api from "../../services/api";
@@ -462,34 +463,30 @@ const BannerManagement = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Target Section</label>
-                                        <div className="grid grid-cols-2 gap-3 p-1.5 bg-gray-50 rounded-2xl border border-gray-100">
-                                            <button
-                                                type="button"
-                                                onClick={() => setCurrentBanner({ ...currentBanner, type: 'hero' })}
-                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${currentBanner.type === 'hero' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:bg-white/50'}`}
-                                            >
-                                                Hero Sec
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setCurrentBanner({ ...currentBanner, type: 'offer' })}
-                                                className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${currentBanner.type === 'offer' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-400 hover:bg-white/50'}`}
-                                            >
-                                                Offers
-                                            </button>
-                                        </div>
+                                        <CustomSelect
+                                            value={currentBanner.type || 'hero'}
+                                            onChange={(e) => setCurrentBanner({ ...currentBanner, type: e.target.value })}
+                                            className="w-full"
+                                            buttonClassName="w-full px-6 py-4 bg-gray-50/50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-emerald-500/20 text-slate-800 font-bold shadow-inner text-sm"
+                                            options={[
+                                                { value: 'hero', label: 'Hero Section' },
+                                                { value: 'offer', label: 'Offers Section' },
+                                            ]}
+                                        />
                                     </div>
 
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Visibility</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCurrentBanner({ ...currentBanner, active: !currentBanner.active })}
-                                            className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 flex items-center justify-center gap-3 ${currentBanner.active ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-gray-50 text-gray-400 border-transparent'}`}
-                                        >
-                                            <div className={`w-2 h-2 rounded-full ${currentBanner.active ? 'bg-indigo-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                                            {currentBanner.active ? 'Published on Website' : 'Held as Draft'}
-                                        </button>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Visibility Status</label>
+                                        <CustomSelect
+                                            value={currentBanner.active ? 'active' : 'inactive'}
+                                            onChange={(e) => setCurrentBanner({ ...currentBanner, active: e.target.value === 'active' })}
+                                            className="w-full"
+                                            buttonClassName="w-full px-6 py-4 bg-gray-50/50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-emerald-500/20 text-slate-800 font-bold shadow-inner text-sm"
+                                            options={[
+                                                { value: 'active', label: 'Published on Website' },
+                                                { value: 'inactive', label: 'Held as Draft' },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
                             </div>

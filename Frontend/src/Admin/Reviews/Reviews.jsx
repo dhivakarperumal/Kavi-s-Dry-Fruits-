@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -313,17 +314,19 @@ const Reviews = () => {
               </div>
             )}
             
-            <select
+            <CustomSelect
               value={timeFilter}
               onChange={(e) => setTimeFilter(e.target.value)}
-              className="bg-white border-2 border-gray-100 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest shadow-sm outline-none cursor-pointer focus:border-green-500 transition-colors"
-            >
-              <option value="all">Every Feedback</option>
-              <option value="today">Today's Voice</option>
-              <option value="week">Weekly View</option>
-              <option value="month">Monthly Stats</option>
-              <option value="custom">📅 Range Pick</option>
-            </select>
+              className="w-48"
+              buttonClassName="bg-white border-2 border-gray-100 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest shadow-sm outline-none cursor-pointer hover:border-emerald-500/50 transition-colors"
+              options={[
+                { value: "all", label: "Every Feedback" },
+                { value: "today", label: "Today's Voice" },
+                { value: "week", label: "Weekly View" },
+                { value: "month", label: "Monthly Stats" },
+                { value: "custom", label: "📅 Range Pick" },
+              ]}
+            />
           </div>
           <button
           onClick={() => setShowModal(true)}
@@ -516,20 +519,25 @@ const Reviews = () => {
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Product</label>
-                    <select
+                    <CustomSelect
                       required
                       value={formData.productId}
                       onChange={(e) => {
-                        const product = products.find(item => String(item.selectorId) === e.target.value);
+                        const product = products.find(item => String(item.selectorId) === String(e.target.value));
                         setFormData(prev => ({ ...prev, productId: e.target.value, productName: product?.name || "" }));
                       }}
-                      className="w-full bg-gray-50 border-2 border-transparent focus:border-green-500 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-gray-900 shadow-inner"
-                    >
-                      <option value="">Select product</option>
-                      {products.map(product => (
-                        <option key={`${product.itemType}-${product.selectorId}`} value={product.selectorId}>{product.name} ({product.itemType})</option>
-                      ))}
-                    </select>
+                      placeholder="Select product"
+                      searchable={true}
+                      className="w-full"
+                      buttonClassName="w-full bg-gray-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-gray-900 shadow-inner"
+                      options={[
+                        { value: "", label: "Select product" },
+                        ...products.map(product => ({
+                          value: product.selectorId,
+                          label: `${product.name} (${product.itemType})`,
+                        })),
+                      ]}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Customer Name</label>
