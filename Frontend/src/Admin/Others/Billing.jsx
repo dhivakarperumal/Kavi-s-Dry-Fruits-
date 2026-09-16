@@ -151,7 +151,7 @@ const Billing = () => {
 
                     <Link
                         to="/adminpanel/billing/create"
-                        className="flex items-center gap-2 px-6 py-4.5 bg-[#009669] hover:bg-indigo-700 text-white rounded-2xl text-xs font-black transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest"
+                        className="flex items-center gap-2 px-6 py-4.5 bg-[#009669] hover:bg-[#237a60] text-white rounded-2xl text-xs font-black transition-all shadow-xl shadow-indigo-100 uppercase tracking-widest"
                     >
                         <FiPlus size={16} /> New Transaction
                     </Link>

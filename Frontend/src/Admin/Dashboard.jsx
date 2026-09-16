@@ -41,6 +41,28 @@ ChartJS.register(
   Filler
 );
 
+const formatCompactIndianCurrency = (value) => {
+  const amount = Number(value) || 0;
+
+  if (amount >= 1e7) {
+    const croreValue = amount / 1e7;
+    const formatted = croreValue >= 10 ? croreValue.toFixed(0) : croreValue.toFixed(1).replace(/\.0$/, "");
+    return `₹${formatted}Cr`;
+  }
+
+  if (amount >= 1e5) {
+    const lakhValue = amount / 1e5;
+    const formatted = lakhValue >= 10 ? lakhValue.toFixed(0) : lakhValue.toFixed(1).replace(/\.0$/, "");
+    return `₹${formatted}L`;
+  }
+
+  if (amount >= 1e3) {
+    return `₹${(amount / 1e3).toFixed(0)}K`;
+  }
+
+  return `₹${amount}`;
+};
+
 const DashboardStats = ({ stats }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
     {stats.map((stat, i) => (
@@ -52,10 +74,12 @@ const DashboardStats = ({ stats }) => (
         <div className={`absolute -bottom-8 -right-8 w-40 h-40 ${stat.round1} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150`}></div>
         <div className={`absolute -top-10 -right-4 w-28 h-28 ${stat.round2} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125`}></div>
 
-        <div className="flex items-center justify-between relative z-10">
-          <div>
+        <div className="flex items-center justify-between relative z-10 gap-3">
+          <div className="min-w-0">
             <p className="text-white/80 font-bold text-sm tracking-widest uppercase mb-1">{stat.title}</p>
-            <h3 className="text-4xl font-extrabold text-white">{stat.value}</h3>
+            <h3 className={`font-extrabold text-white leading-tight break-words ${stat.title === "Total Revenue" ? "text-2xl sm:text-3xl md:text-4xl" : "text-3xl md:text-4xl"}`}>
+              {stat.value}
+            </h3>
           </div>
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner backdrop-blur-md border border-white/20 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ${stat.iconBg}`}>
             {stat.icon}
@@ -109,6 +133,9 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     cancelledOrders: 0,
     returnedOrders: 0,
     revenue: 0,
+    todayOrders: 0,
+    todayRevenue: 0,
+    todayUsers: 0,
   });
 
   const [productsData, setProductsData] = useState([]);
@@ -130,6 +157,7 @@ const Dashboard = ({ adminData, setActiveSection }) => {
       let cancelledCount = 0;
       let returnedCount = 0;
       let totalRevenue = 0;
+      let todayRevenue = 0;
 
       const revenueByMonth = {};
       const ordersByMonth = {};
@@ -140,6 +168,11 @@ const Dashboard = ({ adminData, setActiveSection }) => {
 
       const now = new Date();
       const todayStr = now.toISOString().split('T')[0];
+      const isToday = (value) => {
+        if (!value) return false;
+        const date = new Date(value);
+        return !Number.isNaN(date.getTime()) && date.toISOString().split('T')[0] === todayStr;
+      };
 
       orders.forEach(order => {
         const total = Number(order.totalAmount) || 0;
@@ -175,7 +208,8 @@ const Dashboard = ({ adminData, setActiveSection }) => {
 
         // Today's orders
         const dt = (order.created_at || order.date || "");
-        if (dt.includes(todayStr)) {
+        if (isToday(dt)) {
+          todayRevenue += total;
           todayOrdersList.push({
             id: order.id,
             orderId: order.orderId,
@@ -214,7 +248,10 @@ const Dashboard = ({ adminData, setActiveSection }) => {
         deliveryOrders: deliveryCount,
         cancelledOrders: cancelledCount,
         returnedOrders: returnedCount,
-        revenue: totalRevenue
+        revenue: totalRevenue,
+        todayOrders: todayOrdersList.length,
+        todayRevenue,
+        todayUsers: users.filter((user) => isToday(user.createdAt || user.created_at || user.date)).length,
       });
 
       setProductCategories(Object.entries(cats).map(([name, value]) => ({ name, value })));
@@ -308,9 +345,36 @@ const Dashboard = ({ adminData, setActiveSection }) => {
     },
     {
       title: "Total Revenue",
-      value: `₹${stats.revenue.toLocaleString()}`,
+      value: formatCompactIndianCurrency(stats.revenue),
       icon: <FaDollarSign />,
       bgColor: "bg-gradient-to-br from-amber-400 to-orange-500 shadow-orange-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
+    },
+    {
+      title: "Today Orders",
+      value: stats.todayOrders,
+      icon: <FaShoppingCart />,
+      bgColor: "bg-gradient-to-br from-cyan-400 to-cyan-600 shadow-cyan-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
+    },
+    {
+      title: "Today Revenue",
+      value: formatCompactIndianCurrency(stats.todayRevenue),
+      icon: <FaDollarSign />,
+      bgColor: "bg-gradient-to-br from-lime-400 to-green-600 shadow-green-500/40",
+      iconBg: "bg-white/20 text-white",
+      round1: "bg-white",
+      round2: "bg-white",
+    },
+    {
+      title: "Today User Count",
+      value: stats.todayUsers,
+      icon: <FaUsers />,
+      bgColor: "bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-indigo-500/40",
       iconBg: "bg-white/20 text-white",
       round1: "bg-white",
       round2: "bg-white",
