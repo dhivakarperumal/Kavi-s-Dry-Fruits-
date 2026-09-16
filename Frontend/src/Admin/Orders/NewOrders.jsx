@@ -21,6 +21,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const seenIncomingOrderIds = useRef(new Set());
 
   const navigate = useNavigate();
 
@@ -58,7 +59,24 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
     const interval = setInterval(fetchOrders, 15000);
 
     // Listen for real-time status updates via Socket.IO
-    const socket = io(api.defaults.baseURL.replace('/api', ''));
+    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+      auth: { token: localStorage.getItem("token") },
+    });
+    const handleIncomingOrder = (incomingOrder) => {
+      const orderKey = incomingOrder?.orderId || incomingOrder?.id;
+      if (!orderKey || seenIncomingOrderIds.current.has(orderKey)) return;
+      seenIncomingOrderIds.current.add(orderKey);
+      if (["Delivered", "Cancelled", "Returned", "Refunded"].includes(incomingOrder.orderStatus)) return;
+      const normalizedOrder = {
+        ...incomingOrder,
+        cartItems: Array.isArray(incomingOrder.items) ? incomingOrder.items : [],
+        shippingAddress: incomingOrder.shippingAddress || {},
+        date: incomingOrder.created_at || incomingOrder.date || new Date().toISOString(),
+      };
+      setOrders((currentOrders) => [normalizedOrder, ...currentOrders.filter((order) => (order.orderId || order.id) !== orderKey)]);
+    };
+    socket.on('new-order', handleIncomingOrder);
+    socket.on('newOrder', handleIncomingOrder);
     socket.on('orderStatusUpdated', () => {
       fetchOrders(); // Re-fetch immediately when any status changes
     });
@@ -71,6 +89,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
 
     return () => {
       clearInterval(interval);
+      socket.off('new-order', handleIncomingOrder);
+      socket.off('newOrder', handleIncomingOrder);
       socket.disconnect();
     };
   }, [fetchOrders]);
@@ -501,7 +521,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
 
       {/* Main Content Area */}
       {viewMode === "table" ? (
-        <div className="bg-white rounded-xl md:rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-xl overflow-visible animate-in fade-in duration-700">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#009669] text-white">

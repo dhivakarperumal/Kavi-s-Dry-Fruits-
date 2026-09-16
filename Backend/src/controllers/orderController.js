@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { sendNewOrderPush } = require('../config/pushService');
 
 const getOrders = async (req, res) => {
   try {
@@ -234,16 +235,27 @@ const createOrder = async (req, res) => {
 
     await connection.commit();
     
-    // Emit real-time event to connected admins
+    const newOrder = {
+      id: result.insertId,
+      orderId,
+      clientName,
+      clientPhone,
+      email,
+      shippingAddress,
+      items: parsedItems,
+      totalAmount,
+      shippingCharge,
+      orderStatus,
+      created_at: new Date().toISOString(),
+    };
+
+    // Notify only authenticated admin sockets after the transaction commits.
     const io = req.app.get('io');
     if (io) {
-      io.emit('newOrder', {
-        orderId,
-        clientName,
-        totalAmount,
-        orderStatus
-      });
+      io.to('admins').emit('new-order', newOrder);
+      io.to('admins').emit('newOrder', newOrder);
     }
+    sendNewOrderPush(newOrder).catch((error) => console.error('Push notification error:', error));
 
     res.json({ id: result.insertId, message: 'Order created and stock updated' });
   } catch (error) {

@@ -27,6 +27,7 @@ const settingsRoutes = require('./src/routers/settingsRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const contactFormRoutes = require('./src/routers/contactFormRoutes');
 const bannerRoutes = require('./src/routers/bannerRoutes');
+const pushRoutes = require('./src/routers/pushRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -58,6 +59,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact-form', contactFormRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/push', pushRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -81,6 +83,7 @@ app.get('/', (req, res) => {
 // Start Server
 const http = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 const server = http.createServer(app);
 
@@ -95,6 +98,15 @@ const io = new Server(server, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
+  const token = socket.handshake.auth?.token;
+  if (token) {
+    try {
+      socket.user = jwt.verify(token, process.env.JWT_SECRET);
+      if (String(socket.user.role || '').toLowerCase() === 'admin') socket.join('admins');
+    } catch {
+      socket.user = null;
+    }
+  }
   console.log('A user connected:', socket.id);
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);

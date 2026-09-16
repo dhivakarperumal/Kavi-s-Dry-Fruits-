@@ -491,8 +491,8 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
       )}
 
       {viewMode === "table" ? (
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-700">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-xl overflow-visible animate-in fade-in duration-700">
+          <div className="overflow-visible">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#009669]  text-white">

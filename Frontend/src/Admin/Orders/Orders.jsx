@@ -215,7 +215,7 @@ const Orders = () => {
   return (
     <div className="p-4 sm:p-6 bg-white min-h-screen">
       <h1 className="text-2xl font-bold mb-6">Order Management</h1>
-      <div className="overflow-x-auto">
+      <div className="overflow-visible">
         <table className="w-full table-auto border text-sm">
           <thead className="bg-[#009669] border-b border-emerald-700">
             <tr className="text-white">
