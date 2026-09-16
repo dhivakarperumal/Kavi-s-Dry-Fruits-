@@ -60,7 +60,7 @@ const Topbar = ({
       <div className="flex items-center gap-3.5 sm:gap-4">
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="md:hidden w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition shadow-sm cursor-pointer"
+          className="md:hidden w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 hover:bg-emerald-50 hover:border-emerald-300 text-gray-600 hover:text-emerald-700 transition shadow-sm cursor-pointer"
         >
           <FaBars size={17} />
         </button>
@@ -158,10 +158,10 @@ const Topbar = ({
         {/* 🔍 Search icon toggle */}
         <button
           onClick={() => { setShowSearch(!showSearch); setSearchQuery(""); }}
-          className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition shadow-sm cursor-pointer ${
+          className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition shadow-sm cursor-pointer border ${
             showSearch
-              ? "bg-emerald-600 text-white"
-              : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+              ? "bg-emerald-600 text-white border-emerald-700"
+              : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300"
           }`}
         >
           <FaSearch size={14} />
@@ -171,7 +171,7 @@ const Topbar = ({
         <div className="relative" ref={orderRef}>
           <button
             onClick={() => { setIsOrderDropdown(!isOrderDropdown); setIsStockDropdown(false); setIsProfileDropdown(false); }}
-            className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition shadow-sm cursor-pointer"
+            className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition shadow-sm cursor-pointer"
           >
             <FaBell size={16} />
             {todayOrdersCount > 0 && (
@@ -243,10 +243,10 @@ const Topbar = ({
         <div className="relative" ref={stockRef}>
           <button
             onClick={() => { setIsStockDropdown(!isStockDropdown); setIsOrderDropdown(false); setIsProfileDropdown(false); }}
-            className={`relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition shadow-sm cursor-pointer ${
+            className={`relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition shadow-sm cursor-pointer border ${
               lowStockCount > 0
-                ? "bg-amber-50 text-amber-500 hover:bg-amber-100"
-                : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                ? "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 hover:border-amber-300"
+                : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300"
             }`}
           >
             <MdWarning size={18} />
@@ -317,7 +317,7 @@ const Topbar = ({
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => { setIsProfileDropdown(!isProfileDropdown); setIsOrderDropdown(false); setIsStockDropdown(false); }}
-            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[15px] shadow-md shadow-emerald-200 transition cursor-pointer"
+            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[15px] border border-emerald-700 shadow-md shadow-emerald-200 transition cursor-pointer"
           >
             {(adminName || "A").charAt(0).toUpperCase()}
           </button>
