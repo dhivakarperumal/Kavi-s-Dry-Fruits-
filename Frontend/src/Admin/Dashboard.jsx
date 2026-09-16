@@ -68,7 +68,7 @@ const DashboardStats = ({ stats }) => (
     {stats.map((stat, i) => (
       <div
         key={i}
-        className={`group relative overflow-hidden rounded-2xl p-6 min-h-[150px] shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
+        className={`group relative overflow-hidden rounded-xl p-6 min-h-[150px] shadow-xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-2xl ${stat.bgColor}`}
       >
         {/* Background Decorative Circles */}
         <div className={`absolute -bottom-8 -right-8 w-40 h-40 ${stat.round1} opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150`}></div>
