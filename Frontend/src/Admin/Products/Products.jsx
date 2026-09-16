@@ -19,7 +19,7 @@ import api from "../../services/api";
 import JsBarcode from "jsbarcode";
 import imageCompression from "browser-image-compression";
 
-const Products = () => {
+const Products = ({ onInventoryChanged }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const editItem = location.state?.editItem;
@@ -114,8 +114,9 @@ const Products = () => {
           {activeTab === "single" ? (
             <SingleProductForm 
               categories={categories} 
-              onSuccess={() => { 
-                fetchData(); 
+              onSuccess={async () => {
+                await fetchData();
+                if (onInventoryChanged) await onInventoryChanged();
                 navigate('/adminpanel/all-products');
               }} 
               products={products} 
@@ -124,8 +125,9 @@ const Products = () => {
           ) : (
             <ComboProductForm 
               categories={categories} 
-              onSuccess={() => { 
-                fetchData(); 
+              onSuccess={async () => {
+                await fetchData();
+                if (onInventoryChanged) await onInventoryChanged();
                 navigate('/adminpanel/all-products');
               }} 
               combos={combos} 
@@ -430,7 +432,6 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   });
   const [loading, setLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState([]);
-  const [manualStock, setManualStock] = useState(false);
   const barcodeRef = useRef();
 
   const safeParse = (data) => {
@@ -496,12 +497,18 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   }, [editItem, combos]);
 
   useEffect(() => {
-    const sum = calculateComboTotalWeight(form.comboItems);
-    setForm((prev) => ({
-      ...prev,
-      totalStock: String(sum || 0),
-    }));
-  }, [form.comboItems]);
+    const computedSum = calculateComboTotalWeight(form.comboItems);
+    const manualWeight = Number(form.totalWeight || 0);
+    const nextTotalStock = manualWeight > 0 ? manualWeight : computedSum;
+
+    setForm((prev) => {
+      if (String(prev.totalStock) === String(nextTotalStock)) return prev;
+      return {
+        ...prev,
+        totalStock: String(nextTotalStock || 0),
+      };
+    });
+  }, [form.comboItems, form.totalWeight]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -829,31 +836,6 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
               <div className="relative z-10">
                 <div className="mb-10"><h3 className="text-xl font-black text-amber-900 uppercase tracking-tight">Financial Summary</h3><div className="w-12 h-1.5 bg-amber-500 mt-1 rounded-full"></div></div>
                 <div className="space-y-8">
-                  {/* Total Stock Field (Grams -> KG) */}
-                  <div>
-                    <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
-                      Total Stock *
-                    </label>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="e.g. 1000"
-                        value={form.totalStock || 0}
-                        onChange={(e) => {
-                          setManualStock(true);
-                          setForm({ ...form, totalStock: e.target.value });
-                        }}
-                        className={`w-full border-2 rounded-2xl px-6 py-4 font-black shadow-sm transition-all ${
-                          manualStock ? 'bg-orange-50 border-orange-300 text-orange-900' : 'bg-white border-transparent text-amber-900 focus:border-amber-500'
-                        }`}
-                        required
-                      />
-                    </div>
-                    <p className="text-[9px] text-gray-400 font-medium ml-1 mt-1">
-                      {manualStock ? "Manual weight entry" : "Auto-calculated from combo items"}
-                    </p>
-                  </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Market MRP (₹)</label><input type="number" placeholder="e.g. 1500" value={form.comboDetails.mrp} onChange={(e) => { const u = { ...form.comboDetails }; u.mrp = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>
                     <div><label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">Special Discount %</label><input type="number" placeholder="e.g. 15" value={form.comboDetails.offerPercent} onChange={(e) => { const u = { ...form.comboDetails }; u.offerPercent = e.target.value; u.offerPrice = Math.round(Number(u.mrp) - (Number(u.mrp) * Number(u.offerPercent)) / 100); setForm({ ...form, comboDetails: u }); }} className="w-full bg-white border-2 border-transparent focus:border-amber-500 rounded-2xl px-6 py-4 font-black shadow-sm" /></div>

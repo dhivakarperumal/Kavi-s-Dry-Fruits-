@@ -302,6 +302,61 @@ const AdminPanel = () => {
     navigate(`/adminpanel/${urlPath === "dashboard" ? "" : urlPath}`);
   };
 
+  const syncCollectionCounts = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const [usersRes, productsRes, combosRes, categoriesRes, ordersRes] = await Promise.allSettled([
+        api.get("/users"),
+        api.get("/products"),
+        api.get("/combos"),
+        api.get("/categories"),
+        api.get("/orders"),
+      ]);
+
+      const usersList = usersRes.status === "fulfilled" ? (usersRes.value.data?.users || usersRes.value.data || []) : [];
+      const productsList = productsRes.status === "fulfilled" ? (productsRes.value.data || []) : [];
+      const combosList = combosRes.status === "fulfilled" ? (combosRes.value.data || []) : [];
+      const categoriesList = categoriesRes.status === "fulfilled" ? (categoriesRes.value.data || []) : [];
+      const ordersList = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayActiveOrdersList = ordersList.filter(o =>
+        o.orderStatus === "Order Placed" &&
+        (o.created_at || o.date || "").includes(todayStr)
+      );
+      const deliveredOrders = ordersList.filter(o => o.orderStatus === "Delivered");
+      const cancelledOrders = ordersList.filter(o => o.orderStatus === "Cancelled");
+
+      const lowStockItems = productsList.filter(p => {
+        const stock = parseFloat(p.totalStock || 0);
+        return stock <= 500;
+      });
+
+      const newData = {
+        users: usersList.length,
+        products: productsList.length + combosList.length,
+        orders: ordersList.length,
+        "New Orders": todayActiveOrdersList,
+        lowStockList: lowStockItems,
+        allProducts: productsList,
+        allOrders: ordersList,
+        allUsers: usersList,
+        allCombos: combosList,
+        categories: categoriesList.length,
+        deliveredOrders: deliveredOrders.length,
+        cancelledOrders: cancelledOrders.length
+      };
+
+      setCollectionCounts(newData);
+      adminDataService.setCache(newData);
+      return newData;
+    } catch (error) {
+      console.error("Dashboard Stats Error:", error);
+      return null;
+    }
+  }, [user]);
+
   // Fetch counts from MySQL API
   useEffect(() => {
     if (!user) {
@@ -310,65 +365,19 @@ const AdminPanel = () => {
     }
 
     const fetchCounts = async () => {
-      // If we don't have fresh data, show loading
       if (!adminDataService.isFresh()) {
         setLoading(true);
       }
 
       try {
-        const [usersRes, productsRes, combosRes, categoriesRes, ordersRes] = await Promise.allSettled([
-          api.get("/users"),
-          api.get("/products"),
-          api.get("/combos"),
-          api.get("/categories"),
-          api.get("/orders"),
-        ]);
-
-        const usersList = usersRes.status === "fulfilled" ? (usersRes.value.data?.users || usersRes.value.data || []) : [];
-        const productsList = productsRes.status === "fulfilled" ? (productsRes.value.data || []) : [];
-        const combosList = combosRes.status === "fulfilled" ? (combosRes.value.data || []) : [];
-        const categoriesList = categoriesRes.status === "fulfilled" ? (categoriesRes.value.data || []) : [];
-        const ordersList = ordersRes.status === "fulfilled" ? (ordersRes.value.data || []) : [];
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayActiveOrdersList = ordersList.filter(o => 
-          o.orderStatus === "Order Placed" &&
-          (o.created_at || o.date || "").includes(todayStr)
-        );
-        const deliveredOrders = ordersList.filter(o => o.orderStatus === "Delivered");
-        const cancelledOrders = ordersList.filter(o => o.orderStatus === "Cancelled");
-
-        const lowStockItems = productsList.filter(p => {
-          const stock = parseFloat(p.totalStock || 0);
-          return stock <= 500;
-        });
-
-        const newData = {
-          users: usersList.length,
-          products: productsList.length + combosList.length,
-          orders: ordersList.length,
-          "New Orders": todayActiveOrdersList,
-          lowStockList: lowStockItems,
-          allProducts: productsList,
-          allOrders: ordersList,
-          allUsers: usersList,
-          allCombos: combosList,
-          categories: categoriesList.length,
-          deliveredOrders: deliveredOrders.length,
-          cancelledOrders: cancelledOrders.length
-        };
-
-        setCollectionCounts(newData);
-        adminDataService.setCache(newData);
-      } catch (error) {
-        console.error("Dashboard Stats Error:", error);
+        await syncCollectionCounts();
       } finally {
         setLoading(false);
       }
     };
 
     fetchCounts();
-  }, [user, navigate]);
+  }, [user, navigate, syncCollectionCounts]);
 
   const handleLogout = async () => {
     try {
@@ -390,7 +399,7 @@ const AdminPanel = () => {
       case "Add Users": return <AddUsers />;
 
       // Products
-      case "Add Products": return <Products />;
+      case "Add Products": return <Products onInventoryChanged={syncCollectionCounts} />;
       case "All Products": return <Allproduct adminData={collectionCounts} />;
       case "Add Category": return <Category adminData={collectionCounts} />;
       case "Stock Details": return <StockDetails adminData={collectionCounts} />;
