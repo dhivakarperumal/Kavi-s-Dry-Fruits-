@@ -953,7 +953,7 @@ const Account = () => {
                             e.stopPropagation();
                             handlePrint(order);
                           }}
-                          className="flex items-center justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all shadow-md"
+                          className="flex items-center cursor-pointer justify-center w-10 h-10 bg-green-600 hover:bg-green-700 text-white rounded-full transition-all shadow-md"
                           title="Print Invoice"
                         >
                           <FaPrint /> 
@@ -964,7 +964,7 @@ const Account = () => {
                             e.stopPropagation();
                             handleReorder(order);
                           }}
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-bold rounded-full transition-all shadow-md"
+                          className="flex cursor-pointer items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-bold rounded-full transition-all shadow-md"
                         >
                           <MdRefresh size={18} /> Reorder
                         </button>
@@ -992,7 +992,7 @@ const Account = () => {
                             setTrackingOrderId(order.orderId);
                             setActiveTab("tracking");
                           }}
-                          className="bg-green-600 text-white px-6 py-2 rounded-full text-sm font-black flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100 border-b-4 border-green-800"
+                          className="bg-green-600 cursor-pointer text-white px-6 py-2 rounded-full text-sm font-black flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-lg shadow-green-100 border-b-4 border-green-800"
                         >
                           <FaTruck size={14} /> Track
                         </button>

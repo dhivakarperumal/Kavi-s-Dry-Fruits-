@@ -72,14 +72,14 @@ const UserOrderDetailsModal = ({ order, onClose, onPrint, onCancel, existingRevi
             <button
               type="button"
               onClick={() => onPrint(order)}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-700"
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-700"
             >
               <FaPrint /> <span className="hidden sm:inline">Print</span>
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-white p-2 text-gray-500 shadow-sm transition hover:bg-green-100 hover:text-green-700"
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-white p-2 text-gray-500 shadow-sm transition hover:bg-green-100 hover:text-green-700"
               aria-label="Close order details"
             >
               <FaTimes />
