@@ -11,10 +11,12 @@ import {
   FaSearch, 
   FaTimes,
   FaImage,
-  FaFileAlt
+  FaFileAlt,
+  FaHashtag,
+  FaLayerGroup
 } from "react-icons/fa";
 
-const Category = () => {
+const Category = ({ adminData }) => {
   const [category, setCategory] = useState({
     catId: "",
     cname: "",
@@ -190,6 +192,13 @@ const Category = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  // Summary stats (Based on Billing reference)
+  const totalCategories = categories.length;
+  const withImagesCount = categories.filter(
+    (c) => Array.isArray(c.cimgs) && c.cimgs.length > 0
+  ).length;
+  const nextCatId = generateCategoryId(categories);
+
   return (
     <div className="min-h-screen p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto mt-0">
@@ -232,8 +241,73 @@ const Category = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-       
+        {/* Category Stats Cards (Billing Reference Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Total Categories Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Categories</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {totalCategories}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaLayerGroup />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-6 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredCategories.length} Categories Displayed</span>
+            </div>
+          </div>
+
+          {/* Visual Assets Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Visual Assets</p>
+                <h3 className="text-5xl font-black text-white tracking-tighter">
+                  {withImagesCount}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaImage />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+              {adminData?.allProducts?.length ? `${adminData.allProducts.length} Catalog Items Classified` : 'Illustrated Categories'}
+            </div>
+          </div>
+
+          {/* Next Category Code Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Next Registry Code</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {nextCatId}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaHashtag />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">Sequential ID Allocation</span>
+            </div>
+          </div>
+        </div>
 
         {/* Content Section */}
         {viewMode === "card" ? (
