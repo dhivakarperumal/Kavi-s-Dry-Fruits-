@@ -381,13 +381,17 @@ const NewOrders = ({ adminData }) => {
             <div className="bg-white p-1 rounded-md border border-slate-200 flex items-center shadow-sm">
               <button
                 onClick={() => setViewMode("table")}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-xs font-black transition-all ${viewMode === "table" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
+                aria-label="Table view"
+                title="Table view"
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-xs font-black transition-all ${viewMode === "table" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-[#009669]"}`}
               >
                 <FaTable /> 
               </button>
               <button
                 onClick={() => setViewMode("card")}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-xs font-black transition-all ${viewMode === "card" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
+                aria-label="Card view"
+                title="Card view"
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-xs font-black transition-all ${viewMode === "card" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-[#009669]"}`}
               >
                 <FaThLarge /> 
               </button>

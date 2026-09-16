@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../services/api";
-import { FaPrint, FaEye, FaSearch } from "react-icons/fa";
+import { FaPrint, FaEye, FaSearch, FaTable, FaThLarge } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 import logo from "/images/Kavi_logo.png";
 import OrderDetailsModal from "./OrderDetailsModal";
@@ -397,18 +397,22 @@ const AllOrders = ({ adminData }) => {
 
       
             
-            <div className="flex bg-slate-100 p-1.5 rounded-2xl ">
+            <div className="flex bg-slate-100 p-2 rounded-md ">
               <button 
                 onClick={() => setViewMode("table")} 
-                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                  aria-label="Table view"
+                  title="Table view"
+                  className={`flex items-center justify-center px-6 py-3 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-[#009669]"}`}
               >
-                Table
+                  <FaTable />
               </button>
               <button 
                 onClick={() => setViewMode("card")} 
-                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                  aria-label="Card view"
+                  title="Card view"
+                  className={`flex items-center justify-center px-6 py-3 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-[#009669]"}`}
               >
-                Cards
+                  <FaThLarge />
               </button>
             </div>
           </div>
