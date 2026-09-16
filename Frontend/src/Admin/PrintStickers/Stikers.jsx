@@ -393,7 +393,7 @@ const Stickers = ({ adminData }) => {
               display: grid;
               grid-template-columns: repeat(10, minmax(0, 1fr));
               column-gap: 12px;
-              row-gap: 2px;
+              row-gap: 20px;
               justify-content: center;
             }
             .sticker-card {
