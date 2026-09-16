@@ -63,7 +63,9 @@ const AdminPanel = () => {
     allOrders: [],
     allUsers: [],
     allCombos: [],
-    categories: 0
+    categories: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0
   });
 
   const navigate = useNavigate();
@@ -80,10 +82,14 @@ const AdminPanel = () => {
         order.orderStatus === "Order Placed" &&
         (order.created_at || order.date || "").includes(todayStr)
       );
+      const deliveredOrders = allOrders.filter((order) => order.orderStatus === "Delivered");
+      const cancelledOrders = allOrders.filter((order) => order.orderStatus === "Cancelled");
       const nextData = {
         ...previousData,
         allOrders,
         "New Orders": todayActiveOrders,
+        deliveredOrders: deliveredOrders.length,
+        cancelledOrders: cancelledOrders.length,
       };
       adminDataService.setCache(nextData);
       return nextData;
@@ -113,13 +119,17 @@ const AdminPanel = () => {
           o.orderStatus === "Order Placed" &&
           (o.created_at || o.date || "").includes(todayStr)
         );
+        const deliveredOrders = ordersList.filter(o => o.orderStatus === "Delivered");
+        const cancelledOrders = ordersList.filter(o => o.orderStatus === "Cancelled");
         
         setCollectionCounts(prev => {
           const newData = {
             ...prev,
             orders: ordersList.length,
             "New Orders": todayActiveOrdersList,
-            allOrders: ordersList
+            allOrders: ordersList,
+            deliveredOrders: deliveredOrders.length,
+            cancelledOrders: cancelledOrders.length
           };
           adminDataService.setCache(newData);
           return newData;
@@ -139,13 +149,17 @@ const AdminPanel = () => {
           o.orderStatus === "Order Placed" &&
           (o.created_at || o.date || "").includes(todayStr)
         );
+        const deliveredOrders = ordersList.filter(o => o.orderStatus === "Delivered");
+        const cancelledOrders = ordersList.filter(o => o.orderStatus === "Cancelled");
         
         setCollectionCounts(prev => {
           const newData = {
             ...prev,
             orders: ordersList.length,
             "New Orders": todayActiveOrdersList,
-            allOrders: ordersList
+            allOrders: ordersList,
+            deliveredOrders: deliveredOrders.length,
+            cancelledOrders: cancelledOrders.length
           };
           adminDataService.setCache(newData);
           return newData;
@@ -287,6 +301,8 @@ const AdminPanel = () => {
           o.orderStatus === "Order Placed" &&
           (o.created_at || o.date || "").includes(todayStr)
         );
+        const deliveredOrders = ordersList.filter(o => o.orderStatus === "Delivered");
+        const cancelledOrders = ordersList.filter(o => o.orderStatus === "Cancelled");
 
         const lowStockItems = productsList.filter(p => {
           const stock = parseFloat(p.totalStock || 0);
@@ -303,7 +319,9 @@ const AdminPanel = () => {
           allOrders: ordersList,
           allUsers: usersList,
           allCombos: combosList,
-          categories: categoriesList.length
+          categories: categoriesList.length,
+          deliveredOrders: deliveredOrders.length,
+          cancelledOrders: cancelledOrders.length
         };
 
         setCollectionCounts(newData);
