@@ -102,7 +102,7 @@ export default function ReturnOrders() {
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
-      <div className="mb-8">
+      <div className="relative z-20 mb-8">
         <div className="mb-6">
           <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Return Management</h1>
           <p className="text-sm font-bold text-slate-400 mt-1">Processing {filteredOrders.length} return requests</p>

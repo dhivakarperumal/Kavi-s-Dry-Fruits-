@@ -360,7 +360,7 @@ const Delivery = () => {
 
   return (
     <div className="p-4 sm:p-8  min-h-screen">
-      <div className="mb-8">
+      <div className="relative z-20 mb-8">
       
 
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6 uppercase">

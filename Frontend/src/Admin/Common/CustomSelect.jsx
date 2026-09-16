@@ -169,7 +169,7 @@ const CustomSelect = ({
     <div
       ref={containerRef}
       onKeyDown={handleKeyDown}
-      className={`relative inline-block text-left ${className}`}
+      className={`relative inline-block text-left ${isOpen ? "z-50" : ""} ${className}`}
     >
       {/* Hidden input for HTML form validation if required */}
       {name && (
@@ -219,7 +219,7 @@ const CustomSelect = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className={`absolute mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] min-w-[12rem] w-full animate-in fade-in zoom-in-95 duration-150 ${
+          className={`absolute mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[1000] min-w-[12rem] w-full animate-in fade-in zoom-in-95 duration-150 ${
             align === "right" ? "right-0" : "left-0"
           } ${dropdownClassName}`}
           style={{ maxHeight: "360px" }}

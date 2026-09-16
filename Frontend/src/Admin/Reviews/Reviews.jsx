@@ -268,7 +268,7 @@ const Reviews = () => {
       {/* Main Content Area */}
       <div className="animate-in fade-in duration-500">
         {/* Search, Filter & View Mode Controls */}
-        <div className="mb-10 bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="relative z-20 mb-10 bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="relative w-full md:w-1/3">
             <input
               type="text"

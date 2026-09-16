@@ -165,7 +165,7 @@ const Users = () => {
         <span>Back to Settings</span>
       </button>
 
-      <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-6 space-y-4">
+      <div className="relative z-20 bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-6 space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="relative w-full md:w-1/3">
             <input

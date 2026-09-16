@@ -182,7 +182,7 @@ const BannerManagement = () => {
                     <div><p className="text-xs text-gray-400 font-medium">Hero Section</p><h3 className="text-3xl font-black text-slate-800 leading-none my-0.5">{heroBanners.toLocaleString()}</h3><p className="text-[10px] text-gray-400">Primary page banners</p></div>
                 </div>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div className="relative z-20 bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div className="relative w-full xl:max-w-md">
                     <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input

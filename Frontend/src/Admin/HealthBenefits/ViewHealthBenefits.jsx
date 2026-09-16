@@ -87,7 +87,7 @@ const ViewHealthBenefits = ({ setActiveSection }) => {
     <div className="p-6 md:p-10 space-y-8 animate-in fade-in duration-700">
       
       {/* Header Section */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white/60 backdrop-blur-md p-8 rounded-[3rem] border border-white shadow-xl">
+      <div className="relative z-30 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white/60 backdrop-blur-md p-8 rounded-[3rem] border border-white shadow-xl">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 bg-gradient-to-tr from-emerald-600 to-green-400 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
             <FaHeartbeat size={32} />

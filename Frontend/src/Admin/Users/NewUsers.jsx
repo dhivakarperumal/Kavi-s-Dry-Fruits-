@@ -119,7 +119,7 @@ const NewUsers = () => {
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-transparent">
       {/* Search + Time Filter + View Toggle */}
-      <div className="mb-6 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="relative z-20 mb-6 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="relative w-full md:w-1/3">
           <input
             type="text"
