@@ -439,19 +439,44 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     try { return JSON.parse(data); } catch { return []; }
   };
 
+  const parseWeightToGrams = (value, defaultUnit = "kg") => {
+    if (value === null || value === undefined || value === "") return 0;
+    const raw = String(value).trim().toLowerCase().replace(/,/g, "").replace(/\s+/g, "");
+    if (!raw) return 0;
+    const match = raw.match(/^([\d.]+)(kg|k|g|gram|grams)?$/i);
+    const amount = Number.parseFloat(match ? match[1] : raw);
+    if (!Number.isFinite(amount)) return 0;
+    const unit = match ? (match[2] || defaultUnit) : defaultUnit;
+    if (["kg", "k", "kilogram", "kilograms"].includes(unit)) return amount * 1000;
+    if (["g", "gram", "grams"].includes(unit)) return amount;
+    return amount * (defaultUnit === "kg" ? 1000 : 1);
+  };
+
+  const calculateComboTotalWeight = (items = []) =>
+    items.reduce((sum, item) => sum + parseWeightToGrams(item.weight, "kg"), 0);
+
+  const formatKGDisplay = (grams) => {
+    const total = Number(grams || 0);
+    if (!Number.isFinite(total) || total <= 0) return "0";
+    return (total / 1000).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+  };
+
+  const effectiveTotalWeight = calculateComboTotalWeight(form.comboItems);
+
   useEffect(() => {
     if (editItem) {
       const parsedDetails = typeof editItem.comboDetails === 'string' 
         ? JSON.parse(editItem.comboDetails || '{}') 
         : editItem.comboDetails;
+      const resolvedWeight = Number(parsedDetails?.totalWeight || editItem.totalWeight || 0);
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
         images: safeParse(editItem.images),
         comboItems: safeParse(editItem.comboItems),
         comboDetails: parsedDetails,
-        // Restore totalWeight from comboDetails if available
-        totalWeight: Number(parsedDetails?.totalWeight || editItem.totalWeight || 0),
+        totalWeight: resolvedWeight,
+        totalStock: String(editItem.totalStock || effectiveTotalWeight || 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
       setImageFiles([]);
@@ -464,11 +489,19 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       setForm((prev) => ({
         ...prev,
         productId: `KPR${String(maxId + 1).padStart(3, "0")}`,
-        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, status: "Active"
+        name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, totalWeight: 0, status: "Active"
       }));
       setImageFiles([]);
     }
   }, [editItem, combos]);
+
+  useEffect(() => {
+    const sum = calculateComboTotalWeight(form.comboItems);
+    setForm((prev) => ({
+      ...prev,
+      totalStock: String(sum || 0),
+    }));
+  }, [form.comboItems]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -505,11 +538,12 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       // Force-merge totalWeight into comboDetails at submit time.
       // This is necessary because the useEffect that writes it into comboDetails
       // is async and may not have flushed before the user clicks submit.
+      const normalizedTotalWeight = Number(form.totalWeight || 0) / 1000;
       const submitData = {
         ...form,
         comboDetails: {
           ...form.comboDetails,
-          totalWeight: form.totalWeight,   // always include the correct value
+          totalWeight: Number.isFinite(normalizedTotalWeight) ? normalizedTotalWeight : 0,
           offerPrice: form.comboDetails.offerPrice || 0,
           mrp: form.comboDetails.mrp || 0,
         },
@@ -577,9 +611,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                       <div className="space-y-1">
                         {form.comboItems.map((item, idx) => {
                           if (!item.weight) return null;
-                          const wStr = String(item.weight).toLowerCase();
-                          const val = parseFloat(wStr) || 0;
-                          const inGrams = wStr.includes("kg") ? val * 1000 : val;
+                          const inGrams = parseWeightToGrams(item.weight, "g");
                           return (
                             <div key={idx} className="flex justify-between text-[10px]">
                               <span className="text-gray-500 truncate max-w-[120px]">{item.name || `Item ${idx+1}`}</span>
@@ -589,7 +621,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                         })}
                         <div className="border-t border-dashed border-amber-200 mt-1 pt-1 flex justify-between text-[10px]">
                           <span className="font-black text-amber-900">Total</span>
-                          <span className="font-black text-amber-900">{form.totalWeight}g {form.totalWeight >= 1000 ? `(${(form.totalWeight/1000).toFixed(2)}kg)` : ""}</span>
+                          <span className="font-black text-amber-900">{effectiveTotalWeight}g {effectiveTotalWeight >= 1000 ? `(${formatKGDisplay(effectiveTotalWeight)}kg)` : ""}</span>
                         </div>
                       </div>
                     </div>
@@ -606,10 +638,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                     <div className="flex gap-2 items-center">
                       <input
                         type="text"
-                        value={form.totalWeight}
+                        value={form.totalWeight ? formatKGDisplay(form.totalWeight) : ""}
                         onChange={(e) => {
                           const value = e.target.value;
-                          setForm({ ...form, totalWeight: value, comboDetails: { ...form.comboDetails, totalWeight: value } });
+                          const grams = parseWeightToGrams(value, "kg");
+                          setForm({ ...form, totalWeight: grams, comboDetails: { ...form.comboDetails, totalWeight: grams } });
                         }}
                         required
                         min="1"
@@ -799,14 +832,14 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   {/* Total Stock Field (Grams -> KG) */}
                   <div>
                     <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2 block ml-1">
-                      Inventory Level (Grams) *
+                      Total Stock *
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
                         type="number"
                         min="0"
                         placeholder="e.g. 1000"
-                        value={form.totalStock}
+                        value={form.totalStock || 0}
                         onChange={(e) => {
                           setManualStock(true);
                           setForm({ ...form, totalStock: e.target.value });
