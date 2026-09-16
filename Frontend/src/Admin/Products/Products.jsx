@@ -235,9 +235,14 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const enteredWeightKg = Number(form.totalWeight);
+      const currentStock = Number.isFinite(enteredWeightKg) && enteredWeightKg > 0
+        ? enteredWeightKg * 1000
+        : Number(form.totalStock) || 0;
       const formData = new FormData();
       Object.entries({
         ...form,
+        totalStock: currentStock,
         healthBenefits: JSON.stringify(form.healthBenefits),
         images: JSON.stringify(form.images.filter(image => !image.startsWith("blob:"))),
         variants: JSON.stringify(form.variants),
@@ -559,6 +564,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       const normalizedTotalWeight = Number(form.totalWeight || 0) / 1000;
       const submitData = {
         ...form,
+        totalStock: Number(form.totalWeight) || 0,
         comboDetails: {
           ...form.comboDetails,
           totalWeight: Number.isFinite(normalizedTotalWeight) ? normalizedTotalWeight : 0,
