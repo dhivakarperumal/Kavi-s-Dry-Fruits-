@@ -390,14 +390,15 @@ const Stickers = ({ adminData }) => {
             }
             .sticker-grid {
               display: grid;
-              grid-template-columns: repeat(8, 1fr);
-              gap: 8px;
+              grid-template-columns: repeat(10, minmax(0, 1fr));
+              gap: 4px;
               justify-content: center;
             }
             .sticker-card {
-              width: 82px;
+              width: 100%;
+              min-width: 0;
               text-align: center;
-              padding: 3px 2px;
+              padding: 4px 3px;
               border: 0.5px solid #eaeaea;
               border-radius: 4px;
               background: #fff;
@@ -422,7 +423,7 @@ const Stickers = ({ adminData }) => {
             }
             .barcode-img {
               width: 100%;
-              height: 42px;
+              height: 46px;
               object-fit: contain;
               image-rendering: -webkit-optimize-contrast;
               image-rendering: crisp-edges;
@@ -430,14 +431,16 @@ const Stickers = ({ adminData }) => {
             .price-tag {
               font-weight: 900;
               font-size: 11px;
-              margin-top: 2px;
+              margin-top: 4px;
               color: #000;
+              white-space: nowrap;
             }
             .date-tag {
-              font-size: 7.5px;
-              color: #444;
+              font-size: 8px;
+              color: #111;
               margin-top: 1px;
-              font-weight: 600;
+              font-weight: 500;
+              white-space: nowrap;
             }
           </style>
         </head>
@@ -450,10 +453,8 @@ const Stickers = ({ adminData }) => {
       for (let i = 0; i < qty; i++) {
         doc.write(`
           <div class="sticker-card">
-            <div class="product-name" title="${item.productName}">${item.productName}</div>
-            <div class="sku-tag">${item.productId || ""}</div>
             <img src="${item.barcodeImg}" class="barcode-img" onload="this.setAttribute('loaded', 'true')" />
-            <div class="price-tag">₹${item.price}</div>
+            <div class="price-tag">MRP: ₹${item.price}</div>
             <div class="date-tag">${formatDate(item.packingDate)}</div>
           </div>
         `);
@@ -1103,7 +1104,7 @@ const Stickers = ({ adminData }) => {
                       <img src={liveBarcodeImg} alt="Barcode Preview" className="h-12 object-contain" />
                     </div>
                     <div className="flex justify-between items-center text-[8px] font-black px-1 text-gray-700">
-                      <span>₹{productInput.price || "0"}</span>
+                      <span>MRP: ₹{productInput.price || "0"}</span>
                       <span>{formatDate(productInput.packingDate)}</span>
                     </div>
                   </div>
@@ -1185,7 +1186,7 @@ const Stickers = ({ adminData }) => {
                     {previewSticker.barcode}
                   </p>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-xs font-black text-gray-900">
-                    <span className="text-emerald-700 text-base">₹{previewSticker.price}</span>
+                    <span className="text-emerald-700 text-base">MRP: ₹{previewSticker.price}</span>
                     <span className="text-gray-500 text-[10px]">
                       Date: {formatDate(previewSticker.packingDate)}
                     </span>
