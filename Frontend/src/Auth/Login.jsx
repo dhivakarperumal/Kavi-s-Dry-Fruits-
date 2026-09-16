@@ -105,7 +105,7 @@ const useCountdown = (initial = 0) => {
 const Login = () => {
   // Shared
   const navigate      = useNavigate();
-  const { login }     = useAuth();
+  const { user, login } = useAuth();
   const [activeTab, setActiveTab] = useState("email"); // "email" | "whatsapp"
 
   // Email login state
@@ -126,6 +126,12 @@ const Login = () => {
   const [message,      setMessage]      = useState("");
   const [msgType,      setMsgType]      = useState(""); // "success" | "error" | "info"
 
+  useEffect(() => {
+    if (!user) return;
+
+    navigate(user.role?.toLowerCase() === "admin" ? "/adminpanel" : "/", { replace: true });
+  }, [user, navigate]);
+
   const showMsg = (text, type = "error") => { setMessage(text); setMsgType(type); };
   const clearMsg = () => { setMessage(""); setMsgType(""); };
 
@@ -133,8 +139,18 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     clearMsg();
+    const formData = new FormData(e.currentTarget);
+    const loginEmail = String(formData.get("email") || email).trim();
+    const loginPassword = String(formData.get("password") || password);
+
+    setEmail(loginEmail);
+    setPassword(loginPassword);
+
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post("/auth/login", {
+        email: loginEmail,
+        password: loginPassword,
+      });
       const userData = {
         userId:    data.userId,
         user_id:   data.user_id   || data.userUuid,
@@ -339,10 +355,12 @@ const Login = () => {
                   <label style={labelStyle}>Email Address *</label>
                   <input
                     id="login-email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
+                    autoComplete="username"
                     required
                     style={inputStyle}
                     onFocus={(e) => e.target.style.borderColor = "#16a34a"}
@@ -356,10 +374,12 @@ const Login = () => {
                   <div style={{ position: "relative" }}>
                     <input
                       id="login-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
+                      autoComplete="current-password"
                       required
                       style={{ ...inputStyle, paddingRight: "42px" }}
                       onFocus={(e) => e.target.style.borderColor = "#16a34a"}
