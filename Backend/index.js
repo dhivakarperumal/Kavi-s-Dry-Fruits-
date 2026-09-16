@@ -27,12 +27,16 @@ const settingsRoutes = require('./src/routers/settingsRoutes');
 const reviewRoutes = require('./src/routers/reviewRoutes');
 const contactFormRoutes = require('./src/routers/contactFormRoutes');
 const bannerRoutes = require('./src/routers/bannerRoutes');
+const pushRoutes = require('./src/routers/pushRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true
+}));
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -58,6 +62,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact-form', contactFormRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/push', pushRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -81,13 +86,15 @@ app.get('/', (req, res) => {
 // Start Server
 const http = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Adjust appropriately for production
-    methods: ["GET", "POST", "PUT", "DELETE"]
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   }
 });
 
@@ -95,6 +102,29 @@ const io = new Server(server, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
+  const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+  if (token) {
+    try {
+      socket.user = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Socket user role:', socket.user.role);
+      if (String(socket.user.role || '').toLowerCase() === 'admin') {
+        socket.join('admins');
+        console.log(`Admin joined admins room: ${socket.id}`);
+      }
+    } catch (err) {
+      console.error('Socket JWT verify error:', err.message);
+      socket.user = null;
+    }
+  } else {
+    console.log('No token provided in socket handshake');
+  }
+  
+  // As a fallback for development/testing, if it's the admin panel we can allow them to join
+  socket.on('join-admin', () => {
+    socket.join('admins');
+    console.log(`Socket explicitly joined admins room: ${socket.id}`);
+  });
+
   console.log('A user connected:', socket.id);
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);

@@ -37,6 +37,26 @@ async function migrate() {
       else throw e;
     }
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS admin_push_subscriptions (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNSIGNED NOT NULL,
+        endpoint TEXT NOT NULL,
+        endpoint_hash CHAR(64) NOT NULL UNIQUE,
+        subscription LONGTEXT NOT NULL,
+        enabled TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    try {
+      await connection.query('ALTER TABLE admin_push_subscriptions ADD COLUMN endpoint_hash CHAR(64) NOT NULL UNIQUE');
+      console.log('Added endpoint_hash to admin_push_subscriptions');
+    } catch (e) {
+      if (e.code === 'ER_DUP_FIELDNAME') console.log('endpoint_hash already exists');
+      else throw e;
+    }
+
     try {
       await connection.query('UPDATE products SET totalStock = totalWeight WHERE (totalStock IS NULL OR totalStock = 0) AND totalWeight IS NOT NULL');
       await connection.query('ALTER TABLE products DROP COLUMN totalWeight');

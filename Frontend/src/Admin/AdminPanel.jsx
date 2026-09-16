@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -44,6 +44,7 @@ import DeliverySettings from "./Settings/DeliverySettings";
 import BannerManagement from "./Bannermanagement/BannerManagement";
 
 import { io } from "socket.io-client";
+import { registerAdminPush, showAdminBrowserNotification } from "../services/adminNotifications";
 
 const AdminPanel = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -71,6 +72,7 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const seenOrderIds = useRef(new Set());
 
   const handleOrderUpdated = useCallback((updatedOrder) => {
     setCollectionCounts((previousData) => {
@@ -95,6 +97,44 @@ const AdminPanel = () => {
       return nextData;
     });
   }, []);
+
+  const handleNewOrder = useCallback((incomingOrder) => {
+    console.log("New order received:", incomingOrder);
+    console.log("Notification permission:", Notification.permission);
+    const orderKey = incomingOrder?.orderId || incomingOrder?.id;
+    if (!orderKey || seenOrderIds.current.has(orderKey)) return;
+    seenOrderIds.current.add(orderKey);
+
+    setCollectionCounts((previousData) => {
+      const existingOrders = previousData.allOrders || [];
+      if (existingOrders.some((order) => (order.orderId || order.id) === orderKey)) return previousData;
+      const allOrders = [{ ...incomingOrder, date: incomingOrder.created_at || incomingOrder.date }, ...existingOrders];
+      const todayStr = new Date().toISOString().split("T")[0];
+      const todayActiveOrders = allOrders.filter((order) =>
+        order.orderStatus === "Order Placed" &&
+        (order.created_at || order.date || "").includes(todayStr)
+      );
+      const nextData = {
+        ...previousData,
+        orders: allOrders.length,
+        allOrders,
+        "New Orders": todayActiveOrders,
+        deliveredOrders: allOrders.filter((order) => order.orderStatus === "Delivered").length,
+        cancelledOrders: allOrders.filter((order) => order.orderStatus === "Cancelled").length,
+      };
+      adminDataService.setCache(nextData);
+      return nextData;
+    });
+
+    toast.success(`New Order Received! #${incomingOrder.orderId} - ₹${Number(incomingOrder.totalAmount || 0).toFixed(2)}`);
+    showAdminBrowserNotification(incomingOrder);
+    try { new Audio("/notification.mp3").play().catch(() => {}); } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (String(user?.role || "").toLowerCase() !== "admin") return;
+    registerAdminPush().catch((error) => console.warn("Admin push setup unavailable:", error.message));
+  }, [user]);
 
   // Socket.io connection for real-time order notifications
   useEffect(() => {
@@ -132,6 +172,8 @@ const AdminPanel = () => {
     });
 
     socket.on("connect", async () => {
+      console.log("Socket connected:", socket.id);
+      socket.emit("join-admin");
       // Sync on reconnect to prevent missing orders
       try {
         const ordersRes = await api.get("/orders");
@@ -164,7 +206,7 @@ const AdminPanel = () => {
     return () => {
       socket.disconnect();
     };
-  }, [user]);
+  }, [user, handleNewOrder]);
 
   // Sync URL Path with Active Section
   useEffect(() => {

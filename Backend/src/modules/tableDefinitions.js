@@ -393,7 +393,19 @@ const tables = {
       source VARCHAR(100) DEFAULT 'website',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  `
+  `,
+    admin_push_subscriptions: `
+      CREATE TABLE IF NOT EXISTS admin_push_subscriptions (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNSIGNED NOT NULL,
+        endpoint TEXT NOT NULL,
+        endpoint_hash CHAR(64) NOT NULL UNIQUE,
+        subscription LONGTEXT NOT NULL,
+        enabled TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `
 };
 
 module.exports = tables;
