@@ -399,19 +399,27 @@ When the browser window is **minimized** or the user is focused on **another tab
 ### Q: Does the notification work on mobile browsers?
 **A**: Yes! The floating in-app bottom-right toast works on mobile browsers. It is responsive (`w-[calc(100vw-2rem)] sm:w-96`) and adjusts cleanly to smaller screen widths.
 
-### Q: How to change the notification sound?
-**A**: You have two easy ways to change the sound:
+### Q: How to select and change the notification sound?
+**A**: You can now select and preview your sound directly from the Admin Panel:
 
-1. **Option 1 (No Code - Recommended)**:
-   - Take any `.mp3` audio file you like (e.g., iPhone chime, Bell, Doorbell, Cash register).
-   - Rename it to `notification.mp3`.
-   - Copy it into the `Frontend/public/` folder (`Frontend/public/notification.mp3`).
-   - Done! The app automatically detects this file and plays your custom sound whenever a notification arrives.
+1. **Via Header Button (Fastest)**:
+   - In the top header bar of the Admin Panel, click the **🎵 music note button** (next to the search icon and orders bell).
+   - The **Notification Sound Settings modal** will open.
 
-2. **Option 2 (Code Customization in `notificationAudio.js`)**:
-   - Open [notificationAudio.js](file:///d:/Thenuga/Kavi-s-Dry-Fruits-/Frontend/src/utils/notificationAudio.js).
-   - In `synthesizeChime(type)`:
-     - Change the frequencies (e.g. `784` for G5, `1046.5` for C6, `1318` for E6).
-     - Adjust volume via `gain.gain.exponentialRampToValueAtTime(0.3, ...)`.
-     - Customize individual tones for `'order'`, `'lowStock'`, and `'contact'`.
+2. **Via Settings Page**:
+   - Go to `/adminpanel/settings` \(\rightarrow\) Click the **"Notification & Sound Settings"** card.
+
+#### What you can do in the Sound Settings Modal:
+- **Preview Sounds Live**: Click **▶ Play** next to any sound to listen to it immediately:
+  - **WhatsApp Chime** (Original gentle dual-tone ping)
+  - **Cash Register Bell** (Crisp payment chime - perfect for orders)
+  - **Crystal Glass** (Elegant high-pitch chime)
+  - **Desk Reception Bell** (Warm service bell)
+  - **Digital Arpeggio** (Modern upbeat electronic melody)
+  - **Soft Water Pop** (Subtle bubble pop)
+  - **Custom Audio** (Allows browsing and uploading any `.mp3` or `.wav` from your device)
+- **Volume Slider**: Adjust the sound level from 0% to 100%.
+- **Test Full Alert & Popup**: Fires a complete test alert (sound + Windows desktop popup + bottom-right card) so you can experience it live.
+- **Save**: Saves your chosen sound to your browser so it persists across all sessions.
+
 
