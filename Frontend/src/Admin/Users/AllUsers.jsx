@@ -155,6 +155,12 @@ const Users = () => {
     setEditMode(true);
   };
 
+  const adminUsersCount = users.filter((u) => {
+    const role = String(u.role || "").trim().toLowerCase();
+    return role === "admin" || role === "administrator" || role.includes("admin");
+  }).length;
+  const standardUsersCount = Math.max(0, users.length - adminUsersCount);
+
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-gray-50/50">
       <button
@@ -185,7 +191,7 @@ const Users = () => {
           </div>
           <div className="flex items-center gap-2 mt-6 relative z-10">
             <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
-            <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{users.filter(u => u.role !== 'Admin').length} Active Consumer Accounts</span>
+            <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{standardUsersCount} Active Consumer Accounts</span>
           </div>
         </div>
 
@@ -198,7 +204,7 @@ const Users = () => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">System Administrators</p>
               <h3 className="text-5xl font-black text-white tracking-tighter">
-                {users.filter(u => u.role === 'Admin').length}
+                {adminUsersCount}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
@@ -477,7 +483,13 @@ const Users = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Authorization Role</label>
                 <CustomSelect
-                  value={selectedUser.role || ""}
+                  value={
+                    String(selectedUser.role || "").toLowerCase() === "admin"
+                      ? "Admin"
+                      : String(selectedUser.role || "").toLowerCase() === "user"
+                      ? "User"
+                      : selectedUser.role || ""
+                  }
                   onChange={(e) => setSelectedUser(p => ({ ...p, role: e.target.value }))}
                   disabled={!editMode}
                   placeholder="Select Role (Admin / User)"
