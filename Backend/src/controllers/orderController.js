@@ -240,34 +240,38 @@ const createOrder = async (req, res) => {
     }
 
     await connection.commit();
-    
-    // Emit real-time event to connected admins
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('newOrder', {
-        orderId,
-        clientName,
-        totalAmount,
-        orderStatus,
-        paymentMethod: paymentMethod || 'Online',
-        itemsCount: (parsedItems || []).length,
-        createdAt: new Date()
-      });
 
-      // Check for low stock (<= 500g threshold) on affected items
-      try {
+    res.json({ id: result.insertId, message: 'Order created and stock updated', orderId });
+
+    // Emit real-time event to connected admins safely (does not block or rollback order on error)
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('newOrder', {
+          orderId,
+          clientName,
+          totalAmount,
+          orderStatus,
+          paymentMethod: paymentMode || 'Online',
+          itemsCount: (parsedItems || []).length,
+          createdAt: new Date()
+        });
+
+        // Check for low stock (<= 500g threshold) on affected items
         const lowStockAlerts = [];
         if (affectedProductIds.size > 0) {
+          const ids = Array.from(affectedProductIds);
           const [lowProds] = await db.query(
             `SELECT productId, name, totalStock, category FROM products WHERE id IN (?) AND CAST(totalStock AS SIGNED) <= 500`,
-            [[...affectedProductIds]]
+            [ids]
           );
           lowStockAlerts.push(...lowProds);
         }
         if (affectedProductNames.size > 0) {
+          const names = Array.from(affectedProductNames);
           const [lowNamedProds] = await db.query(
             `SELECT productId, name, totalStock, category FROM products WHERE TRIM(name) IN (?) AND CAST(totalStock AS SIGNED) <= 500`,
-            [[...affectedProductNames]]
+            [names]
           );
           for (const p of lowNamedProds) {
             if (!lowStockAlerts.some(a => String(a.productId) === String(p.productId))) {
@@ -276,9 +280,10 @@ const createOrder = async (req, res) => {
           }
         }
         if (affectedComboIds.size > 0) {
+          const comboIds = Array.from(affectedComboIds);
           const [lowCombos] = await db.query(
             `SELECT productId, name, totalStock, category FROM combos WHERE id IN (?) AND CAST(totalStock AS SIGNED) <= 500`,
-            [[...affectedComboIds]]
+            [comboIds]
           );
           lowStockAlerts.push(...lowCombos);
         }
@@ -293,16 +298,16 @@ const createOrder = async (req, res) => {
             createdAt: new Date()
           });
         }
-      } catch (stockCheckErr) {
-        console.error('Error checking low stock alerts:', stockCheckErr.message);
       }
+    } catch (notifErr) {
+      console.error('Error emitting order notifications / checking low stock:', notifErr.message);
     }
-
-    res.json({ id: result.insertId, message: 'Order created and stock updated' });
   } catch (error) {
     try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     console.error('Order creation failed:', error);
-    res.status(500).json({ error: error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
   } finally {
     connection.release();
   }

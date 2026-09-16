@@ -147,7 +147,6 @@ const ToastItem = ({ toast, onDismiss, onNavigate }) => {
             <span>Click to view details</span>
             <FaExternalLinkAlt size={10} className="transition-transform group-hover:translate-x-0.5" />
           </span>
-          <span className="text-[10px] text-slate-400 font-normal">WhatsApp Notification</span>
         </div>
       </div>
 
