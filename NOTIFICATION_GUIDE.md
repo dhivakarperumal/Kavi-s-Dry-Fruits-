@@ -398,3 +398,20 @@ When the browser window is **minimized** or the user is focused on **another tab
 
 ### Q: Does the notification work on mobile browsers?
 **A**: Yes! The floating in-app bottom-right toast works on mobile browsers. It is responsive (`w-[calc(100vw-2rem)] sm:w-96`) and adjusts cleanly to smaller screen widths.
+
+### Q: How to change the notification sound?
+**A**: You have two easy ways to change the sound:
+
+1. **Option 1 (No Code - Recommended)**:
+   - Take any `.mp3` audio file you like (e.g., iPhone chime, Bell, Doorbell, Cash register).
+   - Rename it to `notification.mp3`.
+   - Copy it into the `Frontend/public/` folder (`Frontend/public/notification.mp3`).
+   - Done! The app automatically detects this file and plays your custom sound whenever a notification arrives.
+
+2. **Option 2 (Code Customization in `notificationAudio.js`)**:
+   - Open [notificationAudio.js](file:///d:/Thenuga/Kavi-s-Dry-Fruits-/Frontend/src/utils/notificationAudio.js).
+   - In `synthesizeChime(type)`:
+     - Change the frequencies (e.g. `784` for G5, `1046.5` for C6, `1318` for E6).
+     - Adjust volume via `gain.gain.exponentialRampToValueAtTime(0.3, ...)`.
+     - Customize individual tones for `'order'`, `'lowStock'`, and `'contact'`.
+
