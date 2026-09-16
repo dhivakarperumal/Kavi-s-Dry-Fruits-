@@ -76,7 +76,7 @@ const Register = () => {
 
   return (
     <div className="h-screen min-h-screen overflow-hidden flex items-center justify-center bg-white font-sans p-2 sm:p-4">
-      <div className="flex max-w-6xl w-full h-full max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] p-2 bg-white rounded-xl border border-green-600 shadow-2xl shadow-green-900/15 overflow-hidden">
+      <div className="flex max-w-6xl w-full h-full max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] p-0 bg-white rounded-xl border border-green-600 shadow-2xl shadow-green-900/15 overflow-hidden">
 
         {/* LEFT IMAGE */}
         <div className="w-1/2 h-full hidden md:block min-h-0 self-stretch">
@@ -85,7 +85,7 @@ const Register = () => {
             alt="Register"
             loading="eager"
             fetchPriority="high"
-            className="block h-full min-h-full w-full object-cover rounded-3xl"
+            className="block h-full min-h-full w-full object-cover rounded-l-xl"
           />
         </div>
 
@@ -135,7 +135,9 @@ const Register = () => {
             </div>
             {/* Name */}
             <div>
+              <label htmlFor="register-first-name" className="mb-1 block text-xs font-semibold text-gray-700">First Name</label>
               <input
+                id="register-first-name"
                 type="text"
                 placeholder="First Name"
                 value={firstName}
@@ -145,26 +147,36 @@ const Register = () => {
             </div>
 
             {/* Email */}
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-green-400 rounded-md px-4 py-2"
-            />
+            <div>
+              <label htmlFor="register-email" className="mb-1 block text-xs font-semibold text-gray-700">Email Address</label>
+              <input
+                id="register-email"
+                type="email"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-green-400 rounded-md px-4 py-2"
+              />
+            </div>
 
             {/* Phone */}
-            <input
-              type="text"
-              placeholder="Phone Number (10 digits)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-green-400 rounded-md px-4 py-2"
-            />
+            <div>
+              <label htmlFor="register-phone" className="mb-1 block text-xs font-semibold text-gray-700">Phone Number</label>
+              <input
+                id="register-phone"
+                type="text"
+                placeholder="Phone Number (10 digits)"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full border border-green-400 rounded-md px-4 py-2"
+              />
+            </div>
 
             {/* Password */}
             <div className="relative">
+              <label htmlFor="register-password" className="mb-1 block text-xs font-semibold text-gray-700">Password</label>
               <input
+                id="register-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
@@ -181,7 +193,9 @@ const Register = () => {
 
             {/* Confirm Password */}
             <div className="relative">
+              <label htmlFor="register-confirm-password" className="mb-1 block text-xs font-semibold text-gray-700">Confirm Password</label>
               <input
+                id="register-confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm Password"
                 value={confirmPassword}
