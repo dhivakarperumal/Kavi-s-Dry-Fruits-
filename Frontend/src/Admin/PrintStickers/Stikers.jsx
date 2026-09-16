@@ -592,37 +592,70 @@ const Stickers = ({ adminData }) => {
           </div>
         </div>
 
-        {/* Quick Summary / Status Chips */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Sticker Types</p>
-              <p className="text-xl font-black text-gray-900 mt-0.5">{stickersList.length}</p>
+        {/* Print Stickers Stats Cards (Contact Form Reference Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Sticker Types Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Sticker Types</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {stickersList.length}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaBarcode />
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <FaBarcode size={18} />
+            <div className="flex items-center gap-2 mt-6 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{stickersList.length} Types Queued</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Total Copies</p>
-              <p className="text-xl font-black text-emerald-600 mt-0.5">{totalLabelsCount}</p>
+          {/* Total Copies Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Print Copies</p>
+                <h3 className="text-5xl font-black text-white tracking-tighter">
+                  {totalLabelsCount}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaPrint />
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <FaPrint size={16} />
+            <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+              Ready for Thermal Batch Printing
             </div>
           </div>
 
-         
+          {/* Filtered Count Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
 
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between col-span-2 sm:col-span-1">
-            <div>
-              <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Filtered Count</p>
-              <p className="text-xl font-black text-gray-900 mt-0.5">{filteredStickers.length}</p>
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Filtered Count</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {filteredStickers.length}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaLayerGroup />
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center font-bold">
-              <FaLayerGroup size={16} />
+            <div className="mt-8 flex items-center gap-2 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredStickers.reduce((acc, curr) => acc + (Number(curr.printQty) || 0), 0)} Labels in View</span>
             </div>
           </div>
         </div>
