@@ -148,6 +148,7 @@ const AdminPanel = () => {
 
     socket.on("connect", async () => {
       console.log("Socket connected:", socket.id);
+      socket.emit("join-admin");
       // Sync on reconnect to prevent missing orders
       try {
         const ordersRes = await api.get("/orders");

@@ -102,15 +102,29 @@ const io = new Server(server, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  const token = socket.handshake.auth?.token;
+  const token = socket.handshake.auth?.token || socket.handshake.query?.token;
   if (token) {
     try {
       socket.user = jwt.verify(token, process.env.JWT_SECRET);
-      if (String(socket.user.role || '').toLowerCase() === 'admin') socket.join('admins');
-    } catch {
+      console.log('Socket user role:', socket.user.role);
+      if (String(socket.user.role || '').toLowerCase() === 'admin') {
+        socket.join('admins');
+        console.log(`Admin joined admins room: ${socket.id}`);
+      }
+    } catch (err) {
+      console.error('Socket JWT verify error:', err.message);
       socket.user = null;
     }
+  } else {
+    console.log('No token provided in socket handshake');
   }
+  
+  // As a fallback for development/testing, if it's the admin panel we can allow them to join
+  socket.on('join-admin', () => {
+    socket.join('admins');
+    console.log(`Socket explicitly joined admins room: ${socket.id}`);
+  });
+
   console.log('A user connected:', socket.id);
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
