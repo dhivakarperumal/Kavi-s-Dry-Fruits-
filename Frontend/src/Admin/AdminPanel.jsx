@@ -402,7 +402,7 @@ const AdminPanel = () => {
       case "Add Products": return <Products onInventoryChanged={syncCollectionCounts} />;
       case "All Products": return <Allproduct adminData={collectionCounts} />;
       case "Add Category": return <Category adminData={collectionCounts} />;
-      case "Stock Details": return <StockDetails adminData={collectionCounts} />;
+      case "Stock Details": return <StockDetails adminData={collectionCounts} onInventoryChanged={syncCollectionCounts} />;
 
 
       // Orders

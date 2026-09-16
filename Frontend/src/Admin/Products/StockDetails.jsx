@@ -27,7 +27,7 @@ import {
   FaFilePdf
 } from "react-icons/fa";
 
-const StockDetail = () => {
+const StockDetail = ({ adminData, onInventoryChanged }) => {
   const safeParse = (data) => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -52,7 +52,7 @@ const StockDetail = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const itemsPerPage = 50;
+  const itemsPerPage = 10;
 
   const fetchStocks = async () => {
     setLoading(true);
@@ -82,7 +82,8 @@ const StockDetail = () => {
     };
     fetchInvoices();
     fetchStocks();
-  }, []);
+    if (onInventoryChanged) onInventoryChanged();
+  }, [onInventoryChanged]);
 
   const handleProductIdChange = (e) => {
     const value = e.target.value;
@@ -133,7 +134,8 @@ const StockDetail = () => {
 
       toast.success("Inventory updated!");
       closeModal();
-      fetchStocks();
+      await fetchStocks();
+      if (onInventoryChanged) await onInventoryChanged();
     } catch (err) {
       toast.error("Transaction failed.");
     }
@@ -842,7 +844,8 @@ const StockDetail = () => {
                               toast.success("Batch stock updated successfully!");
                               setShowImportModal(false);
                               setImportData([]);
-                              fetchStocks();
+                              await fetchStocks();
+                              if (onInventoryChanged) await onInventoryChanged();
                             } catch { toast.error("Batch update failed."); }
                             finally { setLoading(false); }
                           }}
