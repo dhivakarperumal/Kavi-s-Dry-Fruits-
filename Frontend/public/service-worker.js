@@ -1,5 +1,26 @@
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, body, url } = event.data;
+    self.registration.showNotification(title || 'Notification', {
+      body: body || '',
+      icon: '/Kavi_logo.png',
+      badge: '/Kavi_logo.png',
+      tag: `kavi-${Date.now()}`,
+      data: { url: url || '/#/adminpanel' },
+      requireInteraction: true,
+    });
+  }
+});
+
 self.addEventListener('push', (event) => {
-  console.log("Push notification received");
   if (!event.data) return;
   const data = event.data.json();
   event.waitUntil(
@@ -7,10 +28,11 @@ self.addEventListener('push', (event) => {
       if (clients.some((client) => client.visibilityState === 'visible')) return undefined;
       return self.registration.showNotification(data.title || '🔔 New Order Received', {
         body: data.body || 'A new order was received.',
-        icon: '/images/Kavi_logo.png',
-        badge: '/images/Kavi_logo.png',
+        icon: '/Kavi_logo.png',
+        badge: '/Kavi_logo.png',
         tag: `new-order-${data.orderId || Date.now()}`,
-        data: { url: '/#/adminpanel/new-orders' },
+        data: { url: '/#/adminpanel/all-orders' },
+        requireInteraction: true,
       });
     })
   );
@@ -18,7 +40,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || '/#/adminpanel/new-orders', self.location.origin).href;
+  const targetUrl = new URL(event.notification.data?.url || '/#/adminpanel/all-orders', self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((client) => 'focus' in client);

@@ -26,9 +26,9 @@ export const AdminNotificationProvider = ({ children }) => {
 
   // Sync notification permission status
   useEffect(() => {
-    if (isAdmin && typeof window !== "undefined" && "Notification" in window) {
+    if (typeof window !== "undefined" && "Notification" in window) {
       setDesktopPermission(Notification.permission);
-      if (Notification.permission !== "granted") {
+      if (isAdmin && Notification.permission !== "granted") {
         setShowPermissionPrompt(true);
       } else {
         setShowPermissionPrompt(false);
@@ -79,54 +79,94 @@ export const AdminNotificationProvider = ({ children }) => {
     window.addEventListener("focus", onFocus);
   }, []);
 
-  // Trigger Windows OS / Browser Native Push Notification
+  // Trigger Windows OS / Browser Native Push Notification (SYNCHRONOUS, DOES NOT HANG)
   const triggerDesktopNotification = useCallback((title, body, link) => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
     const iconUrl = "/Kavi_logo.png";
-    const targetHash = link.startsWith("/") ? `#${link}` : `/#${link}`;
+    let notificationShown = false;
 
-    // Prefer service worker showNotification (most robust for background tabs on Windows)
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready
-        .then((registration) => {
-          registration.showNotification(title, {
-            body: body || "",
-            icon: iconUrl,
-            badge: iconUrl,
-            tag: `kavi-${Date.now()}`,
-            data: { url: targetHash },
-            vibrate: [200, 100, 200],
-            requireInteraction: true, // Keep notification pinned on Windows until user acts
-          });
-        })
-        .catch(() => {
-          fallbackNotification();
-        });
-    } else {
-      fallbackNotification();
+    // 1. Immediate new Notification (runs synchronously and pops up in Windows Action Center)
+    try {
+      const notif = new Notification(title, {
+        body: body || "",
+        icon: iconUrl,
+        badge: iconUrl,
+        tag: `kavi-${Date.now()}`,
+        requireInteraction: true, // Keep notification pinned on Windows until user acts
+      });
+
+      notif.onclick = () => {
+        window.focus();
+        handleNavigate(link);
+        notif.close();
+      };
+      notificationShown = true;
+    } catch (err) {
+      console.warn("Direct Notification constructor failed:", err);
     }
 
-    function fallbackNotification() {
+    // 2. Also notify active service worker if present
+    if (!notificationShown && navigator.serviceWorker?.controller) {
       try {
-        const notif = new Notification(title, {
-          body: body || "",
-          icon: iconUrl,
-          badge: iconUrl,
-          tag: `kavi-${Date.now()}`,
-          requireInteraction: true,
+        navigator.serviceWorker.controller.postMessage({
+          type: "SHOW_NOTIFICATION",
+          title,
+          body,
+          url: link,
         });
-        notif.onclick = () => {
-          window.focus();
-          handleNavigate(link);
-          notif.close();
-        };
-      } catch (err) {
-        console.warn("Desktop notification error:", err);
+      } catch (swErr) {
+        console.warn("Service worker message failed:", swErr);
       }
     }
   }, [handleNavigate]);
+
+  // Broadcast alert across other open Chrome tabs (e.g. user tab, shop tab)
+  const broadcastToOtherTabs = useCallback((alertData) => {
+    try {
+      if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+        const bc = new BroadcastChannel("kavi_admin_alerts_channel");
+        bc.postMessage(alertData);
+        bc.close();
+      }
+    } catch (e) {}
+  }, []);
+
+  // Listen to cross-tab broadcasts so user login tabs ALSO show the notification!
+  useEffect(() => {
+    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
+
+    const bc = new BroadcastChannel("kavi_admin_alerts_channel");
+    bc.onmessage = (event) => {
+      const alertData = event.data;
+      if (!alertData) return;
+
+      // Play sound on this tab too
+      playNotificationSound(alertData.type || "default");
+
+      // Flash tab title
+      flashTitle(alertData.title);
+
+      // Show bottom-right floating card on this tab!
+      setToasts((prev) => [
+        ...prev.slice(-3),
+        {
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
+          type: alertData.type || "contact",
+          title: alertData.title,
+          message: alertData.message,
+          secondary: alertData.secondary,
+          link: alertData.link,
+          duration: 8000,
+        },
+      ]);
+    };
+
+    return () => {
+      bc.close();
+    };
+  }, [flashTitle]);
 
   const addNotification = useCallback(
     ({ type, title, message, secondary, link, sound = true }) => {
@@ -139,23 +179,26 @@ export const AdminNotificationProvider = ({ children }) => {
       // Flash tab title in browser bar if tab is hidden
       flashTitle(title);
 
-      setToasts((prev) => [
-        ...prev.slice(-3), // keep maximum 4 notifications stacked
-        {
-          id,
-          type, // 'order' | 'lowStock' | 'contact'
-          title,
-          message,
-          secondary,
-          link,
-          duration: 8000,
-        },
-      ]);
+      const alertItem = {
+        id,
+        type, // 'order' | 'lowStock' | 'contact'
+        title,
+        message,
+        secondary,
+        link,
+        duration: 8000,
+      };
+
+      // Add to local state (renders in bottom-right corner of this tab)
+      setToasts((prev) => [...prev.slice(-3), alertItem]);
+
+      // Broadcast to other open Chrome tabs (e.g. user login tab)
+      broadcastToOtherTabs(alertItem);
 
       // Fire native Windows OS Action Center notification
       triggerDesktopNotification(title, message, link);
     },
-    [triggerDesktopNotification, flashTitle]
+    [triggerDesktopNotification, flashTitle, broadcastToOtherTabs]
   );
 
   // Request desktop notification permission and test immediately
@@ -170,7 +213,7 @@ export const AdminNotificationProvider = ({ children }) => {
           addNotification({
             type: "order",
             title: "🔔 Desktop Notifications Enabled!",
-            message: "You will now receive alerts here even when working in other tabs or minimized.",
+            message: "You will now receive alerts on your screen even when in other tabs or minimized.",
             secondary: "WhatsApp Web-style alerts are active.",
             link: "/adminpanel",
             sound: true,
@@ -299,8 +342,8 @@ export const AdminNotificationProvider = ({ children }) => {
         />
       )}
 
-      {/* WhatsApp Web styled bottom-right floating notifications */}
-      {isAdmin && (
+      {/* WhatsApp Web styled bottom-right floating notifications (renders on ANY open tab that has an alert!) */}
+      {toasts.length > 0 && (
         <WhatsAppNotificationContainer
           toasts={toasts}
           onDismiss={dismissToast}
