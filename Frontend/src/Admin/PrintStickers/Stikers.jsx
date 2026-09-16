@@ -423,7 +423,8 @@ const Stickers = ({ adminData }) => {
             }
             .barcode-img {
               width: 100%;
-              height: 46px;
+              height: 38px;
+              display: block;
               object-fit: contain;
               image-rendering: -webkit-optimize-contrast;
               image-rendering: crisp-edges;
@@ -431,7 +432,8 @@ const Stickers = ({ adminData }) => {
             .price-tag {
               font-weight: 900;
               font-size: 11px;
-              margin-top: 4px;
+              margin-top: -2px;
+              line-height: 1;
               color: #000;
               white-space: nowrap;
             }
