@@ -237,96 +237,120 @@ const Category = () => {
 
         {/* Content Section */}
         {viewMode === "card" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {currentItems.map((cat) => (
-              <div key={cat.id} className="group bg-white rounded-[2.5rem] p-5 shadow-sm border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-950/5 transition-all duration-500 flex flex-col relative overflow-hidden">
-                <div className="relative h-48 mb-5 overflow-hidden rounded-[2rem] bg-gray-50 flex items-center justify-center">
-                   {cat.cimgs?.[0] ? (
-                      <img src={cat.cimgs[0]} alt={cat.cname} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                   ) : (
-                      <FaImage size={40} className="text-gray-200" />
-                   )}
-                   <div className="absolute top-4 left-4">
-                      <span className="px-3 py-1 bg-white/90 backdrop-blur shadow-sm rounded-full text-[10px] font-black text-emerald-900 border border-emerald-100 uppercase tracking-tighter">
-                         {cat.catId}
-                      </span>
-                   </div>
-                </div>
+          currentItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+              <FaFileAlt className="mb-4 text-4xl text-slate-300" />
+              <h3 className="text-xl font-black text-slate-700">No categories found</h3>
+              <p className="mt-2 text-sm text-slate-500">
+                {searchTerm ? "No categories match your search." : "There are no categories to display yet."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {currentItems.map((cat) => (
+                <div key={cat.id} className="group bg-white rounded-[2.5rem] p-5 shadow-sm border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-950/5 transition-all duration-500 flex flex-col relative overflow-hidden">
+                  <div className="relative h-48 mb-5 overflow-hidden rounded-[2rem] bg-gray-50 flex items-center justify-center">
+                     {cat.cimgs?.[0] ? (
+                        <img src={cat.cimgs[0]} alt={cat.cname} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                     ) : (
+                        <FaImage size={40} className="text-gray-200" />
+                     )}
+                     <div className="absolute top-4 left-4">
+                        <span className="px-3 py-1 bg-white/90 backdrop-blur shadow-sm rounded-full text-[10px] font-black text-emerald-900 border border-emerald-100 uppercase tracking-tighter">
+                           {cat.catId}
+                        </span>
+                     </div>
+                  </div>
 
-                <div className="px-2 pb-2">
-                   <h4 className="text-lg font-black text-slate-950 mb-2 truncate">{cat.cname}</h4>
-                   <p className="text-[11px] text-slate-800 font-bold line-clamp-2 leading-relaxed h-8 mb-4">
-                      {cat.cdescription}
-                   </p>
+                  <div className="px-2 pb-2">
+                     <h4 className="text-lg font-black text-slate-950 mb-2 truncate">{cat.cname}</h4>
+                     <p className="text-[11px] text-slate-800 font-bold line-clamp-2 leading-relaxed h-8 mb-4">
+                        {cat.cdescription}
+                     </p>
 
-                   <div className="flex items-center justify-between border-t border-gray-50 pt-4">
-                      <div className="flex -space-x-3 overflow-hidden">
-                        {(cat.cimgs || []).slice(0, 3).map((img, i) => (
-                          <img key={i} src={img} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" alt="" />
-                        ))}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                          <FaEdit size={14} />
-                        </button>
-                        <button onClick={() => handleDelete(cat.id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                          <FaTrash size={14} />
-                        </button>
-                      </div>
-                   </div>
+                     <div className="flex items-center justify-between border-t border-gray-50 pt-4">
+                        <div className="flex -space-x-3 overflow-hidden">
+                          {(cat.cimgs || []).slice(0, 3).map((img, i) => (
+                            <img key={i} src={img} className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" alt="" />
+                          ))}
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <FaEdit size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(cat.id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                            <FaTrash size={14} />
+                          </button>
+                        </div>
+                     </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         ) : (
           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
              <table className="w-full text-left">
                 <thead className="bg-[#009669] border-b border-emerald-700">
                    <tr>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">ID</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Description</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">ID</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Identity</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Description</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-center">Gallery</th>
+                      <th className="px-3 py-3 text-[8px] md:px-5 md:py-4 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-right">Actions</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                   {currentItems.map((cat, index) => (
-                      <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
-                         <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
-                            {(currentPage - 1) * itemsPerPage + index + 1}
-                         </td>
-                         <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
-                         <td className="px-8 py-6">
-                            <div className="flex items-center gap-4">
-                               
-                               <span className="font-black text-slate-800 text-sm">{cat.cname}</span>
-                            </div>
-                         </td>
-                         <td className="px-8 py-6 max-w-xs">
-                            <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.cdescription}"</p>
-                         </td>
-                         <td className="px-8 py-6 text-center">
-                            <div className="flex items-center justify-center -space-x-2">
-                               {(cat.cimgs || []).map((img, i) => (
-                                 <img key={i} src={img} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
-                               ))}
-                            </div>
-                         </td>
-                         <td className="px-8 py-6 text-right">
-                            <div className="flex justify-end gap-2">
-                               <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                 <FaEdit size={14} />
-                               </button>
-                               <button onClick={() => handleDelete(cat.id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
-                                 <FaTrash size={14} />
-                               </button>
-                            </div>
-                         </td>
-                      </tr>
-                   ))}
+                   {currentItems.length === 0 ? (
+                     <tr>
+                       <td colSpan="6" className="px-8 py-16 text-center">
+                         <div className="flex flex-col items-center justify-center">
+                           <FaFileAlt className="mb-4 text-4xl text-slate-300" />
+                           <h3 className="text-xl font-black text-slate-700">No data</h3>
+                           <p className="mt-2 text-sm text-slate-500">
+                             {searchTerm ? "No matching categories found." : "There is no data in this table yet."}
+                           </p>
+                         </div>
+                       </td>
+                     </tr>
+                   ) : (
+                     currentItems.map((cat, index) => (
+                        <tr key={cat.id} className="hover:bg-slate-50/50 transition-colors group">
+                           <td className="px-8 py-6 font-black text-slate-900 text-xs text-center">
+                              {(currentPage - 1) * itemsPerPage + index + 1}
+                           </td>
+                           <td className="px-8 py-6 font-black text-slate-900 text-xs">#{cat.catId}</td>
+                           <td className="px-8 py-6">
+                              <div className="flex items-center gap-4">
+                                 
+                                 <span className="font-black text-slate-800 text-sm">{cat.cname}</span>
+                              </div>
+                           </td>
+                           <td className="px-8 py-6 max-w-xs">
+                              <p className="text-xs text-gray-500 font-medium truncate italic">"{cat.cdescription}"</p>
+                           </td>
+                           <td className="px-8 py-6 text-center">
+                              <div className="flex items-center justify-center -space-x-2">
+                                 {(cat.cimgs || []).map((img, i) => (
+                                   <img key={i} src={img} className="w-8 h-8 rounded-full ring-2 ring-white shadow-sm object-cover" alt="" />
+                                 ))}
+                              </div>
+                           </td>
+                           <td className="px-8 py-6 text-right">
+                              <div className="flex justify-end gap-2">
+                                 <button onClick={() => handleEdit(cat)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                   <FaEdit size={14} />
+                                 </button>
+                                 <button onClick={() => handleDelete(cat.id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                                   <FaTrash size={14} />
+                                 </button>
+                              </div>
+                           </td>
+                        </tr>
+                     ))
+                   )}
                 </tbody>
              </table>
           </div>
