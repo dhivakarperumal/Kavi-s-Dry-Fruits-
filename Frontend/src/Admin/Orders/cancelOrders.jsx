@@ -1,6 +1,6 @@
 import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState } from "react";
-import { FaTimes, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
+import { FaTimes, FaSearch, FaThLarge, FaThList, FaBan, FaRupeeSign, FaTimesCircle } from "react-icons/fa";
 import api from "../../services/api";
 
 const CancelOrders = () => {
@@ -95,6 +95,74 @@ const CancelOrders = () => {
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
+      {/* Cancelled Orders Stats Cards (Dealer Reference Style) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Total Voided Card */}
+        <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+          <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+          <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+          <div className="flex items-center justify-between relative z-10">
+            <div>
+              <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Voided Orders</p>
+              <h3 className="text-4xl font-black text-white tracking-tighter">
+                {cancelledOrders.length}
+              </h3>
+            </div>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+              <FaBan />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-6 relative z-10">
+            <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+            <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">Recorded Cancelled Purchases</span>
+          </div>
+        </div>
+
+        {/* Voided Volume Card */}
+        <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+          <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+          <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+          <div className="flex items-center justify-between relative z-10">
+            <div>
+              <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Unrealized Gross Value</p>
+              <h3 className="text-4xl font-black text-white tracking-tighter">
+                ₹{Math.round(cancelledOrders.reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+              </h3>
+            </div>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+              <FaRupeeSign />
+            </div>
+          </div>
+          <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+            Cancelled & Aborted Purchases
+          </div>
+        </div>
+
+        {/* Filtered Display Card */}
+        <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+          <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+          <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+          <div className="flex items-center justify-between relative z-10">
+            <div>
+              <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Matching Filter</p>
+              <h3 className="text-4xl font-black text-white tracking-tighter">
+                {filteredOrders.length}
+              </h3>
+            </div>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+              <FaTimesCircle />
+            </div>
+          </div>
+          <div className="mt-8 flex items-center gap-2 relative z-10">
+            <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+            <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{filteredOrders.length} Cancelled in Current Filter</span>
+          </div>
+        </div>
+      </div>
+
       <div className="relative z-20 mb-8">
         <div className="mb-6">
           <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Voided Orders</h1>

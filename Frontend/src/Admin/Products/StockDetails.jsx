@@ -216,47 +216,76 @@ const StockDetail = () => {
           </div>
         </div>
 
-        {/* Global Stats Bar */}
+        {/* Stock Details Stats Cards (Contact Form Reference Style) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5">
-                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-                    <FaWarehouse size={20} />
+            {/* Total SKU's Card */}
+            <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+                <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                <div className="flex items-center justify-between relative z-10">
+                    <div>
+                        <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Catalog SKU's</p>
+                        <h3 className="text-4xl font-black text-white tracking-tighter">
+                            {liveStocks.length}
+                        </h3>
+                    </div>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                        <FaWarehouse />
+                    </div>
                 </div>
-                <div>
-                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Total SKU's</p>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">{liveStocks.length}</p>
-                </div>
-            </div>
-            {/* Single-product stock (grams → KG) */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                    <FaBoxOpen size={20} />
-                </div>
-                <div>
-                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Products Stock</p>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                        {(liveStocks
-                          .filter(s => s.type !== 'combo')
-                          .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
-                        ).toFixed(1)}
-                        <span className="text-xs text-gray-400"> KG</span>
-                    </p>
+                <div className="flex items-center gap-2 mt-6 relative z-10">
+                    <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                    <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{liveStocks.filter(s => Number(s.totalStock) > 0).length} In-Stock Inventory</span>
                 </div>
             </div>
-            {/* Combo stock (grams → KG) */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center gap-5">
-                <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
-                    <FaHistory size={20} />
+
+            {/* Single-product stock */}
+            <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+                <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                <div className="flex items-center justify-between relative z-10">
+                    <div>
+                        <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Single Products Stock</p>
+                        <h3 className="text-5xl font-black text-white tracking-tighter">
+                            {(liveStocks
+                              .filter(s => s.type !== 'combo')
+                              .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
+                            ).toFixed(1)} <span className="text-2xl font-bold opacity-80">KG</span>
+                        </h3>
+                    </div>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                        <FaBoxOpen />
+                    </div>
                 </div>
-                <div>
-                    <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">Combo Stock</p>
-                    <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                        {(liveStocks
-                          .filter(s => s.type === 'combo')
-                          .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
-                        ).toFixed(1)}
-                        <span className="text-xs text-gray-400"> KG</span>
-                    </p>
+                <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+                    Individual Warehouse Reserves
+                </div>
+            </div>
+
+            {/* Combo stock */}
+            <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+                <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                <div className="flex items-center justify-between relative z-10">
+                    <div>
+                        <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Combo Pack Stock</p>
+                        <h3 className="text-4xl font-black text-white tracking-tighter">
+                            {(liveStocks
+                              .filter(s => s.type === 'combo')
+                              .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
+                            ).toFixed(1)} <span className="text-xl font-bold opacity-80">KG</span>
+                        </h3>
+                    </div>
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                        <FaHistory />
+                    </div>
+                </div>
+                <div className="mt-8 flex items-center gap-2 relative z-10">
+                    <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+                    <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{liveStocks.filter(s => s.type === 'combo').length} Active Combo Bundles</span>
                 </div>
             </div>
         </div>

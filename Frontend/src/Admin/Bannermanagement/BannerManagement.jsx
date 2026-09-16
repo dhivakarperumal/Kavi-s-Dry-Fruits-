@@ -167,19 +167,71 @@ const BannerManagement = () => {
 
     return (
         <div className="space-y-6 p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 min-h-[600px]">
-            {/* Header Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#009669] to-[#009669] flex items-center justify-center text-white shadow-lg shrink-0"><FiImage size={22} /></div>
-                    <div><p className="text-xs text-gray-400 font-medium">Total Banners</p><h3 className="text-3xl font-black text-slate-800 leading-none my-0.5">{totalBanners.toLocaleString()}</h3><p className="text-[10px] text-gray-400">All uploaded banners</p></div>
+            {/* Banner Management Stats Cards (Contact Form Reference Style) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Total Banners Card */}
+                <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+                    <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                    <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                    <div className="flex items-center justify-between relative z-10">
+                        <div>
+                            <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Total Creative Banners</p>
+                            <h3 className="text-4xl font-black text-white tracking-tighter">
+                                {totalBanners.toLocaleString()}
+                            </h3>
+                        </div>
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                            <FiImage />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-6 relative z-10">
+                        <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                        <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{banners.filter(b => b.active).length} Active Live Campaigns</span>
+                    </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white shadow-lg shrink-0"><FiFileText size={22} /></div>
-                    <div><p className="text-xs text-gray-400 font-medium">Offer Banners</p><h3 className="text-3xl font-black text-slate-800 leading-none my-0.5">{offerBanners.toLocaleString()}</h3><p className="text-[10px] text-gray-400">Promotional sections</p></div>
+
+                {/* Offer Banners Card */}
+                <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+                    <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                    <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                    <div className="flex items-center justify-between relative z-10">
+                        <div>
+                            <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Offer Sections</p>
+                            <h3 className="text-5xl font-black text-white tracking-tighter">
+                                {offerBanners.toLocaleString()}
+                            </h3>
+                        </div>
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                            <FiFileText />
+                        </div>
+                    </div>
+                    <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+                        Promotional Highlights & Flash Sales
+                    </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg shrink-0"><FiLink size={22} /></div>
-                    <div><p className="text-xs text-gray-400 font-medium">Hero Section</p><h3 className="text-3xl font-black text-slate-800 leading-none my-0.5">{heroBanners.toLocaleString()}</h3><p className="text-[10px] text-gray-400">Primary page banners</p></div>
+
+                {/* Hero Section Card */}
+                <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+                    <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+                    <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+                    <div className="flex items-center justify-between relative z-10">
+                        <div>
+                            <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Hero Slider Banners</p>
+                            <h3 className="text-4xl font-black text-white tracking-tighter">
+                                {heroBanners.toLocaleString()}
+                            </h3>
+                        </div>
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                            <FiLink />
+                        </div>
+                    </div>
+                    <div className="mt-8 flex items-center gap-2 relative z-10">
+                        <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+                        <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">Homepage Front Showcase</span>
+                    </div>
                 </div>
             </div>
             <div className="relative z-20 bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
