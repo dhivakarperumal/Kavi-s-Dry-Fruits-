@@ -81,21 +81,39 @@ export const AdminNotificationProvider = ({ children }) => {
   }, []);
 
   // Trigger Windows OS / Browser Native Push Notification (SYNCHRONOUS, DOES NOT HANG)
-  const triggerDesktopNotification = useCallback((title, body, link) => {
+  const triggerDesktopNotification = useCallback(async (title, body, link, dedupeKey) => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
     const iconUrl = "/Kavi_logo.png";
-    let notificationShown = false;
+    const notificationTag = dedupeKey ? `kavi-${dedupeKey}` : `kavi-${Date.now()}`;
 
-    // 1. Immediate new Notification (runs synchronously and pops up in Windows Action Center)
+    // Service-worker notifications are delivered by the browser even when this tab is hidden.
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      if (registration) {
+        await registration.showNotification(title, {
+          body: body || "",
+          icon: iconUrl,
+          badge: iconUrl,
+          tag: notificationTag,
+          data: { url: link || "/#/adminpanel" },
+          requireInteraction: true,
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn("Service worker notification failed:", err);
+    }
+
+    // Fall back to the page notification if the service worker is unavailable.
     try {
       const notif = new Notification(title, {
         body: body || "",
         icon: iconUrl,
         badge: iconUrl,
-        tag: `kavi-${Date.now()}`,
-        requireInteraction: true, // Keep notification pinned on Windows until user acts
+        tag: notificationTag,
+        requireInteraction: true,
       });
 
       notif.onclick = () => {
@@ -103,23 +121,8 @@ export const AdminNotificationProvider = ({ children }) => {
         handleNavigate(link);
         notif.close();
       };
-      notificationShown = true;
     } catch (err) {
       console.warn("Direct Notification constructor failed:", err);
-    }
-
-    // 2. Also notify active service worker if present
-    if (!notificationShown && navigator.serviceWorker?.controller) {
-      try {
-        navigator.serviceWorker.controller.postMessage({
-          type: "SHOW_NOTIFICATION",
-          title,
-          body,
-          url: link,
-        });
-      } catch (swErr) {
-        console.warn("Service worker message failed:", swErr);
-      }
     }
   }, [handleNavigate]);
 
@@ -208,7 +211,7 @@ export const AdminNotificationProvider = ({ children }) => {
       broadcastToOtherTabs(alertItem);
 
       // Fire native Windows OS Action Center notification
-      triggerDesktopNotification(title, message, link);
+      triggerDesktopNotification(title, message, link, dedupeKey);
     },
     [triggerDesktopNotification, flashTitle, broadcastToOtherTabs]
   );
