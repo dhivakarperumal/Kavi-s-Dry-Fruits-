@@ -378,16 +378,20 @@ const NewOrders = ({ adminData }) => {
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
             {/* View Toggle */}
-            <div className="bg-white p-1 rounded-2xl border border-slate-200 flex items-center shadow-sm">
+            <div className="bg-white p-1 rounded-md border border-slate-200 flex items-center shadow-sm">
               <button
                 onClick={() => setViewMode("table")}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
+                aria-label="Table view"
+                title="Table view"
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-xs font-black transition-all ${viewMode === "table" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-[#009669]"}`}
               >
                 <FaTable /> 
               </button>
               <button
                 onClick={() => setViewMode("card")}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"}`}
+                aria-label="Card view"
+                title="Card view"
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-xs font-black transition-all ${viewMode === "card" ? "bg-[#009669] text-white shadow-lg" : "text-slate-400 hover:text-[#009669]"}`}
               >
                 <FaThLarge /> 
               </button>
@@ -435,16 +439,16 @@ const NewOrders = ({ adminData }) => {
 
       {/* Main Content Area */}
       {viewMode === "table" ? (
-        <div className="bg-white rounded-2xl  shadow-xl overflow-hidden animate-in fade-in duration-700">
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-700">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#009669]  text-white">
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">S.No</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order Details</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Client</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Amount</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Status Flow</th>
-                <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Actions</th>
+              <tr className="bg-[#009669] text-white">
+                <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black uppercase tracking-widest rounded-tl-xl md:rounded-tl-2xl">S.No</th>
+                <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black uppercase tracking-widest">Order Details</th>
+                <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black uppercase tracking-widest">Client</th>
+                <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black uppercase tracking-widest">Amount</th>
+                <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black uppercase tracking-widest">Status Flow</th>
+                <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black uppercase tracking-widest text-center rounded-tr-xl md:rounded-tr-2xl">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">

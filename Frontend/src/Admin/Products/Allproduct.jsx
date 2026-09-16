@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   FaStar, FaPlus, FaFilter, FaEdit, FaTrash, FaEye, 
   FaBoxOpen, FaLayerGroup, FaThLarge, FaListUl, FaSearch,
-  FaBarcode, FaPrint, FaChevronRight, FaImage,FaBars
+  FaBarcode, FaPrint, FaChevronRight, FaImage, FaBars, FaWarehouse
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import api from "../../services/api";
@@ -272,6 +272,19 @@ const Allproduct = ({ adminData }) => {
     waitForLoad();
   };
 
+  // Summary stats (Based on Billing reference)
+  const totalProducts = items.length;
+  const singleCount = items.filter((i) => i.type === "single").length;
+  const comboCount = items.filter((i) => i.type === "combo").length;
+  const totalCategories = categories.length;
+  const totalStockKg = items.reduce((sum, item) => sum + (Number(item.totalStock) || 0), 0) / 1000;
+  const totalVariants = items.reduce((sum, item) => {
+    if (item.type === "single") {
+      return sum + (safeParse(item.variants).length || 1);
+    }
+    return sum + 1;
+  }, 0);
+
   return (
     <div className="min-h-screen  p-4 md:p-8 animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto mt-0">
@@ -329,6 +342,74 @@ const Allproduct = ({ adminData }) => {
              >
                <FaPlus size={12} /> Add New
              </button>
+          </div>
+        </div>
+
+        {/* Products Stats Cards (Billing Reference Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Catalog Inventory Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-400 to-emerald-600">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Catalog Inventory</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {totalProducts}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaBoxOpen />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-6 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-pulse"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{singleCount} Singles • {comboCount} Combos</span>
+            </div>
+          </div>
+
+          {/* Active Categories Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-indigo-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Active Categories</p>
+                <h3 className="text-5xl font-black text-white tracking-tighter">
+                  {totalCategories}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaLayerGroup />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10 text-white/50 text-[10px] font-black uppercase tracking-widest italic font-mono">
+              {filteredItems.length} Products in Current View
+            </div>
+          </div>
+
+          {/* Stock Volume Card */}
+          <div className="group relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl transform transition-all duration-300 ease-out hover:-translate-y-2 hover:shadow-blue-500/40 bg-gradient-to-br from-blue-500 to-blue-700">
+            <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-150"></div>
+            <div className="absolute -top-10 -right-4 w-28 h-28 bg-white opacity-20 rounded-full transition-transform duration-500 group-hover:scale-125"></div>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Stock Volume</p>
+                <h3 className="text-4xl font-black text-white tracking-tighter">
+                  {totalStockKg > 0 ? `${totalStockKg.toLocaleString("en-IN", { maximumFractionDigits: 1 })} KG` : totalVariants}
+                </h3>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
+                <FaWarehouse />
+              </div>
+            </div>
+            <div className="mt-8 flex items-center gap-2 relative z-10">
+              <span className="flex h-2 w-2 rounded-full bg-white animate-bounce"></span>
+              <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">{totalVariants} Active SKU Variants</span>
+            </div>
           </div>
         </div>
 
@@ -404,117 +485,141 @@ const Allproduct = ({ adminData }) => {
              ) : (
                 <>
                    {viewMode === "card" ? (
-                      <div className={`grid grid-cols-1 sm:grid-cols-2 ${showFilters ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-6 animate-in fade-in zoom-in-95 duration-500`}>
-                         {currentItems.map((item) => {
-                            const images = safeParse(item.images);
-                            const isCombo = item.type === 'combo';
-                            const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
-                            const price = details?.offerPrice || details?.price;
-                            const mrp = details?.mrp;
+                      currentItems.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+                          <FaBoxOpen className="mb-4 text-4xl text-slate-300" />
+                          <h3 className="text-xl font-black text-slate-700">No products found</h3>
+                          <p className="mt-2 text-sm text-slate-500">
+                            {search || categoryFilter.length > 0 || selectedWeight !== 'All' || selectedRating > 0 || selectedTag !== 'All' || priceRange[1] !== maxPrice ? "No products match the current filters." : "There are no products to display yet."}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showFilters ? 'lg:grid-cols-3' : 'lg:grid-cols-3 xl:grid-cols-4'} gap-6 animate-in fade-in zoom-in-95 duration-500`}>
+                           {currentItems.map((item) => {
+                              const images = safeParse(item.images);
+                              const isCombo = item.type === 'combo';
+                              const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
+                              const price = details?.offerPrice || details?.price;
+                              const mrp = details?.mrp;
 
-                            return (
-                               <div key={`${item.type}-${item.id}`} className="group bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100/50 hover:shadow-xl transition-all relative overflow-hidden flex flex-col h-full">
-                                  {/* Image & Type Badge */}
-                                  <div className="relative h-48 w-full flex items-center justify-center rounded-[2rem] overflow-hidden bg-slate-50/50 mb-4 cursor-pointer" onClick={() => setViewProduct(item)}>
-                                     {images[0] ? (
-                                        <img src={images[0]} className="h-full w-full object-contain p-4 group-hover:scale-110 transition-transform duration-700" alt={item.name} />
-                                     ) : <FaBoxOpen className="text-slate-200" size={32} />}
-                                     <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter text-white shadow-sm ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                                        {item.type}
-                                     </span>
-                                     {details?.offerPercent && <span className="absolute top-4 right-4 px-2 py-1 rounded-lg text-[8px] font-black bg-red-500 text-white shadow-sm">{details.offerPercent}% OFF</span>}
-                                  </div>
+                              return (
+                                 <div key={`${item.type}-${item.id}`} className="group bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100/50 hover:shadow-xl transition-all relative overflow-hidden flex flex-col h-full">
+                                    {/* Image & Type Badge */}
+                                    <div className="relative h-48 w-full flex items-center justify-center rounded-[2rem] overflow-hidden bg-slate-50/50 mb-4 cursor-pointer" onClick={() => setViewProduct(item)}>
+                                       {images[0] ? (
+                                          <img src={images[0]} className="h-full w-full object-contain p-4 group-hover:scale-110 transition-transform duration-700" alt={item.name} />
+                                       ) : <FaBoxOpen className="text-slate-200" size={32} />}
+                                       <span className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter text-white shadow-sm ${isCombo ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                                          {item.type}
+                                       </span>
+                                       {details?.offerPercent && <span className="absolute top-4 right-4 px-2 py-1 rounded-lg text-[8px] font-black bg-red-500 text-white shadow-sm">{details.offerPercent}% OFF</span>}
+                                    </div>
 
-                                  <div className="mb-4 text-center">
-                                     <h4 className="text-base font-[900] text-slate-950 truncate mb-1">{item.name}</h4>
-                                     <p className="text-[11px] text-slate-500 font-bold line-clamp-2 h-8 leading-relaxed mb-3">
-                                        {item.description || `${item.category} Registry`}
-                                     </p>
-                                     <div className="flex items-center justify-center gap-2">
-                                        {mrp && <span className="text-[11px] font-bold text-slate-300 line-through">₹{mrp}</span>}
-                                        <span className="text-sm font-black text-slate-950 uppercase tracking-widest">₹ {price || '—'}</span>
-                                     </div>
-                                  </div>
+                                    <div className="mb-4 text-center">
+                                       <h4 className="text-base font-[900] text-slate-950 truncate mb-1">{item.name}</h4>
+                                       <p className="text-[11px] text-slate-500 font-bold line-clamp-2 h-8 leading-relaxed mb-3">
+                                          {item.description || `${item.category} Registry`}
+                                       </p>
+                                       <div className="flex items-center justify-center gap-2">
+                                          {mrp && <span className="text-[11px] font-bold text-slate-300 line-through">₹{mrp}</span>}
+                                          <span className="text-sm font-black text-slate-950 uppercase tracking-widest">₹ {price || '—'}</span>
+                                       </div>
+                                    </div>
 
-                                  <div className="flex justify-center items-center gap-1.5 text-[11px] font-black text-amber-500 mb-6 bg-amber-50/50 w-fit mx-auto px-3 py-1 rounded-full">
-                                     <FaStar size={10} /> {item.rating || '5.0'}
-                                  </div>
+                                    <div className="flex justify-center items-center gap-1.5 text-[11px] font-black text-amber-500 mb-6 bg-amber-50/50 w-fit mx-auto px-3 py-1 rounded-full">
+                                       <FaStar size={10} /> {item.rating || '5.0'}
+                                    </div>
 
-                                  <div className="mt-auto flex items-center justify-center gap-3 pt-4 border-t border-slate-50">
-                                     <button onClick={() => setViewProduct(item)} className="p-3 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-2xl transition-all border border-transparent hover:border-emerald-700 shadow-sm"><FaEye size={12} /></button>
-                                     <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-3 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all border border-transparent hover:border-blue-700 shadow-sm"><FaEdit size={12} /></button>
-                                     <button onClick={() => handleDelete(item)} className="p-3 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-2xl transition-all border border-transparent hover:border-red-700 shadow-sm"><FaTrash size={12} /></button>
-                                  </div>
-                               </div>
-                            );
-                         })}
-                      </div>
+                                    <div className="mt-auto flex items-center justify-center gap-3 pt-4 border-t border-slate-50">
+                                       <button onClick={() => setViewProduct(item)} className="p-3 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-2xl transition-all border border-transparent hover:border-emerald-700 shadow-sm"><FaEye size={12} /></button>
+                                       <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-3 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-2xl transition-all border border-transparent hover:border-blue-700 shadow-sm"><FaEdit size={12} /></button>
+                                       <button onClick={() => handleDelete(item)} className="p-3 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-2xl transition-all border border-transparent hover:border-red-700 shadow-sm"><FaTrash size={12} /></button>
+                                    </div>
+                                 </div>
+                              );
+                           })}
+                        </div>
+                      )
                    ) : (
                     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
                       <table className="w-full text-left">
                          <thead className="bg-[#009669] border-b border-emerald-700">
                             <tr>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Asset</th>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Product Details</th>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Category</th>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Price</th>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Stock Level</th>
-                               <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Actions</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">S.No</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Asset</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Product Details</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Category</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Price</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest">Stock Level</th>
+                               <th className="px-3 py-3 text-[8px] md:px-4 md:py-3 md:text-[9px] lg:px-8 lg:py-5 lg:text-[10px] font-black text-white uppercase tracking-widest text-center">Actions</th>
                             </tr>
                          </thead>
                          <tbody className="divide-y divide-slate-50">
-                            {currentItems.map((item, index) => {
-                               const isCombo = item.type === 'combo';
-                               const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
-                               const price = details?.offerPrice || details?.price;
-                               const stockGrams = Number(item.totalStock || 0);
-                               const isLowStock = stockGrams <= 3000; // 3 KG threshold
+                            {currentItems.length === 0 ? (
+                              <tr>
+                                <td colSpan="7" className="px-8 py-16 text-center">
+                                  <div className="flex flex-col items-center justify-center">
+                                    <FaBoxOpen className="mb-4 text-4xl text-slate-300" />
+                                    <h3 className="text-xl font-black text-slate-700">No data</h3>
+                                    <p className="mt-2 text-sm text-slate-500">
+                                      {search || categoryFilter.length > 0 || selectedWeight !== 'All' || selectedRating > 0 || selectedTag !== 'All' || priceRange[1] !== maxPrice ? "No products match the current filters." : "There is no data in this table yet."}
+                                    </p>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              currentItems.map((item, index) => {
+                                 const isCombo = item.type === 'combo';
+                                 const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
+                                 const price = details?.offerPrice || details?.price;
+                                 const stockGrams = Number(item.totalStock || 0);
+                                 const isLowStock = stockGrams <= 3000; // 3 KG threshold
 
-                               return (
-                                  <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
-                                     <td className="px-8 py-6 font-black text-slate-400 text-[10px] text-center">
-                                        {(currentPage - 1) * itemsPerPage + index + 1}
-                                     </td>
-                                     <td className="px-8 py-6">
-                                        <div className="w-12 h-12 rounded-xl bg-slate-50 p-1.5 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm">
-                                           {safeParse(item.images)[0] ? <img src={safeParse(item.images)[0]} className="h-full w-full object-contain" alt="" /> : <FaImage size={16} className="text-slate-200" />}
-                                        </div>
-                                     </td>
-                                     <td className="px-8 py-6">
-                                        <div className="max-w-[200px]">
-                                           <p className="font-black text-slate-950 text-sm mb-0.5 truncate">{item.name}</p>
-                                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
-                                        </div>
-                                     </td>
-                                     <td className="px-8 py-6">
-                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isCombo ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
-                                           {item.category || item.type}
-                                        </span>
-                                     </td>
-                                     <td className="px-8 py-6 font-black text-slate-900 text-sm">₹ {price || '—'}</td>
-                                     <td className="px-8 py-6">
-                                        <div className={`flex flex-col ${isLowStock ? 'text-amber-600' : 'text-slate-700'}`}>
-                                           <span className="font-black text-sm">
-                                              {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(2) + " KG" : stockGrams + " G"}
-                                           </span>
-                                           {isLowStock && (
-                                              <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest animate-pulse">
-                                                 <FaBoxOpen size={8} /> Low Stock
-                                              </span>
-                                           )}
-                                        </div>
-                                     </td>
-                                     <td className="px-8 py-6">
-                                        <div className="flex justify-center items-center gap-2">
-                                           <button onClick={() => setViewProduct(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-emerald-200"><FaEye size={11} /></button>
-                                           <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-blue-200"><FaEdit size={11} /></button>
-                                           <button onClick={() => handleDelete(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-red-200"><FaTrash size={11} /></button>
-                                        </div>
-                                     </td>
-                                  </tr>
-                               );
-                            })}
+                                 return (
+                                    <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
+                                       <td className="px-8 py-6 font-black text-slate-400 text-[10px] text-center">
+                                          {(currentPage - 1) * itemsPerPage + index + 1}
+                                       </td>
+                                       <td className="px-8 py-6">
+                                          <div className="w-12 h-12 rounded-xl bg-slate-50 p-1.5 flex items-center justify-center overflow-hidden border border-gray-100 shadow-sm">
+                                             {safeParse(item.images)[0] ? <img src={safeParse(item.images)[0]} className="h-full w-full object-contain" alt="" /> : <FaImage size={16} className="text-slate-200" />}
+                                          </div>
+                                       </td>
+                                       <td className="px-8 py-6">
+                                          <div className="max-w-[200px]">
+                                             <p className="font-black text-slate-950 text-sm mb-0.5 truncate">{item.name}</p>
+                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">#{item.productId}</span>
+                                          </div>
+                                       </td>
+                                       <td className="px-8 py-6">
+                                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isCombo ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                             {item.category || item.type}
+                                          </span>
+                                       </td>
+                                       <td className="px-8 py-6 font-black text-slate-900 text-sm">₹ {price || '—'}</td>
+                                       <td className="px-8 py-6">
+                                          <div className={`flex flex-col ${isLowStock ? 'text-amber-600' : 'text-slate-700'}`}>
+                                             <span className="font-black text-sm">
+                                                {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(2) + " KG" : stockGrams + " G"}
+                                             </span>
+                                             {isLowStock && (
+                                                <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest animate-pulse">
+                                                   <FaBoxOpen size={8} /> Low Stock
+                                                </span>
+                                             )}
+                                          </div>
+                                       </td>
+                                       <td className="px-8 py-6">
+                                          <div className="flex justify-center items-center gap-2">
+                                             <button onClick={() => setViewProduct(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-emerald-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-emerald-200"><FaEye size={11} /></button>
+                                             <button onClick={() => navigate('/adminpanel/products', { state: { editItem: item } })} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-blue-200"><FaEdit size={11} /></button>
+                                             <button onClick={() => handleDelete(item)} className="p-2.5 bg-slate-50 text-slate-400 hover:bg-red-600 hover:text-white rounded-xl transition-all border border-transparent shadow-sm hover:shadow-red-200"><FaTrash size={11} /></button>
+                                          </div>
+                                       </td>
+                                    </tr>
+                                 );
+                              })
+                            )}
                          </tbody>
                       </table>
                     </div>

@@ -105,7 +105,7 @@ const useCountdown = (initial = 0) => {
 const Login = () => {
   // Shared
   const navigate      = useNavigate();
-  const { login }     = useAuth();
+  const { user, login } = useAuth();
   const [activeTab, setActiveTab] = useState("email"); // "email" | "whatsapp"
 
   // Email login state
@@ -126,6 +126,12 @@ const Login = () => {
   const [message,      setMessage]      = useState("");
   const [msgType,      setMsgType]      = useState(""); // "success" | "error" | "info"
 
+  useEffect(() => {
+    if (!user) return;
+
+    navigate(user.role?.toLowerCase() === "admin" ? "/adminpanel" : "/", { replace: true });
+  }, [user, navigate]);
+
   const showMsg = (text, type = "error") => { setMessage(text); setMsgType(type); };
   const clearMsg = () => { setMessage(""); setMsgType(""); };
 
@@ -133,8 +139,18 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     clearMsg();
+    const formData = new FormData(e.currentTarget);
+    const loginEmail = String(formData.get("email") || email).trim();
+    const loginPassword = String(formData.get("password") || password);
+
+    setEmail(loginEmail);
+    setPassword(loginPassword);
+
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const { data } = await api.post("/auth/login", {
+        email: loginEmail,
+        password: loginPassword,
+      });
       const userData = {
         userId:    data.userId,
         user_id:   data.user_id   || data.userUuid,
@@ -270,11 +286,11 @@ const Login = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "16px" }}>
+    <div style={{ height: "100vh", minHeight: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", padding: "16px", boxSizing: "border-box" }}>
       <div style={{
         display: "flex", flexDirection: "row", maxWidth: "960px", width: "100%",
         boxShadow: "0 4px 24px rgba(0,0,0,0.1)", border: "1.5px solid #86efac",
-        borderRadius: "16px", overflow: "hidden", minHeight: "560px",
+        borderRadius: "16px", overflow: "hidden", height: "calc(100vh - 32px)", maxHeight: "calc(100vh - 32px)", minHeight: 0,
       }}>
 
         {/* ── Left image (hidden on mobile) ── */}
@@ -287,7 +303,7 @@ const Login = () => {
         </div>
 
         {/* ── Right form panel ── */}
-        <div style={{ flex: 1, padding: "36px 32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ flex: 1, minHeight: 0, padding: "36px 32px", display: "flex", flexDirection: "column", justifyContent: "center", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
 
           {/* Logo */}
           <div style={{ marginBottom: "16px" }}>
@@ -339,10 +355,12 @@ const Login = () => {
                   <label style={labelStyle}>Email Address *</label>
                   <input
                     id="login-email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
+                    autoComplete="username"
                     required
                     style={inputStyle}
                     onFocus={(e) => e.target.style.borderColor = "#16a34a"}
@@ -356,10 +374,12 @@ const Login = () => {
                   <div style={{ position: "relative" }}>
                     <input
                       id="login-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
+                      autoComplete="current-password"
                       required
                       style={{ ...inputStyle, paddingRight: "42px" }}
                       onFocus={(e) => e.target.style.borderColor = "#16a34a"}
@@ -407,6 +427,7 @@ const Login = () => {
                 size="large"
                 text="continue_with"
                 shape="rectangular"
+                logo_alignment="center"
               />
             </>
           )}
@@ -556,6 +577,27 @@ const Login = () => {
               Sign Up
             </Link>
           </p>
+
+          <Link
+            to="/"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              marginTop: "12px",
+              padding: "10px 16px",
+             
+              borderRadius: "8px",
+              color: "#16a34a",
+              background: "#fff",
+              fontSize: "13px",
+              fontWeight: "600",
+              textDecoration: "none",
+            }}
+          >
+           Back To Home
+          </Link>
         </div>
       </div>
 
