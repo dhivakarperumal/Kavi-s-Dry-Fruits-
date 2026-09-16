@@ -407,6 +407,7 @@ const Login = () => {
                 size="large"
                 text="continue_with"
                 shape="rectangular"
+                logo_alignment="center"
               />
             </>
           )}
