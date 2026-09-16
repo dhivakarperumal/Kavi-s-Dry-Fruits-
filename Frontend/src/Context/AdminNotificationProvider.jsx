@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "../PrivateRouter/AuthContext";
-import api from "../services/api";
+import api, { SOCKET_URL } from "../services/api";
 import adminDataService from "../services/adminDataService";
 import { playNotificationSound } from "../utils/notificationAudio";
 import WhatsAppNotificationContainer from "../Component/WhatsAppNotificationToast";
@@ -249,8 +249,7 @@ export const AdminNotificationProvider = ({ children }) => {
       return;
     }
 
-    const socketUrl = (api.defaults.baseURL || "http://localhost:5000").replace("/api", "");
-    const socket = io(socketUrl, {
+    const socket = io(SOCKET_URL, {
       transports: ["polling"],
       reconnectionAttempts: 10,
     });

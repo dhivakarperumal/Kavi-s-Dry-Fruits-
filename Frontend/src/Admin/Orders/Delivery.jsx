@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { FaPrint, FaTrash, FaSearch, FaThLarge, FaThList, FaTruck, FaCheckCircle, FaRupeeSign } from "react-icons/fa";
 import logo from "/images/Kavi_logo.png";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import api, { SOCKET_URL } from "../../services/api";
 import { io } from "socket.io-client";
 
 const Delivery = () => {
@@ -57,7 +57,7 @@ const Delivery = () => {
     const interval = setInterval(fetchDeliveredOrders, 15000);
 
     // Real-time: listen for new bills (created with Delivered status) and status updates
-    const socket = io(api.defaults.baseURL.replace('/api', ''), {
+    const socket = io(SOCKET_URL, {
       transports: ["polling"],
     });
     socket.on('newOrder', () => {
