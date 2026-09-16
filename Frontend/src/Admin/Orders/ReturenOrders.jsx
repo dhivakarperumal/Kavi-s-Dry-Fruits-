@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState, useMemo } from "react";
 import { FaTimes, FaBoxOpen, FaSearch, FaThLarge, FaThList } from "react-icons/fa";
 import api from "../../services/api";
@@ -101,7 +102,7 @@ export default function ReturnOrders() {
 
   return (
     <div className="p-4 sm:p-8 bg-slate-50 min-h-screen">
-      <div className="mb-8">
+      <div className="relative z-20 mb-8">
         <div className="mb-6">
           <h1 className="text-3xl font-[900] text-slate-900 tracking-tight">Return Management</h1>
           <p className="text-sm font-bold text-slate-400 mt-1">Processing {filteredOrders.length} return requests</p>
@@ -122,17 +123,19 @@ export default function ReturnOrders() {
           
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-            <select
+            <CustomSelect
               value={filterType}
               onChange={(e) => { setFilterType(e.target.value); setCurrentPage(1); }}
-              className="bg-white border border-slate-200 rounded-2xl px-6 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-indigo-200 transition-colors"
-            >
-              <option value="all">Full History</option>
-              <option value="today">Today's Returns</option>
-              <option value="week">Weekly Summary</option>
-              <option value="month">Monthly Audit</option>
-              <option value="custom">Custom Selector</option>
-            </select>
+              className="w-48"
+              buttonClassName="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest outline-none cursor-pointer shadow-sm hover:border-amber-300 transition-colors"
+              options={[
+                { value: "all", label: "Full History" },
+                { value: "today", label: "Today's Returns" },
+                { value: "week", label: "Weekly Summary" },
+                { value: "month", label: "Monthly Audit" },
+                { value: "custom", label: "Custom Selector" },
+              ]}
+            />
             <div className="flex items-center gap-1 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm">
               <button type="button" onClick={() => setViewMode("table")} className={`p-3 rounded-xl transition-all ${viewMode === "table" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-indigo-600"}`} aria-label="Table view" title="Table view"><FaThList /></button>
               <button type="button" onClick={() => setViewMode("card")} className={`p-3 rounded-xl transition-all ${viewMode === "card" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-indigo-600"}`} aria-label="Card view" title="Card view"><FaThLarge /></button>

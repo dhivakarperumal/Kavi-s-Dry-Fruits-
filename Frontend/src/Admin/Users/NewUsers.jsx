@@ -1,3 +1,4 @@
+import CustomSelect from '../Common/CustomSelect';
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { FaEdit, FaTrash, FaUsers, FaTable, FaThLarge, FaEye } from "react-icons/fa";
@@ -118,7 +119,7 @@ const NewUsers = () => {
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-transparent">
       {/* Search + Time Filter + View Toggle */}
-      <div className="mb-6 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="relative z-20 mb-6 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="relative w-full md:w-1/3">
           <input
             type="text"
@@ -146,16 +147,18 @@ const NewUsers = () => {
             </button>
           </div>
 
-          <select
+          <CustomSelect
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
-            className="bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold outline-none cursor-pointer"
-          >
-            <option value="all">All New Users</option>
-            <option value="today">Joined Today</option>
-            <option value="week">Joined This Week</option>
-            <option value="month">Joined This Month</option>
-          </select>
+            className="w-48"
+            buttonClassName="bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold outline-none cursor-pointer hover:bg-gray-100 transition-colors"
+            options={[
+              { value: "all", label: "All New Users" },
+              { value: "today", label: "Joined Today" },
+              { value: "week", label: "Joined This Week" },
+              { value: "month", label: "Joined This Month" },
+            ]}
+          />
         </div>
       </div>
 
@@ -346,14 +349,16 @@ const NewUsers = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Authorization</label>
-                  <select
+                  <CustomSelect
                     value={editForm.role}
                     onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                    className="w-full bg-gray-50 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-green-500/10 border-2 border-transparent focus:border-green-500 font-bold text-gray-800 transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="User">User</option>
-                    <option value="Admin">Administrator</option>
-                  </select>
+                    className="w-full"
+                    buttonClassName="w-full bg-gray-50 rounded-2xl px-5 py-4 outline-none focus:ring-4 focus:ring-emerald-500/10 border-2 border-transparent focus:border-emerald-500 font-bold text-gray-800 transition-all cursor-pointer"
+                    options={[
+                      { value: "User", label: "User" },
+                      { value: "Admin", label: "Administrator" },
+                    ]}
+                  />
                 </div>
               </div>
             </div>

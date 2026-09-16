@@ -1,3 +1,4 @@
+import CustomSelect from '../Common/CustomSelect';
 import React, { useState } from "react";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -97,16 +98,17 @@ const AddUsers = () => {
 
         <div>
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Authorization Role</label>
-          <select
+          <CustomSelect
             name="role"
             value={formData.role}
             onChange={handleChange}
-            required
-            className="w-full border-2 border-transparent bg-gray-50 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-green-500/10 focus:border-green-500 font-bold appearance-none cursor-pointer"
-          >
-            <option value="User">Standard User</option>
-            <option value="Admin">Administrator</option>
-          </select>
+            className="w-full"
+            buttonClassName="w-full border-2 border-transparent bg-gray-50 rounded-2xl px-5 py-3 outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 font-bold cursor-pointer"
+            options={[
+              { value: "User", label: "Standard User" },
+              { value: "Admin", label: "Administrator" },
+            ]}
+          />
         </div>
 
         <button
