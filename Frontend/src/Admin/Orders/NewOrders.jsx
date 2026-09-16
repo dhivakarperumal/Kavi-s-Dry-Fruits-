@@ -1,3 +1,4 @@
+import CustomSelect from "../Common/CustomSelect";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { FaPrint, FaTable, FaThLarge, FaSearch, FaChevronRight, FaChevronLeft, FaClock, FaBox, FaUser, FaMoneyBillWave } from "react-icons/fa";
 import { toast } from "react-hot-toast";
@@ -404,17 +405,19 @@ const NewOrders = ({ adminData }) => {
       <div className="bg-white p-5 rounded-[2rem]  shadow-sm flex flex-wrap items-center gap-6 mb-8">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Filter By Date</span>
-          <select
+          <CustomSelect
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-black outline-none cursor-pointer"
-          >
-            <option value="All">All Time</option>
-            <option value="Today">Today Only</option>
-            <option value="This Week">This Week</option>
-            <option value="This Month">This Month</option>
-            <option value="Custom">Custom Range</option>
-          </select>
+            className="w-40"
+            buttonClassName="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-black text-slate-800 hover:border-emerald-500/50"
+            options={[
+              { value: "All", label: "All Time" },
+              { value: "Today", label: "Today Only" },
+              { value: "This Week", label: "This Week" },
+              { value: "This Month", label: "This Month" },
+              { value: "Custom", label: "Custom Range" },
+            ]}
+          />
         </div>
 
         {dateFilter === "Custom" && (
@@ -427,13 +430,13 @@ const NewOrders = ({ adminData }) => {
 
         <div className="ml-auto flex items-center gap-2">
            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visibility</span>
-           <select
+           <CustomSelect
             value={itemsPerPage}
             onChange={(e) => setItemsPerPage(Number(e.target.value))}
-            className="bg-slate-50 border-none rounded-xl px-4 py-2 text-xs font-black outline-none cursor-pointer"
-          >
-            {[25, 50, 100, 250].map(n => <option key={n} value={n}>Show {n}</option>)}
-          </select>
+            className="w-32"
+            buttonClassName="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-black text-slate-800 hover:border-emerald-500/50"
+            options={[25, 50, 100, 250].map(n => ({ value: n, label: `Show ${n}` }))}
+          />
         </div>
       </div>
 
@@ -480,16 +483,13 @@ const NewOrders = ({ adminData }) => {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col gap-2">
-                         <select
+                         <CustomSelect
                           value={order.orderStatus}
                           onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
-                          className={`w-40 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer ${
-                            order.orderStatus === 'Order Placed' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 
-                            order.orderStatus === 'Order Confirmed' ? 'bg-blue-50 border-blue-100 text-blue-700' :
-                            'bg-amber-50 border-amber-100 text-amber-700'}`}
-                        >
-                          {getFilteredStatusOptions(order.orderStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                          badgeVariant={true}
+                          className="w-44"
+                          options={getFilteredStatusOptions(order.orderStatus)}
+                        />
                         {showCancelInput === order.id && (
                           <div className="flex flex-col gap-2 mt-2 animate-in slide-in-from-top-2 duration-300">
                              <textarea className="w-40 p-2 text-[10px] font-bold border border-rose-100 rounded-xl bg-rose-50 outline-none" placeholder="Reason" onChange={e => setCancelReason(e.target.value)} />
@@ -552,13 +552,13 @@ const NewOrders = ({ adminData }) => {
 
                <div className="pt-6 border-t border-slate-100">
                   <label className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] block mb-3 pl-1">Update Pipeline</label>
-                  <select
+                  <CustomSelect
                     value={order.orderStatus}
                     onChange={(e) => e.target.value === "Cancelled" ? setShowCancelInput(order.id) : handleStatusUpdate(order.id, e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest text-slate-700 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all appearance-none cursor-pointer"
-                  >
-                    {getFilteredStatusOptions(order.orderStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                    badgeVariant={true}
+                    className="w-full"
+                    options={getFilteredStatusOptions(order.orderStatus)}
+                  />
                </div>
 
                {/* Decorative Gradient Line */}
