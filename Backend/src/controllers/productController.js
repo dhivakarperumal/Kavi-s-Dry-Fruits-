@@ -58,6 +58,16 @@ exports.addProduct = async (req, res) => {
       ]
     );
 
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('productAdded', {
+        productId,
+        name,
+        category,
+        createdAt: new Date()
+      });
+    }
+
     res.status(201).json({ id: result.insertId, message: 'Product added successfully' });
   } catch (error) {
     console.error(error);

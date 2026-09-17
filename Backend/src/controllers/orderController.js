@@ -1,5 +1,4 @@
 const db = require('../config/db');
-const { sendNewOrderPush } = require('../config/pushService');
 
 const getOrders = async (req, res) => {
   try {
@@ -322,9 +321,11 @@ const updateOrder = async (req, res) => {
     const { id } = req.params;
 
     // Get orderId first
-    const [orders] = await connection.query('SELECT orderId FROM orders WHERE id = ?', [id]);
+    const [orders] = await connection.query('SELECT orderId, userId FROM orders WHERE id = ?', [id]);
+    let updatedOrder = null;
     if (orders.length > 0) {
       const orderId = orders[0].orderId;
+      updatedOrder = orders[0];
       
       // Update the order with new status and optional tracking/cancel info
       await connection.query(
@@ -340,16 +341,24 @@ const updateOrder = async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       // Find the specific order to get its orderId
-      const [updatedRows] = await db.query('SELECT orderId FROM orders WHERE id = ?', [id]);
+      const [updatedRows] = await db.query('SELECT orderId, userId FROM orders WHERE id = ?', [id]);
       if (updatedRows.length > 0) {
-        io.emit('orderStatusUpdated', {
+        const statusUpdate = {
           orderId: updatedRows[0].orderId,
           orderStatus,
           docketNumber,
           deliveryMethod,
           courierName
-        });
+        };
+        const recipientUserId = updatedRows[0].userId;
+        if (recipientUserId) {
+          io.to(`user-${recipientUserId}`).emit('orderStatusUpdated', statusUpdate);
+        }
       }
+    }
+
+    if (updatedOrder && !updatedOrder.userId) {
+      console.warn(`Order ${updatedOrder.orderId} has no userId; status notification was not targeted.`);
     }
 
     res.json({ message: 'Order updated' });

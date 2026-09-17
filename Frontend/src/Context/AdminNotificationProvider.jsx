@@ -254,24 +254,43 @@ export const AdminNotificationProvider = ({ children }) => {
     });
   };
 
-  // Establish socket connection for admin
+  // Establish socket connection for authenticated users and admins
   useEffect(() => {
-    if (!isAdmin) {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-      return;
-    }
-
     const socket = io(SOCKET_URL, {
       transports: ["polling"],
       reconnectionAttempts: 10,
+      auth: { token: localStorage.getItem("token") },
     });
     socketRef.current = socket;
 
-    // 1. New Order Received
+    // Product announcements are visible to every authenticated user.
+    socket.on("productAdded", (data = {}) => {
+      addNotification({
+        type: "product",
+        title: "New Product Added",
+        message: `${data.name || "A new product"} is now available in the shop.`,
+        secondary: data.category ? `Category: ${data.category}` : "Explore the latest products.",
+        link: "/shop",
+        dedupeKey: data.productId ? `product-${data.productId}-${data.createdAt || ""}` : undefined,
+      });
+    });
+
+    // Order status updates are emitted only to the order owner's room.
+    socket.on("orderStatusUpdated", (data = {}) => {
+      if (isAdmin) return;
+      addNotification({
+        type: "order",
+        title: `Order Status Updated #${data.orderId || ""}`,
+        message: `Your order is now ${data.orderStatus || "updated"}.`,
+        secondary: "Open your orders to see the latest tracking details.",
+        link: "/orders",
+        dedupeKey: data.orderId && data.orderStatus ? `status-${data.orderId}-${data.orderStatus}` : undefined,
+      });
+    });
+
+    // Admin-only events
     socket.on("newOrder", (data = {}) => {
+      if (!isAdmin) return;
       const orderId = data.orderId || "N/A";
       const totalAmount = data.totalAmount ? `₹${data.totalAmount}` : "";
       const clientName = data.clientName || "Customer";
@@ -298,6 +317,7 @@ export const AdminNotificationProvider = ({ children }) => {
 
     // 2. Low Stock Alert (Threshold <= 500g)
     socket.on("lowStockAlert", (data = {}) => {
+      if (!isAdmin) return;
       const productName = data.name || "Product";
       const remainingStock = data.remainingStock !== undefined ? `${data.remainingStock}g` : "0g";
       const isZero = Number(data.remainingStock || 0) <= 0;
@@ -313,6 +333,7 @@ export const AdminNotificationProvider = ({ children }) => {
 
     // 3. Contact Form Submission
     socket.on("newContactMessage", (data = {}) => {
+      if (!isAdmin) return;
       const senderName = data.name || "A visitor";
       const contactInfo = data.phone || data.email || "";
       const preview = data.subject || data.message || "New message received.";
@@ -331,7 +352,7 @@ export const AdminNotificationProvider = ({ children }) => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [isAdmin, addNotification]);
+  }, [user, isAdmin, addNotification]);
 
   return (
     <AdminNotificationContext.Provider

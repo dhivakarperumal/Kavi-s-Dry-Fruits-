@@ -38,6 +38,7 @@ const OrderTracking = ({ orderId: propOrderId }) => {
     // Listen for real-time updates
     const socket = io(SOCKET_URL, {
       transports: ["polling"],
+      auth: { token: localStorage.getItem("token") },
     });
     socket.on('orderStatusUpdated', (data) => {
       if (data.orderId === orderId) {

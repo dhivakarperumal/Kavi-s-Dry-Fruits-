@@ -35,6 +35,7 @@ const Orders = () => {
     // Listen for real-time order updates for the user
     const socket = io(SOCKET_URL, {
       transports: ["polling"],
+      auth: { token: localStorage.getItem("token") },
     });
     socket.on('orderStatusUpdated', (data) => {
       // Refresh the orders if a change happens

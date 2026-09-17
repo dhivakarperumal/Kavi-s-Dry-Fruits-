@@ -107,6 +107,8 @@ io.on('connection', (socket) => {
     try {
       socket.user = jwt.verify(token, process.env.JWT_SECRET);
       console.log('Socket user role:', socket.user.role);
+      if (socket.user.userId) socket.join(`user-${socket.user.userId}`);
+      if (socket.user.userUuid) socket.join(`user-${socket.user.userUuid}`);
       if (String(socket.user.role || '').toLowerCase() === 'admin') {
         socket.join('admins');
         console.log(`Admin joined admins room: ${socket.id}`);
