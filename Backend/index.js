@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
@@ -40,6 +41,23 @@ app.use(cors({
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
+  const requestedPath = path.resolve(path.join(__dirname, 'uploads', req.path));
+  const uploadsRoot = path.resolve(path.join(__dirname, 'uploads'));
+  if (!requestedPath.startsWith(`${uploadsRoot}${path.sep}`)) return res.sendStatus(404);
+
+  fs.access(requestedPath, fs.constants.F_OK, (error) => {
+    if (!error) return next();
+    res.type('svg').send(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+        <rect width="400" height="400" fill="#f3f4f6"/>
+        <text x="200" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af">Image unavailable</text>
+      </svg>
+    `);
+  });
+});
 
 // Route Registration
 app.use('/api/auth', authRoutes);
