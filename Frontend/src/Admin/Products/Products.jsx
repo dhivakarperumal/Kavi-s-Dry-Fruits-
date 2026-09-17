@@ -221,7 +221,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       toast.loading("Compressing...", { id: "up-p" });
       const compressedFiles = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 8, maxWidthOrHeight: 800, useWebWorker: true })
+          imageCompression(file, { maxSizeMB: 8, maxWidthOrHeight: 800, fileType: file.type, useWebWorker: true })
         ),
       );
       setImageFiles((prev) => [...prev, ...compressedFiles]);
@@ -377,7 +377,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
               <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Visual Assets</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="relative aspect-square border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-emerald-200 hover:bg-emerald-50/20 transition-all cursor-pointer group">
-                  <input type="file" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" /><FaPlus className="text-emerald-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Add Photo</span>
+                  <input type="file" accept="image/jpeg,image/png" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" /><FaPlus className="text-emerald-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Add Photo</span>
                 </div>
                 {form.images.map((img, i) => (
                   <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-2 ring-white hover:ring-emerald-500 transition-all">
@@ -544,7 +544,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       toast.loading("Uploading...", { id: "up-c" });
       const compressedFiles = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true })
+          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, fileType: file.type, useWebWorker: true })
         ),
       );
       setImageFiles((prev) => [...prev, ...compressedFiles]);
@@ -687,7 +687,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
               <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight mb-8 flex items-center gap-3"><div className="w-2 h-8 bg-orange-500 rounded-full"></div> Pack Photography</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="relative aspect-square border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-amber-200 hover:bg-amber-50/20 transition-all cursor-pointer group">
-                  <input type="file" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0" /><FaPlus className="text-amber-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Upload</span>
+                  <input type="file" accept="image/jpeg,image/png" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0" /><FaPlus className="text-amber-500 group-hover:scale-125 transition-transform" /><span className="text-[9px] font-black text-gray-400 uppercase">Upload</span>
                 </div>
                 {form.images.map((img, i) => (
                   <div key={i} className="relative aspect-square group rounded-[1.5rem] overflow-hidden border shadow-sm ring-4 ring-white hover:ring-amber-500 transition-all">
@@ -746,7 +746,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                             const file = e.target.files[0];
                             if(!file) return;
                             try {
-                              const compressed = await imageCompression(file, { maxSizeMB: 0.05, maxWidthOrHeight: 300, useWebWorker: true });
+                              const compressed = await imageCompression(file, { maxSizeMB: 0.05, maxWidthOrHeight: 300, fileType: file.type, useWebWorker: true });
                               const reader = new FileReader();
                               reader.onloadend = () => {
                                 const u = [...form.comboItems];
