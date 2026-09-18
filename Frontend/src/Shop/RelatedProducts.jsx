@@ -99,7 +99,7 @@ const RelatedProducts = ({ relatedProducts }) => {
 
             return (
               <div key={`${p.id}_${relWeight}`} className="!flex !justify-center px-2">
-                <div className="group bg-white rounded-2xl p-4 shadow-md h-full w-[250px] min-h-[390px] flex flex-col relative">
+                <div className="group bg-white rounded-2xl p-4 shadow-md hover:ring-2 hover:ring-green1 transition-all duration-300 h-full w-[250px] min-h-[390px] flex flex-col relative">
                   <div className="absolute top-7 left-4 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
                     Bestseller
                   </div>
