@@ -10,23 +10,24 @@ import { useStore } from "../Context/StoreContext";
 
 const RelatedProducts = ({ relatedProducts }) => {
   const { addToFav } = useStore();
+  const productCount = relatedProducts.length;
 
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: productCount > 4,
     speed: 500,
-    slidesToShow: 4,
+    slidesToShow: Math.min(4, productCount || 1),
     slidesToScroll: 1,
     arrows: true,
     responsive: [
-      { breakpoint: 1280, settings: { slidesToShow: 3 } },
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 1280, settings: { slidesToShow: Math.min(3, productCount || 1) } },
+      { breakpoint: 1024, settings: { slidesToShow: Math.min(2, productCount || 1) } },
       { breakpoint: 640, settings: { slidesToShow: 1 } },
     ],
   };
 
   return (
-    <section className="my-10 px-4 sm:px-10">
+    <section className="my-10 px-4 pb-16 sm:px-10 sm:pb-20">
       <Helmet>
         <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
 
@@ -75,7 +76,7 @@ const RelatedProducts = ({ relatedProducts }) => {
           </Link>
         </div>
 
-        <Slider {...settings} className="w-full">
+        <Slider {...settings} className="w-full pb-4">
           {relatedProducts.map((p) => {
             const relWeight = p.weights?.[0];
             const priceObj = p.prices?.[relWeight];

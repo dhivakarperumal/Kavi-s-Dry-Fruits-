@@ -475,7 +475,9 @@ const SingleProductView = () => {
         </div>
 
         <Testimonials reviews={product.reviews || []} />
-        <RelatedProducts relatedProducts={relatedProducts} />
+        {relatedProducts.length > 0 && (
+          <RelatedProducts relatedProducts={relatedProducts} />
+        )}
       </section>
     </>
   );
