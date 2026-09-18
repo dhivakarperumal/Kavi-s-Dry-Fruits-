@@ -1,3 +1,11 @@
+const toHashUrl = (url) => {
+  if (!url) return '/#/adminpanel';
+  if (url.startsWith('/#/')) return url;
+  if (url.startsWith('#/')) return `/${url}`;
+  if (url.startsWith('/')) return `/#${url}`;
+  return `/#/${url}`;
+};
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -14,7 +22,7 @@ self.addEventListener('message', (event) => {
       icon: '/Kavi_logo.png',
       badge: '/Kavi_logo.png',
       tag: `kavi-${Date.now()}`,
-      data: { url: url || '/#/adminpanel' },
+      data: { url: toHashUrl(url) },
       requireInteraction: true,
     });
   }

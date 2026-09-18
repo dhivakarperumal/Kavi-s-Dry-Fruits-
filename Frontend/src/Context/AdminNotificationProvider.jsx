@@ -9,6 +9,17 @@ import NotificationSoundModal from "../Component/NotificationSoundModal";
 
 const AdminNotificationContext = createContext(null);
 
+const toHashRoute = (link) => {
+  if (!link) return "#/adminpanel";
+  const value = String(link);
+  if (value.startsWith("#/")) return value;
+  if (value.startsWith("/#/")) return value.slice(1);
+
+  const [path, query = ""] = value.split("?");
+  const hashPath = path.startsWith("/") ? path : `/${path}`;
+  return `#${hashPath}${query ? `?${query}` : ""}`;
+};
+
 export const useAdminNotification = () => useContext(AdminNotificationContext);
 
 export const AdminNotificationProvider = ({ children }) => {
@@ -45,11 +56,7 @@ export const AdminNotificationProvider = ({ children }) => {
 
   const handleNavigate = useCallback((link) => {
     if (!link) return;
-    if (link.startsWith("/")) {
-      window.location.hash = "#" + link;
-    } else {
-      window.location.hash = "#/" + link;
-    }
+    window.location.hash = toHashRoute(link);
   }, []);
 
   // Flash the document title if the tab is hidden / in the background
@@ -97,7 +104,7 @@ export const AdminNotificationProvider = ({ children }) => {
           icon: iconUrl,
           badge: iconUrl,
           tag: notificationTag,
-          data: { url: link || "/#/adminpanel" },
+          data: { url: `/${toHashRoute(link)}` },
           requireInteraction: true,
         });
         return;
@@ -283,7 +290,7 @@ export const AdminNotificationProvider = ({ children }) => {
         title: `Order Status Updated #${data.orderId || ""}`,
         message: `Your order is now ${data.orderStatus || "updated"}.`,
         secondary: "Open your orders to see the latest tracking details.",
-        link: "/orders",
+        link: "/account?goToOrders=true",
         dedupeKey: data.orderId && data.orderStatus ? `status-${data.orderId}-${data.orderStatus}` : undefined,
       });
     });
@@ -327,7 +334,7 @@ export const AdminNotificationProvider = ({ children }) => {
         title: isZero ? `Out of Stock: ${productName}!` : `Low Stock Alert: ${productName}`,
         message: `Inventory has dropped to ${remainingStock} (Threshold: 500g).`,
         secondary: data.category ? `Category: ${data.category}` : "Stock update required",
-        link: "/adminpanel/stock-details",
+        link: "/#/adminpanel/stock-details",
       });
     });
 
