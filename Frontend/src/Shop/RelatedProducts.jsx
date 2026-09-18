@@ -6,8 +6,11 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
+import { useStore } from "../Context/StoreContext";
 
 const RelatedProducts = ({ relatedProducts }) => {
+  const { addToFav } = useStore();
+
   const settings = {
     dots: false,
     infinite: true,
@@ -103,9 +106,20 @@ const RelatedProducts = ({ relatedProducts }) => {
                   <div className="absolute top-7 left-4 z-10 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
                     Bestseller
                   </div>
-                  <div className="absolute top-6 right-6 z-10 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition">
+                  <button
+                    type="button"
+                    onClick={() => addToFav({
+                      ...p,
+                      imageUrl: p.images?.[0],
+                      qty: 1,
+                      selectedWeight: relWeight,
+                      price: relPrice,
+                    })}
+                    aria-label={`Add ${p.name} to favorites`}
+                    className="absolute top-6 right-6 z-10 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition cursor-pointer"
+                  >
                     <FiHeart />
-                  </div>
+                  </button>
                   <div className="relative h-60 w-full flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
                     <Link
                       to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
@@ -122,9 +136,14 @@ const RelatedProducts = ({ relatedProducts }) => {
                       />
                     </Link>
                   </div>
-                  <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis">
-                    {p.name} ({relWeight})
-                  </h3>
+                  <Link
+                    to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
+                    className="block"
+                  >
+                    <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis hover:text-green1 transition-colors">
+                      {p.name} ({relWeight})
+                    </h3>
+                  </Link>
                   <p className="text-center text-gray-600 text-sm mb-2">
                     MRP:{" "}
                     <span className="line-through text-gray-400">
