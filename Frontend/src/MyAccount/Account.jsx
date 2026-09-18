@@ -136,8 +136,10 @@ const Account = () => {
   }, [userIdToUse, user]);
 
   useEffect(() => {
-    if (location.state?.goToOrders) setActiveTab("orders");
-  }, [location.state]);
+    const shouldShowOrders = location.state?.goToOrders ||
+      new URLSearchParams(location.search).get("goToOrders") === "true";
+    if (shouldShowOrders) setActiveTab("orders");
+  }, [location.search, location.state]);
 
   const saveAddresses = async (addressData) => {
     if (!userIdToUse) return;
