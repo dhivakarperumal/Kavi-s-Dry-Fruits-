@@ -139,7 +139,7 @@ const Account = () => {
     const shouldShowOrders = location.state?.goToOrders ||
       new URLSearchParams(location.search).get("goToOrders") === "true";
     if (shouldShowOrders) setActiveTab("orders");
-  }, [location.state]);
+  }, [location.search, location.state]);
 
   const saveAddresses = async (addressData) => {
     if (!userIdToUse) return;
