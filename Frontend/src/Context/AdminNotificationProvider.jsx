@@ -45,11 +45,11 @@ export const AdminNotificationProvider = ({ children }) => {
 
   const handleNavigate = useCallback((link) => {
     if (!link) return;
-    if (link.startsWith("/")) {
-      window.location.hash = "#" + link;
-    } else {
-      window.location.hash = "#/" + link;
-    }
+
+    const [path, query = ""] = link.split("?");
+    const hashPath = path.startsWith("/") ? path : `/${path}`;
+    const hashQuery = query ? `?${query}` : "";
+    window.location.hash = `#${hashPath}${hashQuery}`;
   }, []);
 
   // Flash the document title if the tab is hidden / in the background
@@ -283,7 +283,7 @@ export const AdminNotificationProvider = ({ children }) => {
         title: `Order Status Updated #${data.orderId || ""}`,
         message: `Your order is now ${data.orderStatus || "updated"}.`,
         secondary: "Open your orders to see the latest tracking details.",
-        link: "/orders",
+        link: "/account?goToOrders=true",
         dedupeKey: data.orderId && data.orderStatus ? `status-${data.orderId}-${data.orderStatus}` : undefined,
       });
     });
