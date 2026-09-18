@@ -10,6 +10,7 @@ import OptimizedImage from "./OptimizedImage";
 const ProductCard = React.memo(({
   product,
   activeWeight,
+  titleSuffix,
   addToCart,
   addToFav,
   favItems = [],
@@ -45,6 +46,8 @@ const ProductCard = React.memo(({
   const formatPrice = (value) => `₹${Number(value || 0).toFixed(2)}`;
 
   const avgRating = product.rating || 4.5;
+  const isCombo = product.category === "Combo" || product.type === "combo";
+  const displayedWeight = titleSuffix || (!isCombo ? activeWeight || "100g" : "");
 
   const handleAddToFav = (e) => {
     e.preventDefault();
@@ -105,7 +108,7 @@ const ProductCard = React.memo(({
 
       <Link to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`} className="block flex-1">
         <h3 className="font-semibold text-base sm:text-lg text-center mb-2 hover:text-green1 transition-colors truncate whitespace-nowrap overflow-hidden text-ellipsis">
-          {product.name}
+          {product.name}{displayedWeight ? ` (${displayedWeight})` : ""}
         </h3>
       </Link>
       <p className="text-center text-gray-600 text-sm mb-2">
