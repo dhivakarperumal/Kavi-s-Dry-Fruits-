@@ -334,7 +334,7 @@ export const AdminNotificationProvider = ({ children }) => {
         title: isZero ? `Out of Stock: ${productName}!` : `Low Stock Alert: ${productName}`,
         message: `Inventory has dropped to ${remainingStock} (Threshold: 500g).`,
         secondary: data.category ? `Category: ${data.category}` : "Stock update required",
-        link: "/adminpanel/stock-details",
+        link: "/#/adminpanel/stock-details",
       });
     });
 
