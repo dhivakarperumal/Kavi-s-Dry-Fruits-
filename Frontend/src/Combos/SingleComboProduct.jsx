@@ -200,7 +200,7 @@ const SingleComboProduct = () => {
                 {/* Zoom pane (desktop only) */}
                 {zoomed && (
                   <div
-                    className="hidden md:block absolute top-0 left-full ml-6 w-[min(500px,calc(100vw-2rem))] h-[29rem] border rounded-lg overflow-hidden shadow-lg bg-white z-50"
+                    className="hidden md:block absolute top-2 left-full ml-6 w-[min(600px,calc(100vw-2rem))] h-[36rem] border rounded-lg overflow-hidden shadow-lg bg-white z-40"
                     style={{
                       backgroundImage: `url(${selectedImage})`,
                       backgroundRepeat: "no-repeat",

@@ -67,9 +67,8 @@ const Home = () => {
       />
         <Hero/>
         <Category/>
-        <FestiveGiftPack/> 
         <PopularProduct/>
-        {/* <OfferBanner/> */}
+        <FestiveGiftPack/> 
         <NewArrived/>
         <ClientsAbout/>        
         <Subscribe/>

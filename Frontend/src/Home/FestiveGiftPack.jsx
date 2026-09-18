@@ -2,9 +2,6 @@ import ProductCard from "../Component/ProductCard";
 import { Link } from "react-router-dom";
 import { useStore } from "../Context/StoreContext";
 import { Helmet } from "react-helmet";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 import rightBg from "/images/offer-side-bg2.png";
 
 const FestiveGiftPack = () => {
@@ -13,21 +10,6 @@ const FestiveGiftPack = () => {
   const filteredProduct = allProducts.filter((item) => {
     return item.category === "Combo" || item.type === "combo";
   });
-
-  const settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 4,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
-    responsive: [
-      { breakpoint: 1280, settings: { slidesToShow: 3 } },
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
-      { breakpoint: 640, settings: { slidesToShow: 1 } },
-    ],
-  };
 
   return (
     <div className="py-10 px-4 bg-[#f4faf6]">
@@ -64,20 +46,17 @@ const FestiveGiftPack = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto">
-        <Slider {...settings}>
-          {filteredProduct.map((product) => (
-            <div key={product.id} className="px-3">
-              <ProductCard
-                product={product}
-                activeWeight={product.weights?.[0] || "Combo"}
-                addToCart={addToCart}
-                addToFav={addToFav}
-                favItems={favItems}
-              />
-            </div>
-          ))}
-        </Slider>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        {filteredProduct.slice(0, 4).map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            activeWeight={product.weights?.[0] || "Combo"}
+            addToCart={addToCart}
+            addToFav={addToFav}
+            favItems={favItems}
+          />
+        ))}
       </div>
     </div>
   );
