@@ -83,7 +83,8 @@ const ProductCard = React.memo(({
           <OptimizedImage
             src={product.images?.[0] || ""}
             alt={`${product.name} - Kavi's Dry Fruits`}
-            className="w-full h-full flex items-center justify-center p-5 rounded-md transition-transform duration-500 transform hover:scale-110"
+            className="w-full h-full flex items-center justify-center p-5 rounded-md"
+            imageClassName="transition-transform duration-500 group-hover:scale-110"
             objectFit="contain"
             loading="lazy"
           />

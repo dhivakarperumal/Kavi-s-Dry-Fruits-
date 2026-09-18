@@ -100,20 +100,27 @@ const RelatedProducts = ({ relatedProducts }) => {
             return (
               <div key={`${p.id}_${relWeight}`} className="!flex !justify-center px-2">
                 <div className="group bg-white rounded-2xl p-4 shadow-md hover:ring-2 hover:ring-green1 transition-all duration-300 h-full w-[250px] min-h-[390px] flex flex-col relative">
-                  <div className="absolute top-7 left-4 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
+                  <div className="absolute top-7 left-4 z-10 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
                     Bestseller
                   </div>
-                  <div className="absolute top-6 right-6 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition">
+                  <div className="absolute top-6 right-6 z-10 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition">
                     <FiHeart />
                   </div>
-                  <div className="border-2 border-dotted border-green1 rounded-2xl bg-gray-50 h-56 flex items-center justify-center overflow-hidden">
-                    <OptimizedImage
-                      src={p.images?.[0]}
-                      alt={`${p.name} - Kavi's Dry Fruits`}
-                      className="w-full h-full flex items-center justify-center p-4 rounded-2xl"
-                      objectFit="contain"
-                      loading="lazy"
-                    />
+                  <div className="relative h-60 w-full flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
+                    <Link
+                      to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
+                      className="w-full h-full flex items-center justify-center"
+                      aria-label={`View details for ${p.name}`}
+                    >
+                      <OptimizedImage
+                        src={p.images?.[0]}
+                        alt={`${p.name} - Kavi's Dry Fruits`}
+                        className="w-full h-full flex items-center justify-center p-5 rounded-md"
+                        imageClassName="transition-transform duration-500 group-hover:scale-110"
+                        objectFit="contain"
+                        loading="lazy"
+                      />
+                    </Link>
                   </div>
                   <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis">
                     {p.name} ({relWeight})
