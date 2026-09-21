@@ -42,6 +42,37 @@ exports.addCombo = async (req, res) => {
     const parsedComboDetails = parseJson(comboDetails, {});
     parsedComboDetails.totalWeight = normalizeWeight(parsedComboDetails.totalWeight);
 
+    // Validate constituent products stock before inserting/reducing
+    const addedStockPC = Number(totalStock || 0);
+    if (addedStockPC > 0 && parsedComboItems.length > 0) {
+      const requiredGramsPerProduct = {};
+      for (const item of parsedComboItems) {
+        if (item.name && item.weight) {
+          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
+          let itemWeight = parseFloat(itemWeightStr) || 0;
+          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
+          const key = item.name.trim();
+          requiredGramsPerProduct[key] = (requiredGramsPerProduct[key] || 0) + (addedStockPC * itemWeight);
+        }
+      }
+
+      for (const [prodName, neededGrams] of Object.entries(requiredGramsPerProduct)) {
+        const [prodRows] = await connection.query(
+          `SELECT id, name, totalStock FROM products WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) FOR UPDATE`,
+          [prodName]
+        );
+        if (prodRows.length > 0) {
+          const currentStock = Number(prodRows[0].totalStock || 0);
+          if (currentStock < neededGrams) {
+            await connection.rollback();
+            return res.status(400).json({
+              message: `Insufficient stock for "${prodRows[0].name}". Required: ${neededGrams}g (${addedStockPC} PC), but only ${currentStock}g is available.`
+            });
+          }
+        }
+      }
+    }
+
     const [result] = await connection.query(
       `INSERT INTO combos 
       (productId, name, description, healthBenefits, category, rating, barcode, barcodeValue, images, comboItems, comboDetails, totalStock, status) 
@@ -59,7 +90,6 @@ exports.addCombo = async (req, res) => {
     );
 
     // Reduce constituent products stock based on PC
-    const addedStockPC = Number(totalStock || 0);
     if (addedStockPC > 0 && parsedComboItems.length > 0) {
       for (const item of parsedComboItems) {
         if (item.name && item.weight) {
@@ -70,7 +100,7 @@ exports.addCombo = async (req, res) => {
           const reductionAmount = addedStockPC * itemWeight;
 
           const [res] = await connection.query(
-            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, 
             [reductionAmount, item.name]
           );
           if (res.affectedRows > 0) {
@@ -111,6 +141,37 @@ exports.updateCombo = async (req, res) => {
     const newStock = Number.isFinite(requestedStock) && requestedStock >= 0 ? requestedStock : oldStock;
     const delta = newStock - oldStock;
 
+    // If stock increased, validate that sufficient stock exists for delta
+    if (delta > 0 && parsedComboItems.length > 0) {
+      const numUnitsDelta = delta;
+      const requiredDeltaPerProduct = {};
+      for (const item of parsedComboItems) {
+        if (item.name && item.weight) {
+          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
+          let itemWeight = parseFloat(itemWeightStr) || 0;
+          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
+          const key = item.name.trim();
+          requiredDeltaPerProduct[key] = (requiredDeltaPerProduct[key] || 0) + (numUnitsDelta * itemWeight);
+        }
+      }
+
+      for (const [prodName, neededGrams] of Object.entries(requiredDeltaPerProduct)) {
+        const [prodRows] = await connection.query(
+          `SELECT id, name, totalStock FROM products WHERE LOWER(TRIM(name)) = LOWER(TRIM(?)) FOR UPDATE`,
+          [prodName]
+        );
+        if (prodRows.length > 0) {
+          const currentStock = Number(prodRows[0].totalStock || 0);
+          if (currentStock < neededGrams) {
+            await connection.rollback();
+            return res.status(400).json({
+              message: `Insufficient stock for "${prodRows[0].name}". Additional ${neededGrams}g required (+${numUnitsDelta} PC), but only ${currentStock}g is available.`
+            });
+          }
+        }
+      }
+    }
+
     await connection.query(
       `UPDATE combos SET 
       productId = ?, name = ?, description = ?, healthBenefits = ?, category = ?, rating = ?, barcode = ?, barcodeValue = ?, 
@@ -145,7 +206,7 @@ exports.updateCombo = async (req, res) => {
           const reductionAmount = numUnitsDelta * itemWeight;
 
           await connection.query(
-            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, 
             [reductionAmount, item.name]
           );
           console.log(`[Admin-UpdateCombo] Sub-item '${item.name}': -${reductionAmount}g`);
