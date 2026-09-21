@@ -9,7 +9,25 @@ import api, { SOCKET_URL } from "../../services/api";
 import { io } from "socket.io-client";
 
 const NewOrders = ({ adminData, onOrderUpdated }) => {
-  const [orders, setOrders] = useState([]);
+  const parseOrders = (sourceOrders) => {
+    return sourceOrders.filter(o =>
+      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
+    ).map(o => ({
+      ...o,
+      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+      paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
+      date: o.created_at || o.date
+    })).sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
+
+  const [orders, setOrders] = useState(() => {
+    if (adminData?.allOrders?.length > 0) {
+      return parseOrders(adminData.allOrders);
+    }
+    return [];
+  });
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
@@ -28,15 +46,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
   const navigate = useNavigate();
 
   const applyOrders = (sourceOrders) => {
-    const parsed = sourceOrders.filter(o =>
-      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-    ).map(o => ({
-      ...o,
-      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-      date: o.created_at || o.date
-    }));
-    setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    setOrders(parseOrders(sourceOrders));
   };
 
   // Always fetch fresh from API — never rely on stale adminData cache for New Orders
@@ -74,6 +84,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
         ...incomingOrder,
         cartItems: Array.isArray(incomingOrder.items) ? incomingOrder.items : [],
         shippingAddress: incomingOrder.shippingAddress || {},
+        paymentMethod: incomingOrder.paymentMode || incomingOrder.paymentMethod || "Online Payment",
+        paymentStatus: incomingOrder.paymentStatus || (incomingOrder.paymentMode === "COD" ? "Pending" : "Paid"),
         date: incomingOrder.created_at || incomingOrder.date || new Date().toISOString(),
       };
       setOrders((currentOrders) => [normalizedOrder, ...currentOrders.filter((order) => (order.orderId || order.id) !== orderKey)]);
@@ -437,7 +449,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Pending Fulfillment Value</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                ₹{Math.round(orders.reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+                ₹{Math.round(orders.reduce((acc, o) => acc + (Number(o.totalAmount ?? o.total) || 0), 0)).toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
@@ -592,7 +604,20 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                     </td>
                     <td className="px-8 py-6">
                       <p className="font-black text-slate-800 text-sm leading-tight">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1.5">{order.paymentMethod || "COD"}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                          {order.paymentMode || order.paymentMethod || "Online Payment"}
+                        </span>
+                        {order.paymentStatus && (
+                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                            String(order.paymentStatus).toLowerCase() === 'paid'
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                              : 'bg-amber-50 text-amber-600 border border-amber-200/60'
+                          }`}>
+                            {order.paymentStatus}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                        <p className="text-lg font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
@@ -660,6 +685,20 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                      <div className="min-w-0">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client</p>
                         <p className="font-black text-slate-800 text-xs truncate">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">
+                            {order.paymentMode || order.paymentMethod || "Online Payment"}
+                          </span>
+                          {order.paymentStatus && (
+                            <span className={`text-[7px] font-black uppercase px-1 py-0.2 rounded ${
+                              String(order.paymentStatus).toLowerCase() === 'paid'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                                : 'bg-amber-50 text-amber-600 border border-amber-200/60'
+                            }`}>
+                              {order.paymentStatus}
+                            </span>
+                          )}
+                        </div>
                      </div>
                   </div>
                   <div className="flex items-center gap-3">

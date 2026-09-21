@@ -7,6 +7,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
 import { useStore } from "../Context/StoreContext";
+import { isProductOutOfStock, isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
 
 const RelatedProducts = ({ relatedProducts }) => {
   const { addToFav } = useStore();
@@ -78,7 +79,9 @@ const RelatedProducts = ({ relatedProducts }) => {
 
         <Slider {...settings} className="w-full pb-4">
           {relatedProducts.map((p) => {
-            const relWeight = p.weights?.[0];
+            const isCombo = p.category === "Combo" || p.type === "combo";
+            const purchasableWeight = !isCombo && p.weights?.find(w => parseWeightToGrams(w) <= (p.stock || 0));
+            const relWeight = purchasableWeight || p.weights?.[0];
             const priceObj = p.prices?.[relWeight];
             const offerPercent = p.offer || 0;
 
@@ -99,7 +102,8 @@ const RelatedProducts = ({ relatedProducts }) => {
             if (isNaN(relMrp)) relMrp = 0;
 
             const relRating = p.rating?.toFixed?.(1) || "4.5";
-            const isOutOfStock = p.stock <= 0;
+            const outOfStock = isProductOutOfStock(p);
+            const lowStock = !outOfStock && isLowStock(p.stock, isCombo);
 
             return (
               <div key={`${p.id}_${relWeight}`} className="!flex !justify-center px-2">
@@ -121,7 +125,7 @@ const RelatedProducts = ({ relatedProducts }) => {
                   >
                     <FiHeart />
                   </button>
-                  <div className="relative h-60 w-full flex items-center justify-center border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
+                  <div className="relative h-60 w-full flex items-center justify-center relative border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
                     <Link
                       to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
                       className="w-full h-full flex items-center justify-center"
@@ -136,6 +140,11 @@ const RelatedProducts = ({ relatedProducts }) => {
                         loading="lazy"
                       />
                     </Link>
+                    {lowStock && (
+                      <span className="absolute bottom-2 left-2 bg-amber-500/90 text-white text-[11px] font-medium px-2 py-0.5 rounded shadow">
+                        Only {formatStockDisplay(p.stock, isCombo)} left
+                      </span>
+                    )}
                   </div>
                   <Link
                     to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
@@ -152,18 +161,26 @@ const RelatedProducts = ({ relatedProducts }) => {
                     </span>{" "}
                     ₹{relPrice}
                   </p>
-                  {isOutOfStock && (
-                    <p className="text-red-500 text-sm font-medium mb-2">
+                  {outOfStock ? (
+                    <p className="text-red-500 text-sm font-medium mb-2 text-center">
                       Out of Stock
                     </p>
-                  )}
+                  ) : lowStock ? (
+                    <p className="text-amber-600 text-xs font-medium mb-2 text-center">
+                      Low Stock: Only {formatStockDisplay(p.stock, isCombo)} left
+                    </p>
+                  ) : null}
                   <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
                   <div className="flex justify-center mt-auto">
                     <Link
                       to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
-                      className="bg-green1 text-white px-6 py-2 rounded-md text-md hover:bg-green2 transition"
+                      className={`px-6 py-2 rounded-md text-md transition ${
+                        outOfStock
+                          ? "bg-gray-400 text-white cursor-not-allowed pointer-events-none"
+                          : "bg-green1 text-white hover:bg-green2"
+                      }`}
                     >
-                      Shop Now
+                      {outOfStock ? "Out of Stock" : "Shop Now"}
                     </Link>
                   </div>
                 </div>

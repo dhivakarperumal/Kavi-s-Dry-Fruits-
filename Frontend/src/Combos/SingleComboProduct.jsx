@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import LodingPage from "../Component/LoadingPage";
 import api from "../services/api";
+import { isLowStock, formatStockDisplay } from "../utils/stockUtils";
 
 const SingleComboProduct = () => {
   const { id } = useParams();
@@ -73,15 +74,27 @@ const SingleComboProduct = () => {
   const mrp = Number(product.mrp) || Number(product.comboDetails?.mrp) || Number(product.price) || 0;
   const offerPrice = Number(product.offerPrice) || Number(product.comboDetails?.offerPrice) || Number(product.price) || mrp;
   const averageRating = product.rating ? Number(product.rating).toFixed(1) : "4.5";
-  const isOutOfStock = (product.stock ?? product.totalStock ?? 1) <= 0;
+  const comboStock = Number(product.stock ?? product.totalStock ?? 0);
+  const isOutOfStock = comboStock <= 0;
+  const lowStock = !isOutOfStock && isLowStock(comboStock, true);
+  const canFulfill = !isOutOfStock && quantity <= comboStock;
 
   // --- Quantity Handlers ---
-  const increaseQty = () => setQuantity((q) => q + 1);
+  const increaseQty = () => {
+    if (quantity >= comboStock) {
+      toast.error(`Only ${comboStock} units available in stock`);
+      return;
+    }
+    setQuantity((q) => q + 1);
+  };
   const decreaseQty = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   // --- Cart & Favorite Handlers ---
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
+    if (quantity > comboStock) {
+      return toast.error(`Only ${comboStock} units available in stock.`);
+    }
     const weight = product.weights?.[0] || product.comboDetails?.totalWeight || product.totalWeight || 'Combo';
     addToCart({
       ...product,
@@ -187,6 +200,11 @@ const SingleComboProduct = () => {
             {/* Images (with hover/tap zoom) */}
             <div className="flex flex-col items-center border-dashed border-primary md:rounded-xl p-4">
               <div className="relative w-full">
+                {lowStock && (
+                  <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow z-20">
+                    ⚡ Only {comboStock} left
+                  </span>
+                )}
                 <img
                   src={selectedImage}
                   alt={product.name}
@@ -277,9 +295,17 @@ const SingleComboProduct = () => {
                 </span>
               </p>
 
-              {isOutOfStock && (
+              {isOutOfStock ? (
                 <p className="mt-2 text-red-600 font-semibold">Out of Stock</p>
-              )}
+              ) : quantity > comboStock ? (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  ⚠️ Requested quantity exceeds available stock ({comboStock} units available).
+                </div>
+              ) : lowStock ? (
+                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm font-medium">
+                  ⚡ Hurry! Only {comboStock} left in stock!
+                </div>
+              ) : null}
 
               {/* Quantity */}
               <div className="mt-4 flex items-center gap-3">
@@ -300,17 +326,22 @@ const SingleComboProduct = () => {
               <div className="flex flex-wrap gap-4 mt-6">
                 <button
                   onClick={handleAddToCart}
-                  className={`px-6 py-2 rounded-lg font-semibold transition ${isOutOfStock
+                  className={`px-6 py-2 rounded-lg font-semibold transition ${
+                    !canFulfill
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:bg-green-700 cursor-pointer"
-                    }`}
-                  disabled={isOutOfStock}
+                  }`}
+                  disabled={!canFulfill}
                 >
-                  Add to Cart
+                  {!canFulfill && !isOutOfStock ? `Insufficient Stock (Max ${comboStock})` : "Add to Cart"}
                 </button>
 
                 <button
                   onClick={() => {
+                    if (!canFulfill) {
+                      toast.error(`Only ${comboStock} units available in stock.`);
+                      return;
+                    }
                     const checkoutProduct = {
                       ...product,
                       quantity,
@@ -320,11 +351,12 @@ const SingleComboProduct = () => {
                     };
                     navigate("/checkout", { state: { checkoutProduct } });
                   }}
-                  className={`border px-6 py-2 rounded-lg font-semibold ${isOutOfStock
+                  className={`border px-6 py-2 rounded-lg font-semibold ${
+                    !canFulfill
                       ? "border-gray-400 text-gray-400 cursor-not-allowed"
                       : "border-green-600 text-primary hover:bg-green-50 cursor-pointer"
-                    }`}
-                  disabled={isOutOfStock}
+                  }`}
+                  disabled={!canFulfill}
                 >
                   Buy Now
                 </button>
