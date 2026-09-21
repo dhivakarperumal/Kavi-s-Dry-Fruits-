@@ -379,10 +379,11 @@ const Account = () => {
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
           body {
             font-family: 'Inter', sans-serif;
-            padding: 40px;
+            padding: 20px 24px;
             color: #333;
             max-width: 800px;
             margin: 0 auto;
+            box-sizing: border-box;
           }
           .header {
             display: flex;
@@ -511,8 +512,14 @@ const Account = () => {
           .footer p strong {
             color: #333;
           }
+          @page {
+            margin: 12mm 10mm;
+          }
           @media print {
-            body { padding: 0; }
+            body {
+              padding: 0;
+              margin: 0;
+            }
           }
         </style>
       </head>

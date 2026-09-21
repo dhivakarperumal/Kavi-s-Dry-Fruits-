@@ -9,7 +9,25 @@ import api, { SOCKET_URL } from "../../services/api";
 import { io } from "socket.io-client";
 
 const NewOrders = ({ adminData, onOrderUpdated }) => {
-  const [orders, setOrders] = useState([]);
+  const parseOrders = (sourceOrders) => {
+    return sourceOrders.filter(o =>
+      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
+    ).map(o => ({
+      ...o,
+      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+      paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
+      date: o.created_at || o.date
+    })).sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
+
+  const [orders, setOrders] = useState(() => {
+    if (adminData?.allOrders?.length > 0) {
+      return parseOrders(adminData.allOrders);
+    }
+    return [];
+  });
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
@@ -28,15 +46,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
   const navigate = useNavigate();
 
   const applyOrders = (sourceOrders) => {
-    const parsed = sourceOrders.filter(o =>
-      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-    ).map(o => ({
-      ...o,
-      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-      date: o.created_at || o.date
-    }));
-    setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    setOrders(parseOrders(sourceOrders));
   };
 
   // Always fetch fresh from API — never rely on stale adminData cache for New Orders
@@ -74,6 +84,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
         ...incomingOrder,
         cartItems: Array.isArray(incomingOrder.items) ? incomingOrder.items : [],
         shippingAddress: incomingOrder.shippingAddress || {},
+        paymentMethod: incomingOrder.paymentMode || incomingOrder.paymentMethod || "Online Payment",
+        paymentStatus: incomingOrder.paymentStatus || (incomingOrder.paymentMode === "COD" ? "Pending" : "Paid"),
         date: incomingOrder.created_at || incomingOrder.date || new Date().toISOString(),
       };
       setOrders((currentOrders) => [normalizedOrder, ...currentOrders.filter((order) => (order.orderId || order.id) !== orderKey)]);
@@ -135,11 +147,6 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const generateDocketNumber = () => {
-    const randomDigits = Math.floor(100000000 + Math.random() * 900000000);
-    return `AA${randomDigits}IN`;
-  };
-
   const handleStatusUpdate = async (id, newStatus, shipmentDetails = {}) => {
     if (!newStatus) return;
     try {
@@ -150,15 +157,21 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
       }
 
       if (newStatus === "Shipped") {
-        data.docketNumber = generateDocketNumber();
         data.deliveryMethod = shipmentDetails.deliveryMethod;
-        data.courierName = shipmentDetails.courierName.trim();
+        if (shipmentDetails.deliveryMethod === "Courier") {
+          const courierName = (shipmentDetails.courierName || "").trim();
+          if (!courierName) {
+            toast.error("Please enter the courier name");
+            return;
+          }
+          data.courierName = courierName;
+        }
       }
 
       // ✅ Optimistic update: immediately reflect change in the UI
       setOrders(prev => prev.map(o =>
         o.id === id
-          ? { ...o, orderStatus: newStatus, ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}) }
+          ? { ...o, orderStatus: newStatus, ...(data.deliveryMethod ? { deliveryMethod: data.deliveryMethod } : {}), ...(data.courierName ? { courierName: data.courierName } : {}) }
           : o
       ));
 
@@ -168,12 +181,11 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
         ...updatedOrder,
         id,
         orderStatus: newStatus,
-        ...(data.docketNumber ? { docketNumber: data.docketNumber } : {}),
         ...(data.deliveryMethod ? { deliveryMethod: data.deliveryMethod } : {}),
         ...(data.courierName ? { courierName: data.courierName } : {}),
         ...(data.cancelReason ? { cancelReason: data.cancelReason } : {}),
       });
-      toast.success(newStatus === "Shipped" ? `Order Shipped! Docket: ${data.docketNumber}` : `Order ${newStatus} successfully!`);
+      toast.success(newStatus === "Shipped" ? "Order shipped successfully!" : `Order ${newStatus} successfully!`);
       setCancelReason("");
       setShowCancelInput(null);
       setShippingOrderId(null);
@@ -206,11 +218,10 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
 
   const submitShippingDetails = async (event) => {
     event.preventDefault();
-    if (!shippingForm.courierName.trim()) {
+    if (shippingForm.deliveryMethod === "Courier" && !shippingForm.courierName?.trim()) {
       toast.error("Please enter the courier name");
       return;
     }
-
     await handleStatusUpdate(shippingOrderId, "Shipped", shippingForm);
   };
 
@@ -438,7 +449,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Pending Fulfillment Value</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                ₹{Math.round(orders.reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+                ₹{Math.round(orders.reduce((acc, o) => acc + (Number(o.totalAmount ?? o.total) || 0), 0)).toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
@@ -593,7 +604,20 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                     </td>
                     <td className="px-8 py-6">
                       <p className="font-black text-slate-800 text-sm leading-tight">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1.5">{order.paymentMethod || "COD"}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                          {order.paymentMode || order.paymentMethod || "Online Payment"}
+                        </span>
+                        {order.paymentStatus && (
+                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                            String(order.paymentStatus).toLowerCase() === 'paid'
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                              : 'bg-amber-50 text-amber-600 border border-amber-200/60'
+                          }`}>
+                            {order.paymentStatus}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                        <p className="text-lg font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
@@ -661,6 +685,20 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                      <div className="min-w-0">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client</p>
                         <p className="font-black text-slate-800 text-xs truncate">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">
+                            {order.paymentMode || order.paymentMethod || "Online Payment"}
+                          </span>
+                          {order.paymentStatus && (
+                            <span className={`text-[7px] font-black uppercase px-1 py-0.2 rounded ${
+                              String(order.paymentStatus).toLowerCase() === 'paid'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                                : 'bg-amber-50 text-amber-600 border border-amber-200/60'
+                            }`}>
+                              {order.paymentStatus}
+                            </span>
+                          )}
+                        </div>
                      </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -755,23 +793,27 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
             <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Delivery method</label>
             <select
               value={shippingForm.deliveryMethod}
-              onChange={(e) => setShippingForm((current) => ({ ...current, deliveryMethod: e.target.value }))}
+              onChange={(e) => setShippingForm((current) => ({ ...current, deliveryMethod: e.target.value, courierName: e.target.value === "Courier" ? current.courierName : "" }))}
               className="mb-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
             >
               <option value="Track Hand">Track Hand</option>
               <option value="Courier">Courier</option>
             </select>
 
-            <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Courier name</label>
-            <input
-              value={shippingForm.courierName}
-              onChange={(e) => setShippingForm((current) => ({ ...current, courierName: e.target.value }))}
-              placeholder="Enter courier name"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
-              autoFocus
-            />
+            {shippingForm.deliveryMethod === "Courier" && (
+              <>
+                <label className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-500">Courier name</label>
+                <input
+                  value={shippingForm.courierName || ""}
+                  onChange={(e) => setShippingForm((current) => ({ ...current, courierName: e.target.value }))}
+                  placeholder="Enter courier name"
+                  className="mb-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-emerald-500"
+                  autoFocus
+                />
+              </>
+            )}
 
-            <button type="submit" className="mt-6 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700">
+            <button type="submit" className="mt-2 w-full rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700">
               Submit and mark shipped
             </button>
           </form>

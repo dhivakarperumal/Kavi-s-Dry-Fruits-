@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import dataPreloadService from "../services/dataPreloadService";
 import imagePreloadManager from "../services/imagePreloadManager";
 import api from "../services/api";
+import { parseWeightToGrams, formatStockDisplay, isProductOutOfStock, isSameProduct, getProductCartUsage } from "../utils/stockUtils";
 
 const StoreContext = createContext();
 
@@ -124,7 +125,7 @@ export const StoreProvider = ({ children }) => {
               tags: typeof p.tags === 'string' ? JSON.parse(p.tags || '[]') : (p.tags || []),
               rating: Number(p.rating || 4.5),
               stock: Number(p.totalStock || 0),
-              isOutOfStock: Number(p.totalStock || 0) <= 3000
+              isOutOfStock: isProductOutOfStock({ ...p, stock: Number(p.totalStock || 0), weights, type: 'single' })
             };
           });
 
@@ -147,7 +148,7 @@ export const StoreProvider = ({ children }) => {
               }, 0);
               weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo';
             }
-            const stock = Number(c.totalStock ?? c.stock ?? 1); // Default to 1 if not set
+            const stock = Number(c.totalStock ?? c.stock ?? 0);
 
             return {
               ...c,
@@ -158,7 +159,7 @@ export const StoreProvider = ({ children }) => {
               offerPrice,
               mrp,
               stock,
-              isOutOfStock: stock <= 3,
+              isOutOfStock: stock <= 0,
               image: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
               imageUrl: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
               combos: items, // Rename for frontend compatibility
@@ -179,12 +180,16 @@ export const StoreProvider = ({ children }) => {
         setAllProducts(data.products || []);
         setAllCategories(data.categories || []);
 
-        // Preload critical images for homepage
-        if (data.products && data.products.length > 0) {
-          const topProducts = data.products.slice(0, 12);
-          imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
-            console.warn('Image preload error:', err)
-          );
+        // Preload critical images for homepage safely
+        try {
+          if (data.products && data.products.length > 0 && imagePreloadManager?.preloadHomepageImages) {
+            const topProducts = data.products.slice(0, 12);
+            imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
+              console.warn('Image preload error:', err)
+            );
+          }
+        } catch (imgErr) {
+          console.warn('Image preload non-critical error:', imgErr);
         }
       } catch (err) {
         const isNetworkIssue = !err?.response && !!err?.message && /network|timeout|connection|failed/i.test(err.message);
@@ -236,6 +241,41 @@ export const StoreProvider = ({ children }) => {
       const existing = cartItems.find((c) => c.docId === docId);
       const newQty = (existing?.quantity || 0) + (product.qty || 1);
 
+      // Check available stock
+      const matchedProd = allProducts.find(
+        (p) => isSameProduct(p, product)
+      ) || product;
+
+      const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
+      const isCombo = (matchedProd.category === "Combo") || (matchedProd.type === "combo");
+
+      if (availableStock <= 0) {
+        return toast.error("Sorry, this product is out of stock.");
+      }
+
+      if (isCombo) {
+        const otherQty = getProductCartUsage(cartItems, matchedProd, docId);
+        if (newQty + otherQty > availableStock) {
+          if (otherQty > 0) {
+            return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock (${otherQty} already in your cart).`);
+          }
+          return toast.error(`Out of Stock. Only ${formatStockDisplay(availableStock, true)} available.`);
+        }
+      } else {
+        const weightGrams = parseWeightToGrams(weight);
+        const otherGrams = getProductCartUsage(cartItems, matchedProd, docId);
+        if (weightGrams > 0 && (weightGrams * newQty + otherGrams) > availableStock) {
+          if (otherGrams > 0) {
+            return toast.error(
+              `Only ${formatStockDisplay(availableStock, false)} available in stock (${formatStockDisplay(otherGrams, false)} already in your cart). Cannot add ${product.qty > 1 ? product.qty + "x " : ""}${weight}.`
+            );
+          }
+          return toast.error(
+            `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot add ${newQty > 1 ? newQty + "x " : ""}${weight}.`
+          );
+        }
+      }
+
       await api.post(`/cart/${userIdToUse}`, {
         productId,
         name: product.name || "Unknown Product",
@@ -261,7 +301,7 @@ export const StoreProvider = ({ children }) => {
         return [
           ...prev,
           {
-            id: product.id,
+            id: docId || product.id,
             type: product.type || 'single',
             docId,
             productId,
@@ -287,8 +327,32 @@ export const StoreProvider = ({ children }) => {
   const increaseQuantity = async (item) => {
     if (!user || !item?.docId) return;
     try {
-      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
+      const matchedProd = allProducts.find(
+        (p) => isSameProduct(p, item)
+      ) || item;
+
+      const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
+      const isCombo = (matchedProd.category === "Combo") || (matchedProd.type === "combo");
       const newQty = (item.quantity || 0) + 1;
+
+      if (availableStock <= 0) {
+        return toast.error("Sorry, this item is out of stock.");
+      }
+
+      if (isCombo) {
+        const otherQty = getProductCartUsage(cartItems, matchedProd, item.docId);
+        if (newQty + otherQty > availableStock) {
+          return toast.error(`Out of Stock. Only ${formatStockDisplay(availableStock, true)} available.`);
+        }
+      } else {
+        const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
+        const otherGrams = getProductCartUsage(cartItems, matchedProd, item.docId);
+        if (weightGrams > 0 && (weightGrams * newQty + otherGrams) > availableStock) {
+          return toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
+        }
+      }
+
+      const userIdToUse = String(user.user_id || user.userUuid || user.userId || user.uid || "");
       await api.post(`/cart/${userIdToUse}/update-quantity`, {
         docId: item.docId,
         quantity: newQty,
@@ -440,10 +504,25 @@ export const StoreProvider = ({ children }) => {
 
     try {
       // Get current item from cart
-      const currentItem = cartItems.find((c) => c.id === cartItemId);
+      const currentItem = cartItems.find((c) => c.id === cartItemId || c.docId === cartItemId);
       if (!currentItem) {
         toast.error("Item not found in cart");
         return;
+      }
+
+      const matchedProd = allProducts.find((p) => isSameProduct(p, currentItem)) || currentItem;
+      const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
+      const isCombo = (matchedProd.category === "Combo") || (matchedProd.type === "combo");
+
+      if (!isCombo) {
+        const requestedGrams = (currentItem.quantity || 1) * parseWeightToGrams(newWeight);
+        const otherGrams = getProductCartUsage(cartItems, matchedProd, currentItem.docId || cartItemId);
+        if (requestedGrams + otherGrams > availableStock) {
+          toast.error(
+            `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot select ${newWeight} for ${currentItem.quantity} item(s).`
+          );
+          return;
+        }
       }
 
       const baseProductId = currentItem.productId;

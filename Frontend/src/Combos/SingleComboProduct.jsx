@@ -8,11 +8,12 @@ import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import LodingPage from "../Component/LoadingPage";
 import api from "../services/api";
+import { isLowStock, formatStockDisplay, getProductCartUsage } from "../utils/stockUtils";
 
 const SingleComboProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { allProducts, addToCart, addToFav, loadingProducts } = useStore();
+  const { allProducts, addToCart, addToFav, loadingProducts, cartItems } = useStore();
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
@@ -36,21 +37,18 @@ const SingleComboProduct = () => {
   useEffect(() => {
     if (!id || !allProducts.length) return;
 
-    // FIX: Must filter by combo type FIRST to avoid ID collision with regular products
-    // (both MySQL tables start from id=1, so product id=1 and combo id=1 both exist)
-    const selectedProduct = allProducts.find(
-      (p) =>
-        (p.type === "combo" || p.category === "Combo") &&
-        (String(p.id) === String(id) || p.productId === id)
+    // Direct find in preloaded store
+    const selected = allProducts.find(
+      (p) => 
+        (p.id === id || p.productId === id || p.id === parseInt(id)) &&
+        (p.category === "Combo" || p.type === "combo")
     );
 
-    if (selectedProduct) {
-      setProduct(selectedProduct);
-      setSelectedImage(selectedProduct.images?.[0] || "");
+    if (selected) {
+      setProduct(selected);
+      setSelectedImage(selected.images?.[0] || "");
       setQuantity(1);
-      window.scrollTo(0, 0);
     } else {
-      // Redirection logic: if it's NOT a combo but exists as a product, move to shop view
       const existsAsProduct = allProducts.find(p => String(p.id) === String(id) || p.productId === id);
       if (existsAsProduct) {
         navigate(`/shop/${existsAsProduct.id}`, { replace: true });
@@ -58,6 +56,7 @@ const SingleComboProduct = () => {
       }
       setProduct(null);
     }
+    window.scrollTo(0, 0);
   }, [id, allProducts]);
 
   if (loadingProducts) {
@@ -65,7 +64,11 @@ const SingleComboProduct = () => {
   }
 
   if (!product) {
-    return <div className="text-center mt-10 text-red-600 font-semibold">Product not found</div>;
+    return (
+      <div className="text-center mt-10 text-red-600 font-semibold">
+        Combo product not found.
+      </div>
+    );
   }
 
   // --- Pricing Logic (robust fallback for MySQL combos) ---
@@ -73,15 +76,36 @@ const SingleComboProduct = () => {
   const mrp = Number(product.mrp) || Number(product.comboDetails?.mrp) || Number(product.price) || 0;
   const offerPrice = Number(product.offerPrice) || Number(product.comboDetails?.offerPrice) || Number(product.price) || mrp;
   const averageRating = product.rating ? Number(product.rating).toFixed(1) : "4.5";
-  const isOutOfStock = (product.stock ?? product.totalStock ?? 1) <= 0;
+  const comboStock = Number(product.stock ?? product.totalStock ?? 0);
+  const isOutOfStock = comboStock <= 0;
+  const lowStock = !isOutOfStock && isLowStock(comboStock, true);
+  const cartUsage = getProductCartUsage(cartItems, product);
+  const remainingUnits = Math.max(0, comboStock - cartUsage);
+  const canFulfill = !isOutOfStock && (quantity + cartUsage <= comboStock);
 
   // --- Quantity Handlers ---
-  const increaseQty = () => setQuantity((q) => q + 1);
+  const increaseQty = () => {
+    if (quantity + 1 + cartUsage > comboStock) {
+      if (cartUsage > 0) {
+        toast.error(`Only ${comboStock} units available in stock (${cartUsage} already in your cart)`);
+      } else {
+        toast.error(`Only ${comboStock} units available in stock`);
+      }
+      return;
+    }
+    setQuantity((q) => q + 1);
+  };
   const decreaseQty = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   // --- Cart & Favorite Handlers ---
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
+    if (quantity + cartUsage > comboStock) {
+      if (cartUsage > 0) {
+        return toast.error(`Only ${comboStock} units available in stock (${cartUsage} already in your cart).`);
+      }
+      return toast.error(`Only ${comboStock} units available in stock.`);
+    }
     const weight = product.weights?.[0] || product.comboDetails?.totalWeight || product.totalWeight || 'Combo';
     addToCart({
       ...product,
@@ -187,6 +211,11 @@ const SingleComboProduct = () => {
             {/* Images (with hover/tap zoom) */}
             <div className="flex flex-col items-center border-dashed border-primary md:rounded-xl p-4">
               <div className="relative w-full">
+                {lowStock && (
+                  <span className="absolute top-2 left-2 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow z-20">
+                    ⚡ Only {comboStock} left
+                  </span>
+                )}
                 <img
                   src={selectedImage}
                   alt={product.name}
@@ -277,9 +306,17 @@ const SingleComboProduct = () => {
                 </span>
               </p>
 
-              {isOutOfStock && (
+              {isOutOfStock ? (
                 <p className="mt-2 text-red-600 font-semibold">Out of Stock</p>
-              )}
+              ) : quantity > comboStock ? (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  ⚠️ Requested quantity exceeds available stock ({comboStock} units available).
+                </div>
+              ) : lowStock ? (
+                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm font-medium">
+                  ⚡ Hurry! Only {comboStock} left in stock!
+                </div>
+              ) : null}
 
               {/* Quantity */}
               <div className="mt-4 flex items-center gap-3">
@@ -300,17 +337,22 @@ const SingleComboProduct = () => {
               <div className="flex flex-wrap gap-4 mt-6">
                 <button
                   onClick={handleAddToCart}
-                  className={`px-6 py-2 rounded-lg font-semibold transition ${isOutOfStock
+                  className={`px-6 py-2 rounded-lg font-semibold transition ${
+                    !canFulfill
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : "bg-primary text-white hover:bg-green-700 cursor-pointer"
-                    }`}
-                  disabled={isOutOfStock}
+                  }`}
+                  disabled={!canFulfill}
                 >
-                  Add to Cart
+                  {!canFulfill && !isOutOfStock ? `Insufficient Stock (Max ${comboStock})` : "Add to Cart"}
                 </button>
 
                 <button
                   onClick={() => {
+                    if (!canFulfill) {
+                      toast.error(`Only ${comboStock} units available in stock.`);
+                      return;
+                    }
                     const checkoutProduct = {
                       ...product,
                       quantity,
@@ -320,11 +362,12 @@ const SingleComboProduct = () => {
                     };
                     navigate("/checkout", { state: { checkoutProduct } });
                   }}
-                  className={`border px-6 py-2 rounded-lg font-semibold ${isOutOfStock
+                  className={`border px-6 py-2 rounded-lg font-semibold ${
+                    !canFulfill
                       ? "border-gray-400 text-gray-400 cursor-not-allowed"
                       : "border-green-600 text-primary hover:bg-green-50 cursor-pointer"
-                    }`}
-                  disabled={isOutOfStock}
+                  }`}
+                  disabled={!canFulfill}
                 >
                   Buy Now
                 </button>

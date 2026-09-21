@@ -80,9 +80,9 @@ const OrderDetailsModal = ({ order, onClose = () => {}, onPrint = () => {} }) =>
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment Method</p>
-                  <p className="font-black text-slate-800 text-xs">{order.paymentMethod || "COD"}</p>
-                  <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full mt-1 inline-block ${order.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {order.paymentStatus || 'Pending'}
+                  <p className="font-black text-slate-800 text-xs">{order.paymentMode || order.paymentMethod || "Online Payment"}</p>
+                  <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full mt-1 inline-block ${String(order.paymentStatus || (order.paymentMode === 'COD' ? 'Pending' : 'Paid')).toLowerCase() === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {order.paymentStatus || (order.paymentMode === 'COD' ? 'Pending' : 'Paid')}
                   </span>
                 </div>
               </div>

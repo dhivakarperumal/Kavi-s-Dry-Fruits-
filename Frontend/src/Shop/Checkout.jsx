@@ -8,9 +8,18 @@
   import { Helmet } from "react-helmet";
   import api from "../services/api";
   import axios from "axios";
+  import { isLowStock, formatStockDisplay, parseWeightToGrams, isSameProduct } from "../utils/stockUtils";
+
+  const getItemKey = (it, index) => {
+    if (it?.checkoutKey) return String(it.checkoutKey);
+    if (it?.docId) return String(it.docId);
+    const base = it?.productId || it?.id || "item";
+    const weight = it?.selectedWeight || it?.weight || "def";
+    return index !== undefined ? `${base}_${weight}_${index}` : `${base}_${weight}`;
+  };
 
   const Checkout = () => {
-    const { cartItems, clearCart, user } = useStore();
+    const { cartItems, clearCart, user, allProducts } = useStore();
     const navigate = useNavigate();
     const location = useLocation();
     const checkoutProduct = location.state?.checkoutProduct || null;
@@ -91,14 +100,22 @@
       // Only initialize if itemsToCheckout is empty to prevent manual quantity resets
       if (itemsToCheckout.length === 0) {
         if (checkoutProduct) {
+          const key = getItemKey(checkoutProduct, 0);
           setItemsToCheckout([
             {
               ...checkoutProduct,
+              checkoutKey: key,
               qty: checkoutProduct.qty || checkoutProduct.quantity || 1,
             },
           ]);
         } else if (Array.isArray(cartItems) && cartItems.length > 0) {
-          setItemsToCheckout(cartItems.map((it) => ({ ...it, qty: it.qty || it.quantity || 1 })));
+          setItemsToCheckout(
+            cartItems.map((it, idx) => ({
+              ...it,
+              checkoutKey: getItemKey(it, idx),
+              qty: it.qty || it.quantity || 1,
+            }))
+          );
         }
       }
     }, [cartItems, checkoutProduct, itemsToCheckout.length]);
@@ -556,21 +573,97 @@
     };
 
     // ---------------- Qty update (local UI) ----------------
-    const updateQty = (id, delta) => {
+    const updateQty = (key, delta) => {
+      const currentItem = itemsToCheckout.find((it, idx) => getItemKey(it, idx) === String(key));
+      if (!currentItem) return;
+
+      const oldQty = parseInt(currentItem.qty || currentItem.quantity || 1, 10) || 1;
+      const newQty = Math.max(1, oldQty + delta); // min 1
+
+      if (delta > 0) {
+        const matchedProduct = allProducts?.find((p) => isSameProduct(p, currentItem)) || currentItem;
+        const isCombo = currentItem.category === "Combo" || currentItem.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+        const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? currentItem.stock ?? currentItem.totalStock ?? 0);
+
+        if (availableStock <= 0) {
+          toast.error("Sorry, this item is out of stock.");
+          return;
+        }
+
+        if (isCombo) {
+          const otherQty = itemsToCheckout
+            .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
+            .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
+          if (newQty + otherQty > availableStock) {
+            toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
+            return;
+          }
+        } else {
+          const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
+          const unitGrams = parseWeightToGrams(weightStr);
+          const thisItemGrams = unitGrams * newQty;
+          const otherGrams = itemsToCheckout
+            .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
+            .reduce((sum, it) => {
+              const w = it.selectedWeight || it.weight || it.weights?.[0];
+              return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+            }, 0);
+          const totalGrams = thisItemGrams + otherGrams;
+          if (totalGrams > availableStock) {
+            toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
+            return;
+          }
+        }
+      }
+
       setItemsToCheckout((prev) =>
-        prev.map((item) => {
-          if (item.id !== id) return item;
-          const oldQty = parseInt(item.qty || item.quantity || 1, 10) || 1;
-          const newQty = Math.max(1, oldQty + delta); // min 1
-          return { ...item, qty: newQty };
-        })
+        prev.map((item, idx) => (getItemKey(item, idx) === String(key) ? { ...item, qty: newQty } : item))
       );
     };
 
     // Optional: allow direct qty set from an input (keeps min 1)
-    const setQty = (id, value) => {
+    const setQty = (key, value) => {
+      const currentItem = itemsToCheckout.find((it, idx) => getItemKey(it, idx) === String(key));
+      if (!currentItem) return;
+
       const intVal = Math.max(1, parseInt(value || 1, 10) || 1);
-      setItemsToCheckout((prev) => prev.map((it) => (it.id === id ? { ...it, qty: intVal } : it)));
+      const matchedProduct = allProducts?.find((p) => isSameProduct(p, currentItem)) || currentItem;
+      const isCombo = currentItem.category === "Combo" || currentItem.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+      const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? currentItem.stock ?? currentItem.totalStock ?? 0);
+
+      if (availableStock <= 0) {
+        toast.error("Sorry, this item is out of stock.");
+        return;
+      }
+
+      if (isCombo) {
+        const otherQty = itemsToCheckout
+          .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
+          .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
+        if (intVal + otherQty > availableStock) {
+          toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
+          return;
+        }
+      } else {
+        const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
+        const unitGrams = parseWeightToGrams(weightStr);
+        const thisItemGrams = unitGrams * intVal;
+        const otherGrams = itemsToCheckout
+          .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
+          .reduce((sum, it) => {
+            const w = it.selectedWeight || it.weight || it.weights?.[0];
+            return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+          }, 0);
+        const totalGrams = thisItemGrams + otherGrams;
+        if (totalGrams > availableStock) {
+          toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
+          return;
+        }
+      }
+
+      setItemsToCheckout((prev) =>
+        prev.map((it, idx) => (getItemKey(it, idx) === String(key) ? { ...it, qty: intVal } : it))
+      );
     };
 
     // ---------------- Place order (save to Firestore + update stock) ----------------
@@ -597,9 +690,11 @@
 
       const trimmedCartItems = itemsToCheckout.map((item) => {
         const safeImage = item.image || (item.images && item.images[0]) || "";
+        const actualProductId = String(item.productId || (item.docId ? item.docId.split("_")[0] : null) || item.id || "");
         return {
-          id: item.id,
-          productId: item.productId || item.id,
+          id: actualProductId,
+          productId: actualProductId,
+          cartItemId: item.id,
           name: item.name,
           image: safeImage,
           weight: item.selectedWeight || item.weight || "",
@@ -671,6 +766,52 @@
       if (!isMinimumMet) {
         toast.error(`Minimum order value is ₹${MIN_PURCHASE}. Add ₹${remainingToMin.toFixed(2)} more to proceed.`);
         return;
+      }
+
+      // Stock pre-check before payment gateway (aggregating across all items for each product)
+      const stockUsage = {};
+      for (const item of itemsToCheckout) {
+        const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+        const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+        const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+        const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+        const qty = parseInt(item.qty || item.quantity || 1, 10);
+
+        if (!stockUsage[prodId]) {
+          stockUsage[prodId] = {
+            name: item.name,
+            isCombo,
+            availableStock,
+            totalQty: 0,
+            totalGrams: 0
+          };
+        }
+        stockUsage[prodId].totalQty += qty;
+        if (!isCombo) {
+          const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
+          stockUsage[prodId].totalGrams += parseWeightToGrams(weightStr) * qty;
+        }
+      }
+
+      for (const [, usage] of Object.entries(stockUsage)) {
+        if (usage.availableStock <= 0) {
+          toast.error(`"${usage.name}" is out of stock. Please remove it to proceed.`);
+          return;
+        }
+
+        if (usage.isCombo) {
+          if (usage.totalQty > usage.availableStock) {
+            toast.error(`Out of Stock. Only ${formatStockDisplay(usage.availableStock, true)} available for combo "${usage.name}".`);
+            return;
+          }
+        } else {
+          if (usage.totalGrams > usage.availableStock) {
+            toast.error(
+              `Only ${formatStockDisplay(usage.availableStock, false)} available for "${usage.name}". Your order requires ${formatStockDisplay(usage.totalGrams, false)}. Please adjust quantity.`
+            );
+            return;
+          }
+        }
       }
 
       setIsPlacingOrder(true);
@@ -866,6 +1007,7 @@
 
                   <tbody>
                     {itemsToCheckout.map((item, index) => {
+                      const itemKey = getItemKey(item, index);
                       const productImage =
                         item?.image ||
                         item?.img ||
@@ -879,8 +1021,48 @@
                       const price = parsePrice(item.price || 0);
                       const itemTotal = price * qty;
 
+                      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+                      const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+                      const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+                      const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+
+                      // Calculate maximum allowed quantity for this specific line item
+                      let maxAllowedQty = 999;
+                      if (isCombo) {
+                        const otherQty = itemsToCheckout
+                          .filter((it, idx) => getItemKey(it, idx) !== itemKey && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                          .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
+                        maxAllowedQty = Math.max(1, availableStock - otherQty);
+                      } else {
+                        const unitGrams = parseWeightToGrams(item.selectedWeight || item.weight || item.weights?.[0]) || 1;
+                        const otherGrams = itemsToCheckout
+                          .filter((it, idx) => getItemKey(it, idx) !== itemKey && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                          .reduce((sum, it) => {
+                            const w = it.selectedWeight || it.weight || it.weights?.[0];
+                            return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+                          }, 0);
+                        const remainingGrams = Math.max(0, availableStock - otherGrams);
+                        maxAllowedQty = Math.max(1, Math.floor(remainingGrams / unitGrams));
+                      }
+
+                      // Total requested across all items sharing this product
+                      const totalRequestedForProduct = isCombo
+                        ? itemsToCheckout
+                            .filter((it) => String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                            .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0)
+                        : itemsToCheckout
+                            .filter((it) => String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                            .reduce((sum, it) => {
+                              const w = it.selectedWeight || it.weight || it.weights?.[0];
+                              return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+                            }, 0);
+
+                      const isOut = availableStock <= 0;
+                      const exceedsStock = availableStock > 0 && totalRequestedForProduct > availableStock;
+                      const lowStock = !isOut && !exceedsStock && isLowStock(availableStock, isCombo);
+
                       return (
-                        <tr key={item.id} className="border-b align-top">
+                        <tr key={itemKey} className="border-b align-top">
                           <td className="py-3 px-2">{index + 1}</td>
 
                           <td className="py-3 px-2">
@@ -896,6 +1078,17 @@
                             {item.selectedWeight && (
                               <p className="text-xs text-gray-600">Weight: {item.selectedWeight}</p>
                             )}
+                            {isOut ? (
+                              <p className="text-xs text-red-600 font-semibold mt-1">Out of Stock</p>
+                            ) : exceedsStock ? (
+                              <p className="text-xs text-red-600 font-semibold mt-1">
+                                ⚠️ Exceeds stock (Only {formatStockDisplay(availableStock, isCombo)} available)
+                              </p>
+                            ) : lowStock ? (
+                              <p className="text-xs text-amber-600 font-medium mt-1">
+                                ⚡ Low stock ({formatStockDisplay(availableStock, isCombo)} left)
+                              </p>
+                            ) : null}
                           </td>
 
                           <td className="py-3 px-3 text-right">₹{price.toFixed(2)}</td>
@@ -905,8 +1098,8 @@
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => updateQty(item.id, -1)}
-                                className="w-7 h-7 flex items-center cursor-pointer justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                                onClick={() => updateQty(itemKey, -1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800 transition-colors"
                               >
                                 -
                               </button>
@@ -914,15 +1107,15 @@
                               <input
                                 type="number"
                                 value={qty}
-                                onChange={(e) => setQty(item.id, e.target.value)}
+                                onChange={(e) => setQty(itemKey, e.target.value)}
                                 min={1}
-                                className="w-12 text-center border rounded px-1 py-1"
+                                className="w-12 text-center border rounded px-1 py-1 font-medium"
                               />
 
                               <button
                                 type="button"
-                                onClick={() => updateQty(item.id, +1)}
-                                className="w-7 h-7 flex items-center cursor-pointer justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                                onClick={() => updateQty(itemKey, +1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800 transition-colors"
                               >
                                 +
                               </button>

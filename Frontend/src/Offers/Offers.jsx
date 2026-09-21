@@ -11,6 +11,7 @@ import LodingPage from "../Component/LoadingPage";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
+import { isProductOutOfStock, isLowStock, formatStockDisplay, checkVariantStock, parseWeightToGrams } from "../utils/stockUtils";
 
 const categories = [
   "All",
@@ -302,10 +303,12 @@ const Offers = () => {
               </p>
             ) : (
               paginatedProducts.map((product) => {
+                const isCombo = product.category === "Combo" || product.type === "combo";
+                const purchasableWeight = !isCombo && product.weights?.find(w => parseWeightToGrams(w) <= (product.stock || 0));
                 const activeWeight =
                   selectedWeight !== "All"
                     ? selectedWeight
-                    : product.weights?.[0];
+                    : (purchasableWeight || product.weights?.[0]);
                
                 let mrp = 0;
                 let offerPrice = 0;
@@ -334,7 +337,9 @@ const Offers = () => {
                 if (isNaN(mrp) || mrp <= 0) mrp = offerPrice;
                 if (isNaN(offerPrice) || offerPrice <= 0) offerPrice = mrp;
                 
-                const outOfStock = product.stock <= 0;
+                const outOfStock = isProductOutOfStock(product);
+                const lowStock = !outOfStock && isLowStock(product.stock, isCombo);
+                const variantCheck = checkVariantStock(product, activeWeight, 1);
 
                 return (
                   <div
@@ -356,6 +361,11 @@ const Offers = () => {
                         {mrp > offerPrice ? Math.round(((mrp - offerPrice) / mrp) * 100) : 0}%<br />
                         OFF
                       </span>
+                      {lowStock && (
+                        <span className="absolute bottom-2 left-2 bg-amber-500/90 text-white text-[11px] font-medium px-2 py-0.5 rounded shadow">
+                          Only {formatStockDisplay(product.stock, isCombo)} left
+                        </span>
+                      )}
                     </div>
                     <Link
                       to={product.category === "Combo" || product.type === "combo" ? `/combos/${product.id}` : `/shop/${product.id}`}
@@ -376,15 +386,27 @@ const Offers = () => {
                         Price: ₹{offerPrice}
                       </p>
                     )}
-                    {outOfStock && (
-                      <p className="text-center font-semibold text-red-500">
+                    {outOfStock ? (
+                      <p className="text-center font-semibold text-red-500 text-sm mb-2">
                         Out of Stock
                       </p>
-                    )}
+                    ) : !variantCheck.canFulfill ? (
+                      <p className="text-center font-medium text-red-500 text-xs mb-2">
+                        Only {formatStockDisplay(product.stock, isCombo)} available
+                      </p>
+                    ) : lowStock ? (
+                      <p className="text-center font-medium text-amber-600 text-xs mb-2">
+                        Low Stock: Only {formatStockDisplay(product.stock, isCombo)} left
+                      </p>
+                    ) : null}
                     <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
                     <div className="grid grid-cols-1 md:grid-cols-2 justify-center gap-3 items-center px-1">
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          if (!variantCheck.canFulfill) {
+                            toast.error(variantCheck.message || "Insufficient stock");
+                            return;
+                          }
                           navigate("/checkout", {
                             state: {
                               checkoutProduct: {
@@ -395,11 +417,11 @@ const Offers = () => {
                                 img: product.images?.[0],
                               },
                             },
-                          })
-                        }
-                        disabled={outOfStock}
+                          });
+                        }}
+                        disabled={!variantCheck.canFulfill}
                         className={`py-2 px-4 w-full text-sm rounded-md font-semibold ${
-                          outOfStock
+                          !variantCheck.canFulfill
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-primary text-white hover:bg-green1"
                         }`}
@@ -407,8 +429,12 @@ const Offers = () => {
                         Buy Now
                       </button>
                       <button
-                        disabled={outOfStock}
+                        disabled={!variantCheck.canFulfill}
                         onClick={() => {
+                          if (!variantCheck.canFulfill) {
+                            toast.error(variantCheck.message || "Insufficient stock");
+                            return;
+                          }
                           addToCart({
                             ...product,
                             imageUrl: product.images?.[0],
@@ -419,7 +445,7 @@ const Offers = () => {
                           });
                         }}
                         className={`text-white w-full py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer ${
-                          outOfStock
+                          !variantCheck.canFulfill
                             ? "bg-gray-400 text-white cursor-not-allowed"
                             : "bg-green1 hover:bg-green2"
                         }`}

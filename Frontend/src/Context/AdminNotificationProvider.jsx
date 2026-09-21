@@ -308,6 +308,7 @@ export const AdminNotificationProvider = ({ children }) => {
         message: `${clientName} placed an order${totalAmount ? ` for ${totalAmount}` : ""}.`,
         secondary: "Tap to review in Orders Panel.",
         link: "/adminpanel/all-orders",
+        dedupeKey: data.orderId ? `order-${data.orderId}` : undefined,
       });
 
       // Update cached admin counts if available
@@ -328,6 +329,7 @@ export const AdminNotificationProvider = ({ children }) => {
       const productName = data.name || "Product";
       const remainingStock = data.remainingStock !== undefined ? `${data.remainingStock}g` : "0g";
       const isZero = Number(data.remainingStock || 0) <= 0;
+      const stockIdentity = data.productId || data.name;
 
       addNotification({
         type: "lowStock",
@@ -335,6 +337,7 @@ export const AdminNotificationProvider = ({ children }) => {
         message: `Inventory has dropped to ${remainingStock} (Threshold: 500g).`,
         secondary: data.category ? `Category: ${data.category}` : "Stock update required",
         link: "/#/adminpanel/stock-details",
+        dedupeKey: stockIdentity ? `low-stock-${stockIdentity}-${data.remainingStock}` : undefined,
       });
     });
 

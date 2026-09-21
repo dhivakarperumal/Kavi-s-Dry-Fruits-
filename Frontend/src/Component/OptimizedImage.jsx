@@ -11,6 +11,7 @@ const OptimizedImage = React.memo(({
   fallback = null,
   alt = 'Product image',
   className = '',
+  imageClassName = '',
   objectFit = 'contain',
   onLoad = () => {},
   onError = () => {},
@@ -72,7 +73,7 @@ const OptimizedImage = React.memo(({
         alt={alt}
         width={width}
         height={height}
-        className={`w-full h-full ${objectFit === 'contain' ? 'object-contain' : `object-${objectFit}`} transition-opacity duration-300 ${
+        className={`w-full h-full ${objectFit === 'contain' ? 'object-contain' : `object-${objectFit}`} ${imageClassName} transition-opacity duration-300 ${
           isLoading ? 'opacity-0' : 'opacity-100'
         }`}
         onLoadStart={handleLoadStart}

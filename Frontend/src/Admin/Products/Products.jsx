@@ -175,14 +175,16 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   useEffect(() => {
     if (editItem) {
       const savedStock = Number(editItem.totalStock);
-      const savedWeightKg = Number.isFinite(savedStock) && savedStock > 0
+      const savedWeightKg = Number.isFinite(savedStock) && savedStock >= 0
         ? savedStock / 1000
-        : Number(editItem.totalWeight || 0);
+        : Number(editItem.totalWeight ?? 0);
+      const savedVariants = safeParse(editItem.variants);
+      const savedImages = safeParse(editItem.images).filter((image) => typeof image === "string");
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
-        variants: safeParse(editItem.variants),
-        images: safeParse(editItem.images),
+        variants: savedVariants.length ? savedVariants : [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
+        images: savedImages,
         totalWeight: savedWeightKg,
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
@@ -236,15 +238,16 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     setLoading(true);
     try {
       const enteredWeightKg = Number(form.totalWeight);
-      const currentStock = Number.isFinite(enteredWeightKg) && enteredWeightKg > 0
+      const hasEnteredWeight = String(form.totalWeight ?? "").trim() !== "" && Number.isFinite(enteredWeightKg) && enteredWeightKg >= 0;
+      const currentStock = hasEnteredWeight
         ? enteredWeightKg * 1000
-        : Number(form.totalStock) || 0;
+        : Number.isFinite(Number(form.totalStock)) ? Number(form.totalStock) : 0;
       const formData = new FormData();
       Object.entries({
         ...form,
         totalStock: currentStock,
         healthBenefits: JSON.stringify(form.healthBenefits),
-        images: JSON.stringify(form.images.filter(image => !image.startsWith("blob:"))),
+        images: JSON.stringify(form.images.filter((image) => typeof image === "string" && !image.startsWith("blob:"))),
         variants: JSON.stringify(form.variants),
       }).forEach(([key, value]) => formData.append(key, value ?? ""));
       imageFiles.forEach(file => formData.append("images", file));
@@ -313,7 +316,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                   </div>
                 </div>
                 <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                       Total Weight (kg) *
                       <span className="text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-orange-100 text-orange-500">Manual</span>
                     </label>
@@ -323,7 +326,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                         value={form.totalWeight}
                         onChange={(e) => setForm({ ...form, totalWeight: e.target.value })}
                         required
-                        min="1"
+                        min="0"
                         className="w-full rounded-2xl px-6 py-4 font-black border-2 bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500 shadow-sm outline-none transition-all"
                         placeholder="Enter kilograms, e.g. 50"
                       />
@@ -447,6 +450,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   const [loading, setLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState([]);
   const barcodeRef = useRef();
+  const [manualWeightEdited, setManualWeightEdited] = useState(false);
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -454,21 +458,36 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     try { return JSON.parse(data); } catch { return []; }
   };
 
-  const parseWeightToGrams = (value, defaultUnit = "kg") => {
+  const parseWeightToGrams = (value, defaultUnit = "g") => {
     if (value === null || value === undefined || value === "") return 0;
     const raw = String(value).trim().toLowerCase().replace(/,/g, "").replace(/\s+/g, "");
     if (!raw) return 0;
-    const match = raw.match(/^([\d.]+)(kg|k|g|gram|grams)?$/i);
+    const match = raw.match(/^([\d.]+)(kg|k|g|gm|gram|grams)?$/i);
     const amount = Number.parseFloat(match ? match[1] : raw);
     if (!Number.isFinite(amount)) return 0;
     const unit = match ? (match[2] || defaultUnit) : defaultUnit;
     if (["kg", "k", "kilogram", "kilograms"].includes(unit)) return amount * 1000;
-    if (["g", "gram", "grams"].includes(unit)) return amount;
+    if (["g", "gm", "gram", "grams"].includes(unit)) return amount;
     return amount * (defaultUnit === "kg" ? 1000 : 1);
   };
 
+  const formatWeightDisplay = (grams) => {
+    const total = Number(grams || 0);
+    if (!Number.isFinite(total) || total <= 0) return "0g";
+    if (total >= 1000) {
+      const kg = (total / 1000).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+      return `${total}g (${kg}kg)`;
+    }
+    return `${total}g`;
+  };
+
+  const getComboQuantity = () => {
+    const n = parseInt(form.totalStock, 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  };
+
   const calculateComboTotalWeight = (items = []) =>
-    items.reduce((sum, item) => sum + parseWeightToGrams(item.weight, "kg"), 0);
+    items.reduce((sum, item) => sum + parseWeightToGrams(item.weight, "g"), 0);
 
   const formatKGDisplay = (grams) => {
     const total = Number(grams || 0);
@@ -480,23 +499,32 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
 
   useEffect(() => {
     if (editItem) {
-      const parsedDetails = typeof editItem.comboDetails === 'string' 
-        ? JSON.parse(editItem.comboDetails || '{}') 
-        : editItem.comboDetails;
-      const storedWeight = Number(parsedDetails?.totalWeight || editItem.totalWeight || 0);
+      let parsedDetails = editItem.comboDetails;
+      if (typeof parsedDetails === 'string') {
+        try { parsedDetails = JSON.parse(parsedDetails || '{}'); } catch { parsedDetails = {}; }
+      }
+      const savedImages = safeParse(editItem.images).filter((image) => typeof image === "string");
+      const savedComboItems = safeParse(editItem.comboItems);
+      const storedWeightValue = parsedDetails?.totalWeight !== null && parsedDetails?.totalWeight !== undefined
+        ? parsedDetails.totalWeight
+        : editItem.totalWeight;
+      const storedWeight = Number(storedWeightValue ?? 0);
       // Older combo records stored the kilogram input as grams one extra time.
       const resolvedWeight = storedWeight >= 1000000 ? storedWeight / 1000 : storedWeight;
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
-        images: safeParse(editItem.images),
-        comboItems: safeParse(editItem.comboItems),
+        images: savedImages,
+        comboItems: savedComboItems.length ? savedComboItems : [{ name: "", weight: "", image: "" }],
         comboDetails: parsedDetails,
         totalWeight: resolvedWeight,
-        totalStock: String(editItem.totalStock || effectiveTotalWeight || 0),
+        totalStock: editItem.totalStock !== undefined && editItem.totalStock !== null
+          ? String(editItem.totalStock)
+          : String(Number.isFinite(effectiveTotalWeight) ? effectiveTotalWeight : 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
       setImageFiles([]);
+      setManualWeightEdited(true);
     } else {
       const maxId = combos.reduce((max, c) => {
         const match = c.productId?.match(/\d+/);
@@ -509,22 +537,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, totalWeight: 0, status: "Active"
       }));
       setImageFiles([]);
+      setManualWeightEdited(false);
     }
   }, [editItem, combos]);
 
-  useEffect(() => {
-    const computedSum = calculateComboTotalWeight(form.comboItems);
-    const manualWeight = Number(form.totalWeight || 0);
-    const nextTotalStock = manualWeight > 0 ? manualWeight : computedSum;
-
-    setForm((prev) => {
-      if (String(prev.totalStock) === String(nextTotalStock)) return prev;
-      return {
-        ...prev,
-        totalStock: String(nextTotalStock || 0),
-      };
-    });
-  }, [form.comboItems, form.totalWeight]);
+  // Removed totalStock calculation based on weight. Stock is now maintained as piece count (PC).
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -554,20 +571,143 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     finally { e.target.value = ""; }
   };
 
+  const handleProductSelect = (index, selectedName) => {
+    if (!selectedName) {
+      const u = [...form.comboItems];
+      u[index] = { name: "", weight: "", image: "" };
+      setForm({ ...form, comboItems: u });
+      return;
+    }
+
+    if (selectedName === "custom") {
+      const u = [...form.comboItems];
+      u[index] = { name: "custom", weight: "", image: "" };
+      setForm({ ...form, comboItems: u });
+      return;
+    }
+
+    const matchedProd = products.find(p => p.name === selectedName);
+    if (!matchedProd) {
+      const u = [...form.comboItems];
+      u[index].name = selectedName;
+      setForm({ ...form, comboItems: u });
+      return;
+    }
+
+    const variants = typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : (matchedProd.variants || []);
+    const images = typeof matchedProd.images === 'string' ? JSON.parse(matchedProd.images || '[]') : (matchedProd.images || []);
+    const defaultWeight = variants[0]?.weight || "";
+    const weightGrams = parseWeightToGrams(defaultWeight, "g");
+    const comboQty = getComboQuantity();
+    const requiredGrams = comboQty * weightGrams;
+    const availableStock = Number(matchedProd.totalStock || 0);
+
+    if (weightGrams > 0 && requiredGrams > availableStock) {
+      toast.error(
+        `Cannot add "${matchedProd.name}": Required ${formatWeightDisplay(requiredGrams)} (${defaultWeight} × ${comboQty} PC), but only ${formatWeightDisplay(availableStock)} is available in inventory!`,
+        { duration: 5000, id: `stock-err-${matchedProd.id || index}` }
+      );
+      return; // Do not select/add this product
+    }
+
+    const u = [...form.comboItems];
+    u[index].name = matchedProd.name;
+    u[index].weight = defaultWeight;
+    u[index].image = images[0] || "";
+    setForm({ ...form, comboItems: u });
+  };
+
+  const handleWeightSelect = (index, selectedWeight) => {
+    const item = form.comboItems[index];
+    const matchedProd = products.find(p => p.name === item?.name);
+    
+    if (matchedProd) {
+      const weightGrams = parseWeightToGrams(selectedWeight, "g");
+      const comboQty = getComboQuantity();
+      const requiredGrams = comboQty * weightGrams;
+      const availableStock = Number(matchedProd.totalStock || 0);
+
+      if (weightGrams > 0 && requiredGrams > availableStock) {
+        toast.error(
+          `Cannot select ${selectedWeight} for "${matchedProd.name}": Required ${formatWeightDisplay(requiredGrams)} (${selectedWeight} × ${comboQty} PC), but only ${formatWeightDisplay(availableStock)} is available in inventory!`,
+          { duration: 5000, id: `stock-weight-err-${matchedProd.id || index}` }
+        );
+        return; // Do not apply weight change
+      }
+    }
+
+    const u = [...form.comboItems];
+    u[index].weight = selectedWeight;
+    setForm({ ...form, comboItems: u });
+  };
+
+  const handleStockChange = (e) => {
+    const val = e.target.value.replace(/\D/g, "");
+    setForm((prev) => ({ ...prev, totalStock: val }));
+
+    const newQty = parseInt(val, 10);
+    if (Number.isFinite(newQty) && newQty > 0) {
+      for (const item of form.comboItems) {
+        if (!item.name || item.name === "custom" || !item.weight) continue;
+        const matched = products.find(p => p.name === item.name);
+        if (matched) {
+          const itemWeightGrams = parseWeightToGrams(item.weight, "g");
+          const needed = newQty * itemWeightGrams;
+          const available = Number(matched.totalStock || 0);
+          if (itemWeightGrams > 0 && needed > available) {
+            toast.error(
+              `Warning: "${matched.name}" stock deficit! Requires ${formatWeightDisplay(needed)} (${item.weight} × ${newQty} PC), but only ${formatWeightDisplay(available)} available.`,
+              { duration: 4000, id: `stock-warn-${matched.id}` }
+            );
+            break;
+          }
+        }
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const numericTotalStock = Number(form.totalStock ?? 0);
+    const comboQty = numericTotalStock > 0 ? numericTotalStock : 0;
+
+    // Check constituent products stock before submitting
+    if (comboQty > 0) {
+      const requiredPerProduct = {};
+      for (const item of form.comboItems) {
+        if (!item.name || item.name === "custom" || !item.weight) continue;
+        const matched = products.find(p => p.name === item.name);
+        if (matched) {
+          const itemWeightGrams = parseWeightToGrams(item.weight, "g");
+          const totalNeeded = comboQty * itemWeightGrams;
+          requiredPerProduct[matched.name] = {
+            needed: (requiredPerProduct[matched.name]?.needed || 0) + totalNeeded,
+            available: Number(matched.totalStock || 0),
+            productName: matched.name,
+            weight: item.weight
+          };
+        }
+      }
+
+      for (const req of Object.values(requiredPerProduct)) {
+        if (req.needed > req.available) {
+          toast.error(
+            `Cannot save combo! Insufficient stock for "${req.productName}". Required: ${formatWeightDisplay(req.needed)} (${comboQty} PC), but only ${formatWeightDisplay(req.available)} is available in inventory!`,
+            { duration: 6000 }
+          );
+          return;
+        }
+      }
+    }
+
     setLoading(true);
     try {
-      // Force-merge totalWeight into comboDetails at submit time.
-      // This is necessary because the useEffect that writes it into comboDetails
-      // is async and may not have flushed before the user clicks submit.
-      const normalizedTotalWeight = Number(form.totalWeight || 0) / 1000;
       const submitData = {
         ...form,
-        totalStock: Number(form.totalWeight) || 0,
+        totalStock: Number.isFinite(numericTotalStock) ? numericTotalStock : 0,
         comboDetails: {
           ...form.comboDetails,
-          totalWeight: Number.isFinite(normalizedTotalWeight) ? normalizedTotalWeight : 0,
           offerPrice: form.comboDetails.offerPrice || 0,
           mrp: form.comboDetails.mrp || 0,
         },
@@ -576,7 +716,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       Object.entries({
         ...submitData,
         healthBenefits: JSON.stringify(submitData.healthBenefits),
-        images: JSON.stringify(submitData.images.filter(image => !image.startsWith("blob:"))),
+        images: JSON.stringify(submitData.images.filter((image) => typeof image === "string" && !image.startsWith("blob:"))),
         comboItems: JSON.stringify(submitData.comboItems),
         comboDetails: JSON.stringify(submitData.comboDetails),
       }).forEach(([key, value]) => formData.append(key, value ?? ""));
@@ -590,8 +730,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         toast.success("Pack Registered");
       }
       onSuccess();
-    } catch { toast.error("Submission Failure"); }
-    setLoading(false);
+    } catch (err) { 
+      toast.error(err.response?.data?.message || "Submission Failure"); 
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -631,20 +774,34 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   {/* Weight breakdown per item */}
                   {form.comboItems.some(item => item.weight) && (
                     <div className="bg-white rounded-xl border border-amber-100 p-3 mb-3">
-                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">Weight Breakdown</p>
+                      <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">Weight Breakdown & Stock Status</p>
                       <div className="space-y-1">
                         {form.comboItems.map((item, idx) => {
                           if (!item.weight) return null;
                           const inGrams = parseWeightToGrams(item.weight, "g");
+                          const matched = products.find(p => p.name === item.name);
+                          const comboQty = getComboQuantity();
+                          const needed = comboQty * inGrams;
+                          const available = matched ? Number(matched.totalStock || 0) : null;
+                          const hasDeficit = matched && needed > available;
                           return (
-                            <div key={idx} className="flex justify-between text-[10px]">
-                              <span className="text-gray-500 truncate max-w-[120px]">{item.name || `Item ${idx+1}`}</span>
-                              <span className="font-black text-amber-700">{item.weight} = {inGrams}g</span>
+                            <div key={idx} className={`flex justify-between items-center text-[10px] p-1 rounded ${hasDeficit ? "bg-red-50 text-red-700 font-bold" : ""}`}>
+                              <span className="text-gray-600 truncate max-w-[120px]">{item.name || `Item ${idx+1}`}</span>
+                              <div className="text-right">
+                                <span className={hasDeficit ? "font-black text-red-700" : "font-black text-amber-700"}>
+                                  {item.weight} = {inGrams}g
+                                </span>
+                                {hasDeficit && (
+                                  <span className="block text-[8px] text-red-600 font-black">
+                                    ⚠️ Deficit: Short by {formatWeightDisplay(needed - available)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           );
                         })}
                         <div className="border-t border-dashed border-amber-200 mt-1 pt-1 flex justify-between text-[10px]">
-                          <span className="font-black text-amber-900">Total</span>
+                          <span className="font-black text-amber-900">Total Pack Weight</span>
                           <span className="font-black text-amber-900">{effectiveTotalWeight}g {effectiveTotalWeight >= 1000 ? `(${formatKGDisplay(effectiveTotalWeight)}kg)` : ""}</span>
                         </div>
                       </div>
@@ -656,26 +813,21 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      Total Weight (kg) *
-                      <span className="text-[8px] px-2 py-0.5 rounded-full font-black uppercase bg-orange-100 text-orange-500">Manual</span>
+                      Available Quantity (PC) *
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
-                        type="text"
-                        value={form.totalWeight ? formatKGDisplay(form.totalWeight) : ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const grams = parseWeightToGrams(value, "kg");
-                          setForm({ ...form, totalWeight: grams, comboDetails: { ...form.comboDetails, totalWeight: grams } });
-                        }}
+                        type="number"
+                        value={form.totalStock}
+                        onChange={handleStockChange}
                         required
-                        min="1"
+                        min="0"
+                        step="1"
                         className="w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400"
-                        placeholder="Enter kilograms, e.g. 50"
+                        placeholder="Enter whole numbers, e.g. 50"
                       />
-                      <span className="-ml-16 mr-4 pointer-events-none font-black text-sm text-orange-500">kg</span>
+                      <span className="-ml-16 mr-4 pointer-events-none font-black text-sm text-orange-500">PC</span>
                     </div>
-                    <p className="text-[8px] text-gray-400 font-medium mt-1">Stored as grams: 50 kg = 50000 g.</p>
                   </div>
                 </div>
               </div>
@@ -730,123 +882,125 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
             <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-gray-50/50 flex flex-col">
               <div className="flex justify-between items-center mb-10"><h3 className="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3"><div className="w-2 h-8 bg-blue-500 rounded-full"></div> Included Range</h3><button type="button" onClick={() => setForm((p) => ({ ...p, comboItems: [...p.comboItems, { name: "", weight: "" }] }))} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"><FaPlus size={10} /> Add Item</button></div>
               <div className="space-y-4">
-                {form.comboItems.map((item, i) => (
-                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center bg-gray-50/50 p-5 rounded-3xl border border-gray-100 hover:bg-white hover:border-blue-100 transition-all group shadow-sm">
-                    <div className="relative w-14 h-14 bg-white rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 group/img">
-                      {item.image ? (
-                        <img src={item.image} alt="p" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-200"><FaBoxOpen size={16} /></div>
-                      )}
-                      <label className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          onChange={async (e) => {
-                            const file = e.target.files[0];
-                            if(!file) return;
-                            try {
-                              const compressed = await imageCompression(file, { maxSizeMB: 0.05, maxWidthOrHeight: 300, fileType: file.type, useWebWorker: true });
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                const u = [...form.comboItems];
-                                u[i].image = reader.result;
-                                setForm({ ...form, comboItems: u });
-                              };
-                              reader.readAsDataURL(compressed);
-                            } catch (err) { toast.error("Upload failed"); }
-                            finally { e.target.value = ""; }
-                          }}
-                        />
-                        <FaEdit className="text-white text-xs" />
-                      </label>
-                    </div>
-                    <div className="flex-1 relative">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Item Identity</label>
-                      <div className="relative">
-                        <CustomSelect 
-                          value={item.name} 
-                          onChange={(e) => { 
-                            const val = e.target.value;
-                            const u = [...form.comboItems]; 
-                            const matchedProd = products.find(p => p.name === val);
-                            if (matchedProd) {
-                              const variants = typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : matchedProd.variants;
-                              const images = typeof matchedProd.images === 'string' ? JSON.parse(matchedProd.images || '[]') : matchedProd.images;
-                              u[i].name = matchedProd.name;
-                              u[i].weight = variants[0]?.weight || "";
-                              u[i].image = images[0] || "";
-                            } else {
-                              u[i].name = val;
-                            }
-                            setForm({ ...form, comboItems: u }); 
-                          }} 
-                          className="w-full"
-                          buttonClassName="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
-                          placeholder="Choose Existing Product"
-                          searchable={true}
-                          options={[
-                            { value: "", label: "Choose Existing Product" },
-                            ...products.map((p) => ({
-                              value: p.name,
-                              label: `${p.name} — ${p.productId}`,
-                            })),
-                            { value: "custom", label: "-- Custom Item --" },
-                          ]}
-                        />
-                      </div>
-                    </div>
-                    <div className="w-30 border-l border-gray-100 pl-5 flex flex-col">
-                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
-                      {(() => {
-                        const matchedProd = products.find(p => p.name === item.name);
-                        const variants = matchedProd ? (typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : (matchedProd.variants || [])) : [];
-                        
-                        if (variants.length > 0) {
-                          return (
-                            <div className="relative">
-                              <CustomSelect 
-                                value={item.weight}
-                                onChange={(e) => {
+                {form.comboItems.map((item, i) => {
+                  const matchedProd = products.find(p => p.name === item.name);
+                  const variants = matchedProd ? (typeof matchedProd.variants === 'string' ? JSON.parse(matchedProd.variants || '[]') : (matchedProd.variants || [])) : [];
+                  const itemWeightGrams = parseWeightToGrams(item.weight, "g");
+                  const comboQty = getComboQuantity();
+                  const neededGrams = comboQty * itemWeightGrams;
+                  const availableStock = matchedProd ? Number(matchedProd.totalStock || 0) : null;
+                  const isItemDeficit = matchedProd && neededGrams > 0 && neededGrams > availableStock;
+
+                  return (
+                    <div key={i} className={`grid grid-cols-[auto_minmax(0,1fr)_minmax(7rem,8rem)_auto] gap-4 items-center p-5 rounded-3xl border transition-all group shadow-sm ${isItemDeficit ? "bg-red-50/50 border-red-300 ring-2 ring-red-100" : "bg-gray-50/50 border-gray-100 hover:bg-white hover:border-blue-100"}`}>
+                      <div className="relative w-14 h-14 bg-white rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 group/img">
+                        {item.image ? (
+                          <img src={item.image} alt="p" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-200"><FaBoxOpen size={16} /></div>
+                        )}
+                        <label className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            onChange={async (e) => {
+                              const file = e.target.files[0];
+                              if(!file) return;
+                              try {
+                                const compressed = await imageCompression(file, { maxSizeMB: 0.05, maxWidthOrHeight: 300, fileType: file.type, useWebWorker: true });
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
                                   const u = [...form.comboItems];
-                                  u[i].weight = e.target.value;
+                                  u[i].image = reader.result;
                                   setForm({ ...form, comboItems: u });
-                                }}
-                                className="w-full"
-                                buttonClassName="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs"
-                                placeholder="Select"
-                                options={variants.map((v) => ({
-                                  value: v.weight,
-                                  label: v.weight,
-                                }))}
-                              />
-                            </div>
-                          );
-                        }
-                        
-                        return (
+                                };
+                                reader.readAsDataURL(compressed);
+                              } catch (err) { toast.error("Upload failed"); }
+                              finally { e.target.value = ""; }
+                            }}
+                          />
+                          <FaEdit className="text-white text-xs" />
+                        </label>
+                      </div>
+                      <div className="min-w-0 relative">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Item Identity</label>
+                          {matchedProd && (
+                            <span className="ml-2 shrink-0 text-[9px] font-bold text-gray-500">
+                              Stock: <strong className={availableStock > 0 ? "text-emerald-700" : "text-red-600"}>{formatWeightDisplay(availableStock)}</strong>
+                            </span>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <CustomSelect 
+                            value={item.name} 
+                            onChange={(e) => handleProductSelect(i, e.target.value)} 
+                            className="w-full"
+                            buttonClassName="w-full outline-none font-black bg-transparent text-gray-900 border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                            placeholder="Choose Existing Product"
+                            searchable={true}
+                            options={[
+                              { value: "", label: "Choose Existing Product" },
+                              ...products.map((p) => {
+                                const s = Number(p.totalStock || 0);
+                                const sLabel = s > 0 ? formatWeightDisplay(s) : "Out of Stock";
+                                return {
+                                  value: p.name,
+                                  label: `${p.name} — ${p.productId} [${sLabel}]`,
+                                };
+                              }),
+                              { value: "custom", label: "-- Custom Item --" },
+                            ]}
+                          />
+                        </div>
+                        {matchedProd && item.weight && (
+                          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                            <span className="text-[9px] font-medium text-gray-500">
+                              Need: <span className={isItemDeficit ? "font-black text-red-600" : "font-bold text-blue-700"}>{formatWeightDisplay(neededGrams)} ({item.weight} × {comboQty} PC)</span>
+                            </span>
+                            {isItemDeficit && (
+                              <span className="bg-red-600 text-white px-2 py-0.5 rounded-full font-black text-[8px] animate-pulse">
+                                ⚠️ Deficit: Short by {formatWeightDisplay(neededGrams - availableStock)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 w-full border-l border-gray-100 pl-5 flex flex-col">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
+                        {variants.length > 0 ? (
+                          <div className="relative">
+                            <CustomSelect 
+                              value={item.weight}
+                              onChange={(e) => handleWeightSelect(i, e.target.value)}
+                              className="w-full"
+                              buttonClassName="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 cursor-pointer text-xs"
+                              placeholder="Select"
+                              options={variants.map((v) => ({
+                                value: v.weight,
+                                label: v.weight,
+                              }))}
+                            />
+                          </div>
+                        ) : (
                           <input 
                             placeholder="Weight" 
                             value={item.weight} 
-                            onChange={(e) => { 
-                              const u = [...form.comboItems]; 
-                              u[i].weight = e.target.value; 
-                              setForm({ ...form, comboItems: u }); 
-                            }} 
+                            onChange={(e) => handleWeightSelect(i, e.target.value)} 
                             className="w-full outline-none text-blue-600 font-black bg-transparent border-none p-0 focus:ring-0 text-xs placeholder:text-gray-300"
                           />
-                        );
-                      })()}
+                        )}
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} 
+                        className="p-3 text-red-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <FaTrash size={14} />
+                      </button>
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={() => setForm((p) => ({ ...p, comboItems: p.comboItems.filter((_, idx) => idx !== i) }))} 
-                      className="p-3 text-red-200 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    >
-                      <FaTrash size={14} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             <div className="bg-amber-50/50 p-8 rounded-[3rem] border border-amber-100 shadow-xl overflow-hidden relative">

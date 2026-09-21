@@ -13,6 +13,7 @@ import Services from "../Home/Services";
 import { toast } from "react-hot-toast";
 import LodingPage from "../Component/LoadingPage";
 import { Helmet } from "react-helmet";
+import { formatStockDisplay, isProductOutOfStock, isLowStock, checkVariantStock } from "../utils/stockUtils";
 
 const weights = ["All", "100g", "250g", "500g", "1000g"];
 const productsPerPage = 30;
@@ -271,7 +272,11 @@ const Category = () => {
                 if (isNaN(offerPrice) || offerPrice <= 0) offerPrice = mrp;
                 
                 const avgRating = product.rating || 4.5;
-                const isOutOfStock = product.isOutOfStock;
+                const stock = Number(product.stock ?? product.totalStock ?? 0);
+                const isCombo = product.category === "Combo" || product.type === "combo";
+                const isOutOfStock = product.isOutOfStock ?? isProductOutOfStock(product);
+                const lowStock = isLowStock(product);
+                const variantCheck = checkVariantStock(activeWeight, 1, stock, isCombo);
 
                 return (
                   <div key={product.id} className="group bg-white rounded-2xl p-4 shadow hover:ring-2 hover:ring-green1 transition relative">
@@ -283,6 +288,11 @@ const Category = () => {
                           className="w-full h-full p-5 object-contain transition-transform duration-500 transform hover:scale-110"
                         />
                       </Link>
+                      {lowStock && !isOutOfStock && (
+                        <span className="absolute bottom-2 left-2 z-10 bg-amber-500/95 text-white text-[10px] font-black px-2.5 py-1 rounded-md shadow uppercase tracking-wider">
+                          Only {formatStockDisplay(stock, isCombo)} left
+                        </span>
+                      )}
                       <span className="absolute top-2 left-0 bg-primary text-white text-xs px-3 py-1 rounded-r-full shadow">
                        Bestseller
                       </span>
@@ -311,11 +321,15 @@ const Category = () => {
                       </p>
                     )}
 
-                    {isOutOfStock && (
+                    {isOutOfStock ? (
                       <p className="text-center text-red-600 font-semibold text-sm mb-2">
                         Out of Stock
                       </p>
-                    )}
+                    ) : lowStock ? (
+                      <p className="text-center text-amber-700 font-bold text-xs mb-2">
+                        Low Stock: Only {formatStockDisplay(stock, isCombo)} left!
+                      </p>
+                    ) : null}
 
                     <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
 
@@ -323,13 +337,18 @@ const Category = () => {
                       <button
                         onClick={() => {
                           if (isOutOfStock) return toast.error("Product is out of stock");
+                          if (!variantCheck.canFulfill) {
+                            if (isCombo) return toast.error(`Out of Stock. Only ${formatStockDisplay(stock, true)} available.`);
+                            return toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock.`);
+                          }
                           addToCart({ ...product, qty: 1, selectedWeight: activeWeight, price: offerPrice });
                           toast.success("Added to Cart");
                         }}
                         disabled={isOutOfStock}
                         className={`w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer ${
-                          isOutOfStock ? "bg-gray-400 text-white cursor-not-allowed" : "bg-green1 text-white hover:bg-green2"
+                          isOutOfStock ? "bg-gray-400 text-white cursor-not-allowed" : !variantCheck.canFulfill ? "bg-amber-600 text-white hover:bg-amber-700" : "bg-green1 text-white hover:bg-green2"
                         }`}
+                        title={!variantCheck.canFulfill ? `Only ${formatStockDisplay(stock, isCombo)} available` : "Add to Cart"}
                       >
                         <IoCartOutline />
                       </button>

@@ -6,24 +6,29 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
+import { useStore } from "../Context/StoreContext";
+import { isProductOutOfStock, isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
 
 const RelatedProducts = ({ relatedProducts }) => {
+  const { addToFav } = useStore();
+  const productCount = relatedProducts.length;
+
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: productCount > 4,
     speed: 500,
-    slidesToShow: 4,
+    slidesToShow: Math.min(4, productCount || 1),
     slidesToScroll: 1,
     arrows: true,
     responsive: [
-      { breakpoint: 1280, settings: { slidesToShow: 3 } },
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
+      { breakpoint: 1280, settings: { slidesToShow: Math.min(3, productCount || 1) } },
+      { breakpoint: 1024, settings: { slidesToShow: Math.min(2, productCount || 1) } },
       { breakpoint: 640, settings: { slidesToShow: 1 } },
     ],
   };
 
   return (
-    <section className="my-10 px-4 sm:px-10">
+    <section className="my-10 px-4 pb-16 sm:px-10 sm:pb-20">
       <Helmet>
         <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
 
@@ -72,9 +77,11 @@ const RelatedProducts = ({ relatedProducts }) => {
           </Link>
         </div>
 
-        <Slider {...settings} className="w-full">
+        <Slider {...settings} className="w-full pb-4">
           {relatedProducts.map((p) => {
-            const relWeight = p.weights?.[0];
+            const isCombo = p.category === "Combo" || p.type === "combo";
+            const purchasableWeight = !isCombo && p.weights?.find(w => parseWeightToGrams(w) <= (p.stock || 0));
+            const relWeight = purchasableWeight || p.weights?.[0];
             const priceObj = p.prices?.[relWeight];
             const offerPercent = p.offer || 0;
 
@@ -95,29 +102,58 @@ const RelatedProducts = ({ relatedProducts }) => {
             if (isNaN(relMrp)) relMrp = 0;
 
             const relRating = p.rating?.toFixed?.(1) || "4.5";
-            const isOutOfStock = p.stock <= 0;
+            const outOfStock = isProductOutOfStock(p);
+            const lowStock = !outOfStock && isLowStock(p.stock, isCombo);
 
             return (
               <div key={`${p.id}_${relWeight}`} className="!flex !justify-center px-2">
-                <div className="group bg-white rounded-2xl p-4 shadow-md h-full w-[250px] min-h-[390px] flex flex-col relative">
-                  <div className="absolute top-7 left-4 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
+                <div className="group bg-white rounded-2xl p-4 shadow-md hover:ring-2 hover:ring-green1 transition-all duration-300 h-full w-[250px] min-h-[390px] flex flex-col relative">
+                  <div className="absolute top-7 left-4 z-10 bg-green1 text-white text-xs px-3 py-1 rounded-r-full">
                     Bestseller
                   </div>
-                  <div className="absolute top-6 right-6 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition">
+                  <button
+                    type="button"
+                    onClick={() => addToFav({
+                      ...p,
+                      imageUrl: p.images?.[0],
+                      qty: 1,
+                      selectedWeight: relWeight,
+                      price: relPrice,
+                    })}
+                    aria-label={`Add ${p.name} to favorites`}
+                    className="absolute top-6 right-6 z-10 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition cursor-pointer"
+                  >
                     <FiHeart />
+                  </button>
+                  <div className="relative h-60 w-full flex items-center justify-center relative border-2 border-dashed border-primary rounded-md overflow-hidden bg-gray-50">
+                    <Link
+                      to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
+                      className="w-full h-full flex items-center justify-center"
+                      aria-label={`View details for ${p.name}`}
+                    >
+                      <OptimizedImage
+                        src={p.images?.[0]}
+                        alt={`${p.name} - Kavi's Dry Fruits`}
+                        className="w-full h-full flex items-center justify-center p-5 rounded-md"
+                        imageClassName="transition-transform duration-500 group-hover:scale-110"
+                        objectFit="contain"
+                        loading="lazy"
+                      />
+                    </Link>
+                    {lowStock && (
+                      <span className="absolute bottom-2 left-2 bg-amber-500/90 text-white text-[11px] font-medium px-2 py-0.5 rounded shadow">
+                        Only {formatStockDisplay(p.stock, isCombo)} left
+                      </span>
+                    )}
                   </div>
-                  <div className="border-2 border-dotted border-green1 rounded-2xl bg-gray-50 h-56 flex items-center justify-center overflow-hidden">
-                    <OptimizedImage
-                      src={p.images?.[0]}
-                      alt={`${p.name} - Kavi's Dry Fruits`}
-                      className="w-full h-full flex items-center justify-center p-4 rounded-2xl"
-                      objectFit="contain"
-                      loading="lazy"
-                    />
-                  </div>
-                  <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis">
-                    {p.name} ({relWeight})
-                  </h3>
+                  <Link
+                    to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
+                    className="block"
+                  >
+                    <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis hover:text-green1 transition-colors">
+                      {p.name} ({relWeight})
+                    </h3>
+                  </Link>
                   <p className="text-center text-gray-600 text-sm mb-2">
                     MRP:{" "}
                     <span className="line-through text-gray-400">
@@ -125,18 +161,26 @@ const RelatedProducts = ({ relatedProducts }) => {
                     </span>{" "}
                     ₹{relPrice}
                   </p>
-                  {isOutOfStock && (
-                    <p className="text-red-500 text-sm font-medium mb-2">
+                  {outOfStock ? (
+                    <p className="text-red-500 text-sm font-medium mb-2 text-center">
                       Out of Stock
                     </p>
-                  )}
+                  ) : lowStock ? (
+                    <p className="text-amber-600 text-xs font-medium mb-2 text-center">
+                      Low Stock: Only {formatStockDisplay(p.stock, isCombo)} left
+                    </p>
+                  ) : null}
                   <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
                   <div className="flex justify-center mt-auto">
                     <Link
                       to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
-                      className="bg-green1 text-white px-6 py-2 rounded-md text-md hover:bg-green2 transition"
+                      className={`px-6 py-2 rounded-md text-md transition ${
+                        outOfStock
+                          ? "bg-gray-400 text-white cursor-not-allowed pointer-events-none"
+                          : "bg-green1 text-white hover:bg-green2"
+                      }`}
                     >
-                      Shop Now
+                      {outOfStock ? "Out of Stock" : "Shop Now"}
                     </Link>
                   </div>
                 </div>

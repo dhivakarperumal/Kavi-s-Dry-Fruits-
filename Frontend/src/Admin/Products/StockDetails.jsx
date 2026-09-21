@@ -34,6 +34,11 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
     try { return JSON.parse(data); } catch { return []; }
   };
 
+  const formatStock = (item) => {
+    const stock = Number(item?.totalStock) || 0;
+    return item?.type === 'combo' ? `${stock} PC` : `${(stock / 1000).toFixed(2)} KG`;
+  };
+
   const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [showAddModal, setShowAddModal] = useState(false);
   const [form, setForm] = useState({
@@ -123,7 +128,8 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
       if (!matched) return toast.error("Product mismatch.");
 
       const existingStock = Number(matched.totalStock) || 0;
-      const addedQuantity = parseInt(form.currentQuantity) * 1000; // EVERYTHING is inputted as KG, stored as grams
+      const enteredQuantity = Number(form.currentQuantity) || 0;
+      const addedQuantity = matched.type === 'combo' ? enteredQuantity : enteredQuantity * 1000;
       const newStock = existingStock + addedQuantity;
 
       const endpoint = matched.type === 'combo' ? `/combos/${matched.id}` : `/products/${matched.id}`;
@@ -275,10 +281,10 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
                     <div>
                         <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Combo Pack Stock</p>
                         <h3 className="text-4xl font-black text-white tracking-tighter">
-                            {(liveStocks
+                            {liveStocks
                               .filter(s => s.type === 'combo')
-                              .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0) / 1000
-                            ).toFixed(1)} <span className="text-xl font-bold opacity-80">KG</span>
+                              .reduce((acc, curr) => acc + (Number(curr.totalStock) || 0), 0)
+                            } <span className="text-xl font-bold opacity-80">PC</span>
                         </h3>
                     </div>
                     <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
@@ -330,8 +336,8 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
                    <div className="flex items-end justify-between border-t border-gray-50 pt-4">
                      <div>
                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Stock Level</p>
-                       <p className={`text-xl font-[900] tracking-tighter ${Number(item.totalStock) < 500 ? 'text-red-500' : 'text-emerald-700'}`}>
-                         {((Number(item.totalStock) || 0) / 1000).toFixed(2)} <span className="text-[10px] font-bold text-gray-400">KG</span>
+                       <p className={`text-xl font-[900] tracking-tighter ${Number(item.totalStock) < (item.type === 'combo' ? 1 : 500) ? 'text-red-500' : 'text-emerald-700'}`}>
+                         {formatStock(item)}
                        </p>
                      </div>
                      
@@ -394,8 +400,8 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-900 px-3 py-1.5 rounded-full uppercase tracking-tighter">{item.category}</span>
                              </td>
                              <td className="px-8 py-6 text-center">
-                                <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black tracking-tighter ${Number(item.totalStock) < 500 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
-                                    {((Number(item.totalStock) || 0) / 1000).toFixed(2)} kg
+                                <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black tracking-tighter ${Number(item.totalStock) < (item.type === 'combo' ? 1 : 500) ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
+                                  {formatStock(item)}
                                 </div>
                              </td>
                              <td className="px-8 py-6 text-right">
@@ -533,10 +539,11 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Arrival Quantity (KG) *</label>
+                          <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest ml-1">Arrival Quantity ({isCombo ? 'PC' : 'KG'}) *</label>
                           <input
                             type="number"
                             min="0"
+                            step={isCombo ? "1" : "0.01"}
                             name="currentQuantity"
                             value={form.currentQuantity}
                             onChange={handleChange}
@@ -575,8 +582,7 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
                            <p className="text-xl font-black text-slate-900 tracking-tighter">
                               {(() => {
                                 const matched = liveStocks.find(p => p.productId === form.productId);
-                                const current = Number(matched?.totalStock) || 0;
-                                return `${current / 1000} KG`;
+                                return formatStock(matched);
                               })()}
                            </p>
                         </div>
@@ -584,7 +590,7 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
                         <div className="text-center">
                            <p className="text-[9px] font-black text-emerald-800 uppercase tracking-widest mb-1">New Batch</p>
                            <p className="text-xl font-black text-blue-600 tracking-tighter">
-                              + {form.currentQuantity || 0} KG
+                              + {form.currentQuantity || 0} {isCombo ? 'PC' : 'KG'}
                            </p>
                         </div>
                         <div className="h-px w-8 bg-emerald-200 hidden md:block" />
@@ -594,9 +600,11 @@ const StockDetail = ({ adminData, onInventoryChanged }) => {
                               {(() => {
                                 const matched = liveStocks.find(p => p.productId === form.productId);
                                 const current = Number(matched?.totalStock) || 0;
-                                const added = (Number(form.currentQuantity) || 0) * 1000;
+                                const added = isCombo
+                                  ? (Number(form.currentQuantity) || 0)
+                                  : (Number(form.currentQuantity) || 0) * 1000;
                                 const total = current + added;
-                                return `${total / 1000} KG`;
+                                return isCombo ? `${total} PC` : `${total / 1000} KG`;
                               })()}
                            </p>
                         </div>
