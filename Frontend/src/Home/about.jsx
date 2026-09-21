@@ -83,24 +83,24 @@ const About = () => {
 
   const journeySteps = [
     {
-      step: "01",
+      year: "2023",
+      title: "Started with a Purity-First Promise",
+      desc: "Kavi’s Dry Fruits began with a simple goal: make naturally fresh, carefully selected dry fruits available for every family.",
+    },
+    {
+      year: "2024",
       title: "Careful Orchard Selection",
-      desc: "We partner exclusively with verified growers renowned for cultivating premier-grade varieties.",
+      desc: "We built trusted relationships with growers and refined our sourcing to bring premium quality and consistent freshness.",
     },
     {
-      step: "02",
-      title: "Artisanal Sorting & Grading",
-      desc: "Each batch undergoes rigorous grading by size, moisture balance, aroma, and crisp texture.",
+      year: "2025",
+      title: "Hygienic Packing & Wider Reach",
+      desc: "Better food-grade packing and dependable delivery helped us serve more health-conscious households across India.",
     },
     {
-      step: "03",
-      title: "Hygienic Food-Grade Packing",
-      desc: "Nitrogen flushed and hermetically sealed to preserve farm-fresh crunch and delicate essential oils.",
-    },
-    {
-      step: "04",
-      title: "Fresh to Your Doorstep",
-      desc: "Quickly dispatched to ensure you and your loved ones receive fresh, nutritious dry fruits every time.",
+      year: "2026",
+      title: "Freshness Delivered Every Day",
+      desc: "Today, we continue to grow with the same promise: handpicked products, honest quality, and a better snacking experience.",
     },
   ];
 
@@ -129,10 +129,10 @@ const About = () => {
           <FaLeaf className="text-emerald-600" />
           <span>Pure • Handpicked • Farm-Fresh</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
           Crafting Health, <span className="text-primary">Delivering Purity</span>
         </h1>
-        <p className="mt-4 text-slate-600 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
+        <p className="mt-4 max-w-2xl mx-auto text-sm sm:text-base leading-6 text-slate-600">
           Welcome to Kavi’s Dry Fruits. We bring nature’s richest wholesome treats straight from trusted orchards to your daily wellness routine.
         </p>
         <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-primary mx-auto mt-6 rounded-full" />
@@ -147,15 +147,15 @@ const About = () => {
               <FaAward className="text-emerald-600" /> Our Heritage & Philosophy
             </div>
 
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 leading-tight">
               Kavi’s Dry Fruits – <span className="text-primary">Where Purity Meets Power</span>
             </h2>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+            <p className="text-sm text-justify sm:text-base leading-6 text-slate-600">
               At <strong className="text-slate-900 font-semibold">Kavi’s Dry Fruits</strong>, we believe that great health starts with what you eat. That’s why we bring you premium-quality dry fruits, nuts, seeds, and superfoods—sourced from trusted farms, packed with care, and delivered fresh to your doorstep.
             </p>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+            <p className="text-sm text-justify sm:text-base leading-6 text-slate-600">
               We are not just a store—we are your partner in building a healthier, happier lifestyle. From energizing morning breakfasts and guilt-free snacking to festive gifting, our wholesome selection is curated with an unwavering commitment to purity and flavor.
             </p>
 
@@ -163,19 +163,19 @@ const About = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">100% Raw & Natural Goodness</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">100% Raw & Natural Goodness</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">Zero Artificial Preservatives</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">Zero Artificial Preservatives</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">Moisture-Proof Nitrogen Sealed</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">Moisture-Proof Nitrogen Sealed</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">Prompt Pan-India Delivery</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">Prompt Pan-India Delivery</span>
               </div>
             </div>
 
@@ -183,14 +183,14 @@ const About = () => {
             <div className="pt-4 flex flex-wrap items-center gap-4">
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-green-700 transition shadow-lg shadow-emerald-700/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex items-center gap-2 px-5 py-3 text-sm rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-green-700 transition shadow-lg shadow-emerald-700/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 sm:px-6 sm:py-3.5"
               >
                 <span>Explore Fresh Collection</span>
                 <FaArrowRight className="text-sm" />
               </Link>
               <Link
                 to="/contactus"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition shadow-xs hover:border-slate-300"
+                className="inline-flex items-center gap-2 px-5 py-3 text-sm rounded-xl font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition shadow-xs hover:border-slate-300 sm:px-6 sm:py-3.5"
               >
                 <span>Get In Touch</span>
               </Link>
@@ -257,7 +257,7 @@ const About = () => {
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-emerald-100 shadow-xl shadow-emerald-900/5">
           <div className="text-center max-w-xl mx-auto mb-8">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Proven Trust & Growth</span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
               Our Journey in Numbers
             </h3>
           </div>
@@ -274,7 +274,7 @@ const About = () => {
                     <Icon />
                   </div>
 
-                  <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+                  <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                     {startCount ? (
                       <CountUp
                         end={item.number}
@@ -286,7 +286,7 @@ const About = () => {
                     )}
                   </div>
 
-                  <h4 className="mt-2 text-lg font-bold text-emerald-900">
+                  <h4 className="mt-2 text-base font-bold text-emerald-900 sm:text-lg">
                     {item.label}
                   </h4>
 
@@ -300,13 +300,65 @@ const About = () => {
         </div>
       </section>
 
+      {/* Brand journey timeline */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">Our milestones</span>
+            <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Our Journey <span className="text-primary">So Far</span>
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+              From careful sourcing to doorstep delivery, every step is shaped by our promise of freshness and trust.
+            </p>
+            <div className="mx-auto mt-5 h-1 w-14 rounded-full bg-gradient-to-r from-amber-500 to-primary" />
+          </div>
+
+          <div className="relative">
+            <div className="absolute bottom-0 left-4 top-0 w-px bg-gradient-to-b from-amber-400 via-emerald-500 to-emerald-200 lg:left-1/2 lg:-translate-x-1/2" />
+
+            <div className="space-y-8 sm:space-y-12">
+              {journeySteps.map((item, index) => {
+                const isRight = index % 2 === 0;
+
+                return (
+                  <div key={item.year} className="relative grid grid-cols-[2rem_1fr] items-center gap-4 lg:grid-cols-[1fr_2rem_1fr] lg:gap-2">
+                    <div className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-emerald-600 shadow-md shadow-emerald-700/20 lg:left-1/2">
+                    </div>
+
+                    <div className={`${isRight ? "lg:col-start-3" : "lg:col-start-1 lg:row-start-1"} col-start-2`}>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-md shadow-emerald-900/5 transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-lg sm:p-6">
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-base font-black text-amber-700 sm:text-lg lg:hidden">
+                            {item.year}
+                          </span>
+                          <span className="h-px flex-1 bg-emerald-100" />
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 sm:text-lg">{item.title}</h4>
+                        <p className="mt-2 text-xs leading-6 text-slate-600 sm:text-sm text-justify">{item.desc}</p>
+                      </div>
+                    </div>
+
+                    <div className={`${isRight ? "lg:col-start-1 lg:row-start-1 lg:justify-self-end lg:mr-1" : "lg:col-start-3 lg:row-start-1 lg:justify-self-start lg:ml-1"} hidden items-center lg:flex`}>
+                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-5 py-2 text-xl font-black text-amber-700 shadow-sm shadow-amber-100">
+                        {item.year}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Brand Pillars Bento Grid */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/60 px-3 py-1 rounded-full border border-emerald-200">
             Uncompromising Standards
           </span>
-          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mt-2">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 mt-2">
             Why Discerning Food Lovers Choose Us
           </h3>
           <p className="mt-2 text-slate-600 text-sm sm:text-base">
@@ -325,7 +377,7 @@ const About = () => {
                 <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
                   <PillarIcon />
                 </div>
-                <h4 className="text-lg font-bold text-slate-900 mb-2">
+                <h4 className="text-base font-bold text-slate-900 mb-2 sm:text-lg">
                   {pillar.title}
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -337,55 +389,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* 4-Step Quality Process */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">Our Quality Assurance</span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-              From Orchard to Your Hands in 4 Simple Steps
-            </h3>
-            <p className="text-slate-300 text-sm mt-2">
-              How we preserve peak crunch, natural aroma, and essential nutrients.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            {journeySteps.map((step, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs hover:bg-white/10 transition duration-300"
-              >
-                <span className="text-3xl font-black text-emerald-400 font-mono block mb-2">
-                  {step.step}
-                </span>
-                <h4 className="text-base font-bold text-white mb-1.5">
-                  {step.title}
-                </h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick CTA inside banner */}
-          <div className="mt-10 pt-8 border-t border-white/10 text-center flex flex-col sm:flex-row items-center justify-center gap-4">
-            <span className="text-sm font-medium text-slate-300">
-              Ready to experience wholesome, nutrient-dense nutrition?
-            </span>
-            <Link
-              to="/shop"
-              className="px-6 py-2.5 rounded-xl font-bold text-emerald-950 bg-emerald-300 hover:bg-emerald-200 transition shadow-md text-sm inline-flex items-center gap-2"
-            >
-              <span>Shop All Products</span>
-              <FaArrowRight className="text-xs" />
-            </Link>
-          </div>
-        </div>
-      </section>
+    
     </div>
   );
 };

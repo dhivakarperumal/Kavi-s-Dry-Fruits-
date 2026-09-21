@@ -107,8 +107,8 @@ const ClientsAbout = () => {
             <div className="flex gap-6 flex-col sm:flex-row w-full justify-between">
               {visibleReviews.map((review, index) => (
                 <div key={review.id || index} className="w-full max-w-md">
-                  <p className="text-4xl text-left text-black font-bold">❝</p>
-                  <h4 className="font-boluserNamed text-justify text-lg mb-2">
+                  <p className="text-3xl text-left text-black font-bold">❝</p>
+                  <h4 className="font-boluserNamed text-justify text-base mb-2 sm:text-lg">
                     {review.userName}
                   </h4>
                   {/* <h4 className="font-bold text-justify text-sm text-gray-500 mb-1">

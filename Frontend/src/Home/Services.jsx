@@ -35,7 +35,7 @@ const Services = () => {
                   />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 uppercase tracking-wide">
+              <h3 className="text-base font-semibold text-gray-800 uppercase tracking-wide sm:text-lg">
                 {service.name}
               </h3>
             </div>
