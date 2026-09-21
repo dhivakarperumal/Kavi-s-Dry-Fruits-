@@ -1062,7 +1062,6 @@
                       const isOut = availableStock <= 0;
                       const exceedsStock = availableStock > 0 && totalRequestedForProduct > availableStock;
                       const lowStock = !isOut && !exceedsStock && isLowStock(availableStock, isCombo);
-                      const isMaxReached = availableStock <= 0 || qty >= maxAllowedQty;
 
                       return (
                         <tr key={itemKey} className="border-b align-top">
@@ -1102,12 +1101,7 @@
                               <button
                                 type="button"
                                 onClick={() => updateQty(itemKey, -1)}
-                                disabled={qty <= 1}
-                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
-                                  qty <= 1
-                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    : "bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800"
-                                }`}
+                                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800 transition-colors"
                               >
                                 -
                               </button>
@@ -1117,20 +1111,13 @@
                                 value={qty}
                                 onChange={(e) => setQty(itemKey, e.target.value)}
                                 min={1}
-                                max={maxAllowedQty}
                                 className="w-12 text-center border rounded px-1 py-1 font-medium"
                               />
 
                               <button
                                 type="button"
                                 onClick={() => updateQty(itemKey, +1)}
-                                disabled={isMaxReached}
-                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
-                                  isMaxReached
-                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    : "bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800"
-                                }`}
-                                title={isMaxReached ? `Maximum available stock (${formatStockDisplay(availableStock, isCombo)}) reached` : "Increase quantity"}
+                                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800 transition-colors"
                               >
                                 +
                               </button>
