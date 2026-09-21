@@ -112,7 +112,7 @@ exports.updateCombo = async (req, res) => {
     const [oldRows] = await connection.query(`SELECT totalStock FROM combos WHERE id = ?`, [id]);
     const oldStock = oldRows.length > 0 ? Number(oldRows[0].totalStock || 0) : 0;
     const requestedStock = Number(totalStock);
-    const newStock = Number.isFinite(requestedStock) && requestedStock > 0 ? requestedStock : oldStock;
+    const newStock = Number.isFinite(requestedStock) && requestedStock >= 0 ? requestedStock : oldStock;
     const delta = newStock - oldStock;
 
     await connection.query(

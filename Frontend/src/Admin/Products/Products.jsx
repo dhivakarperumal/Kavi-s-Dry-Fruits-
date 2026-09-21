@@ -175,14 +175,16 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
   useEffect(() => {
     if (editItem) {
       const savedStock = Number(editItem.totalStock);
-      const savedWeightKg = Number.isFinite(savedStock) && savedStock > 0
+      const savedWeightKg = Number.isFinite(savedStock) && savedStock >= 0
         ? savedStock / 1000
         : Number(editItem.totalWeight || 0);
+      const savedVariants = safeParse(editItem.variants);
+      const savedImages = safeParse(editItem.images).filter((image) => typeof image === "string");
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
-        variants: safeParse(editItem.variants),
-        images: safeParse(editItem.images),
+        variants: savedVariants.length ? savedVariants : [{ weight: "", mrp: "", offerPercent: "", offerPrice: "" }],
+        images: savedImages,
         totalWeight: savedWeightKg,
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
@@ -236,7 +238,8 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
     setLoading(true);
     try {
       const enteredWeightKg = Number(form.totalWeight);
-      const currentStock = Number.isFinite(enteredWeightKg) && enteredWeightKg > 0
+      const hasEnteredWeight = String(form.totalWeight ?? "").trim() !== "" && Number.isFinite(enteredWeightKg) && enteredWeightKg >= 0;
+      const currentStock = hasEnteredWeight
         ? enteredWeightKg * 1000
         : Number(form.totalStock) || 0;
       const formData = new FormData();
@@ -244,7 +247,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
         ...form,
         totalStock: currentStock,
         healthBenefits: JSON.stringify(form.healthBenefits),
-        images: JSON.stringify(form.images.filter(image => !image.startsWith("blob:"))),
+        images: JSON.stringify(form.images.filter((image) => typeof image === "string" && !image.startsWith("blob:"))),
         variants: JSON.stringify(form.variants),
       }).forEach(([key, value]) => formData.append(key, value ?? ""));
       imageFiles.forEach(file => formData.append("images", file));
@@ -313,7 +316,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                   </div>
                 </div>
                 <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1 flex items-center gap-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-2">
                       Total Weight (kg) *
                       <span className="text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider bg-orange-100 text-orange-500">Manual</span>
                     </label>
@@ -323,7 +326,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
                         value={form.totalWeight}
                         onChange={(e) => setForm({ ...form, totalWeight: e.target.value })}
                         required
-                        min="1"
+                        min="0"
                         className="w-full rounded-2xl px-6 py-4 font-black border-2 bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-500 shadow-sm outline-none transition-all"
                         placeholder="Enter kilograms, e.g. 50"
                       />
@@ -480,20 +483,25 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
 
   useEffect(() => {
     if (editItem) {
-      const parsedDetails = typeof editItem.comboDetails === 'string' 
-        ? JSON.parse(editItem.comboDetails || '{}') 
-        : editItem.comboDetails;
+      let parsedDetails = editItem.comboDetails;
+      if (typeof parsedDetails === 'string') {
+        try { parsedDetails = JSON.parse(parsedDetails || '{}'); } catch { parsedDetails = {}; }
+      }
+      const savedImages = safeParse(editItem.images).filter((image) => typeof image === "string");
+      const savedComboItems = safeParse(editItem.comboItems);
       const storedWeight = Number(parsedDetails?.totalWeight || editItem.totalWeight || 0);
       // Older combo records stored the kilogram input as grams one extra time.
       const resolvedWeight = storedWeight >= 1000000 ? storedWeight / 1000 : storedWeight;
       setForm({
         ...editItem,
         healthBenefits: safeParse(editItem.healthBenefits).length ? safeParse(editItem.healthBenefits) : [""],
-        images: safeParse(editItem.images),
-        comboItems: safeParse(editItem.comboItems),
+        images: savedImages,
+        comboItems: savedComboItems.length ? savedComboItems : [{ name: "", weight: "", image: "" }],
         comboDetails: parsedDetails,
         totalWeight: resolvedWeight,
-        totalStock: String(editItem.totalStock || effectiveTotalWeight || 0),
+        totalStock: editItem.totalStock !== undefined && editItem.totalStock !== null
+          ? String(editItem.totalStock)
+          : String(effectiveTotalWeight || 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
       setImageFiles([]);
@@ -576,7 +584,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       Object.entries({
         ...submitData,
         healthBenefits: JSON.stringify(submitData.healthBenefits),
-        images: JSON.stringify(submitData.images.filter(image => !image.startsWith("blob:"))),
+        images: JSON.stringify(submitData.images.filter((image) => typeof image === "string" && !image.startsWith("blob:"))),
         comboItems: JSON.stringify(submitData.comboItems),
         comboDetails: JSON.stringify(submitData.comboDetails),
       }).forEach(([key, value]) => formData.append(key, value ?? ""));

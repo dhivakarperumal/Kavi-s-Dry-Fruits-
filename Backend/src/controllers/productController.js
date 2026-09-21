@@ -86,10 +86,11 @@ exports.updateProduct = async (req, res) => {
     const [existingRows] = await db.query('SELECT totalStock FROM products WHERE id = ?', [id]);
     const existingStock = existingRows.length > 0 ? Number(existingRows[0].totalStock || 0) : 0;
     const requestedStock = Number(totalStock);
-    const hasWeight = totalWeight !== undefined && totalWeight !== null && String(totalWeight).trim() !== '';
-    const storedTotalStock = hasWeight && normalizedTotalWeight > 0
+    const parsedWeight = Number(totalWeight);
+    const hasWeight = totalWeight !== undefined && totalWeight !== null && String(totalWeight).trim() !== '' && Number.isFinite(parsedWeight) && parsedWeight >= 0;
+    const storedTotalStock = hasWeight
       ? normalizedTotalWeight
-      : Number.isFinite(requestedStock) && requestedStock > 0
+      : Number.isFinite(requestedStock) && requestedStock >= 0
         ? requestedStock
         : existingStock;
 
