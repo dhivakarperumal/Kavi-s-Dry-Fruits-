@@ -9,6 +9,7 @@ import LodingPage from "../Component/LoadingPage";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
+import { isLowStock, formatStockDisplay } from "../utils/stockUtils";
 
 const Combos = () => {
   const { allProducts, addToFav, addToCart, loadingProducts } = useStore();
@@ -242,6 +243,7 @@ const Combos = () => {
               
               const avgRating = product.rating || 4.5;
               const isOutOfStock = product.stock <= 0;
+              const lowStock = !isOutOfStock && isLowStock(product.stock, true);
 
               return (
                  <div
@@ -258,32 +260,12 @@ const Combos = () => {
                         loading="lazy"
                       />
                     </Link>
-                    {/* <span className="absolute top-2 left-0 bg-primary text-white text-xs px-3 py-1 rounded-r-full shadow">
-                      Bestseller
-                    </span> */}
-                    {/* <button
-                      onClick={() => {
-                        addToFav({
-                          ...product,
-                          imageUrl: product.images[0],
-                          qty: 1,
-                          selectedWeight: activeWeight,
-                          price,
-                        });
-                        toast.success("Added to favorites!");
-                      }}
-                      className="absolute top-2 right-2 border p-2 rounded-full group-hover:text-white group-hover:bg-primary transition cursor-pointer"
-                    >
-                      <FaRegHeart />
-                    </button> */}
-                    {/* <p className="absolute left-0 bottom-2 py-1 px-3 bg-red-500 text-white rounded-br-full rounded-tr-full">
-                      {offer}%
-                    </p> */}
+                    {lowStock && (
+                      <span className="absolute bottom-2 left-2 bg-amber-500/90 text-white text-[11px] font-medium px-2 py-0.5 rounded shadow">
+                        Only {formatStockDisplay(product.stock, true)} left
+                      </span>
+                    )}
                   </div>
-
-               
-
-                  
 
                  <div className="w-full">
                    <h3 className="font-bold text-lg mb-1 mt-2 text-center">{product.name}</h3>
@@ -324,6 +306,11 @@ const Combos = () => {
                       ) : (
                         <p className="text-center text-gray-600 mt-5 text-sm mb-2">
                           Price: ₹{price}
+                        </p>
+                      )}
+                      {lowStock && (
+                        <p className="text-center text-amber-600 text-xs mb-3 font-medium">
+                          Low Stock: Only {formatStockDisplay(product.stock, true)} left
                         </p>
                       )}
                     </>

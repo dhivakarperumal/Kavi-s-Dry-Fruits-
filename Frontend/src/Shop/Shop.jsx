@@ -14,6 +14,7 @@ import { ProductSkeletonGrid } from "../Component/SkeletonLoader";
 import ProductCard from "../Component/ProductCard";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
+import { parseWeightToGrams } from "../utils/stockUtils";
 
 const categories = [
   "All",
@@ -319,7 +320,9 @@ const Shop = () => {
                     const activeWeight =
                       selectedWeight !== "All"
                         ? selectedWeight
-                        : product.weights?.[0];
+                        : (product.weights || []).find(
+                            (w) => parseWeightToGrams(w) <= (product.stock ?? product.totalStock ?? 0)
+                          ) || product.weights?.[0];
 
                     return (
                       <ProductCard

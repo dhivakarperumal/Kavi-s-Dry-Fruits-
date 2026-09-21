@@ -6,6 +6,7 @@ import { IoCartOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import OptimizedImage from "./OptimizedImage";
+import { formatStockDisplay, isProductOutOfStock, isLowStock, checkVariantStock } from "../utils/stockUtils";
 
 const ProductCard = React.memo(({
   product,
@@ -15,6 +16,11 @@ const ProductCard = React.memo(({
   favItems = [],
 }) => {
   const isFavorite = favItems.some(item => String(item.productId) === String(product.id));
+  const stock = Number(product.stock ?? product.totalStock ?? 0);
+  const isCombo = product.category === "Combo" || product.type === "combo";
+  const isOutOfStock = product.isOutOfStock ?? isProductOutOfStock(product);
+  const lowStock = isLowStock(product);
+  const variantCheck = checkVariantStock(activeWeight, 1, stock, isCombo);
 
   // Get price object for the active weight
   const priceObj = product.prices?.[activeWeight];
@@ -59,13 +65,17 @@ const ProductCard = React.memo(({
 
   const handleAddToCart = (e) => {
     e.preventDefault();
-    if (product.isOutOfStock) {
+    if (isOutOfStock) {
       toast.error("Out of Stock");
+      return;
+    }
+    if (!variantCheck.canFulfill) {
+      toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock. Please select an available package size.`);
       return;
     }
     addToCart({
       ...product,
-      imageUrl: product.images[0],
+      imageUrl: product.images?.[0] || product.image || "",
       qty: 1,
       selectedWeight: activeWeight,
       price: finalPrice,
@@ -85,12 +95,17 @@ const ProductCard = React.memo(({
             loading="lazy"
           />
         </Link>
-        {product.isOutOfStock && (
+        {isOutOfStock && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10 p-4">
             <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-black uppercase tracking-widest text-xs shadow-xl transform -rotate-12 border-2 border-white">
               Out of Stock
             </span>
           </div>
+        )}
+        {lowStock && !isOutOfStock && (
+          <span className="absolute bottom-2 left-2 z-10 bg-amber-500/95 text-white text-[10px] font-black px-2.5 py-1 rounded-md shadow uppercase tracking-wider">
+            Only {formatStockDisplay(stock, isCombo)} left
+          </span>
         )}
         <span className="absolute top-2 left-0 bg-primary text-white text-xs px-3 py-1 rounded-r-full shadow">
           Bestseller
@@ -118,12 +133,15 @@ const ProductCard = React.memo(({
       <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
       <div className="flex justify-between items-center mt-auto px-1">
         <button
-          disabled={product.isOutOfStock}
+          disabled={isOutOfStock}
           onClick={handleAddToCart}
-          className={`${product.isOutOfStock
+          className={`${isOutOfStock
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green1 hover:bg-green2"
-            } text-white w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition cursor-pointer`}
+              : !variantCheck.canFulfill
+              ? "bg-amber-600 hover:bg-amber-700 cursor-pointer"
+              : "bg-green1 hover:bg-green2 cursor-pointer"
+            } text-white w-1/2 py-2 rounded-md text-xl flex justify-center items-center transition`}
+          title={!variantCheck.canFulfill ? `Only ${formatStockDisplay(stock, isCombo)} available` : "Add to Cart"}
         >
           <IoCartOutline />
         </button>
@@ -139,6 +157,8 @@ const ProductCard = React.memo(({
     prevProps.product.id === nextProps.product.id &&
     prevProps.activeWeight === nextProps.activeWeight &&
     prevProps.product.isOutOfStock === nextProps.product.isOutOfStock &&
+    prevProps.product.stock === nextProps.product.stock &&
+    prevProps.product.totalStock === nextProps.product.totalStock &&
     prevProps.product.rating === nextProps.product.rating &&
     prevProps.favItems?.length === nextProps.favItems?.length
   );

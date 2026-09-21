@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
+import { isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
 
 // --------------------------------------------
 // MEMOIZED CART ROW (ONLY re-renders when item changes)
@@ -18,6 +19,7 @@ const CartRow = React.memo(
     removeItem,
     updatingWeightId,
     handleWeightChange,
+    availableStock,
   }) => {
     const imgSource = Array.isArray(item.image)
       ? item.image[0]
@@ -28,6 +30,14 @@ const CartRow = React.memo(
 
     // disable select when this item is being updated
     const isUpdating = updatingWeightId === item.id;
+
+    const isCombo = item.category === "Combo" || item.type === "combo";
+    const requestedStock = isCombo
+      ? parseInt(item?.quantity || 1, 10)
+      : parseInt(item?.quantity || 1, 10) * parseWeightToGrams(item.selectedWeight);
+    const exceedsStock = availableStock !== undefined && requestedStock > availableStock;
+    const isOut = availableStock !== undefined && availableStock <= 0;
+    const lowStock = availableStock !== undefined && !isOut && !exceedsStock && isLowStock(availableStock, isCombo);
 
     return (
       <tr key={item.id} className="border-b bg-green4">
@@ -41,6 +51,17 @@ const CartRow = React.memo(
           )}
           <div className="truncate">
             <p className="font-bold truncate">{item.name}</p>
+            {isOut ? (
+              <p className="text-xs text-red-600 font-semibold">Out of Stock</p>
+            ) : exceedsStock ? (
+              <p className="text-xs text-red-600 font-semibold">
+                ⚠️ Exceeds stock (Only {formatStockDisplay(availableStock, isCombo)} available)
+              </p>
+            ) : lowStock ? (
+              <p className="text-xs text-amber-600 font-medium">
+                ⚡ Only {formatStockDisplay(availableStock, isCombo)} left in stock
+              </p>
+            ) : null}
           </div>
         </td>
 
@@ -59,11 +80,15 @@ const CartRow = React.memo(
                 isUpdating ? "opacity-50 grayscale" : ""
               }`}
             >
-              {item.weights && item.weights.map((w) => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
-              ))}
+              {item.weights && item.weights.map((w) => {
+                const reqGrams = (item.quantity || 1) * parseWeightToGrams(w);
+                const disabledOption = availableStock !== undefined && reqGrams > availableStock;
+                return (
+                  <option key={w} value={w} disabled={disabledOption}>
+                    {w} {disabledOption ? `(Max ${formatStockDisplay(availableStock, false)})` : ''}
+                  </option>
+                );
+              })}
             </select>
           )}
         </td>
@@ -109,7 +134,10 @@ const CartRow = React.memo(
   },
 
   // Custom compare — only re-render when the item content changes
-  (prev, next) => JSON.stringify(prev.item) === JSON.stringify(next.item)
+  (prev, next) =>
+    JSON.stringify(prev.item) === JSON.stringify(next.item) &&
+    prev.availableStock === next.availableStock &&
+    prev.updatingWeightId === next.updatingWeightId
 );
 
 // --------------------------------------------
@@ -118,6 +146,7 @@ const CartRow = React.memo(
 const AddToCart = () => {
   const {
     cartItems,
+    allProducts,
     increaseQuantity,
     decreaseQuantity,
     removeItem,
@@ -202,6 +231,21 @@ const AddToCart = () => {
           return;
         }
 
+        // Validate available stock for requested weight & quantity
+        const matched = allProducts.find((p) => String(p.id) === String(item.productId || item.id));
+        const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+        const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
+
+        if (!isCombo) {
+          const requestedGrams = (item.quantity || 1) * parseWeightToGrams(newWeight);
+          if (requestedGrams > availableStock) {
+            toast.error(
+              `Only ${formatStockDisplay(availableStock, false)} available. Cannot select ${newWeight} for ${item.quantity} item(s).`
+            );
+            return;
+          }
+        }
+
         // prevent double updates
         if (updatingWeightId === item.id) return;
 
@@ -224,7 +268,7 @@ const AddToCart = () => {
         setUpdatingWeightId(null);
       }
     },
-    [updateWeight, updatingWeightId]
+    [allProducts, updateWeight, updatingWeightId]
   );
 
   const incQty = useCallback((item) => increaseQuantity(item), [increaseQuantity]);
@@ -249,6 +293,35 @@ const AddToCart = () => {
 
   // Guarded proceed handler
   const handleProceed = useCallback(() => {
+    // Check stock for all items
+    for (const item of cartItems) {
+      const matched = allProducts.find((p) => String(p.id) === String(item.productId || item.id));
+      const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+      const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
+      const qty = parseInt(item.quantity || item.qty || 1, 10);
+
+      if (availableStock <= 0) {
+        toast.error(`"${item.name}" is out of stock. Please remove it to proceed.`);
+        return;
+      }
+
+      if (isCombo) {
+        if (qty > availableStock) {
+          toast.error(`Only ${availableStock} units available for combo "${item.name}". Please reduce quantity.`);
+          return;
+        }
+      } else {
+        const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
+        const totalGrams = weightGrams * qty;
+        if (totalGrams > availableStock) {
+          toast.error(
+            `Only ${formatStockDisplay(availableStock, false)} available for "${item.name}". Your cart requires ${formatStockDisplay(totalGrams, false)}. Please adjust weight or quantity.`
+          );
+          return;
+        }
+      }
+    }
+
     if (!isMinimumMet) {
       toast.error(
         `Minimum purchase is ₹${MIN_PURCHASE}. Add ₹${remaining.toFixed(
@@ -258,7 +331,7 @@ const AddToCart = () => {
       return;
     }
     navigate("/checkout");
-  }, [isMinimumMet, remaining, navigate]);
+  }, [cartItems, allProducts, isMinimumMet, remaining, navigate]);
 
   return (
     <>
@@ -327,17 +400,22 @@ const AddToCart = () => {
                 </thead>
 
                 <tbody>
-                  {cartItems.map((item) => (
-                    <CartRow
-                      key={item.docId}
-                      item={item}
-                      increaseQuantity={incQty}
-                      decreaseQuantity={decQty}
-                      removeItem={remove}
-                      updatingWeightId={updatingWeightId}
-                      handleWeightChange={handleWeightChange}
-                    />
-                  ))}
+                  {cartItems.map((item) => {
+                    const matched = allProducts.find((p) => String(p.id) === String(item.productId || item.id));
+                    const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+                    return (
+                      <CartRow
+                        key={item.docId}
+                        item={item}
+                        increaseQuantity={incQty}
+                        decreaseQuantity={decQty}
+                        removeItem={remove}
+                        updatingWeightId={updatingWeightId}
+                        handleWeightChange={handleWeightChange}
+                        availableStock={availableStock}
+                      />
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

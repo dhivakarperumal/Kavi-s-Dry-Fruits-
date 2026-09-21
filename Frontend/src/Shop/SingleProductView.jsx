@@ -10,6 +10,7 @@ import { Helmet } from "react-helmet";
 import LodingPage from "../Component/LoadingPage";
 import OptimizedImage from "../Component/OptimizedImage";
 import api from "../services/api";
+import { parseWeightToGrams, formatStockDisplay, isProductOutOfStock, isLowStock, checkVariantStock } from "../utils/stockUtils";
 
 const SingleProductView = () => {
   const { id } = useParams();
@@ -54,7 +55,10 @@ const SingleProductView = () => {
 
       setProduct(selected);
       setSelectedImage(selected.images?.[0] || "");
-      setActiveWeight(selected.weights?.[0] || "");
+      const firstAvailableWeight = (selected.weights || []).find(
+        (w) => checkVariantStock(w, 1, selected.stock ?? selected.totalStock, false).canFulfill
+      ) || selected.weights?.[0] || "";
+      setActiveWeight(firstAvailableWeight);
       setQuantity(1);
 
       const related = allProducts.filter(
@@ -101,13 +105,29 @@ const SingleProductView = () => {
 
   const averageRating =
     typeof product.rating === "number" ? product.rating.toFixed(1) : "4.5";
-  const isOutOfStock = product.isOutOfStock;
+  const stock = Number(product.stock ?? product.totalStock ?? 0);
+  const isCombo = product.category === "Combo" || product.type === "combo";
+  const isOutOfStock = isProductOutOfStock(product);
+  const lowStock = isLowStock(product);
 
-  const increaseQty = () => setQuantity((q) => q + 1);
+  const variantCheck = checkVariantStock(activeWeight, quantity, stock, isCombo);
+  const isWeightExceedingStock = !variantCheck.canFulfill;
+
+  const increaseQty = () => {
+    const nextQty = quantity + 1;
+    const check = checkVariantStock(activeWeight, nextQty, stock, isCombo);
+    if (!check.canFulfill) {
+      return toast.error(`Cannot add more. Only ${formatStockDisplay(stock, isCombo)} available in stock.`);
+    }
+    setQuantity(nextQty);
+  };
   const decreaseQty = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
+    if (isWeightExceedingStock) {
+      return toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock. Cannot add ${quantity > 1 ? `${quantity}x ` : ""}${activeWeight}.`);
+    }
     const weight = activeWeight || 'Combo';
     addToCart({
       ...product,
@@ -285,17 +305,44 @@ const SingleProductView = () => {
                 </span>
               </p>
 
+              {/* Low Stock Indicator */}
+              {lowStock && !isOutOfStock && (
+                <div className="mt-3 inline-flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold shadow-sm">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  <span>Low Stock: Only <span className="text-amber-800 underline font-black">{formatStockDisplay(stock, isCombo)}</span> available in stock!</span>
+                </div>
+              )}
+
+              {/* Insufficient Stock Warning if selected weight/qty exceeds stock */}
+              {isWeightExceedingStock && !isOutOfStock && (
+                <div className="mt-3 p-3.5 bg-rose-50 border-2 border-rose-200 text-rose-800 rounded-xl text-xs sm:text-sm font-bold animate-in fade-in duration-300">
+                  <div className="flex items-start gap-2">
+                    <span className="text-base">⚠️</span>
+                    <div>
+                      <p className="font-black text-rose-900 uppercase tracking-wide text-xs">Insufficient Stock for Selection</p>
+                      <p className="mt-0.5 font-medium">
+                        Only <span className="font-bold underline">{formatStockDisplay(stock, isCombo)}</span> available in stock. Your selected size ({quantity > 1 ? `${quantity}x ` : ""}{activeWeight}) exceeds the available stock.
+                      </p>
+                      <p className="text-[11px] text-rose-600 mt-1">Please select an available package size or decrease quantity to proceed.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <select
                   value={activeWeight}
                   onChange={(e) => setActiveWeight(e.target.value)}
-                  className="px-4 py-2 border rounded-lg text-white font-semibold bg-primary cursor-pointer"
+                  className="px-4 py-2 border rounded-lg text-white font-semibold bg-primary cursor-pointer max-w-full"
                 >
-                  {product.weights?.map((w) => (
-                    <option key={w} value={w}>
-                      {w}
-                    </option>
-                  ))}
+                  {product.weights?.map((w) => {
+                    const check = checkVariantStock(w, 1, stock, isCombo);
+                    return (
+                      <option key={w} value={w}>
+                        {w} {!check.canFulfill ? ` (Only ${formatStockDisplay(stock, isCombo)} available)` : ""}
+                      </option>
+                    );
+                  })}
                 </select>
                 <div className="bg-primary text-white flex items-center border rounded-md overflow-hidden">
                   <button
@@ -319,17 +366,20 @@ const SingleProductView = () => {
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 mt-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`${isOutOfStock
+                  disabled={isOutOfStock || isWeightExceedingStock}
+                  className={`${(isOutOfStock || isWeightExceedingStock)
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-primary hover:bg-green-700 cursor-pointer"
-                    } text-white px-6 py-2 rounded-lg font-semibold `}
+                    } text-white px-6 py-2 rounded-lg font-semibold transition`}
                 >
-                  Add to Cart
+                  {isOutOfStock ? "Out of Stock" : isWeightExceedingStock ? `Insufficient Stock (${formatStockDisplay(stock, isCombo)} left)` : "Add to Cart"}
                 </button>
                 <div className="flex items-center justify-between gap-3">
                   <button
-                    onClick={() =>
+                    onClick={() => {
+                      if (isOutOfStock || isWeightExceedingStock) {
+                        return toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock.`);
+                      }
                       navigate("/checkout", {
                         state: {
                           checkoutProduct: {
@@ -340,13 +390,13 @@ const SingleProductView = () => {
                             img: product.images?.[0],
                           },
                         },
-                      })
-                    }
-                    disabled={isOutOfStock}
-                    className={`border ${isOutOfStock
+                      });
+                    }}
+                    disabled={isOutOfStock || isWeightExceedingStock}
+                    className={`border ${(isOutOfStock || isWeightExceedingStock)
                       ? "border-gray-300 text-gray-400 cursor-not-allowed"
-                      : "border-green-600 text-primary cursor-pointer"
-                      } px-6 py-2 rounded-lg font-semibold w-full`}
+                      : "border-green-600 text-primary cursor-pointer hover:bg-green-50"
+                      } px-6 py-2 rounded-lg font-semibold w-full transition`}
                   >
                     Buy Now
                   </button>

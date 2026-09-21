@@ -8,9 +8,10 @@
   import { Helmet } from "react-helmet";
   import api from "../services/api";
   import axios from "axios";
+  import { isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
 
   const Checkout = () => {
-    const { cartItems, clearCart, user } = useStore();
+    const { cartItems, clearCart, user, allProducts } = useStore();
     const navigate = useNavigate();
     const location = useLocation();
     const checkoutProduct = location.state?.checkoutProduct || null;
@@ -556,12 +557,34 @@
     };
 
     // ---------------- Qty update (local UI) ----------------
+    // ---------------- Qty update (local UI) ----------------
     const updateQty = (id, delta) => {
       setItemsToCheckout((prev) =>
         prev.map((item) => {
           if (item.id !== id) return item;
           const oldQty = parseInt(item.qty || item.quantity || 1, 10) || 1;
           const newQty = Math.max(1, oldQty + delta); // min 1
+
+          if (delta > 0) {
+            const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
+            const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+            const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+
+            if (isCombo) {
+              if (newQty > availableStock) {
+                toast.error(`Only ${availableStock} units available in stock`);
+                return item;
+              }
+            } else {
+              const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
+              const totalGrams = parseWeightToGrams(weightStr) * newQty;
+              if (totalGrams > availableStock) {
+                toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock`);
+                return item;
+              }
+            }
+          }
+
           return { ...item, qty: newQty };
         })
       );
@@ -570,7 +593,30 @@
     // Optional: allow direct qty set from an input (keeps min 1)
     const setQty = (id, value) => {
       const intVal = Math.max(1, parseInt(value || 1, 10) || 1);
-      setItemsToCheckout((prev) => prev.map((it) => (it.id === id ? { ...it, qty: intVal } : it)));
+      setItemsToCheckout((prev) =>
+        prev.map((item) => {
+          if (item.id !== id) return item;
+          const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
+          const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+          const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+
+          if (isCombo) {
+            if (intVal > availableStock) {
+              toast.error(`Only ${availableStock} units available in stock`);
+              return item;
+            }
+          } else {
+            const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
+            const totalGrams = parseWeightToGrams(weightStr) * intVal;
+            if (totalGrams > availableStock) {
+              toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock`);
+              return item;
+            }
+          }
+
+          return { ...item, qty: intVal };
+        })
+      );
     };
 
     // ---------------- Place order (save to Firestore + update stock) ----------------
@@ -671,6 +717,35 @@
       if (!isMinimumMet) {
         toast.error(`Minimum order value is ₹${MIN_PURCHASE}. Add ₹${remainingToMin.toFixed(2)} more to proceed.`);
         return;
+      }
+
+      // Stock pre-check before payment gateway
+      for (const item of itemsToCheckout) {
+        const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
+        const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+        const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+        const qty = parseInt(item.qty || item.quantity || 1, 10);
+
+        if (availableStock <= 0) {
+          toast.error(`"${item.name}" is out of stock. Please remove it to proceed.`);
+          return;
+        }
+
+        if (isCombo) {
+          if (qty > availableStock) {
+            toast.error(`Only ${availableStock} units available for combo "${item.name}". Please adjust quantity.`);
+            return;
+          }
+        } else {
+          const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
+          const totalGrams = parseWeightToGrams(weightStr) * qty;
+          if (totalGrams > availableStock) {
+            toast.error(
+              `Only ${formatStockDisplay(availableStock, false)} available for "${item.name}". Your order requires ${formatStockDisplay(totalGrams, false)}. Please adjust quantity.`
+            );
+            return;
+          }
+        }
       }
 
       setIsPlacingOrder(true);
@@ -879,6 +954,14 @@
                       const price = parsePrice(item.price || 0);
                       const itemTotal = price * qty;
 
+                      const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
+                      const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+                      const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+                      const requestedStock = isCombo ? qty : (parseWeightToGrams(item.selectedWeight || item.weight) * qty);
+                      const isOut = availableStock <= 0;
+                      const exceedsStock = requestedStock > availableStock;
+                      const lowStock = !isOut && !exceedsStock && isLowStock(availableStock, isCombo);
+
                       return (
                         <tr key={item.id} className="border-b align-top">
                           <td className="py-3 px-2">{index + 1}</td>
@@ -896,6 +979,17 @@
                             {item.selectedWeight && (
                               <p className="text-xs text-gray-600">Weight: {item.selectedWeight}</p>
                             )}
+                            {isOut ? (
+                              <p className="text-xs text-red-600 font-semibold mt-1">Out of Stock</p>
+                            ) : exceedsStock ? (
+                              <p className="text-xs text-red-600 font-semibold mt-1">
+                                ⚠️ Exceeds stock (Only {formatStockDisplay(availableStock, isCombo)} available)
+                              </p>
+                            ) : lowStock ? (
+                              <p className="text-xs text-amber-600 font-medium mt-1">
+                                ⚡ Low stock ({formatStockDisplay(availableStock, isCombo)} left)
+                              </p>
+                            ) : null}
                           </td>
 
                           <td className="py-3 px-3 text-right">₹{price.toFixed(2)}</td>

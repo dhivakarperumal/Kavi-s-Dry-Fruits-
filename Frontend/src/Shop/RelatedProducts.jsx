@@ -6,6 +6,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Helmet } from "react-helmet";
 import OptimizedImage from "../Component/OptimizedImage";
+import { isProductOutOfStock, isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
 
 const RelatedProducts = ({ relatedProducts }) => {
   const settings = {
@@ -74,7 +75,9 @@ const RelatedProducts = ({ relatedProducts }) => {
 
         <Slider {...settings} className="w-full">
           {relatedProducts.map((p) => {
-            const relWeight = p.weights?.[0];
+            const isCombo = p.category === "Combo" || p.type === "combo";
+            const purchasableWeight = !isCombo && p.weights?.find(w => parseWeightToGrams(w) <= (p.stock || 0));
+            const relWeight = purchasableWeight || p.weights?.[0];
             const priceObj = p.prices?.[relWeight];
             const offerPercent = p.offer || 0;
 
@@ -95,7 +98,8 @@ const RelatedProducts = ({ relatedProducts }) => {
             if (isNaN(relMrp)) relMrp = 0;
 
             const relRating = p.rating?.toFixed?.(1) || "4.5";
-            const isOutOfStock = p.stock <= 0;
+            const outOfStock = isProductOutOfStock(p);
+            const lowStock = !outOfStock && isLowStock(p.stock, isCombo);
 
             return (
               <div key={`${p.id}_${relWeight}`} className="!flex !justify-center px-2">
@@ -106,7 +110,7 @@ const RelatedProducts = ({ relatedProducts }) => {
                   <div className="absolute top-6 right-6 text-green1 border border-green1 p-2 rounded-full text-xl hover:bg-green1 hover:text-white transition">
                     <FiHeart />
                   </div>
-                  <div className="border-2 border-dotted border-green1 rounded-2xl bg-gray-50 h-56 flex items-center justify-center overflow-hidden">
+                  <div className="relative border-2 border-dotted border-green1 rounded-2xl bg-gray-50 h-56 flex items-center justify-center overflow-hidden">
                     <OptimizedImage
                       src={p.images?.[0]}
                       alt={`${p.name} - Kavi's Dry Fruits`}
@@ -114,6 +118,11 @@ const RelatedProducts = ({ relatedProducts }) => {
                       objectFit="contain"
                       loading="lazy"
                     />
+                    {lowStock && (
+                      <span className="absolute bottom-2 left-2 bg-amber-500/90 text-white text-[11px] font-medium px-2 py-0.5 rounded shadow">
+                        Only {formatStockDisplay(p.stock, isCombo)} left
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-semibold text-base sm:text-lg text-center mb-2 truncate whitespace-nowrap overflow-hidden text-ellipsis">
                     {p.name} ({relWeight})
@@ -125,18 +134,26 @@ const RelatedProducts = ({ relatedProducts }) => {
                     </span>{" "}
                     ₹{relPrice}
                   </p>
-                  {isOutOfStock && (
-                    <p className="text-red-500 text-sm font-medium mb-2">
+                  {outOfStock ? (
+                    <p className="text-red-500 text-sm font-medium mb-2 text-center">
                       Out of Stock
                     </p>
-                  )}
+                  ) : lowStock ? (
+                    <p className="text-amber-600 text-xs font-medium mb-2 text-center">
+                      Low Stock: Only {formatStockDisplay(p.stock, isCombo)} left
+                    </p>
+                  ) : null}
                   <div className="w-[90%] h-[1px] border-b border-dashed border-green1 mx-auto mb-3" />
                   <div className="flex justify-center mt-auto">
                     <Link
                       to={p.category === "Combo" || p.type === "combo" ? `/combos/${p.id}` : `/shop/${p.id}`}
-                      className="bg-green1 text-white px-6 py-2 rounded-md text-md hover:bg-green2 transition"
+                      className={`px-6 py-2 rounded-md text-md transition ${
+                        outOfStock
+                          ? "bg-gray-400 text-white cursor-not-allowed pointer-events-none"
+                          : "bg-green1 text-white hover:bg-green2"
+                      }`}
                     >
-                      Shop Now
+                      {outOfStock ? "Out of Stock" : "Shop Now"}
                     </Link>
                   </div>
                 </div>
