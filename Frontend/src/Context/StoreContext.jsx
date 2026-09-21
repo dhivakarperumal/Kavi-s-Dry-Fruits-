@@ -238,8 +238,9 @@ export const StoreProvider = ({ children }) => {
       const newQty = (existing?.quantity || 0) + (product.qty || 1);
 
       // Check available stock
+      const prodId = String(product.productId || (product.docId ? product.docId.split("_")[0] : product.id) || "");
       const matchedProd = allProducts.find(
-        (p) => String(p.id) === productId || String(p.productId) === productId
+        (p) => String(p.id) === prodId || String(p.productId) === prodId
       ) || product;
 
       const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
@@ -257,7 +258,7 @@ export const StoreProvider = ({ children }) => {
         const weightGrams = parseWeightToGrams(weight);
         if (weightGrams > 0 && (weightGrams * newQty) > availableStock) {
           return toast.error(
-            `Only ${formatStockDisplay(availableStock)} available in stock. Cannot add ${newQty > 1 ? newQty + "x " : ""}${weight}.`
+            `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot add ${newQty > 1 ? newQty + "x " : ""}${weight}.`
           );
         }
       }
@@ -313,9 +314,9 @@ export const StoreProvider = ({ children }) => {
   const increaseQuantity = async (item) => {
     if (!user || !item?.docId) return;
     try {
-      const productId = String(item.id || item.productId || "");
+      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
       const matchedProd = allProducts.find(
-        (p) => String(p.id) === productId || String(p.productId) === productId
+        (p) => String(p.id) === prodId || String(p.productId) === prodId
       ) || item;
 
       const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
@@ -328,12 +329,12 @@ export const StoreProvider = ({ children }) => {
 
       if (isCombo) {
         if (newQty > availableStock) {
-          return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock.`);
+          return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
         }
       } else {
-        const weightGrams = parseWeightToGrams(item.selectedWeight);
+        const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
         if (weightGrams > 0 && (weightGrams * newQty) > availableStock) {
-          return toast.error(`Cannot increase quantity. Only ${formatStockDisplay(availableStock)} left in stock.`);
+          return toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
         }
       }
 

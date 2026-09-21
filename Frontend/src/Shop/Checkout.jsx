@@ -557,65 +557,76 @@
     };
 
     // ---------------- Qty update (local UI) ----------------
-    // ---------------- Qty update (local UI) ----------------
     const updateQty = (id, delta) => {
-      setItemsToCheckout((prev) =>
-        prev.map((item) => {
-          if (item.id !== id) return item;
-          const oldQty = parseInt(item.qty || item.quantity || 1, 10) || 1;
-          const newQty = Math.max(1, oldQty + delta); // min 1
+      const currentItem = itemsToCheckout.find((it) => it.id === id);
+      if (!currentItem) return;
 
-          if (delta > 0) {
-            const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
-            const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
-            const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
+      const oldQty = parseInt(currentItem.qty || currentItem.quantity || 1, 10) || 1;
+      const newQty = Math.max(1, oldQty + delta); // min 1
 
-            if (isCombo) {
-              if (newQty > availableStock) {
-                toast.error(`Only ${availableStock} units available in stock`);
-                return item;
-              }
-            } else {
-              const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
-              const totalGrams = parseWeightToGrams(weightStr) * newQty;
-              if (totalGrams > availableStock) {
-                toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock`);
-                return item;
-              }
-            }
+      if (delta > 0) {
+        const prodId = String(currentItem.productId || (currentItem.docId ? currentItem.docId.split("_")[0] : currentItem.id) || "");
+        const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+        const isCombo = currentItem.category === "Combo" || currentItem.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+        const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? currentItem.stock ?? currentItem.totalStock ?? 0);
+
+        if (availableStock <= 0) {
+          toast.error("Sorry, this item is out of stock.");
+          return;
+        }
+
+        if (isCombo) {
+          if (newQty > availableStock) {
+            toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
+            return;
           }
+        } else {
+          const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
+          const totalGrams = parseWeightToGrams(weightStr) * newQty;
+          if (totalGrams > availableStock) {
+            toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
+            return;
+          }
+        }
+      }
 
-          return { ...item, qty: newQty };
-        })
+      setItemsToCheckout((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, qty: newQty } : item))
       );
     };
 
     // Optional: allow direct qty set from an input (keeps min 1)
     const setQty = (id, value) => {
+      const currentItem = itemsToCheckout.find((it) => it.id === id);
+      if (!currentItem) return;
+
       const intVal = Math.max(1, parseInt(value || 1, 10) || 1);
+      const prodId = String(currentItem.productId || (currentItem.docId ? currentItem.docId.split("_")[0] : currentItem.id) || "");
+      const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+      const isCombo = currentItem.category === "Combo" || currentItem.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
+      const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? currentItem.stock ?? currentItem.totalStock ?? 0);
+
+      if (availableStock <= 0) {
+        toast.error("Sorry, this item is out of stock.");
+        return;
+      }
+
+      if (isCombo) {
+        if (intVal > availableStock) {
+          toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
+          return;
+        }
+      } else {
+        const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
+        const totalGrams = parseWeightToGrams(weightStr) * intVal;
+        if (totalGrams > availableStock) {
+          toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
+          return;
+        }
+      }
+
       setItemsToCheckout((prev) =>
-        prev.map((item) => {
-          if (item.id !== id) return item;
-          const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
-          const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
-          const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
-
-          if (isCombo) {
-            if (intVal > availableStock) {
-              toast.error(`Only ${availableStock} units available in stock`);
-              return item;
-            }
-          } else {
-            const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
-            const totalGrams = parseWeightToGrams(weightStr) * intVal;
-            if (totalGrams > availableStock) {
-              toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock`);
-              return item;
-            }
-          }
-
-          return { ...item, qty: intVal };
-        })
+        prev.map((it) => (it.id === id ? { ...it, qty: intVal } : it))
       );
     };
 
@@ -721,7 +732,8 @@
 
       // Stock pre-check before payment gateway
       for (const item of itemsToCheckout) {
-        const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
+        const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+        const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
         const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
         const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
         const qty = parseInt(item.qty || item.quantity || 1, 10);
@@ -733,7 +745,7 @@
 
         if (isCombo) {
           if (qty > availableStock) {
-            toast.error(`Only ${availableStock} units available for combo "${item.name}". Please adjust quantity.`);
+            toast.error(`Only ${formatStockDisplay(availableStock, true)} available for combo "${item.name}". Please adjust quantity.`);
             return;
           }
         } else {
@@ -954,7 +966,8 @@
                       const price = parsePrice(item.price || 0);
                       const itemTotal = price * qty;
 
-                      const matchedProduct = allProducts?.find((p) => String(p.id) === String(item.productId || item.id));
+                      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+                      const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
                       const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
                       const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
                       const requestedStock = isCombo ? qty : (parseWeightToGrams(item.selectedWeight || item.weight) * qty);

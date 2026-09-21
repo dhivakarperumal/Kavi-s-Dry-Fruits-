@@ -232,7 +232,8 @@ const AddToCart = () => {
         }
 
         // Validate available stock for requested weight & quantity
-        const matched = allProducts.find((p) => String(p.id) === String(item.productId || item.id));
+        const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+        const matched = allProducts.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
         const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
         const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
 
@@ -240,7 +241,7 @@ const AddToCart = () => {
           const requestedGrams = (item.quantity || 1) * parseWeightToGrams(newWeight);
           if (requestedGrams > availableStock) {
             toast.error(
-              `Only ${formatStockDisplay(availableStock, false)} available. Cannot select ${newWeight} for ${item.quantity} item(s).`
+              `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot select ${newWeight} for ${item.quantity} item(s).`
             );
             return;
           }
@@ -295,7 +296,8 @@ const AddToCart = () => {
   const handleProceed = useCallback(() => {
     // Check stock for all items
     for (const item of cartItems) {
-      const matched = allProducts.find((p) => String(p.id) === String(item.productId || item.id));
+      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+      const matched = allProducts.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
       const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
       const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
       const qty = parseInt(item.quantity || item.qty || 1, 10);
@@ -307,7 +309,7 @@ const AddToCart = () => {
 
       if (isCombo) {
         if (qty > availableStock) {
-          toast.error(`Only ${availableStock} units available for combo "${item.name}". Please reduce quantity.`);
+          toast.error(`Only ${formatStockDisplay(availableStock, true)} available for combo "${item.name}". Please reduce quantity.`);
           return;
         }
       } else {
@@ -401,7 +403,8 @@ const AddToCart = () => {
 
                 <tbody>
                   {cartItems.map((item) => {
-                    const matched = allProducts.find((p) => String(p.id) === String(item.productId || item.id));
+                    const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+                    const matched = allProducts.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
                     const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
                     return (
                       <CartRow
