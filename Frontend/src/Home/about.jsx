@@ -337,55 +337,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* 4-Step Quality Process */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="bg-gradient-to-br from-emerald-900 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">Our Quality Assurance</span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-              From Orchard to Your Hands in 4 Simple Steps
-            </h3>
-            <p className="text-slate-300 text-sm mt-2">
-              How we preserve peak crunch, natural aroma, and essential nutrients.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            {journeySteps.map((step, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs hover:bg-white/10 transition duration-300"
-              >
-                <span className="text-3xl font-black text-emerald-400 font-mono block mb-2">
-                  {step.step}
-                </span>
-                <h4 className="text-base font-bold text-white mb-1.5">
-                  {step.title}
-                </h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick CTA inside banner */}
-          <div className="mt-10 pt-8 border-t border-white/10 text-center flex flex-col sm:flex-row items-center justify-center gap-4">
-            <span className="text-sm font-medium text-slate-300">
-              Ready to experience wholesome, nutrient-dense nutrition?
-            </span>
-            <Link
-              to="/shop"
-              className="px-6 py-2.5 rounded-xl font-bold text-emerald-950 bg-emerald-300 hover:bg-emerald-200 transition shadow-md text-sm inline-flex items-center gap-2"
-            >
-              <span>Shop All Products</span>
-              <FaArrowRight className="text-xs" />
-            </Link>
-          </div>
-        </div>
-      </section>
+    
     </div>
   );
 };
