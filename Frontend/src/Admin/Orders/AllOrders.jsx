@@ -32,7 +32,8 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        paymentMethod: o.paymentMode || o.paymentMethod || "-",
+        paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+        paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
         date: o.created_at || o.date
       }));
       setOrders(parsedOrders);
@@ -45,7 +46,8 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
         ...o,
         items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
         shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        paymentMethod: o.paymentMode || o.paymentMethod || "-",
+        paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+        paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
         date: o.created_at || o.date
       }));
       setOrders(parsedOrders);
@@ -565,7 +567,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                       </td>
                       <td className="px-8 py-6 text-center">
                         <span className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                          {order.paymentMethod || "COD"}
+                          {order.paymentMode || order.paymentMethod || "Online Payment"}
                         </span>
                       </td>
                       <td className="px-8 py-6 text-center">
@@ -652,7 +654,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment</p>
-                    <p className="text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{order.paymentMethod || "COD"}</p>
+                    <p className="text-[10px] font-black text-slate-600 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{order.paymentMode || order.paymentMethod || "Online Payment"}</p>
                   </div>
                 </div>
 

@@ -34,6 +34,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
       ...o,
       cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
       shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+      paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
       date: o.created_at || o.date
     }));
     setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
@@ -74,6 +76,8 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
         ...incomingOrder,
         cartItems: Array.isArray(incomingOrder.items) ? incomingOrder.items : [],
         shippingAddress: incomingOrder.shippingAddress || {},
+        paymentMethod: incomingOrder.paymentMode || incomingOrder.paymentMethod || "Online Payment",
+        paymentStatus: incomingOrder.paymentStatus || (incomingOrder.paymentMode === "COD" ? "Pending" : "Paid"),
         date: incomingOrder.created_at || incomingOrder.date || new Date().toISOString(),
       };
       setOrders((currentOrders) => [normalizedOrder, ...currentOrders.filter((order) => (order.orderId || order.id) !== orderKey)]);
@@ -593,7 +597,20 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                     </td>
                     <td className="px-8 py-6">
                       <p className="font-black text-slate-800 text-sm leading-tight">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
-                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1.5">{order.paymentMethod || "COD"}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">
+                          {order.paymentMode || order.paymentMethod || "Online Payment"}
+                        </span>
+                        {order.paymentStatus && (
+                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                            String(order.paymentStatus).toLowerCase() === 'paid'
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                              : 'bg-amber-50 text-amber-600 border border-amber-200/60'
+                          }`}>
+                            {order.paymentStatus}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                        <p className="text-lg font-black text-emerald-600 tracking-tighter">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
@@ -661,6 +678,20 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
                      <div className="min-w-0">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client</p>
                         <p className="font-black text-slate-800 text-xs truncate">{order.clientName || order.fullname || order.shippingAddress?.fullname || "Guest"}</p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">
+                            {order.paymentMode || order.paymentMethod || "Online Payment"}
+                          </span>
+                          {order.paymentStatus && (
+                            <span className={`text-[7px] font-black uppercase px-1 py-0.2 rounded ${
+                              String(order.paymentStatus).toLowerCase() === 'paid'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                                : 'bg-amber-50 text-amber-600 border border-amber-200/60'
+                            }`}>
+                              {order.paymentStatus}
+                            </span>
+                          )}
+                        </div>
                      </div>
                   </div>
                   <div className="flex items-center gap-3">

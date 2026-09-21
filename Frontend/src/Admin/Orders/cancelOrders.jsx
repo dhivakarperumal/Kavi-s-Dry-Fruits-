@@ -279,7 +279,7 @@ const CancelOrders = () => {
                   <p className="font-black text-slate-800">{order.shippingAddress?.fullname || "Guest"}</p>
                   <p className="text-xs font-bold text-slate-500">{new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   <p className="text-xl font-black text-slate-800 opacity-60">₹{Number(order.totalAmount).toLocaleString('en-IN')}</p>
-                  <span className="inline-block px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">{order.paymentMethod || "COD"}</span>
+                  <span className="inline-block px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest">{order.paymentMode || order.paymentMethod || "Online Payment"}</span>
                   <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 flex items-start gap-3">
                     <FaTimes className="text-rose-400 text-xs mt-0.5" />
                     <p className="text-[11px] font-black text-rose-700 leading-snug">{order.cancelReason || "No formal reason provided"}</p>
@@ -322,7 +322,7 @@ const CancelOrders = () => {
                     </td>
                     <td className="px-8 py-6 text-center">
                        <span className="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest shadow-sm">
-                         {order.paymentMethod || "COD"}
+                         {order.paymentMode || order.paymentMethod || "Online Payment"}
                        </span>
                     </td>
                     <td className="px-8 py-6 text-center">

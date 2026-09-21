@@ -33,7 +33,9 @@ const getOrders = async (req, res) => {
         ...row,
         shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
         items: normalizedItems,
-        cartItems: normalizedItems
+        cartItems: normalizedItems,
+        paymentMethod: row.paymentMode || row.paymentMethod || 'Online Payment',
+        paymentStatus: row.paymentStatus || 'Paid'
       };
     });
     res.json(parsedRows);
@@ -63,7 +65,9 @@ const getOrderById = async (req, res) => {
       ...row,
       shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
       items: normalizedItems,
-      cartItems: normalizedItems
+      cartItems: normalizedItems,
+      paymentMethod: row.paymentMode || row.paymentMethod || 'Online Payment',
+      paymentStatus: row.paymentStatus || 'Paid'
     };
     res.json(order);
   } catch (error) {
@@ -252,7 +256,9 @@ const createOrder = async (req, res) => {
           clientName,
           totalAmount,
           orderStatus,
-          paymentMethod: paymentMode || 'Online',
+          paymentMode: paymentMode || 'Online Payment',
+          paymentMethod: paymentMode || 'Online Payment',
+          paymentStatus: paymentStatus || 'Paid',
           itemsCount: (parsedItems || []).length,
           createdAt: new Date()
         });
@@ -398,6 +404,8 @@ const getUserOrders = async (req, res) => {
         shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
         items: normalizedItems,
         cartItems: normalizedItems,
+        paymentMethod: row.paymentMode || row.paymentMethod || 'Online Payment',
+        paymentStatus: row.paymentStatus || 'Paid',
         date: row.created_at
       };
     }));
