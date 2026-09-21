@@ -576,13 +576,23 @@
         }
 
         if (isCombo) {
-          if (newQty > availableStock) {
+          const otherQty = itemsToCheckout
+            .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+            .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
+          if (newQty + otherQty > availableStock) {
             toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
             return;
           }
         } else {
           const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
-          const totalGrams = parseWeightToGrams(weightStr) * newQty;
+          const thisItemGrams = parseWeightToGrams(weightStr) * newQty;
+          const otherGrams = itemsToCheckout
+            .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+            .reduce((sum, it) => {
+              const w = it.selectedWeight || it.weight || it.weights?.[0];
+              return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+            }, 0);
+          const totalGrams = thisItemGrams + otherGrams;
           if (totalGrams > availableStock) {
             toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
             return;
@@ -612,13 +622,23 @@
       }
 
       if (isCombo) {
-        if (intVal > availableStock) {
+        const otherQty = itemsToCheckout
+          .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+          .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
+        if (intVal + otherQty > availableStock) {
           toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
           return;
         }
       } else {
         const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
-        const totalGrams = parseWeightToGrams(weightStr) * intVal;
+        const thisItemGrams = parseWeightToGrams(weightStr) * intVal;
+        const otherGrams = itemsToCheckout
+          .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+          .reduce((sum, it) => {
+            const w = it.selectedWeight || it.weight || it.weights?.[0];
+            return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+          }, 0);
+        const totalGrams = thisItemGrams + otherGrams;
         if (totalGrams > availableStock) {
           toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
           return;
@@ -654,9 +674,11 @@
 
       const trimmedCartItems = itemsToCheckout.map((item) => {
         const safeImage = item.image || (item.images && item.images[0]) || "";
+        const actualProductId = String(item.productId || (item.docId ? item.docId.split("_")[0] : null) || item.id || "");
         return {
-          id: item.id,
-          productId: item.productId || item.id,
+          id: actualProductId,
+          productId: actualProductId,
+          cartItemId: item.id,
           name: item.name,
           image: safeImage,
           weight: item.selectedWeight || item.weight || "",
@@ -730,7 +752,8 @@
         return;
       }
 
-      // Stock pre-check before payment gateway
+      // Stock pre-check before payment gateway (aggregating across all items for each product)
+      const stockUsage = {};
       for (const item of itemsToCheckout) {
         const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
         const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
@@ -738,22 +761,37 @@
         const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
         const qty = parseInt(item.qty || item.quantity || 1, 10);
 
-        if (availableStock <= 0) {
-          toast.error(`"${item.name}" is out of stock. Please remove it to proceed.`);
+        if (!stockUsage[prodId]) {
+          stockUsage[prodId] = {
+            name: item.name,
+            isCombo,
+            availableStock,
+            totalQty: 0,
+            totalGrams: 0
+          };
+        }
+        stockUsage[prodId].totalQty += qty;
+        if (!isCombo) {
+          const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
+          stockUsage[prodId].totalGrams += parseWeightToGrams(weightStr) * qty;
+        }
+      }
+
+      for (const [, usage] of Object.entries(stockUsage)) {
+        if (usage.availableStock <= 0) {
+          toast.error(`"${usage.name}" is out of stock. Please remove it to proceed.`);
           return;
         }
 
-        if (isCombo) {
-          if (qty > availableStock) {
-            toast.error(`Only ${formatStockDisplay(availableStock, true)} available for combo "${item.name}". Please adjust quantity.`);
+        if (usage.isCombo) {
+          if (usage.totalQty > usage.availableStock) {
+            toast.error(`Only ${formatStockDisplay(usage.availableStock, true)} available for combo "${usage.name}". Please adjust quantity.`);
             return;
           }
         } else {
-          const weightStr = item.selectedWeight || item.weight || item.weights?.[0];
-          const totalGrams = parseWeightToGrams(weightStr) * qty;
-          if (totalGrams > availableStock) {
+          if (usage.totalGrams > usage.availableStock) {
             toast.error(
-              `Only ${formatStockDisplay(availableStock, false)} available for "${item.name}". Your order requires ${formatStockDisplay(totalGrams, false)}. Please adjust quantity.`
+              `Only ${formatStockDisplay(usage.availableStock, false)} available for "${usage.name}". Your order requires ${formatStockDisplay(usage.totalGrams, false)}. Please adjust quantity.`
             );
             return;
           }

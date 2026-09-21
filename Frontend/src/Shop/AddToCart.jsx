@@ -239,7 +239,13 @@ const AddToCart = () => {
 
         if (!isCombo) {
           const requestedGrams = (item.quantity || 1) * parseWeightToGrams(newWeight);
-          if (requestedGrams > availableStock) {
+          const otherGrams = cartItems
+            .filter((i) => (i.id !== item.id && i.docId !== item.docId) && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
+            .reduce((sum, i) => {
+              const w = i.selectedWeight || i.weights?.[0];
+              return sum + parseWeightToGrams(w) * (parseInt(i.quantity || i.qty || 1, 10) || 1);
+            }, 0);
+          if (requestedGrams + otherGrams > availableStock) {
             toast.error(
               `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot select ${newWeight} for ${item.quantity} item(s).`
             );
@@ -269,7 +275,7 @@ const AddToCart = () => {
         setUpdatingWeightId(null);
       }
     },
-    [allProducts, updateWeight, updatingWeightId]
+    [allProducts, cartItems, updateWeight, updatingWeightId]
   );
 
   const incQty = useCallback((item) => increaseQuantity(item), [increaseQuantity]);
@@ -294,7 +300,8 @@ const AddToCart = () => {
 
   // Guarded proceed handler
   const handleProceed = useCallback(() => {
-    // Check stock for all items
+    // Check aggregated stock for all items
+    const productUsage = {};
     for (const item of cartItems) {
       const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
       const matched = allProducts.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
@@ -302,22 +309,37 @@ const AddToCart = () => {
       const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
       const qty = parseInt(item.quantity || item.qty || 1, 10);
 
-      if (availableStock <= 0) {
-        toast.error(`"${item.name}" is out of stock. Please remove it to proceed.`);
+      if (!productUsage[prodId]) {
+        productUsage[prodId] = {
+          name: item.name,
+          isCombo,
+          availableStock,
+          totalQty: 0,
+          totalGrams: 0,
+        };
+      }
+      productUsage[prodId].totalQty += qty;
+      if (!isCombo) {
+        const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
+        productUsage[prodId].totalGrams += weightGrams * qty;
+      }
+    }
+
+    for (const [, usage] of Object.entries(productUsage)) {
+      if (usage.availableStock <= 0) {
+        toast.error(`"${usage.name}" is out of stock. Please remove it to proceed.`);
         return;
       }
 
-      if (isCombo) {
-        if (qty > availableStock) {
-          toast.error(`Only ${formatStockDisplay(availableStock, true)} available for combo "${item.name}". Please reduce quantity.`);
+      if (usage.isCombo) {
+        if (usage.totalQty > usage.availableStock) {
+          toast.error(`Only ${formatStockDisplay(usage.availableStock, true)} available for combo "${usage.name}". Please reduce quantity.`);
           return;
         }
       } else {
-        const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
-        const totalGrams = weightGrams * qty;
-        if (totalGrams > availableStock) {
+        if (usage.totalGrams > usage.availableStock) {
           toast.error(
-            `Only ${formatStockDisplay(availableStock, false)} available for "${item.name}". Your cart requires ${formatStockDisplay(totalGrams, false)}. Please adjust weight or quantity.`
+            `Only ${formatStockDisplay(usage.availableStock, false)} available for "${usage.name}". Your cart requires ${formatStockDisplay(usage.totalGrams, false)}. Please adjust weight or quantity.`
           );
           return;
         }

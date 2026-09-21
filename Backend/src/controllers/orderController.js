@@ -150,9 +150,10 @@ const createOrder = async (req, res) => {
     const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
     for (const item of parsedItems) {
       const weight = item.selectedWeight || item.weight || item.totalWeight || '';
+      const prodId = String(item.productId || (item.docId ? item.docId.split('_')[0] : item.id) || '');
       await connection.query(
         'INSERT INTO order_items (order_id, product_id, name, image, quantity, price, weight) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [orderId, item.id || item.productId, item.name, item.image || item.images?.[0] || '', item.qty || item.quantity, item.price, weight]
+        [orderId, prodId, item.name, item.image || item.images?.[0] || '', item.qty || item.quantity, item.price, weight]
       );
     }
 
@@ -180,9 +181,18 @@ const createOrder = async (req, res) => {
       const table = isCombo ? 'combos' : 'products';
       
       const columns = isCombo ? 'productId, id, totalStock, comboDetails, comboItems' : 'productId, id, totalStock';
+      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
+      const altId = String(item.id || "");
+      const itemName = String(item.name || "").trim();
+
       const [rows] = await connection.query(
-        `SELECT ${columns} FROM ${table} WHERE TRIM(productId) = TRIM(?) OR id = ?`, 
-        [item.productId || item.id || "", item.id || 0]
+        `SELECT ${columns} FROM ${table} 
+         WHERE id = ? 
+            OR TRIM(productId) = TRIM(?) 
+            OR id = ? 
+            OR TRIM(productId) = TRIM(?) 
+            OR LOWER(TRIM(name)) = LOWER(TRIM(?))`, 
+        [prodId, prodId, altId, altId, itemName]
       );
       
       if (rows.length > 0) {
@@ -225,19 +235,33 @@ const createOrder = async (req, res) => {
             }
           }
           await connection.query(
-            `UPDATE combos SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ? OR id = ?`, 
-            [weightToSubtract, productData.productId, productData.id]
+            `UPDATE combos SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE id = ? OR TRIM(productId) = TRIM(?)`, 
+            [weightToSubtract, productData.id, productData.productId]
           );
         } else {
           affectedProductIds.add(productData.id);
-          const weightStr = String(item.weight || item.selectedWeight || "").toLowerCase();
-          let weightPerUnit = parseFloat(weightStr) || 0;
-          if (weightStr.includes("kg") || weightStr.includes("k")) weightPerUnit *= 1000;
+          const weightStr = String(item.weight || item.selectedWeight || "").toLowerCase().trim();
+          let weightPerUnit = 0;
+          const match = weightStr.match(/^([\d.]+)\s*(kg|k|g|gm|gram|grams)?$/i);
+          if (match) {
+            const amount = parseFloat(match[1]);
+            const unit = (match[2] || "g").toLowerCase();
+            if (["kg", "k", "kilogram", "kilograms"].includes(unit)) {
+              weightPerUnit = Math.round(amount * 1000);
+            } else {
+              weightPerUnit = Math.round(amount);
+            }
+          } else {
+            let parsed = parseFloat(weightStr) || 0;
+            if (weightStr.includes("kg")) parsed *= 1000;
+            weightPerUnit = Math.round(parsed);
+          }
+
           const totalWeightToSubtract = qty * weightPerUnit;
           
           await connection.query(
-            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE productId = ? OR id = ?`, 
-            [totalWeightToSubtract, productData.productId, productData.id]
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE id = ?`, 
+            [totalWeightToSubtract, productData.id]
           );
         }
       }

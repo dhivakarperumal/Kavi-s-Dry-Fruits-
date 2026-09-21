@@ -251,12 +251,21 @@ export const StoreProvider = ({ children }) => {
       }
 
       if (isCombo) {
-        if (newQty > availableStock) {
+        const otherQty = cartItems
+          .filter((i) => i.docId !== docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
+          .reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1, 10) || 1), 0);
+        if (newQty + otherQty > availableStock) {
           return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock.`);
         }
       } else {
         const weightGrams = parseWeightToGrams(weight);
-        if (weightGrams > 0 && (weightGrams * newQty) > availableStock) {
+        const otherGrams = cartItems
+          .filter((i) => i.docId !== docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
+          .reduce((sum, i) => {
+            const w = i.selectedWeight || i.weights?.[0];
+            return sum + parseWeightToGrams(w) * (parseInt(i.quantity || i.qty || 1, 10) || 1);
+          }, 0);
+        if (weightGrams > 0 && (weightGrams * newQty + otherGrams) > availableStock) {
           return toast.error(
             `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot add ${newQty > 1 ? newQty + "x " : ""}${weight}.`
           );
@@ -328,12 +337,21 @@ export const StoreProvider = ({ children }) => {
       }
 
       if (isCombo) {
-        if (newQty > availableStock) {
+        const otherQty = cartItems
+          .filter((i) => i.docId !== item.docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
+          .reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1, 10) || 1), 0);
+        if (newQty + otherQty > availableStock) {
           return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
         }
       } else {
         const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
-        if (weightGrams > 0 && (weightGrams * newQty) > availableStock) {
+        const otherGrams = cartItems
+          .filter((i) => i.docId !== item.docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
+          .reduce((sum, i) => {
+            const w = i.selectedWeight || i.weights?.[0];
+            return sum + parseWeightToGrams(w) * (parseInt(i.quantity || i.qty || 1, 10) || 1);
+          }, 0);
+        if (weightGrams > 0 && (weightGrams * newQty + otherGrams) > availableStock) {
           return toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
         }
       }
