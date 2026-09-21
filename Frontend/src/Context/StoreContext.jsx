@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import dataPreloadService from "../services/dataPreloadService";
 import imagePreloadManager from "../services/imagePreloadManager";
 import api from "../services/api";
-import { parseWeightToGrams, formatStockDisplay, isProductOutOfStock } from "../utils/stockUtils";
+import { parseWeightToGrams, formatStockDisplay, isProductOutOfStock, isSameProduct, getProductCartUsage } from "../utils/stockUtils";
 
 const StoreContext = createContext();
 
@@ -180,12 +180,16 @@ export const StoreProvider = ({ children }) => {
         setAllProducts(data.products || []);
         setAllCategories(data.categories || []);
 
-        // Preload critical images for homepage
-        if (data.products && data.products.length > 0) {
-          const topProducts = data.products.slice(0, 12);
-          imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
-            console.warn('Image preload error:', err)
-          );
+        // Preload critical images for homepage safely
+        try {
+          if (data.products && data.products.length > 0 && imagePreloadManager?.preloadHomepageImages) {
+            const topProducts = data.products.slice(0, 12);
+            imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
+              console.warn('Image preload error:', err)
+            );
+          }
+        } catch (imgErr) {
+          console.warn('Image preload non-critical error:', imgErr);
         }
       } catch (err) {
         const isNetworkIssue = !err?.response && !!err?.message && /network|timeout|connection|failed/i.test(err.message);
@@ -238,9 +242,8 @@ export const StoreProvider = ({ children }) => {
       const newQty = (existing?.quantity || 0) + (product.qty || 1);
 
       // Check available stock
-      const prodId = String(product.productId || (product.docId ? product.docId.split("_")[0] : product.id) || "");
       const matchedProd = allProducts.find(
-        (p) => String(p.id) === prodId || String(p.productId) === prodId
+        (p) => isSameProduct(p, product)
       ) || product;
 
       const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
@@ -251,21 +254,22 @@ export const StoreProvider = ({ children }) => {
       }
 
       if (isCombo) {
-        const otherQty = cartItems
-          .filter((i) => i.docId !== docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
-          .reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1, 10) || 1), 0);
+        const otherQty = getProductCartUsage(cartItems, matchedProd, docId);
         if (newQty + otherQty > availableStock) {
+          if (otherQty > 0) {
+            return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock (${otherQty} already in your cart).`);
+          }
           return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock.`);
         }
       } else {
         const weightGrams = parseWeightToGrams(weight);
-        const otherGrams = cartItems
-          .filter((i) => i.docId !== docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
-          .reduce((sum, i) => {
-            const w = i.selectedWeight || i.weights?.[0];
-            return sum + parseWeightToGrams(w) * (parseInt(i.quantity || i.qty || 1, 10) || 1);
-          }, 0);
+        const otherGrams = getProductCartUsage(cartItems, matchedProd, docId);
         if (weightGrams > 0 && (weightGrams * newQty + otherGrams) > availableStock) {
+          if (otherGrams > 0) {
+            return toast.error(
+              `Only ${formatStockDisplay(availableStock, false)} available in stock (${formatStockDisplay(otherGrams, false)} already in your cart). Cannot add ${product.qty > 1 ? product.qty + "x " : ""}${weight}.`
+            );
+          }
           return toast.error(
             `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot add ${newQty > 1 ? newQty + "x " : ""}${weight}.`
           );
@@ -323,9 +327,8 @@ export const StoreProvider = ({ children }) => {
   const increaseQuantity = async (item) => {
     if (!user || !item?.docId) return;
     try {
-      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
       const matchedProd = allProducts.find(
-        (p) => String(p.id) === prodId || String(p.productId) === prodId
+        (p) => isSameProduct(p, item)
       ) || item;
 
       const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
@@ -337,20 +340,13 @@ export const StoreProvider = ({ children }) => {
       }
 
       if (isCombo) {
-        const otherQty = cartItems
-          .filter((i) => i.docId !== item.docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
-          .reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1, 10) || 1), 0);
+        const otherQty = getProductCartUsage(cartItems, matchedProd, item.docId);
         if (newQty + otherQty > availableStock) {
           return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
         }
       } else {
         const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
-        const otherGrams = cartItems
-          .filter((i) => i.docId !== item.docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
-          .reduce((sum, i) => {
-            const w = i.selectedWeight || i.weights?.[0];
-            return sum + parseWeightToGrams(w) * (parseInt(i.quantity || i.qty || 1, 10) || 1);
-          }, 0);
+        const otherGrams = getProductCartUsage(cartItems, matchedProd, item.docId);
         if (weightGrams > 0 && (weightGrams * newQty + otherGrams) > availableStock) {
           return toast.error(`Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot increase quantity.`);
         }
@@ -508,10 +504,25 @@ export const StoreProvider = ({ children }) => {
 
     try {
       // Get current item from cart
-      const currentItem = cartItems.find((c) => c.id === cartItemId);
+      const currentItem = cartItems.find((c) => c.id === cartItemId || c.docId === cartItemId);
       if (!currentItem) {
         toast.error("Item not found in cart");
         return;
+      }
+
+      const matchedProd = allProducts.find((p) => isSameProduct(p, currentItem)) || currentItem;
+      const availableStock = Number(matchedProd.stock ?? matchedProd.totalStock ?? 0);
+      const isCombo = (matchedProd.category === "Combo") || (matchedProd.type === "combo");
+
+      if (!isCombo) {
+        const requestedGrams = (currentItem.quantity || 1) * parseWeightToGrams(newWeight);
+        const otherGrams = getProductCartUsage(cartItems, matchedProd, currentItem.docId || cartItemId);
+        if (requestedGrams + otherGrams > availableStock) {
+          toast.error(
+            `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot select ${newWeight} for ${currentItem.quantity} item(s).`
+          );
+          return;
+        }
       }
 
       const baseProductId = currentItem.productId;

@@ -8,7 +8,7 @@
   import { Helmet } from "react-helmet";
   import api from "../services/api";
   import axios from "axios";
-  import { isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
+  import { isLowStock, formatStockDisplay, parseWeightToGrams, isSameProduct } from "../utils/stockUtils";
 
   const getItemKey = (it, index) => {
     if (it?.checkoutKey) return String(it.checkoutKey);
@@ -581,8 +581,7 @@
       const newQty = Math.max(1, oldQty + delta); // min 1
 
       if (delta > 0) {
-        const prodId = String(currentItem.productId || (currentItem.docId ? currentItem.docId.split("_")[0] : currentItem.id) || "");
-        const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+        const matchedProduct = allProducts?.find((p) => isSameProduct(p, currentItem)) || currentItem;
         const isCombo = currentItem.category === "Combo" || currentItem.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
         const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? currentItem.stock ?? currentItem.totalStock ?? 0);
 
@@ -593,7 +592,7 @@
 
         if (isCombo) {
           const otherQty = itemsToCheckout
-            .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+            .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
             .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
           if (newQty + otherQty > availableStock) {
             toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
@@ -604,7 +603,7 @@
           const unitGrams = parseWeightToGrams(weightStr);
           const thisItemGrams = unitGrams * newQty;
           const otherGrams = itemsToCheckout
-            .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+            .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
             .reduce((sum, it) => {
               const w = it.selectedWeight || it.weight || it.weights?.[0];
               return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
@@ -628,8 +627,7 @@
       if (!currentItem) return;
 
       const intVal = Math.max(1, parseInt(value || 1, 10) || 1);
-      const prodId = String(currentItem.productId || (currentItem.docId ? currentItem.docId.split("_")[0] : currentItem.id) || "");
-      const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+      const matchedProduct = allProducts?.find((p) => isSameProduct(p, currentItem)) || currentItem;
       const isCombo = currentItem.category === "Combo" || currentItem.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
       const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? currentItem.stock ?? currentItem.totalStock ?? 0);
 
@@ -640,7 +638,7 @@
 
       if (isCombo) {
         const otherQty = itemsToCheckout
-          .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+          .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
           .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
         if (intVal + otherQty > availableStock) {
           toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
@@ -651,7 +649,7 @@
         const unitGrams = parseWeightToGrams(weightStr);
         const thisItemGrams = unitGrams * intVal;
         const otherGrams = itemsToCheckout
-          .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+          .filter((it, idx) => getItemKey(it, idx) !== String(key) && isSameProduct(it, currentItem))
           .reduce((sum, it) => {
             const w = it.selectedWeight || it.weight || it.weights?.[0];
             return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);

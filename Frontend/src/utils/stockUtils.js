@@ -137,3 +137,86 @@ export const checkVariantStock = (weightStr, quantity = 1, totalStock = 0, isCom
     diff: stock - totalRequiredGrams,
   };
 };
+
+/**
+ * Determines if a cart item corresponds to a given product or another cart item.
+ * Robustly matches by database ID, productId string (e.g. PR001), docId prefix, or trimmed product name.
+ * @param {object} itemA
+ * @param {object} itemB
+ * @returns {boolean}
+ */
+export const isSameProduct = (itemA, itemB) => {
+  if (!itemA || !itemB) return false;
+
+  const getIdentifiers = (it) => {
+    const ids = [];
+    if (it.id !== undefined && it.id !== null) ids.push(String(it.id));
+    if (it.productId !== undefined && it.productId !== null) ids.push(String(it.productId));
+    if (it.docId && typeof it.docId === "string") {
+      const prefix = it.docId.split("_")[0];
+      if (prefix) ids.push(prefix);
+    }
+    return ids;
+  };
+
+  const idsA = getIdentifiers(itemA);
+  const idsB = getIdentifiers(itemB);
+
+  // Check if any identifier matches
+  for (const idA of idsA) {
+    if (idsB.some((idB) => idB.toLowerCase() === idA.toLowerCase())) {
+      return true;
+    }
+  }
+
+  // Name match fallback (safe when both items have non-empty names)
+  const nameA = String(itemA.name || "").trim().toLowerCase();
+  const nameB = String(itemB.name || "").trim().toLowerCase();
+  if (nameA && nameB && nameA === nameB) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Calculates how much of a product's stock is already reserved in the cart (across all variants/weights).
+ * For combos: returns total unit count.
+ * For singles: returns total grams.
+ * @param {Array} cartItems
+ * @param {object} product
+ * @param {string|null} excludeDocId - optional docId to exclude (useful when checking an update)
+ * @returns {number}
+ */
+export const getProductCartUsage = (cartItems = [], product, excludeDocId = null) => {
+  if (!Array.isArray(cartItems) || !product) return 0;
+  const isCombo = (product.category === "Combo") || (product.type === "combo");
+
+  return cartItems
+    .filter((item) => {
+      if (excludeDocId && item.docId === excludeDocId) return false;
+      return isSameProduct(item, product);
+    })
+    .reduce((sum, item) => {
+      const qty = parseInt(item.quantity || item.qty || 1, 10) || 1;
+      if (isCombo) {
+        return sum + qty;
+      }
+      const weight = item.selectedWeight || item.weights?.[0] || item.weight;
+      return sum + parseWeightToGrams(weight) * qty;
+    }, 0);
+};
+
+/**
+ * Calculates remaining available stock for a product, subtracting what's currently in the cart.
+ * @param {object} product
+ * @param {Array} cartItems
+ * @param {string|null} excludeDocId
+ * @returns {number}
+ */
+export const getAvailableStockRemaining = (product, cartItems = [], excludeDocId = null) => {
+  if (!product) return 0;
+  const totalStock = Number(product.stock ?? product.totalStock ?? 0);
+  const used = getProductCartUsage(cartItems, product, excludeDocId);
+  return Math.max(0, totalStock - used);
+};

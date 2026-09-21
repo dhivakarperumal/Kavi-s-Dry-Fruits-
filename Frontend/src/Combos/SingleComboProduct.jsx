@@ -8,12 +8,12 @@ import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import LodingPage from "../Component/LoadingPage";
 import api from "../services/api";
-import { isLowStock, formatStockDisplay } from "../utils/stockUtils";
+import { isLowStock, formatStockDisplay, getProductCartUsage } from "../utils/stockUtils";
 
 const SingleComboProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { allProducts, addToCart, addToFav, loadingProducts } = useStore();
+  const { allProducts, addToCart, addToFav, loadingProducts, cartItems } = useStore();
 
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState("");
@@ -37,21 +37,18 @@ const SingleComboProduct = () => {
   useEffect(() => {
     if (!id || !allProducts.length) return;
 
-    // FIX: Must filter by combo type FIRST to avoid ID collision with regular products
-    // (both MySQL tables start from id=1, so product id=1 and combo id=1 both exist)
-    const selectedProduct = allProducts.find(
-      (p) =>
-        (p.type === "combo" || p.category === "Combo") &&
-        (String(p.id) === String(id) || p.productId === id)
+    // Direct find in preloaded store
+    const selected = allProducts.find(
+      (p) => 
+        (p.id === id || p.productId === id || p.id === parseInt(id)) &&
+        (p.category === "Combo" || p.type === "combo")
     );
 
-    if (selectedProduct) {
-      setProduct(selectedProduct);
-      setSelectedImage(selectedProduct.images?.[0] || "");
+    if (selected) {
+      setProduct(selected);
+      setSelectedImage(selected.images?.[0] || "");
       setQuantity(1);
-      window.scrollTo(0, 0);
     } else {
-      // Redirection logic: if it's NOT a combo but exists as a product, move to shop view
       const existsAsProduct = allProducts.find(p => String(p.id) === String(id) || p.productId === id);
       if (existsAsProduct) {
         navigate(`/shop/${existsAsProduct.id}`, { replace: true });
@@ -59,6 +56,7 @@ const SingleComboProduct = () => {
       }
       setProduct(null);
     }
+    window.scrollTo(0, 0);
   }, [id, allProducts]);
 
   if (loadingProducts) {
@@ -66,7 +64,11 @@ const SingleComboProduct = () => {
   }
 
   if (!product) {
-    return <div className="text-center mt-10 text-red-600 font-semibold">Product not found</div>;
+    return (
+      <div className="text-center mt-10 text-red-600 font-semibold">
+        Combo product not found.
+      </div>
+    );
   }
 
   // --- Pricing Logic (robust fallback for MySQL combos) ---
@@ -77,12 +79,18 @@ const SingleComboProduct = () => {
   const comboStock = Number(product.stock ?? product.totalStock ?? 0);
   const isOutOfStock = comboStock <= 0;
   const lowStock = !isOutOfStock && isLowStock(comboStock, true);
-  const canFulfill = !isOutOfStock && quantity <= comboStock;
+  const cartUsage = getProductCartUsage(cartItems, product);
+  const remainingUnits = Math.max(0, comboStock - cartUsage);
+  const canFulfill = !isOutOfStock && (quantity + cartUsage <= comboStock);
 
   // --- Quantity Handlers ---
   const increaseQty = () => {
-    if (quantity >= comboStock) {
-      toast.error(`Only ${comboStock} units available in stock`);
+    if (quantity + 1 + cartUsage > comboStock) {
+      if (cartUsage > 0) {
+        toast.error(`Only ${comboStock} units available in stock (${cartUsage} already in your cart)`);
+      } else {
+        toast.error(`Only ${comboStock} units available in stock`);
+      }
       return;
     }
     setQuantity((q) => q + 1);
@@ -92,7 +100,10 @@ const SingleComboProduct = () => {
   // --- Cart & Favorite Handlers ---
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
-    if (quantity > comboStock) {
+    if (quantity + cartUsage > comboStock) {
+      if (cartUsage > 0) {
+        return toast.error(`Only ${comboStock} units available in stock (${cartUsage} already in your cart).`);
+      }
       return toast.error(`Only ${comboStock} units available in stock.`);
     }
     const weight = product.weights?.[0] || product.comboDetails?.totalWeight || product.totalWeight || 'Combo';
