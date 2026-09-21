@@ -4,6 +4,20 @@ import emailjs from "@emailjs/browser";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
 import api from "../services/api";
+import {
+  FaPhoneAlt,
+  FaWhatsapp,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaClock,
+  FaUser,
+  FaHome,
+  FaCommentDots,
+  FaPaperPlane,
+  FaShieldAlt,
+  FaTruck,
+  FaAward
+} from "react-icons/fa";
 
 const Contact = () => {
   const form = useRef();
@@ -46,152 +60,301 @@ const Contact = () => {
   };
 
   return (
-    <div className="py-10 px-4 relative overflow-hidden">
-    <Helmet>
-  <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
-
-  <meta
-    name="description"
-    content="Buy premium dry fruits, nuts, seeds, raisins, dates and combo packs at best prices. Fresh quality delivered across Tamil Nadu and India. Contact +91 94895 93504. Tirupattur 635653."
-  />
-
-  <meta
-    name="keywords"
-    content="
-      dry fruits shop, buy dry fruits online, almonds online, cashews online, pistachios online, dates online, raisins online, premium dry fruits store,
-      fresh dry fruits Tirupattur, Tirupattur dry fruits, dry fruits 635653, dry fruits Tamil Nadu,
-      dry fruits Chennai, dry fruits Coimbatore, dry fruits Madurai, dry fruits Vellore, dry fruits Salem,
-      dry fruits Krishnagiri, dry fruits Dharmapuri, dry fruits Erode, dry fruits Tirunelveli,
-      dry fruits Kanyakumari, dry fruits Tiruvannamalai, dry fruits Namakkal, dry fruits Trichy,
-      dry fruits Thanjavur, dry fruits Cuddalore, dry fruits Dindigul, dry fruits Kanchipuram,
-      buy nuts online India, premium nuts store, healthy snacks online, organic dry fruits,
-      big size cashews W180, premium almonds, roasted pistachios, family pack dry fruits,
-      dry fruits combo pack, Tamil Nadu pincode delivery, dry fruits shop phone number +91 94895 93504
-    "
-  />
-
-  <link rel="canonical" href="https://kavisdryfruits.com/shop" />
-
-  <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits Tirupattur" />
-  <meta property="og:description" content="Premium almonds, cashews, pista, dates & seeds delivered across Tamil Nadu & India. Contact +91 94895 93504." />
-  <meta property="og:url" content="https://kavisdryfruits.com/shop" />
-  <meta property="og:type" content="website" />
-</Helmet>
+    <div className="bg-gradient-to-b from-white via-emerald-50/30 to-white py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <Helmet>
+        <title>Contact Kavi’s Dry Fruits – Customer Support, Bulk & Wholesale Enquiries</title>
+        <meta
+          name="description"
+          content="Get in touch with Kavi’s Dry Fruits for order enquiries, wholesale prices, bulk ordering, delivery details & customer support. Call +91 94895 93504."
+        />
+        <meta
+          name="keywords"
+          content="contact kavis dry fruits, dry fruits shop phone number, dry fruits delivery support, tirupattur dry fruits store"
+        />
+        <link rel="canonical" href="https://kavisdryfruits.com/contact" />
+      </Helmet>
 
       <SEO
         title={"Contact Us - Kavi’s Dry Fruits"}
         description={"Contact Kavi’s Dry Fruits for enquiries, orders, and support. Office address, phone and email details."}
         canonical={"https://kavisdryfruits.com/contact"}
       />
-      {/* Decorative Top-Right Image */}
-      <img
-        src="https://kavisdryfruits.com/images/offer-side-bg2.png"
-        alt="nut decoration"
-        className="hidden md:block absolute right-10 top-10 w-32"
-      />
 
-      <div className="max-w-6xl mx-auto">
-        {/* Heading */}
-        <div className="text-center pb-10">
-          <h2 className="text-2xl font-bold mb-4">
-            Contact <span className="text-primary">Us</span>
-          </h2>
-          <div className="md:w-[17%] w-[80%] h-[2px] border-b-2 border-dashed border-primary mx-auto"></div>
+      {/* Decorative ambient background blurs */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-200/20 blur-[120px] rounded-full pointer-events-none -z-10" />
+
+      <div className="max-w-7xl mx-auto">
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100/80 text-emerald-800 border border-emerald-200 mb-3 shadow-xs">
+            <FaEnvelope className="text-emerald-600 text-xs" /> We'd Love to Hear From You
+          </span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
+            Get in Touch With <span className="text-primary">Our Team</span>
+          </h1>
+          <p className="mt-3 text-slate-600 text-base sm:text-lg">
+            Have questions about an order, custom gift hampers, wholesale pricing, or our natural dry fruits? Reach out to us anytime!
+          </p>
+          <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-primary mx-auto mt-4 rounded-full" />
         </div>
 
-        {/* Main Content */}
-        <div className="grid md:grid-cols-2 gap-10 items-center">
-          {/* Left - Contact Info with background */}
-          <div className="relative rounded-2xl min-h-[400px] overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url("https://kavisdryfruits.com/images/contact.jpg")` }}
-            ></div>
-            <div className="absolute inset-0 bg-black opacity-60"></div>
+        {/* 4 Quick Connect Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+          {/* Card 1: Call Us */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 group">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-primary flex items-center justify-center text-xl mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+              <FaPhoneAlt />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Call Us</h3>
+            <p className="text-xs text-slate-500 mb-3">Direct call support Mon–Sun</p>
+            <a
+              href="tel:+919489593504"
+              className="text-sm font-semibold text-primary hover:text-emerald-700 transition flex items-center gap-1.5"
+            >
+              +91 94895 93504 <span>→</span>
+            </a>
+          </div>
 
-            <div className="relative p-8 text-white z-10 h-full flex flex-col justify-center">
-              <h3 className="text-xl font-bold mb-6">OUR INFORMATION</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-                <div>
-                  <p className="mb-10">
-                    <span className="font-semibold">Office Address</span>
-                    <br />
-                    No:58 Vaitheeshwaran Nagar
-                    <br />
-                    Tirupathur-635653 Tamilnadu
-                  </p>
-                  <p className="mb-4">
-                    <span className="font-semibold">Call Us</span>
-                    <br />
-                    +91 9489593504
-                  </p>
+          {/* Card 2: WhatsApp */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 group">
+            <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
+              <FaWhatsapp />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">WhatsApp Chat</h3>
+            <p className="text-xs text-slate-500 mb-3">Instant response on WhatsApp</p>
+            <a
+              href="https://wa.me/919489593504?text=Hi%20Kavi's%20Dry%20Fruits,%20I%20have%20an%20enquiry"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-green-600 hover:text-green-700 transition flex items-center gap-1.5"
+            >
+              Chat on WhatsApp <span>→</span>
+            </a>
+          </div>
+
+          {/* Card 3: Email */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 group">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl mb-4 group-hover:bg-emerald-700 group-hover:text-white transition-colors duration-300">
+              <FaEnvelope />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Email Us</h3>
+            <p className="text-xs text-slate-500 mb-3">Quick response within 2–4 hours</p>
+            <a
+              href="mailto:kavidryfruits@gmail.com"
+              className="text-sm font-semibold text-primary hover:text-emerald-700 transition truncate block"
+              title="kavidryfruits@gmail.com"
+            >
+              kavidryfruits@gmail.com
+            </a>
+          </div>
+
+          {/* Card 4: Store Timings */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 group">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-4 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300">
+              <FaClock />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1">Working Hours</h3>
+            <p className="text-xs text-slate-500 mb-2">Open all 7 days of the week</p>
+            <p className="text-sm font-semibold text-slate-800">
+              10:00 AM – 07:00 PM
+            </p>
+          </div>
+        </div>
+
+        {/* Main 2-Column Content: Info + Form */}
+        <div className="grid lg:grid-cols-12 gap-8 items-stretch mb-16">
+          {/* Left Column (5 cols): Store Info & Map */}
+          <div className="lg:col-span-5 flex flex-col justify-between rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-slate-900 text-white p-8 sm:p-10 shadow-xl relative overflow-hidden">
+            {/* Background pattern */}
+            <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div>
+              <span className="inline-block px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold uppercase tracking-wider mb-4 border border-emerald-500/30">
+                Store & Headquarters
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold leading-tight mb-4">
+                Kavi’s Dry Fruits Store
+              </h2>
+              <p className="text-emerald-100/80 text-sm leading-relaxed mb-6">
+                Step into our store for premium quality, naturally sourced almonds, cashews, dates, raisins, and signature gift packs in Tirupattur.
+              </p>
+
+              {/* Address card */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 mb-6">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
+                    <FaMapMarkerAlt className="text-lg" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-sm mb-1">Office & Store Address</h4>
+                    <p className="text-emerald-100/90 text-sm leading-relaxed">
+                      No: 58 Vaitheeshwaran Nagar,
+                      <br />
+                      Tirupathur – 635653, Tamil Nadu, India
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="mb-10">
-                    <span className="font-semibold">General Enquiry</span>
-                    <br />
-                    kavidryfruits@gmail.com
-                  </p>
-                  <p>
-                    <span className="font-semibold">Our Timing</span>
-                    <br />
-                    Mon – Sun : 10:00 AM – 07:00 PM
-                  </p>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="flex items-center gap-2 text-xs font-medium text-emerald-200/90 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-700/30">
+                  <FaShieldAlt className="text-emerald-400 text-sm shrink-0" />
+                  <span>100% Quality Assured</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-medium text-emerald-200/90 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-700/30">
+                  <FaTruck className="text-emerald-400 text-sm shrink-0" />
+                  <span>Pan-India Shipping</span>
                 </div>
               </div>
             </div>
+
+            {/* Embedded Google Map */}
+            <div className="rounded-2xl overflow-hidden border border-white/15 shadow-inner mt-4">
+              <iframe
+                title="Kavi's Dry Fruits Tirupattur Location"
+                src="https://maps.google.com/maps?q=12.5858719,78.6313559&hl=en&z=15&output=embed"
+                width="100%"
+                height="200"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-48 rounded-xl filter contrast-105"
+              />
+            </div>
           </div>
 
-          {/* Right - Enquiry Form */}
-          <div>
-            <h3 className="text-xl font-bold text-primary mb-6">
-              ENQUIRY FORM
-            </h3>
-            <form ref={form} onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Full Name*"
-                  required
-                  className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
-                />
-                <input
-                  type="text"
-                  name="contact"
-                  placeholder="Contact No*"
-                  required
-                  className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
-                />
+          {/* Right Column (7 cols): Enquiry Form */}
+          <div className="lg:col-span-7 bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+            <div className="mb-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+                Send an Enquiry
+              </h2>
+              <p className="text-slate-600 text-sm sm:text-base">
+                Fill in your details below. Our support team will reach out to you with pricing, order updates, or assistance.
+              </p>
+            </div>
+
+            <form ref={form} onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Full Name <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <FaUser className="text-sm" />
+                    </div>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="e.g. Sowmiya Ramesh"
+                      required
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-3 focus:ring-emerald-500/15 outline-none transition text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Contact No */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Contact Number <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <FaPhoneAlt className="text-sm" />
+                    </div>
+                    <input
+                      type="tel"
+                      name="contact"
+                      placeholder="e.g. 98765 43210"
+                      required
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-3 focus:ring-emerald-500/15 outline-none transition text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                    />
+                  </div>
+                </div>
               </div>
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Id"
-                required
-                className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
-              />
-              <input
-                type="text"
-                name="address"
-                placeholder="Recipient Address*"
-                required
-                className="border border-green1 rounded-md px-4 py-2 w-full focus:outline-none"
-              />
-              <textarea
-                placeholder="Your Message*"
-                name="message"
-                required
-                className="border border-green1 rounded-md px-4 py-2 w-full h-32 resize-none focus:outline-none"
-              ></textarea>
+
+              {/* Email ID */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Email Address <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <FaEnvelope className="text-sm" />
+                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="e.g. yourname@example.com"
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-3 focus:ring-emerald-500/15 outline-none transition text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Recipient Address */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Delivery / Recipient Address <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <FaHome className="text-sm" />
+                  </div>
+                  <input
+                    type="text"
+                    name="address"
+                    placeholder="Street, City, Pincode"
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-3 focus:ring-emerald-500/15 outline-none transition text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Your Message or Enquiry <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute top-3.5 left-3.5 pointer-events-none text-slate-400">
+                    <FaCommentDots className="text-sm" />
+                  </div>
+                  <textarea
+                    placeholder="Tell us what you're looking for (e.g. wholesale inquiries, gift packs, specific products)..."
+                    name="message"
+                    required
+                    rows={4}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-3 focus:ring-emerald-500/15 outline-none transition text-sm text-slate-800 placeholder:text-slate-400 font-medium resize-none"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className={`${
-                  loading ? "bg-gray-400 cursor-not-allowed" : "bg-primary hover:bg-green-700"
-                } text-white font-semibold px-8 py-2 rounded-md transition`}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-bold text-white transition-all shadow-md ${
+                  loading
+                    ? "bg-slate-400 cursor-not-allowed"
+                    : "bg-primary hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 active:scale-98 cursor-pointer"
+                }`}
               >
-                {loading ? "Sending..." : "Submit"}
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Sending Message...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaPaperPlane className="text-sm" />
+                    <span>Send Message</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
