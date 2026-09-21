@@ -10,6 +10,14 @@
   import axios from "axios";
   import { isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
 
+  const getItemKey = (it, index) => {
+    if (it?.checkoutKey) return String(it.checkoutKey);
+    if (it?.docId) return String(it.docId);
+    const base = it?.productId || it?.id || "item";
+    const weight = it?.selectedWeight || it?.weight || "def";
+    return index !== undefined ? `${base}_${weight}_${index}` : `${base}_${weight}`;
+  };
+
   const Checkout = () => {
     const { cartItems, clearCart, user, allProducts } = useStore();
     const navigate = useNavigate();
@@ -92,14 +100,22 @@
       // Only initialize if itemsToCheckout is empty to prevent manual quantity resets
       if (itemsToCheckout.length === 0) {
         if (checkoutProduct) {
+          const key = getItemKey(checkoutProduct, 0);
           setItemsToCheckout([
             {
               ...checkoutProduct,
+              checkoutKey: key,
               qty: checkoutProduct.qty || checkoutProduct.quantity || 1,
             },
           ]);
         } else if (Array.isArray(cartItems) && cartItems.length > 0) {
-          setItemsToCheckout(cartItems.map((it) => ({ ...it, qty: it.qty || it.quantity || 1 })));
+          setItemsToCheckout(
+            cartItems.map((it, idx) => ({
+              ...it,
+              checkoutKey: getItemKey(it, idx),
+              qty: it.qty || it.quantity || 1,
+            }))
+          );
         }
       }
     }, [cartItems, checkoutProduct, itemsToCheckout.length]);
@@ -557,8 +573,8 @@
     };
 
     // ---------------- Qty update (local UI) ----------------
-    const updateQty = (id, delta) => {
-      const currentItem = itemsToCheckout.find((it) => it.id === id);
+    const updateQty = (key, delta) => {
+      const currentItem = itemsToCheckout.find((it, idx) => getItemKey(it, idx) === String(key));
       if (!currentItem) return;
 
       const oldQty = parseInt(currentItem.qty || currentItem.quantity || 1, 10) || 1;
@@ -577,7 +593,7 @@
 
         if (isCombo) {
           const otherQty = itemsToCheckout
-            .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+            .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
             .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
           if (newQty + otherQty > availableStock) {
             toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
@@ -585,9 +601,10 @@
           }
         } else {
           const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
-          const thisItemGrams = parseWeightToGrams(weightStr) * newQty;
+          const unitGrams = parseWeightToGrams(weightStr);
+          const thisItemGrams = unitGrams * newQty;
           const otherGrams = itemsToCheckout
-            .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+            .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
             .reduce((sum, it) => {
               const w = it.selectedWeight || it.weight || it.weights?.[0];
               return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
@@ -601,13 +618,13 @@
       }
 
       setItemsToCheckout((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, qty: newQty } : item))
+        prev.map((item, idx) => (getItemKey(item, idx) === String(key) ? { ...item, qty: newQty } : item))
       );
     };
 
     // Optional: allow direct qty set from an input (keeps min 1)
-    const setQty = (id, value) => {
-      const currentItem = itemsToCheckout.find((it) => it.id === id);
+    const setQty = (key, value) => {
+      const currentItem = itemsToCheckout.find((it, idx) => getItemKey(it, idx) === String(key));
       if (!currentItem) return;
 
       const intVal = Math.max(1, parseInt(value || 1, 10) || 1);
@@ -623,7 +640,7 @@
 
       if (isCombo) {
         const otherQty = itemsToCheckout
-          .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+          .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
           .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
         if (intVal + otherQty > availableStock) {
           toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
@@ -631,9 +648,10 @@
         }
       } else {
         const weightStr = currentItem.selectedWeight || currentItem.weight || currentItem.weights?.[0];
-        const thisItemGrams = parseWeightToGrams(weightStr) * intVal;
+        const unitGrams = parseWeightToGrams(weightStr);
+        const thisItemGrams = unitGrams * intVal;
         const otherGrams = itemsToCheckout
-          .filter((it) => it.id !== id && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+          .filter((it, idx) => getItemKey(it, idx) !== String(key) && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
           .reduce((sum, it) => {
             const w = it.selectedWeight || it.weight || it.weights?.[0];
             return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
@@ -646,7 +664,7 @@
       }
 
       setItemsToCheckout((prev) =>
-        prev.map((it) => (it.id === id ? { ...it, qty: intVal } : it))
+        prev.map((it, idx) => (getItemKey(it, idx) === String(key) ? { ...it, qty: intVal } : it))
       );
     };
 
@@ -991,6 +1009,7 @@
 
                   <tbody>
                     {itemsToCheckout.map((item, index) => {
+                      const itemKey = getItemKey(item, index);
                       const productImage =
                         item?.image ||
                         item?.img ||
@@ -1008,13 +1027,45 @@
                       const matchedProduct = allProducts?.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
                       const isCombo = item.category === "Combo" || item.type === "combo" || matchedProduct?.category === "Combo" || matchedProduct?.type === "combo";
                       const availableStock = Number(matchedProduct?.stock ?? matchedProduct?.totalStock ?? item.stock ?? item.totalStock ?? 0);
-                      const requestedStock = isCombo ? qty : (parseWeightToGrams(item.selectedWeight || item.weight) * qty);
+
+                      // Calculate maximum allowed quantity for this specific line item
+                      let maxAllowedQty = 999;
+                      if (isCombo) {
+                        const otherQty = itemsToCheckout
+                          .filter((it, idx) => getItemKey(it, idx) !== itemKey && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                          .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0);
+                        maxAllowedQty = Math.max(1, availableStock - otherQty);
+                      } else {
+                        const unitGrams = parseWeightToGrams(item.selectedWeight || item.weight || item.weights?.[0]) || 1;
+                        const otherGrams = itemsToCheckout
+                          .filter((it, idx) => getItemKey(it, idx) !== itemKey && String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                          .reduce((sum, it) => {
+                            const w = it.selectedWeight || it.weight || it.weights?.[0];
+                            return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+                          }, 0);
+                        const remainingGrams = Math.max(0, availableStock - otherGrams);
+                        maxAllowedQty = Math.max(1, Math.floor(remainingGrams / unitGrams));
+                      }
+
+                      // Total requested across all items sharing this product
+                      const totalRequestedForProduct = isCombo
+                        ? itemsToCheckout
+                            .filter((it) => String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                            .reduce((sum, it) => sum + (parseInt(it.qty || it.quantity || 1, 10) || 1), 0)
+                        : itemsToCheckout
+                            .filter((it) => String(it.productId || (it.docId ? it.docId.split("_")[0] : it.id)) === prodId)
+                            .reduce((sum, it) => {
+                              const w = it.selectedWeight || it.weight || it.weights?.[0];
+                              return sum + parseWeightToGrams(w) * (parseInt(it.qty || it.quantity || 1, 10) || 1);
+                            }, 0);
+
                       const isOut = availableStock <= 0;
-                      const exceedsStock = requestedStock > availableStock;
+                      const exceedsStock = availableStock > 0 && totalRequestedForProduct > availableStock;
                       const lowStock = !isOut && !exceedsStock && isLowStock(availableStock, isCombo);
+                      const isMaxReached = availableStock <= 0 || qty >= maxAllowedQty;
 
                       return (
-                        <tr key={item.id} className="border-b align-top">
+                        <tr key={itemKey} className="border-b align-top">
                           <td className="py-3 px-2">{index + 1}</td>
 
                           <td className="py-3 px-2">
@@ -1050,8 +1101,13 @@
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => updateQty(item.id, -1)}
-                                className="w-7 h-7 flex items-center cursor-pointer justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                                onClick={() => updateQty(itemKey, -1)}
+                                disabled={qty <= 1}
+                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
+                                  qty <= 1
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : "bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800"
+                                }`}
                               >
                                 -
                               </button>
@@ -1059,15 +1115,22 @@
                               <input
                                 type="number"
                                 value={qty}
-                                onChange={(e) => setQty(item.id, e.target.value)}
+                                onChange={(e) => setQty(itemKey, e.target.value)}
                                 min={1}
-                                className="w-12 text-center border rounded px-1 py-1"
+                                max={maxAllowedQty}
+                                className="w-12 text-center border rounded px-1 py-1 font-medium"
                               />
 
                               <button
                                 type="button"
-                                onClick={() => updateQty(item.id, +1)}
-                                className="w-7 h-7 flex items-center cursor-pointer justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                                onClick={() => updateQty(itemKey, +1)}
+                                disabled={isMaxReached}
+                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
+                                  isMaxReached
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : "bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800"
+                                }`}
+                                title={isMaxReached ? `Maximum available stock (${formatStockDisplay(availableStock, isCombo)}) reached` : "Increase quantity"}
                               >
                                 +
                               </button>

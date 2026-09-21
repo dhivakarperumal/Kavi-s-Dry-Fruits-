@@ -297,7 +297,7 @@ export const StoreProvider = ({ children }) => {
         return [
           ...prev,
           {
-            id: product.id,
+            id: docId || product.id,
             type: product.type || 'single',
             docId,
             productId,
