@@ -62,7 +62,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-white via-emerald-50/30 to-white px-4 pb-10 pt-2 sm:px-6 sm:pb-14 sm:pt-4 lg:px-8 lg:pb-16 lg:pt-6">
+    <div className="relative overflow-hidden bg-gradient-to-b from-white via-emerald-50/30 to-white px-4 pb-10 pt-0 sm:px-6 sm:pb-14 lg:px-8 lg:pb-16">
       <Helmet>
         <title>Contact Kavi’s Dry Fruits – Customer Support, Bulk & Wholesale Enquiries</title>
         <meta
@@ -377,62 +377,7 @@ const Contact = () => {
           />
         </section>
 
-        {/* Frequently asked questions */}
-        <section className="mx-auto max-w-5xl rounded-[2rem] border border-emerald-100 bg-white/80 p-5 shadow-lg shadow-emerald-100/40 sm:p-8 lg:p-10">
-          <div className="mb-8 text-center sm:mb-10">
-            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
-              Helpful answers
-            </span>
-            <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Frequently Asked Questions</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-xs leading-6 text-slate-600 sm:text-sm">
-              Quick answers about orders, delivery, bulk purchases, and getting in touch with our team.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              {
-                question: "How can I place an order?",
-                answer: "You can shop online through our website or contact us by phone or WhatsApp for help choosing products and completing your order.",
-              },
-              {
-                question: "Do you accept bulk, wholesale, or gifting orders?",
-                answer: "Yes. We prepare bulk orders, festive hampers, and custom gift packs. Send us your quantity and requirements so our team can share the best options.",
-              },
-              {
-                question: "Where is Kavi’s Dry Fruits located?",
-                answer: "Our store is at No: 58 Vaitheeshwaran Nagar, Tirupathur - 635653, Tamil Nadu, India. Use the map above for directions.",
-              },
-              {
-                question: "How can I get help with delivery or an existing order?",
-                answer: "Call +91 94895 93504 or message us on WhatsApp with your order details. Our team will help with delivery updates and order questions.",
-              },
-              {
-                question: "What is your return policy?",
-                answer: "Please review our Return Policy page for eligibility and steps. For assistance with a specific order, contact our support team directly.",
-              },
-            ].map((item, index) => {
-              const isOpen = openFaq === index;
-              const answerId = `contact-faq-answer-${index}`;
-
-              return (
-                <div key={item.question} className={`overflow-hidden rounded-2xl border bg-white transition-shadow ${isOpen ? "border-emerald-300 shadow-md shadow-emerald-100/60" : "border-slate-200 shadow-sm"}`}>
-                  <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-controls={answerId}
-                    onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                    className="flex min-h-16 w-full items-center justify-between gap-4 px-4 py-4 text-left outline-none transition hover:bg-emerald-50/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 sm:px-6"
-                  >
-                    <span className="text-xs font-bold text-slate-900 sm:text-sm">{item.question}</span>
-                    <FaChevronDown className={`shrink-0 text-emerald-600 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {isOpen && <p id={answerId} className="border-t border-emerald-100 px-4 pb-5 pt-4 text-xs leading-6 text-slate-600 sm:px-6 sm:text-sm">{item.answer}</p>}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+       
       </div>
     </div>
   );
