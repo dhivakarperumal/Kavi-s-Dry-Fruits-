@@ -4,8 +4,25 @@ import { FaTimes, FaSearch, FaThLarge, FaThList, FaBan, FaRupeeSign, FaTimesCirc
 import api from "../../services/api";
 import logo from "/images/Kavi_logo.png";
 
-const CancelOrders = () => {
-  const [cancelledOrders, setCancelledOrders] = useState([]);
+const CancelOrders = ({ adminData }) => {
+  const parseCancelledOrders = (ordersList) => {
+    return (ordersList || [])
+      .filter(o => o.orderStatus === "Cancelled")
+      .map(o => ({
+        ...o,
+        cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+        paymentMethod: o.paymentMode || o.paymentMethod || "-",
+        date: o.created_at || o.date
+      }));
+  };
+
+  const [cancelledOrders, setCancelledOrders] = useState(() => {
+    if (adminData?.allOrders?.length > 0) {
+      return parseCancelledOrders(adminData.allOrders);
+    }
+    return [];
+  });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -24,18 +41,12 @@ const CancelOrders = () => {
     setLoading(true);
     try {
       const res = await api.get("/orders");
-      const data = (res.data || [])
-        .filter(o => o.orderStatus === "Cancelled")
-        .map(o => ({
-          ...o,
-          cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-          shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-          paymentMethod: o.paymentMode || o.paymentMethod || "-",
-          date: o.created_at || o.date
-        }));
-      setCancelledOrders(data);
+      setCancelledOrders(parseCancelledOrders(res.data || []));
     } catch (error) {
       console.error("Error fetching cancelled orders:", error);
+      if (adminData?.allOrders?.length > 0) {
+        setCancelledOrders(parseCancelledOrders(adminData.allOrders));
+      }
     } finally {
       setLoading(false);
     }
@@ -167,7 +178,7 @@ const CancelOrders = () => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Unrealized Gross Value</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                ₹{Math.round(cancelledOrders.reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+                ₹{Math.round(cancelledOrders.reduce((acc, o) => acc + (Number(o.totalAmount ?? o.total) || 0), 0)).toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">

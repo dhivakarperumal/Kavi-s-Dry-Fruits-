@@ -9,7 +9,25 @@ import api, { SOCKET_URL } from "../../services/api";
 import { io } from "socket.io-client";
 
 const NewOrders = ({ adminData, onOrderUpdated }) => {
-  const [orders, setOrders] = useState([]);
+  const parseOrders = (sourceOrders) => {
+    return sourceOrders.filter(o =>
+      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
+    ).map(o => ({
+      ...o,
+      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+      paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
+      date: o.created_at || o.date
+    })).sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
+
+  const [orders, setOrders] = useState(() => {
+    if (adminData?.allOrders?.length > 0) {
+      return parseOrders(adminData.allOrders);
+    }
+    return [];
+  });
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
@@ -28,17 +46,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
   const navigate = useNavigate();
 
   const applyOrders = (sourceOrders) => {
-    const parsed = sourceOrders.filter(o =>
-      o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled" && o.orderStatus !== "Returned" && o.orderStatus !== "Refunded"
-    ).map(o => ({
-      ...o,
-      cartItems: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-      paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
-      paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
-      date: o.created_at || o.date
-    }));
-    setOrders(parsed.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    setOrders(parseOrders(sourceOrders));
   };
 
   // Always fetch fresh from API — never rely on stale adminData cache for New Orders
@@ -442,7 +450,7 @@ const NewOrders = ({ adminData, onOrderUpdated }) => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Pending Fulfillment Value</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                ₹{Math.round(orders.reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+                ₹{Math.round(orders.reduce((acc, o) => acc + (Number(o.totalAmount ?? o.total) || 0), 0)).toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">

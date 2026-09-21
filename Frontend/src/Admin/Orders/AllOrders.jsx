@@ -8,7 +8,23 @@ import OrderDetailsModal from "./OrderDetailsModal";
 import { useNavigate } from "react-router-dom";
 
 const AllOrders = ({ adminData, onOrderUpdated }) => {
-  const [orders, setOrders] = useState([]);
+  const parseOrders = (sourceOrders) => {
+    return (sourceOrders || []).map(o => ({
+      ...o,
+      items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
+      shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
+      paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
+      paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
+      date: o.created_at || o.date
+    }));
+  };
+
+  const [orders, setOrders] = useState(() => {
+    if (adminData?.allOrders?.length > 0) {
+      return parseOrders(adminData.allOrders);
+    }
+    return [];
+  });
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [cancelReason, setCancelReason] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(null);
@@ -28,15 +44,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
   const fetchOrders = async (forceApi = false) => {
     // Use the admin snapshot for the initial render, but fetch fresh data after a mutation.
     if (!forceApi && adminData && adminData.allOrders && adminData.allOrders.length > 0) {
-      const parsedOrders = adminData.allOrders.map(o => ({
-        ...o,
-        items: typeof o.items === 'string' ? JSON.parse(o.items) : (o.items || []),
-        shippingAddress: typeof o.shippingAddress === 'string' ? JSON.parse(o.shippingAddress) : (o.shippingAddress || {}),
-        paymentMethod: o.paymentMode || o.paymentMethod || "Online Payment",
-        paymentStatus: o.paymentStatus || (o.paymentMode === "COD" ? "Pending" : "Paid"),
-        date: o.created_at || o.date
-      }));
-      setOrders(parsedOrders);
+      setOrders(parseOrders(adminData.allOrders));
       return;
     }
 
@@ -407,7 +415,7 @@ const AllOrders = ({ adminData, onOrderUpdated }) => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Cumulative Sales Revenue</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                ₹{Math.round(orders.filter(o => o.orderStatus !== 'Cancelled').reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+                ₹{Math.round(orders.filter(o => (o.orderStatus || '').toLowerCase() !== 'cancelled').reduce((acc, o) => acc + (Number(o.totalAmount ?? o.total) || 0), 0)).toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">

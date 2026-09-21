@@ -6,8 +6,32 @@ import { useNavigate } from "react-router-dom";
 import api, { SOCKET_URL } from "../../services/api";
 import { io } from "socket.io-client";
 
-const Delivery = () => {
-  const [deliveredOrders, setDeliveredOrders] = useState([]);
+const Delivery = ({ adminData }) => {
+  const parseDeliveredOrders = (ordersList) => {
+    return (ordersList || [])
+      .filter(o => o.orderStatus === "Delivered")
+      .map((order) => {
+        const dateStr = order.created_at || order.date;
+        const orderDateMs = dateStr ? new Date(dateStr).getTime() : 0;
+        return {
+          ...order,
+          id: order.id,
+          paymentMethod: order.paymentMode || order.paymentMethod || "-",
+          orderDateMs,
+          cartItems: typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []),
+          shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress) : (order.shippingAddress || {}),
+          date: dateStr
+        };
+      })
+      .sort((a, b) => (b.orderDateMs || 0) - (a.orderDateMs || 0));
+  };
+
+  const [deliveredOrders, setDeliveredOrders] = useState(() => {
+    if (adminData?.allOrders?.length > 0) {
+      return parseDeliveredOrders(adminData.allOrders);
+    }
+    return [];
+  });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filterType, setFilterType] = useState("all");
   const [customFrom, setCustomFrom] = useState("");
@@ -25,29 +49,14 @@ const Delivery = () => {
   const fetchDeliveredOrders = useCallback(async () => {
     try {
       const res = await api.get("/orders");
-      const deliveries = (res.data || [])
-        .filter(o => o.orderStatus === "Delivered")
-        .map((order) => {
-          const dateStr = order.created_at || order.date;
-          const orderDateMs = dateStr ? new Date(dateStr).getTime() : 0;
-          return {
-            ...order,
-            id: order.id,
-            paymentMethod: order.paymentMode || order.paymentMethod || "-",
-            orderDateMs,
-            cartItems: typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []),
-            shippingAddress: typeof order.shippingAddress === 'string' ? JSON.parse(order.shippingAddress) : (order.shippingAddress || {}),
-            date: dateStr
-          };
-        });
-
-      // sort by timestamp (descending)
-      deliveries.sort((a, b) => (b.orderDateMs || 0) - (a.orderDateMs || 0));
-      setDeliveredOrders(deliveries);
+      setDeliveredOrders(parseDeliveredOrders(res.data || []));
     } catch (error) {
       console.error("fetchDeliveredOrders error:", error);
+      if (adminData?.allOrders?.length > 0) {
+        setDeliveredOrders(parseDeliveredOrders(adminData.allOrders));
+      }
     }
-  }, []);
+  }, [adminData]);
 
   useEffect(() => {
     // Fetch immediately on mount
@@ -378,7 +387,7 @@ const Delivery = () => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Realized Delivered Revenue</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                ₹{Math.round(deliveredOrders.reduce((acc, o) => acc + (Number(o.total) || 0), 0)).toLocaleString()}
+                ₹{Math.round(deliveredOrders.reduce((acc, o) => acc + (Number(o.totalAmount ?? o.total) || 0), 0)).toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
@@ -399,7 +408,7 @@ const Delivery = () => {
             <div>
               <p className="text-white/80 font-black text-[10px] tracking-widest uppercase mb-2">Filtered Shipments</p>
               <h3 className="text-4xl font-black text-white tracking-tighter">
-                {deliveredOrders.filter(o => o.orderId?.toLowerCase().includes(debouncedSearch.toLowerCase())).length}
+                {filteredOrders.length}
               </h3>
             </div>
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-inner backdrop-blur-md border border-white/20 text-white transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 bg-white/20">
