@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
+import logo from "/images/Kavi_logo.png";
 
 const Billing = () => {
     const [orders, setOrders] = useState([]);
@@ -101,7 +102,6 @@ const Billing = () => {
             return `<tr>
                 <td>${index + 1}</td>
                 <td><strong>${escapeHtml(item.name || item.productName || "Item")}</strong><small>${escapeHtml(item.productId || "-")}</small></td>
-                <td>${escapeHtml(item.category || "-")}</td>
                 <td>${escapeHtml(item.selectedWeight || item.weight || item.weightDisplay || "-")}</td>
                 <td>${quantity}</td>
                 <td>${money(unitPrice)}</td>
@@ -117,11 +117,11 @@ const Billing = () => {
                <style>
                  @page { size: A4; margin: 0; }
                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-                 body {
+                                 body {
                    font-family: 'Inter', sans-serif;
                    padding: 15mm;
                    color: #333;
-                   max-width: 800px;
+                                     max-width: 900px;
                    margin: 0 auto;
                  }
                  .header {
@@ -131,22 +131,24 @@ const Billing = () => {
                    margin-bottom: 0px;
                  }
                  .logo { margin-top: 3px; }
-                 .logo img { max-width: 140px; }
+                 .logo img { width: 140px; height: auto; max-height: 58px; object-fit: contain; object-position: left center; }
                  .invoice-title { text-align: right; }
                  .invoice-title h1 { color: #2b5c92; font-size: 36px; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase; }
                  .invoice-title p { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
                  .invoice-title .invoice-date { font-size: 11px; color: #666; margin-top: 8px; font-weight: 500; }
                  .divider { height: 4px; background-color: #2b5c92; margin-bottom: 40px; }
-                 .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
-                 .info-block { width: 48%; }
-                 .info-block h3 { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                 .info-block p { font-size: 13px; line-height: 1.6; margin: 4px 0; color: #444; }
+                 .info-section { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 32px; }
+                 .info-block { min-height: 120px; }
+                 .info-block h3 { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                 .info-block p { font-size: 11px; line-height: 1.45; margin: 4px 0; color: #444; }
                  .info-block p strong { color: #222; }
                  .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
                  .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
                  table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-bottom: 5px; }
-                 th, td { border: 1px solid #333; padding: 8px 12px; text-align: center; font-size: 13px; }
+                 th, td { border: 1px solid #333; padding: 7px 6px; text-align: center; font-size: 10px; }
                  th { background-color: #fcfcfc; font-weight: 700; color: #333; }
+                 td:nth-child(2) { text-align: left; }
+                 td small { display: block; color: #666; font-size: 8px; margin-top: 2px; }
                  .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
                  .summary-table { width: 300px; }
                  .summary-table div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #444; }
@@ -160,7 +162,7 @@ const Billing = () => {
              <body>
                <div class="header">
                  <div class="logo">
-                   <strong>KAVI'S DRY FRUITS</strong>
+                                     <img src="${logo}" alt="Kavi's Dry Fruits" />
                  </div>
                  <div class="invoice-title">
                    <h1>INVOICE</h1>
@@ -181,8 +183,23 @@ const Billing = () => {
                  </div>
                  <div class="info-block">
                    <h3>Order Info</h3>
-                   <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
-                   <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
+                                     <p><strong>Customer Type:</strong> ${order.customerType || "Shop Customer"}</p>
+                                     <p><strong>Payment:</strong> ${order.paymentMode || order.paymentMethod || "-"}</p>
+                                     <p><strong>Payment Status:</strong> ${order.paymentStatus || "-"}</p>
+                                     <p><strong>Payment ID:</strong> ${order.paymentId || "-"}</p>
+                                     <p><strong>Order Status:</strong> ${order.orderStatus || order.status || "-"}</p>
+                                 </div>
+                                 <div class="info-block">
+                                     <h3>Billing Address</h3>
+                                     <p>${address.street || "-"}</p>
+                                     <p>${[address.city, address.state, address.zip].filter(Boolean).join(", ") || "-"}</p>
+                                     <p><strong>Country:</strong> ${address.country || "India"}</p>
+                                     <p><strong>GSTIN:</strong> ${order.clientGST || "-"}</p>
+                                 </div>
+                                 <div class="info-block">
+                                     <h3>Store Details</h3>
+                                     <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
+                                     <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
                  </div>
                </div>
        
@@ -190,12 +207,13 @@ const Billing = () => {
                <table>
                  <thead>
                    <tr>
-                     <th style="width: 8%">S.No</th>
-                     <th style="width: 34%; text-align: center;">Product Name</th>
+                     <th style="width: 6%">S.No</th>
+                     <th style="width: 36%; text-align: left;">Product / ID</th>
                      <th style="width: 16%">Weight</th>
-                     <th style="width: 16%">Price</th>
                      <th style="width: 10%">Qty</th>
-                     <th style="width: 16%">Total</th>
+                     <th style="width: 14%">Price</th>
+                     <th style="width: 10%">GST</th>
+                     <th style="width: 18%">Line Total</th>
                    </tr>
                  </thead>
                  <tbody>
@@ -213,6 +231,10 @@ const Billing = () => {
                      <span>Shipping:</span>
                      <strong>₹${shipping.toFixed(2)}</strong>
                    </div>
+                                     <div>
+                                         <span>GST / Tax:</span>
+                                         <strong>₹${tax.toFixed(2)}</strong>
+                                     </div>
                    <div class="total">
                      <span>Total Amount:</span>
                      <span class="total-val">₹${total.toFixed(2)}</span>
