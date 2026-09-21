@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet";
-import { isLowStock, formatStockDisplay, parseWeightToGrams } from "../utils/stockUtils";
+import { isLowStock, formatStockDisplay, parseWeightToGrams, isSameProduct, getProductCartUsage } from "../utils/stockUtils";
 
 // --------------------------------------------
 // MEMOIZED CART ROW (ONLY re-renders when item changes)
@@ -233,19 +233,13 @@ const AddToCart = () => {
         }
 
         // Validate available stock for requested weight & quantity
-        const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
-        const matched = allProducts.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+        const matched = allProducts.find((p) => isSameProduct(p, item)) || item;
         const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
         const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
 
         if (!isCombo) {
           const requestedGrams = (item.quantity || 1) * parseWeightToGrams(newWeight);
-          const otherGrams = cartItems
-            .filter((i) => (i.id !== item.id && i.docId !== item.docId) && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
-            .reduce((sum, i) => {
-              const w = i.selectedWeight || i.weights?.[0];
-              return sum + parseWeightToGrams(w) * (parseInt(i.quantity || i.qty || 1, 10) || 1);
-            }, 0);
+          const otherGrams = getProductCartUsage(cartItems, matched, item.docId || item.id);
           if (requestedGrams + otherGrams > availableStock) {
             toast.error(
               `Only ${formatStockDisplay(availableStock, false)} available in stock. Cannot select ${newWeight} for ${item.quantity} item(s).`
@@ -304,25 +298,25 @@ const AddToCart = () => {
     // Check aggregated stock for all items
     const productUsage = {};
     for (const item of cartItems) {
-      const prodId = String(item.productId || (item.docId ? item.docId.split("_")[0] : item.id) || "");
-      const matched = allProducts.find((p) => String(p.id) === prodId || String(p.productId) === prodId);
+      const matched = allProducts.find((p) => isSameProduct(p, item)) || item;
+      const key = matched?.id ? String(matched.id) : String(item.name || item.productId || item.docId || "unknown");
       const availableStock = Number(matched?.stock ?? matched?.totalStock ?? item.stock ?? item.totalStock ?? 0);
       const isCombo = item.category === "Combo" || item.type === "combo" || matched?.category === "Combo" || matched?.type === "combo";
       const qty = parseInt(item.quantity || item.qty || 1, 10);
 
-      if (!productUsage[prodId]) {
-        productUsage[prodId] = {
-          name: item.name,
+      if (!productUsage[key]) {
+        productUsage[key] = {
+          name: item.name || matched?.name || "Product",
           isCombo,
           availableStock,
           totalQty: 0,
           totalGrams: 0,
         };
       }
-      productUsage[prodId].totalQty += qty;
+      productUsage[key].totalQty += qty;
       if (!isCombo) {
         const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
-        productUsage[prodId].totalGrams += weightGrams * qty;
+        productUsage[key].totalGrams += weightGrams * qty;
       }
     }
 
