@@ -16,12 +16,15 @@ import {
   FaPaperPlane,
   FaShieldAlt,
   FaTruck,
-  FaAward
+  FaAward,
+  FaChevronDown,
+  FaExternalLinkAlt
 } from "react-icons/fa";
 
 const Contact = () => {
   const form = useRef();
   const [loading, setLoading] = useState(false);
+  const [openFaq, setOpenFaq] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -209,20 +212,6 @@ const Contact = () => {
               </div>
             </div>
 
-            {/* Embedded Google Map */}
-            <div className="rounded-2xl overflow-hidden border border-white/15 shadow-inner mt-4">
-              <iframe
-                title="Kavi's Dry Fruits Tirupattur Location"
-                src="https://maps.google.com/maps?q=12.5858719,78.6313559&hl=en&z=15&output=embed"
-                width="100%"
-                height="200"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="w-full h-48 rounded-xl filter contrast-105"
-              />
-            </div>
           </div>
 
           {/* Right Column (7 cols): Enquiry Form */}
@@ -359,6 +348,105 @@ const Contact = () => {
             </form>
           </div>
         </div>
+
+        {/* Dedicated store location */}
+        <section className="mb-16 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-xl shadow-emerald-100/40">
+          <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="flex flex-col justify-center bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 p-8 text-white sm:p-10">
+              <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">
+                <FaMapMarkerAlt className="text-emerald-300" /> Find our store
+              </span>
+              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Visit Kavi’s Dry Fruits</h2>
+              <p className="mt-4 max-w-md text-sm leading-7 text-emerald-100/80">
+                Drop by our store in Tirupathur for premium dry fruits, gift packs, and friendly guidance for your next order.
+              </p>
+              <div className="mt-8 flex items-start gap-3 border-t border-white/10 pt-6">
+                <FaMapMarkerAlt className="mt-1 shrink-0 text-emerald-300" />
+                <address className="not-italic text-sm leading-7 text-white">
+                  No: 58 Vaitheeshwaran Nagar,<br />
+                  Tirupathur - 635653,<br />
+                  Tamil Nadu, India
+                </address>
+              </div>
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-emerald-950 transition hover:bg-emerald-300"
+              >
+                Get directions <FaExternalLinkAlt className="text-xs" />
+              </a>
+            </div>
+            <div className="min-h-[320px] bg-emerald-50 p-3 sm:p-4">
+              <iframe
+                title="Kavi's Dry Fruits store at No 58 Vaitheeshwaran Nagar, Tirupathur"
+                src="https://www.google.com/maps?q=No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu&hl=en&z=16&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: "288px" }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="h-full min-h-[288px] w-full rounded-2xl"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Frequently asked questions */}
+        <section className="mx-auto max-w-5xl pb-4">
+          <div className="mb-10 text-center">
+            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-amber-700">
+              Helpful answers
+            </span>
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">Frequently Asked Questions</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+              Quick answers about orders, delivery, bulk purchases, and getting in touch with our team.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              {
+                question: "How can I place an order?",
+                answer: "You can shop online through our website or contact us by phone or WhatsApp for help choosing products and completing your order.",
+              },
+              {
+                question: "Do you accept bulk, wholesale, or gifting orders?",
+                answer: "Yes. We prepare bulk orders, festive hampers, and custom gift packs. Send us your quantity and requirements so our team can share the best options.",
+              },
+              {
+                question: "Where is Kavi’s Dry Fruits located?",
+                answer: "Our store is at No: 58 Vaitheeshwaran Nagar, Tirupathur - 635653, Tamil Nadu, India. Use the map above for directions.",
+              },
+              {
+                question: "How can I get help with delivery or an existing order?",
+                answer: "Call +91 94895 93504 or message us on WhatsApp with your order details. Our team will help with delivery updates and order questions.",
+              },
+              {
+                question: "What is your return policy?",
+                answer: "Please review our Return Policy page for eligibility and steps. For assistance with a specific order, contact our support team directly.",
+              },
+            ].map((item, index) => {
+              const isOpen = openFaq === index;
+
+              return (
+                <div key={item.question} className={`overflow-hidden rounded-2xl border bg-white transition-all ${isOpen ? "border-emerald-300 shadow-md shadow-emerald-100/60" : "border-slate-200"}`}>
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenFaq(isOpen ? -1 : index)}
+                    className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left sm:px-6"
+                  >
+                    <span className="font-bold text-slate-900">{item.question}</span>
+                    <FaChevronDown className={`shrink-0 text-emerald-600 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {isOpen && <p className="border-t border-emerald-100 px-5 pb-5 pt-4 text-sm leading-7 text-slate-600 sm:px-6">{item.answer}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );
