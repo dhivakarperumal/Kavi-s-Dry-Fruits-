@@ -17,8 +17,7 @@ import {
   FaShieldAlt,
   FaTruck,
   FaAward,
-  FaChevronDown,
-  FaExternalLinkAlt
+  FaChevronDown
 } from "react-icons/fa";
 
 const Contact = () => {
@@ -210,6 +209,21 @@ const Contact = () => {
                   <span>Pan-India Shipping</span>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/10 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-300">Need quick help?</p>
+                <p className="mt-2 text-sm leading-6 text-emerald-100/80">
+                  Our team can help you choose products, plan gift packs, or check an order.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <a href="tel:+919489593504" className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-bold text-emerald-900 transition hover:bg-emerald-100">
+                    <FaPhoneAlt /> Call us
+                  </a>
+                  <a href="https://wa.me/919489593504" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/40 px-3 py-2 text-xs font-bold text-emerald-100 transition hover:bg-emerald-800">
+                    <FaWhatsapp /> WhatsApp
+                  </a>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -327,11 +341,10 @@ const Contact = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-bold text-white transition-all shadow-md ${
-                  loading
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-bold text-white transition-all shadow-md ${loading
                     ? "bg-slate-400 cursor-not-allowed"
                     : "bg-primary hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 active:scale-98 cursor-pointer"
-                }`}
+                  }`}
               >
                 {loading ? (
                   <>
@@ -348,50 +361,6 @@ const Contact = () => {
             </form>
           </div>
         </div>
-
-        {/* Dedicated store location */}
-        <section className="mb-16 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-xl shadow-emerald-100/40">
-          <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
-            <div className="flex flex-col justify-center bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 p-8 text-white sm:p-10">
-              <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">
-                <FaMapMarkerAlt className="text-emerald-300" /> Find our store
-              </span>
-              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Visit Kavi’s Dry Fruits</h2>
-              <p className="mt-4 max-w-md text-sm leading-7 text-emerald-100/80">
-                Drop by our store in Tirupathur for premium dry fruits, gift packs, and friendly guidance for your next order.
-              </p>
-              <div className="mt-8 flex items-start gap-3 border-t border-white/10 pt-6">
-                <FaMapMarkerAlt className="mt-1 shrink-0 text-emerald-300" />
-                <address className="not-italic text-sm leading-7 text-white">
-                  No: 58 Vaitheeshwaran Nagar,<br />
-                  Tirupathur - 635653,<br />
-                  Tamil Nadu, India
-                </address>
-              </div>
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-emerald-950 transition hover:bg-emerald-300"
-              >
-                Get directions <FaExternalLinkAlt className="text-xs" />
-              </a>
-            </div>
-            <div className="min-h-[320px] bg-emerald-50 p-3 sm:p-4">
-              <iframe
-                title="Kavi's Dry Fruits store at No 58 Vaitheeshwaran Nagar, Tirupathur"
-                src="https://www.google.com/maps?q=No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu&hl=en&z=16&output=embed"
-                width="100%"
-                height="100%"
-                style={{ border: 0, minHeight: "288px" }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="h-full min-h-[288px] w-full rounded-2xl"
-              />
-            </div>
-          </div>
-        </section>
 
         {/* Frequently asked questions */}
         <section className="mx-auto max-w-5xl pb-4">
@@ -446,6 +415,21 @@ const Contact = () => {
               );
             })}
           </div>
+        </section>
+
+        {/* Full-width store location map */}
+        <section className="relative left-1/2 mb-16 w-screen -translate-x-1/2 overflow-hidden border-y border-emerald-100 bg-emerald-50 shadow-xl shadow-emerald-100/40">
+          <iframe
+            title="Kavi's Dry Fruits store at No 58 Vaitheeshwaran Nagar, Tirupathur"
+            src="https://www.google.com/maps?q=No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu&hl=en&z=16&output=embed"
+            width="100%"
+            height="420"
+            style={{ border: 0 }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="h-[360px] w-full sm:h-[420px]"
+          />
         </section>
       </div>
     </div>
