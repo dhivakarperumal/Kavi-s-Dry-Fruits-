@@ -36,13 +36,9 @@ const CartRow = React.memo(
     const requestedStock = isCombo
       ? currentQty
       : currentQty * parseWeightToGrams(item.selectedWeight);
-    const nextRequestedStock = isCombo
-      ? currentQty + 1
-      : (currentQty + 1) * parseWeightToGrams(item.selectedWeight);
     const exceedsStock = availableStock !== undefined && requestedStock > availableStock;
     const isOut = availableStock !== undefined && availableStock <= 0;
     const lowStock = availableStock !== undefined && !isOut && !exceedsStock && isLowStock(availableStock, isCombo);
-    const isMaxReached = availableStock !== undefined && (availableStock <= 0 || nextRequestedStock > availableStock);
 
     return (
       <tr key={item.id} className="border-b bg-green4">
@@ -106,12 +102,7 @@ const CartRow = React.memo(
           <div className="flex border rounded overflow-hidden w-max">
             <button
               onClick={() => decreaseQuantity(item)}
-              disabled={currentQty <= 1}
-              className={`px-3 py-1 text-lg transition-colors ${
-                currentQty <= 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-green-200 cursor-pointer text-gray-800"
-              }`}
+              className="px-3 py-1 text-lg hover:bg-green-200 cursor-pointer text-gray-800 transition-colors"
             >
               –
             </button>
@@ -120,13 +111,7 @@ const CartRow = React.memo(
             </span>
             <button
               onClick={() => increaseQuantity(item)}
-              disabled={isMaxReached}
-              className={`px-3 py-1 text-lg transition-colors ${
-                isMaxReached
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "hover:bg-green-200 cursor-pointer text-gray-800"
-              }`}
-              title={isMaxReached ? `Maximum available stock (${formatStockDisplay(availableStock, isCombo)}) reached` : "Increase quantity"}
+              className="px-3 py-1 text-lg hover:bg-green-200 cursor-pointer text-gray-800 transition-colors"
             >
               +
             </button>
