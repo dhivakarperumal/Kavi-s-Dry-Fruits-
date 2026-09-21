@@ -830,7 +830,7 @@
 
         script.onload = () => {
           const options = {
-            key: "rzp_test_SGj8n5SyKSE10b",
+            key: "rzp_live_AemM2AyOody9mU",
             amount: Math.round(finalAmount * 100), 
             currency: "INR",
             name: "Kavi DryFruits",
