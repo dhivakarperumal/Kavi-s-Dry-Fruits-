@@ -27,7 +27,7 @@ const Contac_Us = () => {
       <PageHeader title={"Contact Us"} curpage={"Contact Us"} />
 
       <section className="bg-gradient-to-b from-white via-emerald-50/40 to-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1fr_1.1fr] items-center">
+        {/* <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1fr_1.1fr] items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">
               <FaCommentDots className="text-emerald-600" />
@@ -70,7 +70,7 @@ const Contac_Us = () => {
               <li className="flex items-start gap-3"><span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500" /> Support for custom product bundles and wholesale enquiries</li>
             </ul>
           </div>
-        </div>
+        </div> */}
       </section>
 
       <Contact />
