@@ -892,7 +892,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   const isItemDeficit = matchedProd && neededGrams > 0 && neededGrams > availableStock;
 
                   return (
-                    <div key={i} className={`grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center p-5 rounded-3xl border transition-all group shadow-sm ${isItemDeficit ? "bg-red-50/50 border-red-300 ring-2 ring-red-100" : "bg-gray-50/50 border-gray-100 hover:bg-white hover:border-blue-100"}`}>
+                    <div key={i} className={`grid grid-cols-[auto_minmax(0,1fr)_minmax(7rem,8rem)_auto] gap-4 items-center p-5 rounded-3xl border transition-all group shadow-sm ${isItemDeficit ? "bg-red-50/50 border-red-300 ring-2 ring-red-100" : "bg-gray-50/50 border-gray-100 hover:bg-white hover:border-blue-100"}`}>
                       <div className="relative w-14 h-14 bg-white rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 group/img">
                         {item.image ? (
                           <img src={item.image} alt="p" className="w-full h-full object-cover" />
@@ -922,11 +922,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                           <FaEdit className="text-white text-xs" />
                         </label>
                       </div>
-                      <div className="flex-1 relative">
+                      <div className="min-w-0 relative">
                         <div className="flex items-center justify-between mb-1">
                           <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Item Identity</label>
                           {matchedProd && (
-                            <span className="text-[9px] font-bold text-gray-500">
+                            <span className="ml-2 shrink-0 text-[9px] font-bold text-gray-500">
                               Stock: <strong className={availableStock > 0 ? "text-emerald-700" : "text-red-600"}>{formatWeightDisplay(availableStock)}</strong>
                             </span>
                           )}
@@ -966,7 +966,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                           </div>
                         )}
                       </div>
-                      <div className="w-32 border-l border-gray-100 pl-5 flex flex-col">
+                      <div className="min-w-0 w-full border-l border-gray-100 pl-5 flex flex-col">
                         <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Weight</label>
                         {variants.length > 0 ? (
                           <div className="relative">
