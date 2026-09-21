@@ -129,10 +129,10 @@ const About = () => {
           <FaLeaf className="text-emerald-600" />
           <span>Pure • Handpicked • Farm-Fresh</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">
           Crafting Health, <span className="text-primary">Delivering Purity</span>
         </h1>
-        <p className="mt-4 text-slate-600 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
+        <p className="mt-4 max-w-2xl mx-auto text-sm sm:text-base leading-6 text-slate-600">
           Welcome to Kavi’s Dry Fruits. We bring nature’s richest wholesome treats straight from trusted orchards to your daily wellness routine.
         </p>
         <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-primary mx-auto mt-6 rounded-full" />
@@ -147,15 +147,15 @@ const About = () => {
               <FaAward className="text-emerald-600" /> Our Heritage & Philosophy
             </div>
 
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 leading-tight">
               Kavi’s Dry Fruits – <span className="text-primary">Where Purity Meets Power</span>
             </h2>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+            <p className="text-sm sm:text-base leading-6 text-slate-600">
               At <strong className="text-slate-900 font-semibold">Kavi’s Dry Fruits</strong>, we believe that great health starts with what you eat. That’s why we bring you premium-quality dry fruits, nuts, seeds, and superfoods—sourced from trusted farms, packed with care, and delivered fresh to your doorstep.
             </p>
 
-            <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+            <p className="text-sm sm:text-base leading-6 text-slate-600">
               We are not just a store—we are your partner in building a healthier, happier lifestyle. From energizing morning breakfasts and guilt-free snacking to festive gifting, our wholesome selection is curated with an unwavering commitment to purity and flavor.
             </p>
 
@@ -163,19 +163,19 @@ const About = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">100% Raw & Natural Goodness</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">100% Raw & Natural Goodness</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">Zero Artificial Preservatives</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">Zero Artificial Preservatives</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">Moisture-Proof Nitrogen Sealed</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">Moisture-Proof Nitrogen Sealed</span>
               </div>
               <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-emerald-100 shadow-xs">
                 <FaCheckCircle className="text-emerald-600 shrink-0 text-lg" />
-                <span className="text-sm font-semibold text-slate-800">Prompt Pan-India Delivery</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-800">Prompt Pan-India Delivery</span>
               </div>
             </div>
 
@@ -183,14 +183,14 @@ const About = () => {
             <div className="pt-4 flex flex-wrap items-center gap-4">
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-green-700 transition shadow-lg shadow-emerald-700/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex items-center gap-2 px-5 py-3 text-sm rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-primary hover:from-emerald-700 hover:to-green-700 transition shadow-lg shadow-emerald-700/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 sm:px-6 sm:py-3.5"
               >
                 <span>Explore Fresh Collection</span>
                 <FaArrowRight className="text-sm" />
               </Link>
               <Link
                 to="/contactus"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition shadow-xs hover:border-slate-300"
+                className="inline-flex items-center gap-2 px-5 py-3 text-sm rounded-xl font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition shadow-xs hover:border-slate-300 sm:px-6 sm:py-3.5"
               >
                 <span>Get In Touch</span>
               </Link>
@@ -257,7 +257,7 @@ const About = () => {
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-emerald-100 shadow-xl shadow-emerald-900/5">
           <div className="text-center max-w-xl mx-auto mb-8">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Proven Trust & Growth</span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
               Our Journey in Numbers
             </h3>
           </div>
@@ -274,7 +274,7 @@ const About = () => {
                     <Icon />
                   </div>
 
-                  <div className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+                  <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                     {startCount ? (
                       <CountUp
                         end={item.number}
@@ -286,7 +286,7 @@ const About = () => {
                     )}
                   </div>
 
-                  <h4 className="mt-2 text-lg font-bold text-emerald-900">
+                  <h4 className="mt-2 text-base font-bold text-emerald-900 sm:text-lg">
                     {item.label}
                   </h4>
 
@@ -306,7 +306,7 @@ const About = () => {
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/60 px-3 py-1 rounded-full border border-emerald-200">
             Uncompromising Standards
           </span>
-          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mt-2">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 mt-2">
             Why Discerning Food Lovers Choose Us
           </h3>
           <p className="mt-2 text-slate-600 text-sm sm:text-base">
@@ -325,7 +325,7 @@ const About = () => {
                 <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl mb-4 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
                   <PillarIcon />
                 </div>
-                <h4 className="text-lg font-bold text-slate-900 mb-2">
+                <h4 className="text-base font-bold text-slate-900 mb-2 sm:text-lg">
                   {pillar.title}
                 </h4>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
