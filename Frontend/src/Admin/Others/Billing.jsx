@@ -13,7 +13,8 @@ import {
     FiUser,
     FiPackage,
     FiList,
-    FiGrid
+    FiGrid,
+    FiPrinter
 } from "react-icons/fi";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
@@ -67,6 +68,169 @@ const Billing = () => {
             return dateStr;
         }
     };
+
+    const handlePrint = (order) => {
+        const items = order.items.length > 0 ? order.items : order.cartItems;
+        const address = typeof order.shippingAddress === "string"
+            ? (() => {
+                try { return JSON.parse(order.shippingAddress); } catch { return {}; }
+            })()
+            : (order.shippingAddress || {});
+        const escapeHtml = (value) => String(value ?? "-")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        const money = (value) => `₹${(parseFloat(value) || 0).toFixed(2)}`;
+        const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+        const tax = parseFloat(order.gstAmount || order.taxAmount || 0);
+        const shipping = parseFloat(order.shippingCharge || 0);
+        const total = parseFloat(order.totalAmount || order.total_amount || subtotal + tax + shipping);
+        const printWindow = window.open("", "_blank", "width=850,height=750");
+
+        if (!printWindow) {
+            toast.error("Please allow pop-ups to print the bill.");
+            return;
+        }
+
+        const itemRows = items.map((item, index) => {
+            const quantity = parseInt(item.quantity || item.qty) || 0;
+            const unitPrice = parseFloat(item.price || item.unitPrice || 0);
+            const itemTotal = parseFloat(item.total || unitPrice * quantity) || 0;
+            return `<tr>
+                <td>${index + 1}</td>
+                <td><strong>${escapeHtml(item.name || item.productName || "Item")}</strong><small>${escapeHtml(item.productId || "-")}</small></td>
+                <td>${escapeHtml(item.category || "-")}</td>
+                <td>${escapeHtml(item.selectedWeight || item.weight || item.weightDisplay || "-")}</td>
+                <td>${quantity}</td>
+                <td>${money(unitPrice)}</td>
+                <td>${money(item.gst)}</td>
+                <td>${money(itemTotal + (parseFloat(item.gst) || 0))}</td>
+            </tr>`;
+        }).join("");
+
+       printWindow.document.write(`
+           <html>
+             <head>
+               <title></title>
+               <style>
+                 @page { size: A4; margin: 0; }
+                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+                 body {
+                   font-family: 'Inter', sans-serif;
+                   padding: 15mm;
+                   color: #333;
+                   max-width: 800px;
+                   margin: 0 auto;
+                 }
+                 .header {
+                   display: flex;
+                   justify-content: space-between;
+                   align-items: center;
+                   margin-bottom: 0px;
+                 }
+                 .logo { margin-top: 3px; }
+                 .logo img { max-width: 140px; }
+                 .invoice-title { text-align: right; }
+                 .invoice-title h1 { color: #2b5c92; font-size: 36px; font-weight: 800; margin: 0; letter-spacing: 1px; text-transform: uppercase; }
+                 .invoice-title p { font-size: 16px; color: #555; margin: 5px 0 0 0; font-weight: 600; }
+                 .invoice-title .invoice-date { font-size: 11px; color: #666; margin-top: 8px; font-weight: 500; }
+                 .divider { height: 4px; background-color: #2b5c92; margin-bottom: 40px; }
+                 .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+                 .info-block { width: 48%; }
+                 .info-block h3 { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                 .info-block p { font-size: 13px; line-height: 1.6; margin: 4px 0; color: #444; }
+                 .info-block p strong { color: #222; }
+                 .status-badge { color: #2b5c92; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 5px; }
+                 .manifest-title { font-size: 14px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; font-weight: 700; }
+                 table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-bottom: 5px; }
+                 th, td { border: 1px solid #333; padding: 8px 12px; text-align: center; font-size: 13px; }
+                 th { background-color: #fcfcfc; font-weight: 700; color: #333; }
+                 .summary-section { display: flex; justify-content: flex-end; margin-bottom: 50px; }
+                 .summary-table { width: 300px; }
+                 .summary-table div { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #444; }
+                 .summary-table .total { font-size: 18px; font-weight: 800; color: #222; border-top: 2px solid #eee; padding-top: 12px; margin-top: 4px; }
+                 .total-val { color: #2b5c92; }
+                 .footer { text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+                 .footer p { font-size: 12px; color: #666; margin: 5px 0; }
+                 .footer p strong { color: #333; }
+                 @media print { body { padding: 0; } }
+               </style>
+             <body>
+               <div class="header">
+                 <div class="logo">
+                   <strong>KAVI'S DRY FRUITS</strong>
+                 </div>
+                 <div class="invoice-title">
+                   <h1>INVOICE</h1>
+                   <p>${order.orderId || order.id}</p>
+                   <div class="invoice-date">${formatDateTime(order.created_at || order.date)}</div>
+                 </div>
+               </div>
+               <div class="divider"></div>
+       
+               <div class="info-section">
+                 <div class="info-block">
+                   <h3>Customer Info</h3>
+                   <p><strong>Name:</strong> ${order.clientName || order.fullname || order.client_name || order.client?.name || address.fullname || "-"}</p>
+                   <p><strong>Email:</strong> ${order.email || address.email || "-"}</p>
+                   <p><strong>Phone:</strong> ${order.clientPhone || address.contact || "-"}</p>
+                   <p><strong>Address:</strong> ${(address.street ? address.street + ', ' : '')}${(address.city ? address.city + ', ' : '')}${(address.state || '')}${(address.zip ? ' - ' + address.zip : '')}</p>
+                   <p><strong>Country:</strong> ${address.country || "India"}</p>
+                 </div>
+                 <div class="info-block">
+                   <h3>Order Info</h3>
+                   <p><strong>Shop:</strong> Kavi's Dry Fruits</p>
+                   <p>Tirupattur,<br>Tamil Nadu, 635601<br>Ph: +91 94895 93504</p>
+                 </div>
+               </div>
+       
+               <div class="manifest-title">Item Manifest</div>
+               <table>
+                 <thead>
+                   <tr>
+                     <th style="width: 8%">S.No</th>
+                     <th style="width: 34%; text-align: center;">Product Name</th>
+                     <th style="width: 16%">Weight</th>
+                     <th style="width: 16%">Price</th>
+                     <th style="width: 10%">Qty</th>
+                     <th style="width: 16%">Total</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   ${itemRows}
+                 </tbody>
+               </table>
+       
+               <div class="summary-section">
+                 <div class="summary-table">
+                   <div>
+                     <span>Subtotal:</span>
+                     <strong>₹${subtotal.toFixed(2)}</strong>
+                   </div>
+                   <div>
+                     <span>Shipping:</span>
+                     <strong>₹${shipping.toFixed(2)}</strong>
+                   </div>
+                   <div class="total">
+                     <span>Total Amount:</span>
+                     <span class="total-val">₹${total.toFixed(2)}</span>
+                   </div>
+                 </div>
+               </div>
+       
+               <div class="footer">
+                 <p><strong>Thank you for shopping with Kavi's Dry Fruits!</strong></p>
+                 <p>For any support, please contact us at kavidryfruits@gmail.com</p>
+               </div>
+             </body>
+           </html>
+           `);
+           printWindow.document.close();
+           setTimeout(() => { printWindow.focus(); printWindow.print(); printWindow.close(); }, 500);
+        };
+       
 
     const getStatusStyle = (status) => {
         const s = (status || "").toLowerCase();
@@ -271,6 +435,7 @@ const Billing = () => {
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Volume</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Classification</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Settlement</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -308,6 +473,16 @@ const Billing = () => {
                                         </td>
                                         <td className="px-8 py-6 font-black text-slate-900 text-sm text-right tracking-tighter">
                                             ₹{parseFloat(order.totalAmount || order.total_amount || 0).toFixed(2)}
+                                        </td>
+                                        <td className="px-8 py-6 text-center">
+                                            <button
+                                                onClick={() => handlePrint(order)}
+                                                className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-2xl transition-all border border-slate-100 shadow-sm"
+                                                title="Print bill"
+                                                aria-label={`Print bill ${order.orderId || order.id}`}
+                                            >
+                                                <FiPrinter size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 );
