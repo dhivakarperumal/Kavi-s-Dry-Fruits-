@@ -58,7 +58,27 @@ exports.addCombo = async (req, res) => {
       ]
     );
 
-    // Component stock is not modified when adding a combo pack
+    // Reduce constituent products stock based on PC
+    const addedStockPC = Number(totalStock || 0);
+    if (addedStockPC > 0 && parsedComboItems.length > 0) {
+      for (const item of parsedComboItems) {
+        if (item.name && item.weight) {
+          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
+          let itemWeight = parseFloat(itemWeightStr) || 0;
+          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
+          
+          const reductionAmount = addedStockPC * itemWeight;
+
+          const [res] = await connection.query(
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+            [reductionAmount, item.name]
+          );
+          if (res.affectedRows > 0) {
+            console.log(`[Admin-AddCombo] Atomic reduction for '${item.name.trim()}': -${reductionAmount}g`);
+          }
+        }
+      }
+    }
 
     await connection.commit();
     res.status(201).json({ id: result.insertId, message: 'Combo pack added successfully' });
@@ -109,7 +129,29 @@ exports.updateCombo = async (req, res) => {
       ]
     );
 
-    // Component stock is not modified when updating a combo pack
+    // If stock increased, reduce components based on PC delta
+    if (delta > 0 && parsedComboItems.length > 0) {
+      const numUnitsDelta = delta;
+
+      // SORT to prevent deadlocks
+      const sortedItems = [...parsedComboItems].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+      for (const item of sortedItems) {
+        if (item.name && item.weight) {
+          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
+          let itemWeight = parseFloat(itemWeightStr) || 0;
+          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
+          
+          const reductionAmount = numUnitsDelta * itemWeight;
+
+          await connection.query(
+            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
+            [reductionAmount, item.name]
+          );
+          console.log(`[Admin-UpdateCombo] Sub-item '${item.name}': -${reductionAmount}g`);
+        }
+      }
+    }
     await connection.commit();
     res.json({ message: 'Combo pack updated successfully' });
   } catch (error) {
