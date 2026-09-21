@@ -803,7 +803,7 @@
 
         if (usage.isCombo) {
           if (usage.totalQty > usage.availableStock) {
-            toast.error(`Only ${formatStockDisplay(usage.availableStock, true)} available for combo "${usage.name}". Please adjust quantity.`);
+            toast.error(`Out of Stock. Only ${formatStockDisplay(usage.availableStock, true)} available for combo "${usage.name}".`);
             return;
           }
         } else {

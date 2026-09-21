@@ -526,20 +526,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     }
   }, [editItem, combos]);
 
-  useEffect(() => {
-    const computedSum = calculateComboTotalWeight(form.comboItems);
-    const manualWeight = Number(form.totalWeight ?? 0);
-    const hasManualWeight = manualWeightEdited && Number.isFinite(manualWeight) && manualWeight >= 0;
-    const nextTotalStock = hasManualWeight ? manualWeight : computedSum;
-
-    setForm((prev) => {
-      if (String(prev.totalStock) === String(nextTotalStock)) return prev;
-      return {
-        ...prev,
-        totalStock: String(Number.isFinite(nextTotalStock) ? nextTotalStock : 0),
-      };
-    });
-  }, [form.comboItems, form.totalWeight, manualWeightEdited]);
+  // Removed totalStock calculation based on weight. Stock is now maintained as piece count (PC).
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -573,17 +560,12 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     e.preventDefault();
     setLoading(true);
     try {
-      // Force-merge totalWeight into comboDetails at submit time.
-      // This is necessary because the useEffect that writes it into comboDetails
-      // is async and may not have flushed before the user clicks submit.
-      const numericTotalWeight = Number(form.totalWeight ?? 0);
-      const normalizedTotalWeight = Number.isFinite(numericTotalWeight) ? numericTotalWeight / 1000 : 0;
+      const numericTotalStock = Number(form.totalStock ?? 0);
       const submitData = {
         ...form,
-        totalStock: Number.isFinite(numericTotalWeight) ? numericTotalWeight : 0,
+        totalStock: Number.isFinite(numericTotalStock) ? numericTotalStock : 0,
         comboDetails: {
           ...form.comboDetails,
-          totalWeight: Number.isFinite(normalizedTotalWeight) ? normalizedTotalWeight : 0,
           offerPrice: form.comboDetails.offerPrice || 0,
           mrp: form.comboDetails.mrp || 0,
         },
@@ -672,27 +654,24 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      Total Weight (kg) *
-                      <span className="text-[8px] px-2 py-0.5 rounded-full font-black uppercase bg-orange-100 text-orange-500">Manual</span>
+                      Available Quantity (PC) *
                     </label>
                     <div className="flex gap-2 items-center">
                       <input
-                        type="text"
-                        value={form.totalWeight !== null && form.totalWeight !== undefined ? formatKGDisplay(form.totalWeight) : ""}
+                        type="number"
+                        value={form.totalStock}
                         onChange={(e) => {
-                          const value = e.target.value;
-                          const grams = parseWeightToGrams(value, "kg");
-                          setManualWeightEdited(true);
-                          setForm({ ...form, totalWeight: value === "" ? "" : grams, comboDetails: { ...form.comboDetails, totalWeight: grams } });
+                          const val = e.target.value.replace(/\D/g, "");
+                          setForm({ ...form, totalStock: val });
                         }}
                         required
-                        min="1"
+                        min="0"
+                        step="1"
                         className="w-full rounded-xl px-4 py-2.5 font-black border-2 shadow-sm outline-none transition-all text-sm bg-orange-50 border-orange-300 text-orange-700 focus:border-orange-400"
-                        placeholder="Enter kilograms, e.g. 50"
+                        placeholder="Enter whole numbers, e.g. 50"
                       />
-                      <span className="-ml-16 mr-4 pointer-events-none font-black text-sm text-orange-500">kg</span>
+                      <span className="-ml-16 mr-4 pointer-events-none font-black text-sm text-orange-500">PC</span>
                     </div>
-                    <p className="text-[8px] text-gray-400 font-medium mt-1">Stored as grams: 50 kg = 50000 g.</p>
                   </div>
                 </div>
               </div>

@@ -201,42 +201,12 @@ const createOrder = async (req, res) => {
 
         if (isCombo) {
           affectedComboIds.add(productData.id);
-          const details = typeof productData.comboDetails === 'string' ? JSON.parse(productData.comboDetails || '{}') : (productData.comboDetails || {});
-          const comboItems = typeof productData.comboItems === 'string' ? JSON.parse(productData.comboItems || '[]') : (productData.comboItems || []);
           
-          let comboWeight = Number(details.totalWeight || 0);
-          
-          if (comboWeight <= 0) {
-            comboWeight = comboItems.reduce((sum, ci) => {
-              const wStr = String(ci.weight || ci.selectedWeight || ci.totalWeight || "").toLowerCase();
-              let w = parseFloat(wStr) || 0;
-              if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
-              return sum + w;
-            }, 0) || 1;
-          }
+          const amountToSubtract = qty; // PC based stock deduction
 
-          weightToSubtract = qty * comboWeight;
-          
-          // Sort sub-items for deadlock prevention
-          const sortedSubItems = [...comboItems].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-
-          for (const subItem of sortedSubItems) {
-            if (subItem.name) {
-              affectedProductNames.add(subItem.name.trim());
-              const subWeightStr = String(subItem.weight || "").replace(/[()]/g, "").toLowerCase();
-              let subWeightPerUnit = parseFloat(subWeightStr) || 0;
-              if (subWeightStr.includes("kg") || subWeightStr.includes("k")) subWeightPerUnit *= 1000;
-              const subTotalToSubtract = qty * subWeightPerUnit;
-
-              await connection.query(
-                `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))`, 
-                [subTotalToSubtract, subItem.name]
-              );
-            }
-          }
           await connection.query(
             `UPDATE combos SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE id = ? OR TRIM(productId) = TRIM(?)`, 
-            [weightToSubtract, productData.id, productData.productId]
+            [amountToSubtract, productData.id, productData.productId]
           );
         } else {
           affectedProductIds.add(productData.id);

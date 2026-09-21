@@ -72,7 +72,8 @@ const ProductCard = React.memo(({
       return;
     }
     if (!variantCheck.canFulfill) {
-      toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock. Please select an available package size.`);
+      if (isCombo) toast.error(`Out of Stock. Only ${formatStockDisplay(stock, true)} available.`);
+      else toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock. Please select an available package size.`);
       return;
     }
     addToCart({

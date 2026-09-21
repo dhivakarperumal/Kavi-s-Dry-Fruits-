@@ -117,6 +117,7 @@ const SingleProductView = () => {
     const nextQty = quantity + 1;
     const check = checkVariantStock(activeWeight, nextQty, stock, isCombo);
     if (!check.canFulfill) {
+      if (isCombo) return toast.error(`Out of Stock. Only ${formatStockDisplay(stock, true)} available.`);
       return toast.error(`Cannot add more. Only ${formatStockDisplay(stock, isCombo)} available in stock.`);
     }
     setQuantity(nextQty);
@@ -126,6 +127,7 @@ const SingleProductView = () => {
   const handleAddToCart = () => {
     if (isOutOfStock) return toast.error("This product is out of stock.");
     if (isWeightExceedingStock) {
+      if (isCombo) return toast.error(`Out of Stock. Only ${formatStockDisplay(stock, true)} available.`);
       return toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock. Cannot add ${quantity > 1 ? `${quantity}x ` : ""}${activeWeight}.`);
     }
     const weight = activeWeight || 'Combo';

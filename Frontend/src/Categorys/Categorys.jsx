@@ -338,6 +338,7 @@ const Category = () => {
                         onClick={() => {
                           if (isOutOfStock) return toast.error("Product is out of stock");
                           if (!variantCheck.canFulfill) {
+                            if (isCombo) return toast.error(`Out of Stock. Only ${formatStockDisplay(stock, true)} available.`);
                             return toast.error(`Only ${formatStockDisplay(stock, isCombo)} available in stock.`);
                           }
                           addToCart({ ...product, qty: 1, selectedWeight: activeWeight, price: offerPrice });

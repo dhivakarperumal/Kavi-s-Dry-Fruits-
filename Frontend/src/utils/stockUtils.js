@@ -42,7 +42,7 @@ export const formatStockDisplay = (stock, isCombo = false) => {
   if (s <= 0) return "0";
 
   if (isCombo) {
-    return `${s} ${s === 1 ? "unit" : "units"}`;
+    return `${s} PC`;
   }
 
   if (s >= 1000) {

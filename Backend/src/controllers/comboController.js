@@ -58,34 +58,10 @@ exports.addCombo = async (req, res) => {
       ]
     );
 
-    // Reduce constituent products stock
-    const addedStock = Number(totalStock || 0);
-    if (addedStock > 0 && parsedComboItems.length > 0) {
-      const details = parsedComboDetails;
-      const totalWeight = Number(details.totalWeight || 1); // avoid division by zero
-
-      for (const item of parsedComboItems) {
-        if (item.name && item.weight) {
-          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
-          let itemWeight = parseFloat(itemWeightStr) || 0;
-          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
-          
-          // Calculate how much to reduce from bulk product
-          const reductionAmount = (addedStock / totalWeight) * itemWeight;
-
-          const [res] = await connection.query(
-            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
-            [reductionAmount, item.name]
-          );
-          if (res.affectedRows > 0) {
-            console.log(`[Admin-AddCombo] Atomic reduction for '${item.name.trim()}': -${reductionAmount}g`);
-          }
-        }
-      }
-    }
+    // Component stock is not modified when adding a combo pack
 
     await connection.commit();
-    res.status(201).json({ id: result.insertId, message: 'Combo pack added and component stock reduced' });
+    res.status(201).json({ id: result.insertId, message: 'Combo pack added successfully' });
   } catch (error) {
     try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     console.error(error);
@@ -133,43 +109,9 @@ exports.updateCombo = async (req, res) => {
       ]
     );
 
-    // If stock increased, reduce components
-    if (delta > 0 && parsedComboItems.length > 0) {
-      const details = parsedComboDetails;
-      
-      // Calculate real total weight from items if missing or set to 1
-      let calculatedTotalWeight = parsedComboItems.reduce((sum, ci) => {
-        const wStr = String(ci.weight || "").toLowerCase();
-        let w = parseFloat(wStr) || 0;
-        if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
-        return sum + w;
-      }, 0);
-
-      const totalWeight = Number(details.totalWeight) || calculatedTotalWeight || 1;
-      const numUnitsDelta = delta / totalWeight;
-
-      // SORT to prevent deadlocks
-      const sortedItems = [...parsedComboItems].sort((a, b) => String(a.name).localeCompare(String(b.name)));
-
-      for (const item of sortedItems) {
-        if (item.name && item.weight) {
-          const itemWeightStr = String(item.weight).replace(/[()]/g, "").toLowerCase();
-          let itemWeight = parseFloat(itemWeightStr) || 0;
-          if (itemWeightStr.includes("kg") || itemWeightStr.includes("k")) itemWeight *= 1000;
-          
-          const reductionAmount = numUnitsDelta * itemWeight;
-
-          await connection.query(
-            `UPDATE products SET totalStock = GREATEST(CAST(totalStock AS SIGNED) - ?, 0) WHERE TRIM(name) = TRIM(?)`, 
-            [reductionAmount, item.name]
-          );
-          console.log(`[Admin-UpdateCombo] Sub-item '${item.name}': -${reductionAmount}g`);
-        }
-      }
-    }
-
+    // Component stock is not modified when updating a combo pack
     await connection.commit();
-    res.json({ message: 'Combo pack updated and component stock adjusted' });
+    res.json({ message: 'Combo pack updated successfully' });
   } catch (error) {
     try { await connection.rollback(); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     console.error(error);

@@ -569,8 +569,8 @@ const Allproduct = ({ adminData, onInventoryChanged }) => {
                                  const isCombo = item.type === 'combo';
                                  const details = isCombo ? (typeof item.comboDetails === 'object' ? item.comboDetails : safeParse(item.comboDetails)) : safeParse(item.variants)[0];
                                  const price = details?.offerPrice || details?.price;
-                                 const stockGrams = Number(item.totalStock || 0);
-                                 const isLowStock = stockGrams <= 500; // 500g threshold
+                                 const stockQuantity = Number(item.totalStock ?? 0);
+                                 const isLowStock = isCombo ? stockQuantity <= 0 : stockQuantity <= 500;
 
                                  return (
                                      <tr key={`${item.type}-${item.id}`} className="hover:bg-emerald-50/30 transition-colors group">
@@ -609,7 +609,11 @@ const Allproduct = ({ adminData, onInventoryChanged }) => {
                                         <td className="px-8 py-4 md:py-5">
                                            <div className={`flex flex-col ${isLowStock ? 'text-amber-600' : 'text-slate-700'}`}>
                                               <span className="font-black text-sm">
-                                                 {stockGrams >= 1000 ? (stockGrams / 1000).toFixed(2) + " KG" : stockGrams + " G"}
+                                                 {isCombo
+                                                   ? `${stockQuantity} PCS`
+                                                   : stockQuantity >= 1000
+                                                     ? (stockQuantity / 1000).toFixed(2) + " KG"
+                                                     : stockQuantity + " G"}
                                               </span>
                                               {isLowStock && (
                                                  <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest animate-pulse">

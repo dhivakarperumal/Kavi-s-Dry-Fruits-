@@ -255,7 +255,7 @@ export const StoreProvider = ({ children }) => {
           .filter((i) => i.docId !== docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
           .reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1, 10) || 1), 0);
         if (newQty + otherQty > availableStock) {
-          return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock.`);
+          return toast.error(`Out of Stock. Only ${formatStockDisplay(availableStock, true)} available.`);
         }
       } else {
         const weightGrams = parseWeightToGrams(weight);
@@ -341,7 +341,7 @@ export const StoreProvider = ({ children }) => {
           .filter((i) => i.docId !== item.docId && String(i.productId || (i.docId ? i.docId.split("_")[0] : i.id)) === prodId)
           .reduce((sum, i) => sum + (parseInt(i.quantity || i.qty || 1, 10) || 1), 0);
         if (newQty + otherQty > availableStock) {
-          return toast.error(`Only ${formatStockDisplay(availableStock, true)} available in stock. Cannot increase quantity.`);
+          return toast.error(`Out of Stock. Only ${formatStockDisplay(availableStock, true)} available.`);
         }
       } else {
         const weightGrams = parseWeightToGrams(item.selectedWeight || item.weights?.[0]);
