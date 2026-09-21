@@ -177,7 +177,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       const savedStock = Number(editItem.totalStock);
       const savedWeightKg = Number.isFinite(savedStock) && savedStock >= 0
         ? savedStock / 1000
-        : Number(editItem.totalWeight || 0);
+        : Number(editItem.totalWeight ?? 0);
       const savedVariants = safeParse(editItem.variants);
       const savedImages = safeParse(editItem.images).filter((image) => typeof image === "string");
       setForm({
@@ -241,7 +241,7 @@ const SingleProductForm = ({ categories, onSuccess, products, editItem }) => {
       const hasEnteredWeight = String(form.totalWeight ?? "").trim() !== "" && Number.isFinite(enteredWeightKg) && enteredWeightKg >= 0;
       const currentStock = hasEnteredWeight
         ? enteredWeightKg * 1000
-        : Number(form.totalStock) || 0;
+        : Number.isFinite(Number(form.totalStock)) ? Number(form.totalStock) : 0;
       const formData = new FormData();
       Object.entries({
         ...form,
@@ -450,6 +450,7 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   const [loading, setLoading] = useState(false);
   const [imageFiles, setImageFiles] = useState([]);
   const barcodeRef = useRef();
+  const [manualWeightEdited, setManualWeightEdited] = useState(false);
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -489,7 +490,10 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       }
       const savedImages = safeParse(editItem.images).filter((image) => typeof image === "string");
       const savedComboItems = safeParse(editItem.comboItems);
-      const storedWeight = Number(parsedDetails?.totalWeight || editItem.totalWeight || 0);
+      const storedWeightValue = parsedDetails?.totalWeight !== null && parsedDetails?.totalWeight !== undefined
+        ? parsedDetails.totalWeight
+        : editItem.totalWeight;
+      const storedWeight = Number(storedWeightValue ?? 0);
       // Older combo records stored the kilogram input as grams one extra time.
       const resolvedWeight = storedWeight >= 1000000 ? storedWeight / 1000 : storedWeight;
       setForm({
@@ -501,10 +505,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         totalWeight: resolvedWeight,
         totalStock: editItem.totalStock !== undefined && editItem.totalStock !== null
           ? String(editItem.totalStock)
-          : String(effectiveTotalWeight || 0),
+          : String(Number.isFinite(effectiveTotalWeight) ? effectiveTotalWeight : 0),
         barcodeValue: editItem.barcodeValue || editItem.productId
       });
       setImageFiles([]);
+      setManualWeightEdited(true);
     } else {
       const maxId = combos.reduce((max, c) => {
         const match = c.productId?.match(/\d+/);
@@ -517,22 +522,24 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
         name: "", description: "", healthBenefits: [""], images: [], totalStock: "0", comboItems: [{ name: "", weight: "", image: "" }], comboDetails: { mrp: "", offerPercent: "", offerPrice: "" }, totalWeight: 0, status: "Active"
       }));
       setImageFiles([]);
+      setManualWeightEdited(false);
     }
   }, [editItem, combos]);
 
   useEffect(() => {
     const computedSum = calculateComboTotalWeight(form.comboItems);
-    const manualWeight = Number(form.totalWeight || 0);
-    const nextTotalStock = manualWeight > 0 ? manualWeight : computedSum;
+    const manualWeight = Number(form.totalWeight ?? 0);
+    const hasManualWeight = manualWeightEdited && Number.isFinite(manualWeight) && manualWeight >= 0;
+    const nextTotalStock = hasManualWeight ? manualWeight : computedSum;
 
     setForm((prev) => {
       if (String(prev.totalStock) === String(nextTotalStock)) return prev;
       return {
         ...prev,
-        totalStock: String(nextTotalStock || 0),
+        totalStock: String(Number.isFinite(nextTotalStock) ? nextTotalStock : 0),
       };
     });
-  }, [form.comboItems, form.totalWeight]);
+  }, [form.comboItems, form.totalWeight, manualWeightEdited]);
 
   useEffect(() => {
     if (form.productId && barcodeRef.current) {
@@ -569,10 +576,11 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
       // Force-merge totalWeight into comboDetails at submit time.
       // This is necessary because the useEffect that writes it into comboDetails
       // is async and may not have flushed before the user clicks submit.
-      const normalizedTotalWeight = Number(form.totalWeight || 0) / 1000;
+      const numericTotalWeight = Number(form.totalWeight ?? 0);
+      const normalizedTotalWeight = Number.isFinite(numericTotalWeight) ? numericTotalWeight / 1000 : 0;
       const submitData = {
         ...form,
-        totalStock: Number(form.totalWeight) || 0,
+        totalStock: Number.isFinite(numericTotalWeight) ? numericTotalWeight : 0,
         comboDetails: {
           ...form.comboDetails,
           totalWeight: Number.isFinite(normalizedTotalWeight) ? normalizedTotalWeight : 0,
@@ -670,11 +678,12 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
                     <div className="flex gap-2 items-center">
                       <input
                         type="text"
-                        value={form.totalWeight ? formatKGDisplay(form.totalWeight) : ""}
+                        value={form.totalWeight !== null && form.totalWeight !== undefined ? formatKGDisplay(form.totalWeight) : ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           const grams = parseWeightToGrams(value, "kg");
-                          setForm({ ...form, totalWeight: grams, comboDetails: { ...form.comboDetails, totalWeight: grams } });
+                          setManualWeightEdited(true);
+                          setForm({ ...form, totalWeight: value === "" ? "" : grams, comboDetails: { ...form.comboDetails, totalWeight: grams } });
                         }}
                         required
                         min="1"
