@@ -151,11 +151,11 @@ const About = () => {
               Kavi’s Dry Fruits – <span className="text-primary">Where Purity Meets Power</span>
             </h2>
 
-            <p className="text-sm sm:text-base leading-6 text-slate-600">
+            <p className="text-sm text-justify sm:text-base leading-6 text-slate-600">
               At <strong className="text-slate-900 font-semibold">Kavi’s Dry Fruits</strong>, we believe that great health starts with what you eat. That’s why we bring you premium-quality dry fruits, nuts, seeds, and superfoods—sourced from trusted farms, packed with care, and delivered fresh to your doorstep.
             </p>
 
-            <p className="text-sm sm:text-base leading-6 text-slate-600">
+            <p className="text-sm text-justify sm:text-base leading-6 text-slate-600">
               We are not just a store—we are your partner in building a healthier, happier lifestyle. From energizing morning breakfasts and guilt-free snacking to festive gifting, our wholesome selection is curated with an unwavering commitment to purity and flavor.
             </p>
 
@@ -335,7 +335,7 @@ const About = () => {
                           <span className="h-px flex-1 bg-emerald-100" />
                         </div>
                         <h4 className="text-base font-bold text-slate-900 sm:text-lg">{item.title}</h4>
-                        <p className="mt-2 text-xs leading-6 text-slate-600 sm:text-sm">{item.desc}</p>
+                        <p className="mt-2 text-xs leading-6 text-slate-600 sm:text-sm text-justify">{item.desc}</p>
                       </div>
                     </div>
 
