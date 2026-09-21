@@ -83,24 +83,24 @@ const About = () => {
 
   const journeySteps = [
     {
-      step: "01",
+      year: "2023",
+      title: "Started with a Purity-First Promise",
+      desc: "Kavi’s Dry Fruits began with a simple goal: make naturally fresh, carefully selected dry fruits available for every family.",
+    },
+    {
+      year: "2024",
       title: "Careful Orchard Selection",
-      desc: "We partner exclusively with verified growers renowned for cultivating premier-grade varieties.",
+      desc: "We built trusted relationships with growers and refined our sourcing to bring premium quality and consistent freshness.",
     },
     {
-      step: "02",
-      title: "Artisanal Sorting & Grading",
-      desc: "Each batch undergoes rigorous grading by size, moisture balance, aroma, and crisp texture.",
+      year: "2025",
+      title: "Hygienic Packing & Wider Reach",
+      desc: "Better food-grade packing and dependable delivery helped us serve more health-conscious households across India.",
     },
     {
-      step: "03",
-      title: "Hygienic Food-Grade Packing",
-      desc: "Nitrogen flushed and hermetically sealed to preserve farm-fresh crunch and delicate essential oils.",
-    },
-    {
-      step: "04",
-      title: "Fresh to Your Doorstep",
-      desc: "Quickly dispatched to ensure you and your loved ones receive fresh, nutritious dry fruits every time.",
+      year: "2026",
+      title: "Freshness Delivered Every Day",
+      desc: "Today, we continue to grow with the same promise: handpicked products, honest quality, and a better snacking experience.",
     },
   ];
 
@@ -296,6 +296,58 @@ const About = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Brand journey timeline */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">Our milestones</span>
+            <h3 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Our Journey <span className="text-primary">So Far</span>
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+              From careful sourcing to doorstep delivery, every step is shaped by our promise of freshness and trust.
+            </p>
+            <div className="mx-auto mt-5 h-1 w-14 rounded-full bg-gradient-to-r from-amber-500 to-primary" />
+          </div>
+
+          <div className="relative">
+            <div className="absolute bottom-0 left-4 top-0 w-px bg-gradient-to-b from-amber-400 via-emerald-500 to-emerald-200 lg:left-1/2 lg:-translate-x-1/2" />
+
+            <div className="space-y-8 sm:space-y-12">
+              {journeySteps.map((item, index) => {
+                const isRight = index % 2 === 0;
+
+                return (
+                  <div key={item.year} className="relative grid grid-cols-[2rem_1fr] items-center gap-4 lg:grid-cols-[1fr_2rem_1fr] lg:gap-8">
+                    <div className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-emerald-600 shadow-md shadow-emerald-700/20 lg:left-1/2">
+                    </div>
+
+                    <div className={`${isRight ? "lg:col-start-3" : "lg:col-start-1 lg:row-start-1"} col-start-2`}>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-md shadow-emerald-900/5 transition hover:-translate-y-1 hover:border-emerald-300 hover:shadow-lg sm:p-6">
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-base font-black text-amber-700 sm:text-lg lg:hidden">
+                            {item.year}
+                          </span>
+                          <span className="h-px flex-1 bg-emerald-100" />
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 sm:text-lg">{item.title}</h4>
+                        <p className="mt-2 text-xs leading-6 text-slate-600 sm:text-sm">{item.desc}</p>
+                      </div>
+                    </div>
+
+                    <div className={`${isRight ? "lg:col-start-1 lg:row-start-1" : "lg:col-start-3 lg:row-start-1"} hidden items-center lg:flex`}>
+                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-5 py-2 text-xl font-black text-amber-700 shadow-sm shadow-amber-100">
+                        {item.year}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
