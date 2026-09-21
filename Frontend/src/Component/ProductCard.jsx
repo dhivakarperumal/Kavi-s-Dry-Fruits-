@@ -52,7 +52,6 @@ const ProductCard = React.memo(({
   const formatPrice = (value) => `₹${Number(value || 0).toFixed(2)}`;
 
   const avgRating = product.rating || 4.5;
-  const isCombo = product.category === "Combo" || product.type === "combo";
   const displayedWeight = titleSuffix || (!isCombo ? activeWeight || "100g" : "");
 
   const handleAddToFav = (e) => {
