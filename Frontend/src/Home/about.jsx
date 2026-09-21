@@ -322,7 +322,7 @@ const About = () => {
                 const isRight = index % 2 === 0;
 
                 return (
-                  <div key={item.year} className="relative grid grid-cols-[2rem_1fr] items-center gap-4 lg:grid-cols-[1fr_2rem_1fr] lg:gap-8">
+                  <div key={item.year} className="relative grid grid-cols-[2rem_1fr] items-center gap-4 lg:grid-cols-[1fr_2rem_1fr] lg:gap-2">
                     <div className="absolute left-4 top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-emerald-600 shadow-md shadow-emerald-700/20 lg:left-1/2">
                     </div>
 
@@ -339,7 +339,7 @@ const About = () => {
                       </div>
                     </div>
 
-                    <div className={`${isRight ? "lg:col-start-1 lg:row-start-1" : "lg:col-start-3 lg:row-start-1"} hidden items-center lg:flex`}>
+                    <div className={`${isRight ? "lg:col-start-1 lg:row-start-1 lg:justify-self-end lg:mr-1" : "lg:col-start-3 lg:row-start-1 lg:justify-self-start lg:ml-1"} hidden items-center lg:flex`}>
                       <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-5 py-2 text-xl font-black text-amber-700 shadow-sm shadow-amber-100">
                         {item.year}
                       </span>
