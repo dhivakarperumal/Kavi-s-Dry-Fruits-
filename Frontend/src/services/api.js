@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = (import.meta.env.VITE_API_URL || "https://kavis.qtechx.com/api").replace(/\/+$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || "https://kavisdryfruits.com/api").replace(/\/+$/, "");
 export const SOCKET_URL = (import.meta.env.VITE_SOCKET_URL || API_URL.replace(/\/api$/, "")).replace(/\/+$/, "");
 
 const api = axios.create({

@@ -39,7 +39,13 @@ const SingleProductView = () => {
 
 
   useEffect(() => {
-    if (!id || !allProducts.length) return;
+    if (!id) return;
+
+    if (loadingProducts || !allProducts.length) {
+      setProduct(null);
+      setRelatedProducts([]);
+      return;
+    }
 
     const selected = allProducts.find(
       (p) => 
@@ -71,9 +77,9 @@ const SingleProductView = () => {
     }
 
     window.scrollTo(0, 0);
-  }, [id, allProducts]);
+  }, [id, allProducts, loadingProducts, navigate]);
 
-  if (loadingProducts) {
+  if (loadingProducts || (!product && !allProducts.length)) {
     return <LodingPage />;
   }
 
