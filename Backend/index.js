@@ -33,6 +33,17 @@ const pushRoutes = require('./src/routers/pushRoutes');
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
+const uploadsRoot = path.join(__dirname, 'uploads');
+const requiredUploadDirs = [
+  uploadsRoot,
+  path.join(uploadsRoot, 'banners'),
+  path.join(uploadsRoot, 'categories'),
+  path.join(uploadsRoot, 'combos'),
+  path.join(uploadsRoot, 'health-benefits'),
+  path.join(uploadsRoot, 'products'),
+];
+requiredUploadDirs.forEach((dir) => fs.mkdirSync(dir, { recursive: true }));
+
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:5173",
