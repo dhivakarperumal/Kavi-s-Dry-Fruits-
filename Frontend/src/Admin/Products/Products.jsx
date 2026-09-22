@@ -558,10 +558,10 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   const handleImageUpload = async (e) => {
     const rawFiles = Array.from(e.target.files);
     try {
-      toast.loading("Uploading...", { id: "up-c" });
+      toast.loading("Compressing...", { id: "up-c" });
       const compressedFiles = await Promise.all(
         rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800, fileType: file.type, useWebWorker: true })
+          imageCompression(file, { maxSizeMB: 8, maxWidthOrHeight: 1200, fileType: file.type, useWebWorker: true })
         ),
       );
       setImageFiles((prev) => [...prev, ...compressedFiles]);
