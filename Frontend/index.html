@@ -7,6 +7,36 @@
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
   <meta name="description" content="Kavi's Dry Fruits offers premium almonds, cashews, pistachios, walnuts, raisins, dates, seeds, spices and dry fruit gift boxes with trusted Pan India delivery." />
   <meta name="keywords" content="dry fruits online, almonds, cashews, pistachios, dates, raisins, Kavi's Dry Fruits, Tirupattur dry fruits, premium nuts, gift boxes" />
+  <script>
+    (async function loadSeoMeta() {
+      const keywordsTag = document.querySelector('meta[name="keywords"]');
+      if (!keywordsTag) return;
+
+      const apiBase = (import.meta && import.meta.env && import.meta.env.VITE_API_URL)
+        ? import.meta.env.VITE_API_URL.replace(/\/+$/, '')
+        : 'https://kavisdryfruits.com/api';
+
+      try {
+        const response = await fetch(`${apiBase}/seo`);
+        if (!response.ok) throw new Error('SEO API request failed');
+
+        const data = await response.json();
+
+        if (Array.isArray(data?.keywords)) {
+          const keywords = data.keywords
+            .map((item) => (typeof item === 'string' ? item : (item?.keyword || '')))
+            .map((item) => String(item).trim())
+            .filter(Boolean);
+
+          if (keywords.length > 0) {
+            keywordsTag.setAttribute('content', keywords.join(', '));
+          }
+        }
+      } catch (error) {
+        console.warn('SEO keywords could not be loaded from API:', error);
+      }
+    })();
+  </script>
   <meta name="author" content="Kavi's Dry Fruits" />
   <meta name="theme-color" content="#8B4513" />
   <meta property="og:title" content="Kavi's Dry Fruits | Premium Dry Fruits, Nuts & Gift Boxes" />
