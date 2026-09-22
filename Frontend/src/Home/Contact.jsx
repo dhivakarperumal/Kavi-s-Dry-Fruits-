@@ -366,7 +366,7 @@ const Contact = () => {
         <section className="relative left-1/2 mb-12 w-screen -translate-x-1/2 overflow-hidden border-y border-emerald-100 bg-emerald-50 shadow-xl shadow-emerald-100/40 lg:mb-16">
           <iframe
             title="Kavi's Dry Fruits store at No 58 Vaitheeshwaran Nagar, Tirupathur"
-            src="https://www.google.com/maps?q=No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu&hl=en&z=16&output=embed"
+            src="https://www.google.com/maps?q=Kavi%27s%20Dry%20Fruits%2C%20No%2058%20Vaitheeshwaran%20Nagar%2C%20Tirupathur%20635653%2C%20Tamil%20Nadu&hl=en&z=16&output=embed"
             width="100%"
             height="420"
             style={{ border: 0 }}
