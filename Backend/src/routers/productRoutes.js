@@ -10,17 +10,18 @@ const productUploadDir = path.join(__dirname, '../../uploads/products');
 fs.mkdirSync(productUploadDir, { recursive: true });
 
 const imageExtensions = {
-	'image/jpeg': '.jpg',
+	'image/jpeg': '.jpeg',
+	'image/jpg': '.jpeg',
 	'image/png': '.png',
 };
 
 const upload = multer({
 	storage: multer.diskStorage({
 		destination: (_req, _file, cb) => cb(null, productUploadDir),
-		filename: (_req, file, cb) => cb(null, `product-${Date.now()}-${Math.round(Math.random() * 1e9)}${imageExtensions[file.mimetype]}`),
+		filename: (_req, file, cb) => cb(null, `product-${Date.now()}-${Math.round(Math.random() * 1e9)}${imageExtensions[file.mimetype] || '.jpeg'}`),
 	}),
 	limits: { files: 10, fileSize: 8 * 1024 * 1024 },
-	fileFilter: (_req, file, cb) => cb(null, Boolean(imageExtensions[file.mimetype])),
+	fileFilter: (_req, file, cb) => cb(null, Boolean(imageExtensions[file.mimetype] || ['jpg', 'jpeg', 'png'].includes(String(file.originalname).split('.').pop()?.toLowerCase()))),
 });
 
 router.get('/', productController.getProducts);

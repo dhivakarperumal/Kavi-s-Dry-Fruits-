@@ -555,8 +555,26 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
     }
   }, [form.productId, form.barcodeValue]);
 
+  const isAllowedComboImageFile = (file) => {
+    const mimeType = (file?.type || '').toLowerCase();
+    const extension = (file?.name || '').split('.').pop()?.toLowerCase();
+    return ['image/jpeg', 'image/jpg', 'image/png'].includes(mimeType) || ['jpg', 'jpeg', 'png'].includes(extension);
+  };
+
   const handleImageUpload = async (e) => {
-    const rawFiles = Array.from(e.target.files);
+    const rawFiles = Array.from(e.target.files || []).filter((file) => {
+      if (!isAllowedComboImageFile(file)) {
+        toast.error("Only JPG, JPEG, and PNG images are allowed.");
+        return false;
+      }
+      return true;
+    });
+
+    if (!rawFiles.length) {
+      e.target.value = "";
+      return;
+    }
+
     try {
       toast.loading("Compressing...", { id: "up-c" });
       const compressedFiles = await Promise.all(
