@@ -28,7 +28,18 @@ const getOrders = async (req, res) => {
     }
 
     const parsedRows = rows.map(row => {
-      const normalizedItems = itemsByOrderId.get(row.orderId) || [];
+      let normalizedItems = [];
+      try {
+        const storedItems = typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items;
+        if (Array.isArray(storedItems) && storedItems.length > 0) normalizedItems = storedItems;
+      } catch (parseError) {
+        console.warn(`Invalid items JSON for order ${row.orderId}:`, parseError.message);
+      }
+      if (normalizedItems.length === 0) {
+        try {
+          normalizedItems = itemsByOrderId.get(row.orderId) || [];
+        } catch (_error) { normalizedItems = []; }
+      }
       return {
         ...row,
         shippingAddress: typeof row.shippingAddress === 'string' ? JSON.parse(row.shippingAddress || '{}') : row.shippingAddress,
@@ -53,7 +64,14 @@ const getOrderById = async (req, res) => {
     
     const row = rows[0];
     const [items] = await db.query('SELECT * FROM order_items WHERE order_id = ?', [row.orderId]);
-    const normalizedItems = items.map(it => ({
+    let normalizedItems = [];
+    try {
+      const storedItems = typeof row.items === 'string' ? JSON.parse(row.items || '[]') : row.items;
+      if (Array.isArray(storedItems) && storedItems.length > 0) normalizedItems = storedItems;
+    } catch (parseError) {
+      console.warn(`Invalid items JSON for order ${row.orderId}:`, parseError.message);
+    }
+    if (normalizedItems.length === 0) normalizedItems = items.map(it => ({
       ...it,
       productId: it.product_id,
       qty: it.quantity,
@@ -119,10 +137,13 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // 1. Insert Order (Store empty items JSON to avoid packet size limits, use order_items table instead)
+    const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
+
+    // Keep the exact checkout payload on the order. This is the authoritative
+    // item list; order_items remains available as a fallback for legacy orders.
     const [result] = await connection.query(
       'INSERT INTO orders (orderId, userId, clientName, clientPhone, clientGST, email, shippingAddress, area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, items, gstAmount, totalAmount, docketNumber, cancelReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, '[]', gstAmount, totalAmount, docketNumber, cancelReason]
+      [orderId, userId, clientName, clientPhone, clientGST, email, JSON.stringify(shippingAddress), area, pincode, lat, lng, distance, delivery_charge, delivery_days, customerType, paymentMode, paymentStatus, paymentId, orderStatus, shippingCharge, JSON.stringify(parsedItems), gstAmount, totalAmount, docketNumber, cancelReason]
     );
 
     if (couponCode) {
@@ -147,7 +168,6 @@ const createOrder = async (req, res) => {
     }
 
     // 2. Insert Order Items
-    const parsedItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
     for (const item of parsedItems) {
       const weight = item.selectedWeight || item.weight || item.totalWeight || '';
       const prodId = String(item.productId || (item.docId ? item.docId.split('_')[0] : item.id) || '');
