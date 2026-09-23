@@ -23,8 +23,9 @@ const Products = ({ onInventoryChanged }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const editItem = location.state?.editItem;
+  const defaultType = location.state?.defaultType || (editItem?.type === "combo" ? "combo" : "single");
 
-  const [activeTab, setActiveTab] = useState(editItem?.type === "combo" ? "combo" : "single");
+  const [activeTab, setActiveTab] = useState(defaultType);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
@@ -32,8 +33,8 @@ const Products = ({ onInventoryChanged }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    setActiveTab(editItem?.type === "combo" ? "combo" : "single");
-  }, [editItem]);
+    setActiveTab(location.state?.defaultType || (editItem?.type === "combo" ? "combo" : "single"));
+  }, [editItem, location.state]);
 
   const fetchData = async () => {
     setLoadingList(true);

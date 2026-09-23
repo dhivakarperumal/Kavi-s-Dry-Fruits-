@@ -13,6 +13,7 @@ const Allproduct = ({ adminData, onInventoryChanged }) => {
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [viewMode, setViewMode] = useState("table");
+  const [activeType, setActiveType] = useState("all");
 
   const [categoryFilter, setCategoryFilter] = useState([]);
   const [selectedWeight, setSelectedWeight] = useState("All");
@@ -157,6 +158,9 @@ const Allproduct = ({ adminData, onInventoryChanged }) => {
 
   useEffect(() => {
     let filtered = [...items];
+    if (activeType !== "all") {
+      filtered = filtered.filter((p) => p.type === activeType);
+    }
     if (search.trim()) {
       filtered = filtered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.productId.toLowerCase().includes(search.toLowerCase()));
     }
@@ -183,7 +187,7 @@ const Allproduct = ({ adminData, onInventoryChanged }) => {
     });
     setFilteredItems(filtered);
     setCurrentPage(1);
-  }, [search, categoryFilter, selectedWeight, selectedRating, selectedTag, priceRange, items]);
+  }, [search, categoryFilter, selectedWeight, selectedRating, selectedTag, priceRange, items, activeType]);
 
   const clearFilters = () => {
     setCategoryFilter([]);
@@ -333,13 +337,38 @@ const Allproduct = ({ adminData, onInventoryChanged }) => {
                 <FaPrint size={12} /> Barcodes
              </button>
 
-             <button
-               onClick={() => navigate('/adminpanel/products')}
-               className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all shadow-xl shadow-emerald-100 uppercase tracking-widest"
-             >
-               <FaPlus size={12} /> Add New
-             </button>
+             
+               <button
+                 onClick={() => navigate('/adminpanel/products', { state: { defaultType: 'single' } })}
+                 className="flex items-center gap-2 px-4 py-3 rounded-md bg-emerald-600 text-white font-black text-[12px] uppercase tracking-widest transition-all shadow-sm"
+               >
+                 <FaPlus size={10} /> Add Product
+               </button>
+           
+             
           </div>
+        </div>
+
+        <div className="flex bg-white p-2 rounded-[2rem] shadow-sm border border-gray-100 mb-8 w-fit">
+          {[
+            { key: 'all', label: 'All Products' },
+            { key: 'single', label: 'Single Products' },
+            { key: 'combo', label: 'Combo Products' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveType(tab.key)}
+              className={`px-5 py-3 rounded-[1.4rem] text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeType === tab.key
+                  ? tab.key === 'combo'
+                    ? 'bg-amber-500 text-white shadow-lg'
+                    : 'bg-emerald-600 text-white shadow-lg'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Products Stats Cards (Billing Reference Style) */}
