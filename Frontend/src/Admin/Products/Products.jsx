@@ -451,6 +451,9 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   const [imageFiles, setImageFiles] = useState([]);
   const barcodeRef = useRef();
   const [manualWeightEdited, setManualWeightEdited] = useState(false);
+  const MAX_COMBO_IMAGES = 20;
+  const MAX_COMBO_IMAGE_SIZE_MB = 5;
+  const MAX_COMBO_IMAGE_SIZE_BYTES = MAX_COMBO_IMAGE_SIZE_MB * 1024 * 1024;
 
   const safeParse = (data) => {
     if (!data) return [];
@@ -562,31 +565,81 @@ const ComboProductForm = ({ categories, onSuccess, combos, products, editItem })
   };
 
   const handleImageUpload = async (e) => {
-    const rawFiles = Array.from(e.target.files || []).filter((file) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    const validFiles = selectedFiles.filter((file) => {
       if (!isAllowedComboImageFile(file)) {
-        toast.error("Only JPG, JPEG, and PNG images are allowed.");
+        toast.error(`"${file.name}" is not a valid JPG, JPEG, or PNG image.`, { id: `combo-file-type-${file.name}` });
+        return false;
+      }
+      if (file.size > MAX_COMBO_IMAGE_SIZE_BYTES) {
+        toast.error(`"${file.name}" exceeds the ${MAX_COMBO_IMAGE_SIZE_MB} MB limit before compression.`, { id: `combo-file-size-${file.name}` });
         return false;
       }
       return true;
     });
 
-    if (!rawFiles.length) {
+    if (!validFiles.length) {
       e.target.value = "";
       return;
     }
 
+    const remainingSlots = MAX_COMBO_IMAGES - form.images.length;
+    if (remainingSlots <= 0) {
+      toast.error(`Maximum ${MAX_COMBO_IMAGES} images allowed. Please remove an image before adding more.`, { id: "combo-max-count" });
+      e.target.value = "";
+      return;
+    }
+
+    const filesToProcess = validFiles.slice(0, remainingSlots);
+    const rejectedCount = validFiles.length - filesToProcess.length;
+    if (rejectedCount > 0) {
+      toast.error(`Maximum ${MAX_COMBO_IMAGES} images allowed. ${rejectedCount} file(s) were skipped.`, { id: "combo-max-count" });
+    }
+
+    const compressedFiles = [];
+    const failedFiles = [];
+
     try {
-      toast.loading("Compressing...", { id: "up-c" });
-      const compressedFiles = await Promise.all(
-        rawFiles.map((file) =>
-          imageCompression(file, { maxSizeMB: 8, maxWidthOrHeight: 1200, fileType: file.type, useWebWorker: true })
-        ),
-      );
-      setImageFiles((prev) => [...prev, ...compressedFiles]);
-      setForm((prev) => ({ ...prev, images: [...prev.images, ...compressedFiles.map(file => URL.createObjectURL(file))] }));
-      toast.success("Ready!", { id: "up-c" });
-    } catch { toast.error("Fail", { id: "up-c" }); }
-    finally { e.target.value = ""; }
+      toast.loading("Compressing images one by one...", { id: "up-c" });
+
+      for (const file of filesToProcess) {
+        try {
+          const compressed = await imageCompression(file, {
+            maxSizeMB: MAX_COMBO_IMAGE_SIZE_MB,
+            maxWidthOrHeight: 1600,
+            fileType: file.type,
+            useWebWorker: true,
+          });
+
+          if (compressed.size > MAX_COMBO_IMAGE_SIZE_MB * 1024 * 1024) {
+            throw new Error(`Compressed file is still larger than ${MAX_COMBO_IMAGE_SIZE_MB} MB.`);
+          }
+
+          compressedFiles.push(compressed);
+        } catch (error) {
+          failedFiles.push(`${file.name}: ${error?.message || "Unknown compression error"}`);
+        }
+      }
+
+      if (compressedFiles.length > 0) {
+        setImageFiles((prev) => [...prev, ...compressedFiles]);
+        setForm((prev) => ({
+          ...prev,
+          images: [...prev.images, ...compressedFiles.map((file) => URL.createObjectURL(file))],
+        }));
+      }
+
+      if (failedFiles.length > 0) {
+        throw new Error(failedFiles.join(" | "));
+      }
+
+      toast.success(`Ready! ${compressedFiles.length} image(s) uploaded.`, { id: "up-c" });
+    } catch (error) {
+      const message = error?.message || "Image compression failed.";
+      toast.error(message, { id: "up-c", duration: 6000 });
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const handleProductSelect = (index, selectedName) => {
