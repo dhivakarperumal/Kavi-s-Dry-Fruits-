@@ -151,6 +151,7 @@ const Login = () => {
         email: loginEmail,
         password: loginPassword,
       });
+      const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
         user_id:   data.user_id   || data.userUuid,
@@ -158,11 +159,11 @@ const Login = () => {
         username:  data.username,
         firstName: data.firstName || data.username,
         email:     data.email,
-        role:      data.role,
+        role:      normalizedRole,
       };
       login(userData, data.token || "user-token");
       showMsg("Login successful! Redirecting...", "success");
-      setTimeout(() => navigate(data.role === "admin" ? "/adminpanel" : "/"), 1000);
+      setTimeout(() => navigate(normalizedRole === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
       showMsg(err.response?.data?.message || "Invalid email or password.");
     }
@@ -181,6 +182,7 @@ const Login = () => {
         googleId:  decoded.sub,
         provider:  "google",
       });
+      const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
         user_id:   data.user_id,
@@ -188,13 +190,13 @@ const Login = () => {
         username:  data.username,
         firstName: data.firstName,
         email:     data.email,
-        role:      data.role,
+        role:      normalizedRole,
         provider:  data.provider,
         photoURL:  decoded.picture || "",
       };
       login(userData, credentialResponse.credential);
       showMsg("Google login successful!", "success");
-      setTimeout(() => navigate(data.role === "Admin" ? "/adminpanel" : "/"), 1000);
+      setTimeout(() => navigate(normalizedRole === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
       showMsg(err.response?.data?.message || "Google login failed.");
     }
@@ -236,6 +238,7 @@ const Login = () => {
     setVerifying(true);
     try {
       const { data } = await api.post("/auth/verify-otp", { phone: fullPhone, otp });
+      const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
         user_id:   data.user_id   || data.userUuid,
@@ -244,12 +247,12 @@ const Login = () => {
         firstName: data.firstName || data.username,
         email:     data.email     || "",
         phone:     data.phone,
-        role:      data.role,
+        role:      normalizedRole,
         provider:  data.provider,
       };
       login(userData, data.token);
       showMsg("Verified! Logging you in...", "success");
-      setTimeout(() => navigate("/"), 1000);
+      setTimeout(() => navigate(normalizedRole === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
       showMsg(err.response?.data?.message || "Verification failed.");
     } finally {

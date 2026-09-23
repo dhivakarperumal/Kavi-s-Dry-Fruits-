@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
+const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+
 const AuthContext = createContext();
 
 export { AuthContext };
@@ -15,16 +17,20 @@ export const AuthProvider = ({ children }) => {
     if (token && storedUserStr) {
       try {
         const storedUser = JSON.parse(storedUserStr);
-        setUser(storedUser);
+        const normalizedUser = {
+          ...storedUser,
+          role: normalizeRole(storedUser.role || "user"),
+        };
+        setUser(normalizedUser);
         setProfileName({
           displayName:
-            storedUser.username ||
-            storedUser.email?.split("@")[0] ||
+            normalizedUser.username ||
+            normalizedUser.email?.split("@")[0] ||
             "User",
-          email: storedUser.email || "",
-          role: storedUser.role || "user",
-          photoURL: storedUser.photoURL || "",
-          uid: storedUser.uid || "",
+          email: normalizedUser.email || "",
+          role: normalizedUser.role || "user",
+          photoURL: normalizedUser.photoURL || "",
+          uid: normalizedUser.uid || "",
         });
       } catch (error) {
         setUser(null);
