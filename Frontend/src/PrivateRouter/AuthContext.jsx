@@ -20,10 +20,17 @@ export const AuthProvider = ({ children }) => {
         const normalizedUser = {
           ...storedUser,
           role: normalizeRole(storedUser.role || "user"),
+          name:
+            storedUser.name ||
+            storedUser.username ||
+            storedUser.firstName ||
+            storedUser.email?.split("@")[0] ||
+            "User",
         };
         setUser(normalizedUser);
         setProfileName({
           displayName:
+            normalizedUser.name ||
             normalizedUser.username ||
             normalizedUser.email?.split("@")[0] ||
             "User",

@@ -17,6 +17,8 @@ const Topbar = ({
   allOrders = [],
   ordersold = [],
   handleLogout,
+  adminRole = "Administrator",
+  adminEmail = "",
 }) => {
   const [isOrderDropdown,   setIsOrderDropdown]   = useState(false);
   const [isStockDropdown,   setIsStockDropdown]   = useState(false);
@@ -349,9 +351,12 @@ const Topbar = ({
                 <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {(adminName || "A").charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800 leading-tight">{adminName}</p>
-                  <p className="text-[10px] text-emerald-600 font-medium">Administrator</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-800 leading-tight truncate">{adminName}</p>
+                 
+                  {adminEmail && (
+                    <p className="text-[9px] text-slate-500 truncate">{adminEmail}</p>
+                  )}
                 </div>
               </div>
               <button

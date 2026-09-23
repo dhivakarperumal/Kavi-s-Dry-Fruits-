@@ -73,6 +73,9 @@ const AdminPanel = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const seenOrderIds = useRef(new Set());
+  const adminDisplayName = user?.name || user?.username || user?.firstName || user?.email?.split("@")[0] || "Administrator";
+  const adminRoleLabel = String(user?.role || "").trim().toLowerCase() === "admin" ? "Administrator" : "User";
+  const adminEmail = user?.email || "admin@gmail.com";
 
   const handleOrderUpdated = useCallback((updatedOrder) => {
     setCollectionCounts((previousData) => {
@@ -466,7 +469,9 @@ const AdminPanel = () => {
           lowStockItems={collectionCounts.lowStockList || []}
           allProducts={collectionCounts.allProducts || []}
           allOrders={collectionCounts.allOrders || []}
-          adminName={user?.name || "Administrator"}
+          adminName={adminDisplayName}
+          adminRole={adminRoleLabel}
+          adminEmail={adminEmail}
         />
 
         <main className="flex-1 overflow-y-auto custom-scrollbar p-2">
