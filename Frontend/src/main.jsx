@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.jsx";
@@ -35,18 +35,13 @@ import OrderTracking from "./Shop/OrderTracking.jsx";
 import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
 import { AdminNotificationProvider } from "./Context/AdminNotificationProvider.jsx";
 
-// Convert legacy hash URLs such as /#/shop to browser-router paths.
-if (window.location.hash.startsWith("#/")) {
-  window.history.replaceState(null, "", window.location.hash.slice(1));
-}
-
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js").catch((error) => {
     console.warn("Service worker registration failed:", error);
   });
 }
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,

@@ -194,7 +194,7 @@ const Login = () => {
       };
       login(userData, credentialResponse.credential);
       showMsg("Google login successful!", "success");
-      setTimeout(() => navigate(data.role === "Admin" ? "/adminpanel" : "/"), 1000);
+      setTimeout(() => navigate(data.role?.toLowerCase() === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
       showMsg(err.response?.data?.message || "Google login failed.");
     }

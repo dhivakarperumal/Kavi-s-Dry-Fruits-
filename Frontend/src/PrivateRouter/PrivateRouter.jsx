@@ -10,7 +10,12 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles.length && !allowedRoles.includes(user.role)) {
+  const userRole = String(user.role || "").toLowerCase();
+  const hasAllowedRole = allowedRoles.some(
+    (allowedRole) => String(allowedRole).toLowerCase() === userRole
+  );
+
+  if (allowedRoles.length && !hasAllowedRole) {
     return (
       <div className="p-6 text-center text-red-600">
         You are not authorized to view this page
