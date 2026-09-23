@@ -34,8 +34,12 @@ const Navbar = () => {
     const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
 
     if (storedUser) {
-      setUser(storedUser);
-      setRole(storedUser.role || "User");
+      const normalizedUser = {
+        ...storedUser,
+        role: String(storedUser.role || "user").trim().toLowerCase(),
+      };
+      setUser(normalizedUser);
+      setRole(normalizedUser.role || "user");
     } else {
       setUser(null);
       setRole("");

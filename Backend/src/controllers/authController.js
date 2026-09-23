@@ -17,9 +17,14 @@ const createUuid = () => {
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 };
 
+const normalizeRole = (role) => {
+  const value = String(role || '').trim();
+  return value.toLowerCase() === 'admin' ? 'admin' : 'user';
+};
+
 const signToken = (user) =>
   jwt.sign(
-    { userId: user.id, userUuid: user.user_id, role: user.role },
+    { userId: user.id, userUuid: user.user_id, role: normalizeRole(user.role) },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '9d' }
   );
@@ -100,6 +105,7 @@ const login = async (req, res) => {
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
 
+    user.role = normalizeRole(user.role);
     const token = signToken(user);
 
     return res.json({
@@ -113,7 +119,7 @@ const login = async (req, res) => {
       firstName: user.username,
       email:     user.email,
       phone:     user.phone,
-      role:      user.role || 'User',
+      role:      user.role,
     });
   } catch (error) {
     console.error('Auth login error:', error);
@@ -143,17 +149,20 @@ const googleLogin = async (req, res) => {
     } else {
       const userUuid  = createUuid();
       const fullName  = `${firstName} ${lastName}`.trim();
+      const isAdminGoogleEmail = normalizedEmail === 'admin@gmail.com';
+      const defaultRole = isAdminGoogleEmail ? 'Admin' : 'User';
       const [result]  = await db.query(
         'INSERT INTO users (user_id, username, email, role, provider, google_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [userUuid, fullName || username, normalizedEmail, 'User', provider || 'google', googleId]
+        [userUuid, fullName || username, normalizedEmail, defaultRole, provider || 'google', googleId]
       );
       user = {
         id: result.insertId, user_id: userUuid,
         username: fullName || username, email: normalizedEmail,
-        role: 'User', provider: provider || 'google', google_id: googleId,
+        role: defaultRole, provider: provider || 'google', google_id: googleId,
       };
     }
 
+    user.role = normalizeRole(user.role);
     const token = signToken(user);
 
     return res.status(200).json({
@@ -328,6 +337,7 @@ const verifyOtp = async (req, res) => {
     }
 
     // ── Issue JWT ─────────────────────────────────────────────────────────────
+    user.role = normalizeRole(user.role);
     const token = signToken(user);
 
     return res.json({
@@ -341,7 +351,7 @@ const verifyOtp = async (req, res) => {
       firstName: user.username,
       email:     user.email   || '',
       phone:     user.phone,
-      role:      user.role    || 'User',
+      role:      user.role,
       provider:  user.provider || 'whatsapp',
     });
 

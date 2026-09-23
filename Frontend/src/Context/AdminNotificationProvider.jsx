@@ -34,7 +34,8 @@ export const AdminNotificationProvider = ({ children }) => {
   const titleIntervalRef = useRef(null);
   const handledAlertKeysRef = useRef(new Set());
 
-  const isAdmin = user && (user.role === "admin" || user.isAdmin === true);
+  const normalizedRole = String(user?.role || "").trim().toLowerCase();
+  const isAdmin = Boolean(user && (normalizedRole === "admin" || user.isAdmin === true));
 
   // Sync notification permission status
   useEffect(() => {
