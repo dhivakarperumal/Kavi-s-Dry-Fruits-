@@ -1,6 +1,6 @@
 import { toast } from "react-hot-toast";
 import { useRef, useState } from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import api from "../services/api";
 
 const Subscribe = () => {

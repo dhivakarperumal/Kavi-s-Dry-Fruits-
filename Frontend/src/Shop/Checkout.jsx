@@ -5,7 +5,7 @@
   import { useNavigate, useLocation } from "react-router-dom";
   import emailjs from "@emailjs/browser";
   import { toast } from "react-hot-toast";
-  import { Helmet } from "react-helmet";
+  import { Helmet } from "react-helmet-async";
   import api from "../services/api";
   import axios from "axios";
   import { isLowStock, formatStockDisplay, parseWeightToGrams, isSameProduct } from "../utils/stockUtils";

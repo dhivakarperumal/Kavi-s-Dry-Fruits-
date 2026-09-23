@@ -2,7 +2,7 @@ import React from 'react';
 import PageHeader from '../Component/PageHeader';
 import Contact from '../Home/Contact';
 import Services from '../Home/Services';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { FaEnvelope, FaPhoneAlt, FaWhatsapp, FaCommentDots } from 'react-icons/fa';
 
 const Contac_Us = () => {

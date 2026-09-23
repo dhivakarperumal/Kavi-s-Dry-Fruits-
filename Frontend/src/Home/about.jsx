@@ -2,7 +2,7 @@ import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import {
   FaLeaf,
   FaAward,

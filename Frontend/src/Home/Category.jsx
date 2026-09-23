@@ -6,7 +6,7 @@ import "slick-carousel/slick/slick-theme.css";
 
 import { FaChevronRight, FaChevronLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { useStore } from "../Context/StoreContext";
 
 const PrevArrow = (props) => {

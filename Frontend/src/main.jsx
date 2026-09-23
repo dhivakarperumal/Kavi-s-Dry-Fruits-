@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.jsx";
 import "./index.css";
 import Home from "./Home/Home.jsx";
@@ -33,6 +34,11 @@ import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
 import OrderTracking from "./Shop/OrderTracking.jsx";
 import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
 import { AdminNotificationProvider } from "./Context/AdminNotificationProvider.jsx";
+
+// Convert legacy hash URLs such as /#/shop to browser-router paths.
+if (window.location.hash.startsWith("#/")) {
+  window.history.replaceState(null, "", window.location.hash.slice(1));
+}
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js").catch((error) => {
@@ -138,26 +144,28 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <StoreProvider>
-          <AdminNotificationProvider>
-            <RouterProvider router={router} />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                style: {
-                  background: "#333",
-                  color: "#fff",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                },
-                duration: 2000,
-              }}
-            />
-          </AdminNotificationProvider>
-        </StoreProvider>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+    <HelmetProvider>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        <AuthProvider>
+          <StoreProvider>
+            <AdminNotificationProvider>
+              <RouterProvider router={router} />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: "#333",
+                    color: "#fff",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                  },
+                  duration: 2000,
+                }}
+              />
+            </AdminNotificationProvider>
+          </StoreProvider>
+        </AuthProvider>
+      </GoogleOAuthProvider>
+    </HelmetProvider>
   </React.StrictMode>
 );

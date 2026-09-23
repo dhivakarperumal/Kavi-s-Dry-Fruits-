@@ -5,7 +5,7 @@ import { useStore } from "../Context/StoreContext";
 import PageHeader from "../Component/PageHeader";
 import Testimonials from "../Shop/Testimonials";
 import { toast } from "react-hot-toast";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import LodingPage from "../Component/LoadingPage";
 import api from "../services/api";
 import { isLowStock, formatStockDisplay, getProductCartUsage } from "../utils/stockUtils";

@@ -12,7 +12,7 @@ import FestiveGiftPack from "../Home/FestiveGiftPack";
 import Services from "../Home/Services";
 import { toast } from "react-hot-toast";
 import LodingPage from "../Component/LoadingPage";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { formatStockDisplay, isProductOutOfStock, isLowStock, checkVariantStock } from "../utils/stockUtils";
 
 const weights = ["All", "100g", "250g", "500g", "1000g"];

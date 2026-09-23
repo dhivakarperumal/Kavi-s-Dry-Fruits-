@@ -1,9 +1,9 @@
-const toHashUrl = (url) => {
-  if (!url) return '/#/adminpanel';
-  if (url.startsWith('/#/')) return url;
-  if (url.startsWith('#/')) return `/${url}`;
-  if (url.startsWith('/')) return `/#${url}`;
-  return `/#/${url}`;
+const toRouteUrl = (url) => {
+  if (!url) return '/adminpanel';
+  if (url.startsWith('/#/')) return url.slice(1);
+  if (url.startsWith('#/')) return url.slice(1);
+  if (url.startsWith('/')) return url;
+  return `/${url}`;
 };
 
 self.addEventListener('install', (event) => {
@@ -22,7 +22,7 @@ self.addEventListener('message', (event) => {
       icon: '/Kavi_logo.png',
       badge: '/Kavi_logo.png',
       tag: `kavi-${Date.now()}`,
-      data: { url: toHashUrl(url) },
+      data: { url: toRouteUrl(url) },
       requireInteraction: true,
     });
   }
@@ -39,7 +39,7 @@ self.addEventListener('push', (event) => {
         icon: '/Kavi_logo.png',
         badge: '/Kavi_logo.png',
         tag: `new-order-${data.orderId || Date.now()}`,
-        data: { url: '/#/adminpanel/all-orders' },
+        data: { url: '/adminpanel/all-orders' },
         requireInteraction: true,
       });
     })
@@ -48,7 +48,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = new URL(event.notification.data?.url || '/#/adminpanel/all-orders', self.location.origin).href;
+  const targetUrl = new URL(event.notification.data?.url || '/adminpanel/all-orders', self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((client) => 'focus' in client);

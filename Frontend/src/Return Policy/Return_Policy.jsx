@@ -1,6 +1,6 @@
 import React from 'react'
 import PageHeader from '../Component/PageHeader'
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 const Return_Policy = () => {
   return (

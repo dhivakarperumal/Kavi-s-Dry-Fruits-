@@ -6,7 +6,7 @@ import Services from "../Home/Services";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import api from "../services/api";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
 import OrderTracking from "../Shop/OrderTracking";
 import { FaTruck, FaShoppingCart, FaEye, FaEyeSlash } from "react-icons/fa";

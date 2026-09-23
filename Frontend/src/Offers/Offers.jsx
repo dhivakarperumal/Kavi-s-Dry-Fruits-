@@ -9,7 +9,7 @@ import { useStore } from "../Context/StoreContext";
 import { Link, useNavigate } from "react-router-dom";
 import LodingPage from "../Component/LoadingPage";
 import { toast } from "react-hot-toast";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import OptimizedImage from "../Component/OptimizedImage";
 import { isProductOutOfStock, isLowStock, formatStockDisplay, checkVariantStock, parseWeightToGrams } from "../utils/stockUtils";
 

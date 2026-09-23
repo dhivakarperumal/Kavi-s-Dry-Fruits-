@@ -8,13 +8,22 @@
   <meta name="description" content="Kavi's Dry Fruits offers premium almonds, cashews, pistachios, walnuts, raisins, dates, seeds, spices and dry fruit gift boxes with trusted Pan India delivery." />
   <meta name="keywords" content="dry fruits online, almonds, cashews, pistachios, dates, raisins, Kavi's Dry Fruits, Tirupattur dry fruits, premium nuts, gift boxes" />
   <script>
+    (function normalizeLegacyHashRoute() {
+      const hash = window.location.hash;
+      if (hash.startsWith('#/')) {
+        window.history.replaceState(null, document.title, hash.slice(1));
+      }
+    })();
+  </script>
+  <script>
     (async function loadSeoMeta() {
       const keywordsTag = document.querySelector('meta[name="keywords"]');
       if (!keywordsTag) return;
 
-      const apiBase = (import.meta && import.meta.env && import.meta.env.VITE_API_URL)
-        ? import.meta.env.VITE_API_URL.replace(/\/+$/, '')
-        : 'https://kavisdryfruits.com/api';
+      const configuredApiBase = '%VITE_API_URL%';
+      const apiBase = (configuredApiBase && !configuredApiBase.startsWith('%'))
+        ? configuredApiBase.replace(/\/+$/, '')
+        : 'http://localhost:5000/api';
 
       try {
         const response = await fetch(`${apiBase}/seo`);
