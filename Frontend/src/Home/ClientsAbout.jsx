@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import api from "../services/api";
 
 

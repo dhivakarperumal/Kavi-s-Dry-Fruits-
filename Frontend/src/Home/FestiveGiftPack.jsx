@@ -1,7 +1,7 @@
 import ProductCard from "../Component/ProductCard";
 import { Link } from "react-router-dom";
 import { useStore } from "../Context/StoreContext";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import rightBg from "/images/offer-side-bg2.png";
 
 const FestiveGiftPack = () => {

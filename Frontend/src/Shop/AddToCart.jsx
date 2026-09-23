@@ -5,7 +5,7 @@ import bgImage from "/images/empty-cart.png";
 import { useNavigate } from "react-router-dom";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import { isLowStock, formatStockDisplay, parseWeightToGrams, isSameProduct, getProductCartUsage } from "../utils/stockUtils";
 
 // --------------------------------------------

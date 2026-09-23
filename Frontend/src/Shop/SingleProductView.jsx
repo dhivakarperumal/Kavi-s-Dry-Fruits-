@@ -6,7 +6,7 @@ import PageHeader from "../Component/PageHeader";
 import Testimonials from "./Testimonials";
 import RelatedProducts from "./RelatedProducts";
 import { toast } from "react-hot-toast";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import LodingPage from "../Component/LoadingPage";
 import OptimizedImage from "../Component/OptimizedImage";
 import api from "../services/api";

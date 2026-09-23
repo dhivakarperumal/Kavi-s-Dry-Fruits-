@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import {Link} from "react-router-dom"
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import api from "../services/api";
 
 const fallbackImages = [

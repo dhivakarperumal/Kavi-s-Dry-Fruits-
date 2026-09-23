@@ -7,7 +7,7 @@ import { useStore } from "../Context/StoreContext";
 import PageHeader from "../Component/PageHeader";
 import LodingPage from "../Component/LoadingPage";
 import { toast } from "react-hot-toast";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import OptimizedImage from "../Component/OptimizedImage";
 import { isLowStock, formatStockDisplay } from "../utils/stockUtils";
 

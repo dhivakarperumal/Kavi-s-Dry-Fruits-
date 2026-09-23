@@ -12,7 +12,7 @@ import { toast } from "react-hot-toast";
 import LodingPage from "../Component/LoadingPage";
 import { ProductSkeletonGrid } from "../Component/SkeletonLoader";
 import ProductCard from "../Component/ProductCard";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 import OptimizedImage from "../Component/OptimizedImage";
 import { parseWeightToGrams } from "../utils/stockUtils";
 

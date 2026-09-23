@@ -9,15 +9,15 @@ import NotificationSoundModal from "../Component/NotificationSoundModal";
 
 const AdminNotificationContext = createContext(null);
 
-const toHashRoute = (link) => {
-  if (!link) return "#/adminpanel";
+const toRoute = (link) => {
+  if (!link) return "/adminpanel";
   const value = String(link);
-  if (value.startsWith("#/")) return value;
   if (value.startsWith("/#/")) return value.slice(1);
+  if (value.startsWith("#/")) return value.slice(1);
 
   const [path, query = ""] = value.split("?");
-  const hashPath = path.startsWith("/") ? path : `/${path}`;
-  return `#${hashPath}${query ? `?${query}` : ""}`;
+  const routePath = path.startsWith("/") ? path : `/${path}`;
+  return `${routePath}${query ? `?${query}` : ""}`;
 };
 
 export const useAdminNotification = () => useContext(AdminNotificationContext);
@@ -57,7 +57,9 @@ export const AdminNotificationProvider = ({ children }) => {
 
   const handleNavigate = useCallback((link) => {
     if (!link) return;
-    window.location.hash = toHashRoute(link);
+    const route = toRoute(link);
+    window.history.pushState(null, "", route);
+    window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
 
   // Flash the document title if the tab is hidden / in the background
@@ -105,7 +107,7 @@ export const AdminNotificationProvider = ({ children }) => {
           icon: iconUrl,
           badge: iconUrl,
           tag: notificationTag,
-          data: { url: `/${toHashRoute(link)}` },
+          data: { url: toRoute(link) },
           requireInteraction: true,
         });
         return;

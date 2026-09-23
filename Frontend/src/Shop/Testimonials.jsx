@@ -1,7 +1,7 @@
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useState } from "react";
 import rightBg from "/images/offer-side-bg2.png";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 const Testimonials = ({ reviews = [] }) => {
   const [start, setStart] = useState(0);

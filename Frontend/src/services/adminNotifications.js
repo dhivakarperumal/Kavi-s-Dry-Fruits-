@@ -40,7 +40,8 @@ export const showAdminBrowserNotification = (order) => {
   });
   notification.onclick = () => {
     window.focus();
-    window.location.hash = '#/adminpanel/new-orders';
+    window.history.pushState(null, '', '/adminpanel/new-orders');
+    window.dispatchEvent(new PopStateEvent('popstate'));
     notification.close();
   };
 };

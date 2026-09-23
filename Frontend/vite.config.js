@@ -15,7 +15,7 @@ export default defineConfig({
           // Vendor chunks
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-          'vendor-ui': ['react-icons', 'react-hot-toast', 'react-helmet'],
+          'vendor-ui': ['react-icons', 'react-hot-toast', 'react-helmet-async'],
           'vendor-utils': ['aos', 'slick-carousel', 'react-slick', 'browser-image-compression'],
           
           // Route chunks for better lazy loading
@@ -49,7 +49,7 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
-      'react-helmet',
+      'react-helmet-async',
       'react-icons',
       'react-hot-toast',
       'aos'

@@ -4,7 +4,7 @@ import PageHeader from "../Component/PageHeader";
 import { useStore } from "../Context/StoreContext";
 import Services from "../Home/Services";
 import { toast } from "react-hot-toast";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 
 const AddToFav = () => {
