@@ -25,6 +25,7 @@ const upload = multer({
 });
 
 router.get('/', productController.getProducts);
+router.get('/:id', productController.getProductById);
 router.post('/', upload.array('images', 10), productController.addProduct);
 router.post('/:id/review', reviewController.addReview);
 router.put('/:id', upload.array('images', 10), productController.updateProduct);

@@ -11,6 +11,12 @@ import LodingPage from "../Component/LoadingPage";
 import OptimizedImage from "../Component/OptimizedImage";
 import api from "../services/api";
 import { parseWeightToGrams, formatStockDisplay, isProductOutOfStock, isLowStock, checkVariantStock, getProductCartUsage } from "../utils/stockUtils";
+import { normalizeProduct } from "../utils/catalog";
+
+const getMetaDescription = (value) => {
+  const description = String(value || "").replace(/\s+/g, " ").trim();
+  return description.length > 155 ? `${description.slice(0, 152).trimEnd()}...` : description;
+};
 
 const SingleProductView = () => {
   const { id } = useParams();
@@ -18,6 +24,9 @@ const SingleProductView = () => {
   const { allProducts, addToCart, addToFav, loadingProducts, cartItems } = useStore();
 
   const [product, setProduct] = useState(null);
+  const [productLoading, setProductLoading] = useState(true);
+  const [productLoadError, setProductLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -41,25 +50,19 @@ const SingleProductView = () => {
   useEffect(() => {
     if (!id) return;
 
-    if (loadingProducts || !allProducts.length) {
-      setProduct(null);
-      setRelatedProducts([]);
-      return;
-    }
-
-    const selected = allProducts.find(
-      (p) => 
-        (p.id === id || p.productId === id || p.id === parseInt(id))
+    const selected = allProducts.find((item) =>
+      String(item.id) === String(id) || String(item.productId) === String(id)
     );
 
     if (selected) {
-      // Redirection logic: if it's a combo, move to the combos view
       if (selected.category === "Combo" || selected.type === "combo") {
         navigate(`/combos/${selected.id}`, { replace: true });
         return;
       }
 
       setProduct(selected);
+      setProductLoading(false);
+      setProductLoadError(false);
       setSelectedImage(selected.images?.[0] || "");
       const firstAvailableWeight = (selected.weights || []).find(
         (w) => checkVariantStock(w, 1, selected.stock ?? selected.totalStock, false).canFulfill
@@ -71,22 +74,67 @@ const SingleProductView = () => {
         (p) => p.category === selected.category && p.id !== selected.id && p.category !== "Combo"
       );
       setRelatedProducts(related);
-    } else {
-      setProduct(null);
-      setRelatedProducts([]);
+      return;
     }
 
+    let active = true;
+    setProduct(null);
+    setRelatedProducts([]);
+    setProductLoading(true);
+    setProductLoadError(false);
     window.scrollTo(0, 0);
-  }, [id, allProducts, loadingProducts, navigate]);
 
-  if (loadingProducts || (!product && !allProducts.length)) {
+    api.get(`/products/${encodeURIComponent(id)}`, { timeout: 8000 })
+      .then(({ data }) => {
+        if (!active) return;
+        const fetchedProduct = normalizeProduct(data);
+        if (fetchedProduct.category === "Combo" || fetchedProduct.type === "combo") {
+          navigate(`/combos/${fetchedProduct.id}`, { replace: true });
+          return;
+        }
+        setProduct(fetchedProduct);
+        setSelectedImage(fetchedProduct.images?.[0] || "");
+        setActiveWeight(fetchedProduct.weights?.[0] || "");
+        setQuantity(1);
+        setRelatedProducts(allProducts.filter(
+          (item) => item.category === fetchedProduct.category &&
+            String(item.id) !== String(fetchedProduct.id) &&
+            item.category !== "Combo"
+        ));
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error?.response?.status !== 404) {
+          console.error("Product detail request failed:", error);
+          setProductLoadError(true);
+        }
+      })
+      .finally(() => {
+        if (active) setProductLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, allProducts, loadingProducts, navigate, retryCount]);
+
+  if (productLoading || (!product && loadingProducts)) {
     return <LodingPage />;
   }
 
   if (!product) {
     return (
-      <div className="text-center mt-10 text-red-600 font-semibold">
-        Product not found.
+      <div className="text-center mt-10 mb-16 font-semibold">
+        <p className="text-red-600">{productLoadError ? "Unable to load this product right now." : "Product not found."}</p>
+        {productLoadError && (
+          <button
+            type="button"
+            className="mt-4 rounded bg-green1 px-4 py-2 text-white"
+            onClick={() => setRetryCount((count) => count + 1)}
+          >
+            Try again
+          </button>
+        )}
       </div>
     );
   }
@@ -115,6 +163,9 @@ const SingleProductView = () => {
   const isCombo = product.category === "Combo" || product.type === "combo";
   const isOutOfStock = isProductOutOfStock(product);
   const lowStock = isLowStock(product);
+  const metaDescription = getMetaDescription(
+    `Buy ${product.name} online from Kavi's Dry Fruits. ${product.shortDescription || product.description || "Carefully packed and delivered across Tamil Nadu and India."}`
+  );
 
   // Calculate existing cart usage for this product across all variants in cart
   const cartUsage = getProductCartUsage(cartItems, product);
@@ -206,19 +257,40 @@ const SingleProductView = () => {
   return (
     <>
       <Helmet>
-        <title>{product.name} – Premium Quality | Kavi's Dry Fruits</title>
+        <title>{product.name} | Buy Online | Kavi's Dry Fruits</title>
         <meta
           name="description"
-          content={`Buy fresh ${product.name}. ${product.shortDescription || 'High-quality dry fruits'}. 100% premium quality, hygienically packed. Pan India delivery.`}
-        />
-        <meta
-          name="keywords"
-          content={`${product.name}, buy ${product.name} online, premium ${product.name}, ${product.category}, dry fruits`}
+          content={metaDescription}
         />
         <link
           rel="canonical"
-          href={`https://kavisdryfruits.com/shop/${product.id}`}
+          href={`https://kavisdryfruits.com/shop/${product.id}/`}
         />
+        <meta property="og:title" content={`${product.name} | Kavi's Dry Fruits`} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={(product.images?.[0] || "https://kavisdryfruits.com/Kavi_logo.png").replace(/^http:\/\/(?:www\.)?kavisdryfruits\.com\//i, "https://kavisdryfruits.com/")} />
+        <meta property="og:url" content={`https://kavisdryfruits.com/shop/${product.id}/`} />
+        <meta property="og:type" content="product" />
+        {price > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Product",
+              name: product.name,
+              description: product.shortDescription || product.description || `Premium ${product.name} from Kavi's Dry Fruits.`,
+              image: product.images?.filter(Boolean).map((image) => image.replace(/^http:\/\/(?:www\.)?kavisdryfruits\.com\//i, "https://kavisdryfruits.com/")),
+              brand: { "@type": "Brand", name: "Kavi's Dry Fruits" },
+              offers: {
+                "@type": "Offer",
+                url: `https://kavisdryfruits.com/shop/${product.id}/`,
+                priceCurrency: "INR",
+                price,
+                availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+                seller: { "@type": "Organization", name: "Kavi's Dry Fruits" },
+              },
+            })}
+          </script>
+        )}
       </Helmet>
       <PageHeader
         title="Product Details"
@@ -245,7 +317,10 @@ const SingleProductView = () => {
                   alt={`${product.name} - Kavi's Dry Fruits`}
                   className="w-full h-[26rem] sm:h-[32rem] rounded-lg bg-white cursor-zoom-in"
                   objectFit="contain"
-                  loading="lazy"
+                  loading="eager"
+                  fetchPriority="high"
+                  width={640}
+                  height={640}
                   onMouseEnter={() => setZoomed(true)}
                   onMouseLeave={() => setZoomed(false)}
                   onMouseMove={handleMouseMove}
@@ -558,4 +633,3 @@ const SingleProductView = () => {
 };
 
 export default SingleProductView;
-

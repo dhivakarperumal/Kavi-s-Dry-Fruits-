@@ -78,6 +78,18 @@ DB_NAME=medicare_db
 JWT_SECRET=your_jwt_secret_key_here
 ```
 
+### Instagram homepage feed
+
+To show the latest Instagram posts and Reels on the homepage, configure the Instagram Graph API credentials in the backend environment (never in the frontend):
+
+```
+INSTAGRAM_USER_ID=your_instagram_professional_account_id
+INSTAGRAM_ACCESS_TOKEN=your_meta_user_access_token
+META_GRAPH_API_VERSION=v26.0
+```
+
+The Instagram account must be a Business or Creator account connected to a Facebook Page. The Meta app needs the `instagram_basic` and `pages_show_list` permissions. The feed is cached by the backend for five minutes, so newly published posts appear on the homepage after the cache refreshes. The homepage displays the first 25 posts and Reels, with a button to load older media. Meta credentials must be added to the backend deployment environment before media can be loaded; they must never be placed in frontend variables or committed to source control.
+
 ## Database Models
 
 ### MediCarePatient

@@ -36,8 +36,8 @@ const Category = () => {
 
   useEffect(() => {
     if (categoryName) {
-      // Find matching category name from allCategories (case & space insensitive)
-      const found = allCategories.find(c => c.name.toLowerCase().replace(/\s+/g, '') === categoryName.toLowerCase().replace(/\s+/g, ''));
+      const normalizeCategory = (name) => String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const found = allCategories.find(c => normalizeCategory(c.name) === normalizeCategory(categoryName));
       setSelectedCategory(found ? found.name : "All");
     } else {
       setSelectedCategory("All");
@@ -116,32 +116,18 @@ const Category = () => {
   return (
     <section className="bg-white">
          <Helmet>
-  <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits</title>
+  <title>{selectedCategory === "All" ? "Shop Premium Dry Fruits, Nuts & Seeds" : `Buy ${selectedCategory} Online`} | Kavi's Dry Fruits</title>
 
   <meta
     name="description"
-    content="Explore and shop premium dry fruits, nuts, dates, raisins, seeds, combos and more. High quality, fresh and healthy products delivered Pan India."
+    content={`Shop ${selectedCategory === "All" ? "premium dry fruits, nuts, dates, raisins and seeds" : `premium ${selectedCategory.toLowerCase()}`} online from Kavi's Dry Fruits. Carefully packed and delivered across Tamil Nadu and India.`}
   />
 
-  <meta
-  name="keywords"
-  content="
-  buy dry fruits online, premium dry fruits, almonds online, cashews online, pistachios online,
-  dates online, raisins online, dried fruits, nuts store India, healthy snacks online,
-  organic dry fruits India, affordable dry fruits shop, wholesale dry fruits supplier,
-  chia seeds online, pumpkin seeds online, sunflower seeds online, flax seeds online,
-  big size cashews W180, premium almonds, roasted pistachios,
-  family pack dry fruits, dry fruits combo pack, gift boxes dry fruits,
-  dry fruits shop Tirupathur, dry fruits Tamil Nadu, dry fruits Chennai online
-  "
-/>
+  <link rel="canonical" href={`https://kavisdryfruits.com/category/${encodeURIComponent(String(categoryName || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}/`} />
 
-
-  <link rel="canonical" href="https://kavisdryfruits.com/category" />
-
-  <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits" />
-  <meta property="og:description" content="Buy premium almonds, cashews, pista, raisins, dates & seeds with fast delivery." />
-  <meta property="og:url" content="https://kavisdryfruits.com/category" />
+  <meta property="og:title" content={`${selectedCategory === "All" ? "Shop Premium Dry Fruits & Nuts" : `Buy ${selectedCategory} Online`} | Kavi's Dry Fruits`} />
+  <meta property="og:description" content={`Shop ${selectedCategory === "All" ? "premium dry fruits and nuts" : selectedCategory.toLowerCase()} online, delivered across Tamil Nadu and India.`} />
+  <meta property="og:url" content={`https://kavisdryfruits.com/category/${encodeURIComponent(String(categoryName || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}/`} />
   <meta property="og:type" content="website" />
 </Helmet>
       {loadingProducts ? (

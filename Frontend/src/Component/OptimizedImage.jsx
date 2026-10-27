@@ -16,6 +16,7 @@ const OptimizedImage = React.memo(({
   onLoad = () => {},
   onError = () => {},
   loading = 'lazy',
+  fetchPriority = 'auto',
   srcSet = null,
   sizes = null,
   width = null,
@@ -23,12 +24,13 @@ const OptimizedImage = React.memo(({
   ...props
 }) => {
   const [imageSrc, setImageSrc] = useState(() => getImageWithFallback(src, fallback));
-  const [isLoading, setIsLoading] = useState(!isImageCached(src));
+  const [isLoading, setIsLoading] = useState(() => !isImageCached(getImageWithFallback(src, fallback)));
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    setImageSrc(getImageWithFallback(src, fallback));
-    setIsLoading(!isImageCached(src));
+    const nextImageSrc = getImageWithFallback(src, fallback);
+    setImageSrc(nextImageSrc);
+    setIsLoading(!isImageCached(nextImageSrc));
     setHasError(false);
   }, [src, fallback]);
 
@@ -62,7 +64,7 @@ const OptimizedImage = React.memo(({
     <div className={`relative overflow-hidden flex items-center justify-center ${className}`}>
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
+        <div className="absolute inset-0 bg-gray-100" />
       )}
       
       {/* Image with responsive support */}
@@ -70,6 +72,7 @@ const OptimizedImage = React.memo(({
         src={imageSrc}
         srcSet={srcSet}
         sizes={sizes}
+        fetchPriority={fetchPriority}
         alt={alt}
         width={width}
         height={height}

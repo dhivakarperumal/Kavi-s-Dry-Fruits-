@@ -5,52 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-  <meta name="description" content="Kavi's Dry Fruits offers premium almonds, cashews, pistachios, walnuts, raisins, dates, seeds, spices and dry fruit gift boxes with trusted Pan India delivery." />
-  <meta name="keywords" content="dry fruits online, almonds, cashews, pistachios, dates, raisins, Kavi's Dry Fruits, Tirupattur dry fruits, premium nuts, gift boxes" />
-  <script>
-    (function normalizeLegacyHashRoute() {
-      const hash = window.location.hash;
-      if (hash.startsWith('#/')) {
-        window.history.replaceState(null, document.title, hash.slice(1));
-      }
-    })();
-  </script>
-  <script>
-    (async function loadSeoMeta() {
-      const keywordsTag = document.querySelector('meta[name="keywords"]');
-      if (!keywordsTag) return;
-
-      const configuredApiBase = '%VITE_API_URL%';
-      const apiBase = (configuredApiBase && !configuredApiBase.startsWith('%'))
-        ? configuredApiBase.replace(/\/+$/, '')
-        : 'http://localhost:5000/api';
-
-      try {
-        const response = await fetch(`${apiBase}/seo`);
-        if (!response.ok) throw new Error('SEO API request failed');
-
-        const data = await response.json();
-
-        if (Array.isArray(data?.keywords)) {
-          const keywords = data.keywords
-            .map((item) => (typeof item === 'string' ? item : (item?.keyword || '')))
-            .map((item) => String(item).trim())
-            .filter(Boolean);
-
-          if (keywords.length > 0) {
-            keywordsTag.setAttribute('content', keywords.join(', '));
-          }
-        }
-      } catch (error) {
-        console.warn('SEO keywords could not be loaded from API:', error);
-      }
-    })();
-  </script>
+  <meta name="description" content="Shop premium almonds, cashews, pistachios, walnuts, raisins, dates, seeds and dry fruit gift boxes from Kavi's Dry Fruits. Carefully packed and delivered across Tamil Nadu and India." />
   <meta name="author" content="Kavi's Dry Fruits" />
   <meta name="theme-color" content="#8B4513" />
   <meta property="og:title" content="Kavi's Dry Fruits | Premium Dry Fruits, Nuts & Gift Boxes" />
   <meta property="og:description" content="Premium dry fruits, nuts, dates, seeds, spices and festive gift boxes delivered with trusted quality across Tamil Nadu and India." />
-  <meta property="og:image" content="https://kavisdryfruits.com/og-image.jpg" />
+  <meta property="og:image" content="https://kavisdryfruits.com/Kavi_logo.png" />
   <meta property="og:url" content="https://kavisdryfruits.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Kavi's Dry Fruits" />
@@ -58,7 +18,7 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Kavi's Dry Fruits | Premium Dry Fruits Store" />
   <meta name="twitter:description" content="Buy premium dry fruits, nuts, dates and gift boxes with Pan India delivery." />
-  <meta name="twitter:image" content="https://kavisdryfruits.com/og-image.jpg" />
+  <meta name="twitter:image" content="https://kavisdryfruits.com/Kavi_logo.png" />
   <link rel="canonical" href="https://kavisdryfruits.com/" />
   <link rel="icon" type="image/png" href="/Kavi_logo.png" />
   <link rel="preconnect" href="https://fonts.gstatic.com" />
@@ -72,14 +32,22 @@
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <main>
+      <h1>Kavi's Dry Fruits | Premium Dry Fruits, Nuts & Gift Boxes</h1>
+      <p>Shop carefully packed almonds, cashews, pistachios, dates, seeds and dry fruit gift boxes, delivered across Tamil Nadu and India.</p>
+      <p>Based in Tirupattur, Tamil Nadu. <a href="/shop/">Browse the shop</a> or <a href="/contactus/">contact us</a>.</p>
+    </main>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+      "@type": "GroceryStore",
+      "@id": "https://kavisdryfruits.com/#business",
       "name": "Kavi's Dry Fruits",
       "image": "https://kavisdryfruits.com/Kavi_logo.png",
+      "logo": "https://kavisdryfruits.com/Kavi_logo.png",
       "telephone": "+91 94895 93504",
       "email": "kavisdryfruits@gmail.com",
       "address": {
@@ -92,12 +60,15 @@
       },
       "url": "https://kavisdryfruits.com/",
       "priceRange": "$$",
-      "areaServed": "IN",
-      "description": "Premium dry fruits, nuts, dates, seeds, spices, combo packs and gift boxes with Pan India and Tamil Nadu delivery.",
+      "areaServed": [
+        { "@type": "AdministrativeArea", "name": "Tamil Nadu" },
+        { "@type": "Country", "name": "India" }
+      ],
+      "description": "Premium dry fruits, nuts, dates, seeds, spices, combo packs and gift boxes. Delivery across Tamil Nadu and India.",
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": "12.4944",
-        "longitude": "78.5680"
+        "latitude": 12.4944,
+        "longitude": 78.568
       }
     }
   </script>

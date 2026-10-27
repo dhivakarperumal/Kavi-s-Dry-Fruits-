@@ -18,10 +18,6 @@ export default defineConfig({
           'vendor-ui': ['react-icons', 'react-hot-toast', 'react-helmet-async'],
           'vendor-utils': ['aos', 'slick-carousel', 'react-slick', 'browser-image-compression'],
           
-          // Route chunks for better lazy loading
-          'shop': ['./src/Shop/Shop.jsx', './src/Shop/SingleProductView.jsx', './src/Shop/Checkout.jsx'],
-          'admin': ['./src/Admin/AdminPanel.jsx', './src/Admin/Dashboard.jsx'],
-          'home': ['./src/Home/Home.jsx', './src/Home/Hero.jsx', './src/Home/PopularProduct.jsx'],
         }
       }
     },
@@ -56,4 +52,3 @@ export default defineConfig({
     ]
   }
 });
-

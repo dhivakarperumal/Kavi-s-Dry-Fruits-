@@ -29,6 +29,7 @@ const reviewRoutes = require('./src/routers/reviewRoutes');
 const contactFormRoutes = require('./src/routers/contactFormRoutes');
 const bannerRoutes = require('./src/routers/bannerRoutes');
 const pushRoutes = require('./src/routers/pushRoutes');
+const instagramRoutes = require('./src/routers/instagramRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -51,7 +52,11 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1y',
+  immutable: true,
+  etag: true,
+}));
 app.use('/uploads', (req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 
@@ -92,6 +97,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact-form', contactFormRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/instagram', instagramRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {

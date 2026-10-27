@@ -5,18 +5,16 @@ const DEFAULTS = {
   title: "Kavi's Dry Fruits | Premium Dry Fruits, Nuts, Seeds & Gift Boxes",
   description:
     "Buy premium dry fruits, almonds, cashews, pistachios, dates, raisins, seeds, spices and gift boxes with Pan India delivery from Kavi's Dry Fruits.",
-  keywords:
-    "dry fruits online, premium dry fruits, almonds, cashews, pistachios, dates, raisins, gift boxes, healthy snacks, Kavi's Dry Fruits",
   canonical: "https://kavisdryfruits.com/",
-  image: "https://kavisdryfruits.com/og-image.jpg",
+  image: "https://kavisdryfruits.com/Kavi_logo.png",
 };
 
 const SEO = ({
   title,
   description,
-  keywords,
   canonical,
   image,
+  robots = "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
   type = "website",
   author = "Kavi's Dry Fruits",
   siteName = "Kavi's Dry Fruits",
@@ -24,7 +22,6 @@ const SEO = ({
 }) => {
   const t = title || DEFAULTS.title;
   const d = description || DEFAULTS.description;
-  const k = keywords || DEFAULTS.keywords;
   const c = canonical || DEFAULTS.canonical;
   const img = image || DEFAULTS.image;
 
@@ -32,8 +29,7 @@ const SEO = ({
     <Helmet>
       <title>{t}</title>
       <meta name="description" content={d} />
-      <meta name="keywords" content={k} />
-      <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+      <meta name="robots" content={robots} />
       <meta name="author" content={author} />
       <meta name="theme-color" content="#8B4513" />
       <meta name="language" content="English" />
@@ -55,8 +51,6 @@ const SEO = ({
       <meta name="twitter:title" content={t} />
       <meta name="twitter:description" content={d} />
       <meta name="twitter:image" content={img} />
-      <meta name="twitter:site" content="@kavisdryfruits" />
-      <meta name="twitter:creator" content="@kavisdryfruits" />
     </Helmet>
   );
 };

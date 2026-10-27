@@ -6,7 +6,6 @@ import "slick-carousel/slick/slick-theme.css";
 
 import { FaChevronRight, FaChevronLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { useStore } from "../Context/StoreContext";
 
 const PrevArrow = (props) => {
@@ -60,22 +59,6 @@ const Category = () => {
   return (
     <section className="relative bg-white py-12 overflow-hidden">
 
-    <Helmet>
-  <title>Buy Premium Dry Fruits Online – Almonds, Cashews, Pistachios & Raisins</title>
-
-  <meta
-    name="description"
-    content="Shop premium quality dry fruits including almonds, cashews, pista, raisins, and walnuts. Fresh and crunchy dry fruits delivered across India."
-  />
-
-  <meta
-    name="keywords"
-    content="almonds online, cashews online, pista online, raisins online, walnuts online, buy dry fruits near me"
-  />
-
-  <link rel="canonical" href="https://kavisdryfruits.com/dry-fruits" />
-</Helmet>
-
       {/* Background image (left corner) */}
       <img
         src='https://kavisdryfruits.com/images/offer-side-bg1.png'
@@ -110,6 +93,10 @@ const Category = () => {
                     }
                     alt={item.name}
                     className="w-[120px] h-[120px] object-contain mb-2 transition duration-500"
+                    width="120"
+                    height="120"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
 

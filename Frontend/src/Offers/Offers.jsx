@@ -175,33 +175,17 @@ const Offers = () => {
   return (
     <section className="bg-green4 overflow-hidden">
     <Helmet>
-  <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
+  <title>Dry Fruit Offers & Deals | Kavi's Dry Fruits</title>
 
   <meta
     name="description"
-    content="Buy premium dry fruits, nuts, seeds, raisins, dates and combo packs at best prices. Fresh quality delivered across Tamil Nadu and India. Contact +91 94895 93504. Tirupattur 635653."
+    content="Browse current offers on premium dry fruits, nuts and gift combos from Kavi's Dry Fruits, with delivery across Tamil Nadu and India."
   />
 
-  <meta
-    name="keywords"
-    content="
-      dry fruits shop, buy dry fruits online, almonds online, cashews online, pistachios online, dates online, raisins online, premium dry fruits store,
-      fresh dry fruits Tirupattur, Tirupattur dry fruits, dry fruits 635653, dry fruits Tamil Nadu,
-      dry fruits Chennai, dry fruits Coimbatore, dry fruits Madurai, dry fruits Vellore, dry fruits Salem,
-      dry fruits Krishnagiri, dry fruits Dharmapuri, dry fruits Erode, dry fruits Tirunelveli,
-      dry fruits Kanyakumari, dry fruits Tiruvannamalai, dry fruits Namakkal, dry fruits Trichy,
-      dry fruits Thanjavur, dry fruits Cuddalore, dry fruits Dindigul, dry fruits Kanchipuram,
-      buy nuts online India, premium nuts store, healthy snacks online, organic dry fruits,
-      big size cashews W180, premium almonds, roasted pistachios, family pack dry fruits,
-      dry fruits combo pack, Tamil Nadu pincode delivery, dry fruits shop phone number +91 94895 93504
-    "
-  />
-
-  <link rel="canonical" href="https://kavisdryfruits.com/shop" />
-
-  <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits Tirupattur" />
-  <meta property="og:description" content="Premium almonds, cashews, pista, dates & seeds delivered across Tamil Nadu & India. Contact +91 94895 93504." />
-  <meta property="og:url" content="https://kavisdryfruits.com/shop" />
+  <link rel="canonical" href="https://kavisdryfruits.com/offers/" />
+  <meta property="og:title" content="Dry Fruit Offers & Deals | Kavi's Dry Fruits" />
+  <meta property="og:description" content="Browse current dry fruit offers and combo deals, delivered across Tamil Nadu and India." />
+  <meta property="og:url" content="https://kavisdryfruits.com/offers/" />
   <meta property="og:type" content="website" />
 </Helmet>
 

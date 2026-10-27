@@ -12,7 +12,6 @@ import { toast } from "react-hot-toast";
 import LodingPage from "../Component/LoadingPage";
 import { ProductSkeletonGrid } from "../Component/SkeletonLoader";
 import ProductCard from "../Component/ProductCard";
-import { Helmet } from "react-helmet-async";
 import OptimizedImage from "../Component/OptimizedImage";
 import { parseWeightToGrams } from "../utils/stockUtils";
 
@@ -172,28 +171,6 @@ const Shop = () => {
 
   return (
     <section className="bg-green4">
-     <Helmet>
-  <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits</title>
-
-  <meta
-    name="description"
-    content="Explore and shop premium dry fruits, nuts, dates, raisins, seeds, combos and more. High quality, fresh and healthy products delivered Pan India."
-  />
-
-  <meta
-    name="keywords"
-    content="dry fruits shop, buy nuts online, dates online, pistachios online, almonds online, cashews online, premium dry fruits store"
-  />
-
-  <link rel="canonical" href="https://kavisdryfruits.com/shop" />
-
-  <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits" />
-  <meta property="og:description" content="Buy premium almonds, cashews, pista, raisins, dates & seeds with fast delivery." />
-  <meta property="og:url" content="https://kavisdryfruits.com/shop" />
-  <meta property="og:type" content="website" />
-</Helmet>
-
-
       <PageHeader title="Shop" curpage="Shop" />
 
       <div className="text-center mt-6">

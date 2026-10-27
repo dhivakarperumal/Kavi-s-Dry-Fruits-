@@ -31,6 +31,7 @@ const upload = multer({
 });
 
 router.get('/', comboController.getCombos);
+router.get('/:id', comboController.getComboById);
 router.post('/', upload.array('images', 20), comboController.addCombo);
 router.post('/:id/review', reviewController.addReview);
 router.put('/:id', upload.array('images', 20), comboController.updateCombo);

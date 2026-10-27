@@ -15,6 +15,7 @@ const ProductCard = React.memo(({
   addToCart,
   addToFav,
   favItems = [],
+  priority = false,
 }) => {
   const isFavorite = favItems.some(item => String(item.productId) === String(product.id));
   const stock = Number(product.stock ?? product.totalStock ?? 0);
@@ -96,7 +97,10 @@ const ProductCard = React.memo(({
             className="w-full h-full flex items-center justify-center p-5 rounded-md"
             imageClassName="transition-transform duration-500 group-hover:scale-110"
             objectFit="contain"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            width={400}
+            height={400}
           />
         </Link>
         {isOutOfStock && (
@@ -164,7 +168,8 @@ const ProductCard = React.memo(({
     prevProps.product.stock === nextProps.product.stock &&
     prevProps.product.totalStock === nextProps.product.totalStock &&
     prevProps.product.rating === nextProps.product.rating &&
-    prevProps.favItems?.length === nextProps.favItems?.length
+    prevProps.favItems?.length === nextProps.favItems?.length &&
+    prevProps.priority === nextProps.priority
   );
 });
 

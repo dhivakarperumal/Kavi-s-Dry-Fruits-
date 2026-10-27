@@ -1,0 +1,48 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build frontend loading fixes",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Lint changed image and detail files",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/Context/StoreContext.jsx",
+				"Frontend/src/utils/catalog.js",
+				"Frontend/src/utils/imageOptimization.js",
+				"Frontend/src/Component/OptimizedImage.jsx",
+				"Frontend/src/Component/ProductCard.jsx",
+				"Frontend/src/Home/Home.jsx",
+				"Frontend/src/Home/Category.jsx",
+				"Frontend/src/Home/PopularProduct.jsx",
+				"Frontend/src/Shop/SingleProductView.jsx",
+				"Frontend/src/Shop/RelatedProducts.jsx",
+				"Frontend/src/Combos/SingleComboProduct.jsx",
+				"Frontend/src/services/dataPreloadService.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

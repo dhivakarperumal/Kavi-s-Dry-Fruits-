@@ -1,39 +1,47 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
-import { createHashRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { HelmetProvider } from "react-helmet-async";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 import App from "./App.jsx";
 import "./index.css";
-import Home from "./Home/Home.jsx";
-import Shop from "./Shop/Shop.jsx";
-import SingleProductView from "./Shop/SingleProductView.jsx";
-import Login from "./Auth/Login.jsx";
-import Register from "./Auth/Register.jsx";
-import AddToCart from "./Shop/AddToCart.jsx";
 import { StoreProvider } from "./Context/StoreContext.jsx";
-import AddToFav from "./Shop/AddToFav.jsx";
-import Checkout from "./Shop/Checkout.jsx";
 import PrivateRouter from "./PrivateRouter/PrivateRouter.jsx";
 import { AuthProvider } from "./PrivateRouter/AuthContext.jsx";
-import Orders from "./Shop/Orders.jsx";
 import ErrorPage from "./Component/ErrorPage.jsx";
-import Account from "./MyAccount/Account.jsx";
-import Categorys from "./Categorys/Categorys.jsx";
-import Contac_Us from "./Contact Us/Contac_Us.jsx";
-import About_Us from "./About Us/About_Us.jsx";
-import Return_Policy from "./Return Policy/Return_Policy.jsx";
-import Privacy_Policy from "./Privacy Policy/Privacy_Policy.jsx";
-import Combos from "./Combos/Combos.jsx";
-import Offers from "./Offers/Offers.jsx";
-import SingleComboProduct from "./Combos/SingleComboProduct.jsx";
-import Adminpanel from "./Admin/AdminPanel.jsx";
 import { Toaster } from "react-hot-toast";
-import ViewInvoice from "./Admin/ViewInvoice.jsx";
-import OrderDetail from "./Admin/Orders/OrdersDetails.jsx";
-import OrderTracking from "./Shop/OrderTracking.jsx";
-import HealthBenefits from "./Health Benefits/HealthBenefits.jsx";
 import { AdminNotificationProvider } from "./Context/AdminNotificationProvider.jsx";
+import NoIndex from "./Component/NoIndex.jsx";
+import LoadingPage from "./Component/LoadingPage.jsx";
+
+const Home = lazy(() => import("./Home/Home.jsx"));
+const Shop = lazy(() => import("./Shop/Shop.jsx"));
+const SingleProductView = lazy(() => import("./Shop/SingleProductView.jsx"));
+const Login = lazy(() => import("./Auth/Login.jsx"));
+const Register = lazy(() => import("./Auth/Register.jsx"));
+const AddToCart = lazy(() => import("./Shop/AddToCart.jsx"));
+const AddToFav = lazy(() => import("./Shop/AddToFav.jsx"));
+const Checkout = lazy(() => import("./Shop/Checkout.jsx"));
+const Orders = lazy(() => import("./Shop/Orders.jsx"));
+const Account = lazy(() => import("./MyAccount/Account.jsx"));
+const Categorys = lazy(() => import("./Categorys/Categorys.jsx"));
+const Contac_Us = lazy(() => import("./Contact Us/Contac_Us.jsx"));
+const About_Us = lazy(() => import("./About Us/About_Us.jsx"));
+const Return_Policy = lazy(() => import("./Return Policy/Return_Policy.jsx"));
+const Privacy_Policy = lazy(() => import("./Privacy Policy/Privacy_Policy.jsx"));
+const Combos = lazy(() => import("./Combos/Combos.jsx"));
+const Offers = lazy(() => import("./Offers/Offers.jsx"));
+const SingleComboProduct = lazy(() => import("./Combos/SingleComboProduct.jsx"));
+const OrderTracking = lazy(() => import("./Shop/OrderTracking.jsx"));
+const HealthBenefits = lazy(() => import("./Health Benefits/HealthBenefits.jsx"));
+const Adminpanel = lazy(() => import("./Admin/AdminPanel.jsx"));
+const ViewInvoice = lazy(() => import("./Admin/ViewInvoice.jsx"));
+const OrderDetail = lazy(() => import("./Admin/Orders/OrdersDetails.jsx"));
+const withLoading = (Page) => (
+  <Suspense fallback={<LoadingPage />}>
+    <Page />
+  </Suspense>
+);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js").catch((error) => {
@@ -41,31 +49,35 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-const router = createHashRouter([
+if (window.location.hash.startsWith("#/")) {
+  window.history.replaceState(null, "", window.location.hash.slice(1));
+}
+
+const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     errorElement: <ErrorPage />,
     children: [
-      { path: "/", element: <Home /> },
-      { path: "/shop", element: <Shop /> },
-      { path: "/shop/:id", element: <SingleProductView /> },
-      { path: "/category/:categoryName", element: <Categorys /> },
-      { path: "/contactus", element: <Contac_Us /> },
-      { path: "/aboutus", element: <About_Us /> },
-      { path: "/healthbenefits", element: <HealthBenefits /> },
-      { path: "/return-policy", element: <Return_Policy /> },
-      { path: "/privacy-policy", element: <Privacy_Policy /> },
-      { path: "/combos", element: <Combos /> },
-      { path: "/combos/:id", element: <SingleComboProduct /> },
-      { path: "/offers", element: <Offers /> },
-      { path: "orders/:uid/:orderId", element: <OrderDetail /> },
+      { path: "/", element: withLoading(Home) },
+      { path: "/shop", element: withLoading(Shop) },
+      { path: "/shop/:id", element: withLoading(SingleProductView) },
+      { path: "/category/:categoryName", element: withLoading(Categorys) },
+      { path: "/contactus", element: withLoading(Contac_Us) },
+      { path: "/aboutus", element: withLoading(About_Us) },
+      { path: "/healthbenefits", element: withLoading(HealthBenefits) },
+      { path: "/return-policy", element: withLoading(Return_Policy) },
+      { path: "/privacy-policy", element: withLoading(Privacy_Policy) },
+      { path: "/combos", element: withLoading(Combos) },
+      { path: "/combos/:id", element: withLoading(SingleComboProduct) },
+      { path: "/offers", element: withLoading(Offers) },
+      { path: "orders/:uid/:orderId", element: withLoading(OrderDetail) },
 
       {
         path: "/account",
         element: (
           <PrivateRouter>
-            <Account />
+            {withLoading(Account)}
           </PrivateRouter>
         ),
       },
@@ -73,7 +85,7 @@ const router = createHashRouter([
         path: "/addtocart",
         element: (
           <PrivateRouter>
-            <AddToCart />
+            {withLoading(AddToCart)}
           </PrivateRouter>
         ),
       },
@@ -81,7 +93,7 @@ const router = createHashRouter([
         path: "/addtofav",
         element: (
           <PrivateRouter>
-            <AddToFav />
+            {withLoading(AddToFav)}
           </PrivateRouter>
         ),
       },
@@ -89,7 +101,7 @@ const router = createHashRouter([
         path: "/checkout",
         element: (
           <PrivateRouter>
-            <Checkout />
+            {withLoading(Checkout)}
           </PrivateRouter>
         ),
       },
@@ -97,7 +109,7 @@ const router = createHashRouter([
         path: "/orders",
         element: (
           <PrivateRouter>
-            <Orders />
+            {withLoading(Orders)}
           </PrivateRouter>
         ),
       },
@@ -105,7 +117,7 @@ const router = createHashRouter([
         path: "/tracking/:orderId",
         element: (
           <PrivateRouter>
-            <OrderTracking />
+            {withLoading(OrderTracking)}
           </PrivateRouter>
         ),
       },
@@ -115,9 +127,11 @@ const router = createHashRouter([
   {
     path: "/adminpanel/*",
     element: (
-      <PrivateRouter allowedRoles={["admin"]}>
-        <Adminpanel />
-      </PrivateRouter>
+      <NoIndex>
+        <PrivateRouter allowedRoles={["admin"]}>
+          {withLoading(Adminpanel)}
+        </PrivateRouter>
+      </NoIndex>
     )
   },
 
@@ -125,14 +139,16 @@ const router = createHashRouter([
   {
     path: "/admin/invoice",
     element: (
-      <PrivateRouter allowedRoles={["admin"]}>
-        <ViewInvoice />
-      </PrivateRouter>
+      <NoIndex>
+        <PrivateRouter allowedRoles={["admin"]}>
+          {withLoading(ViewInvoice)}
+        </PrivateRouter>
+      </NoIndex>
     )
   },
 
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
+  { path: "/login", element: <NoIndex>{withLoading(Login)}</NoIndex> },
+  { path: "/register", element: <NoIndex>{withLoading(Register)}</NoIndex> },
   // { path: "/admin/invoice", element: <ViewInvoice /> },
   
 ]);

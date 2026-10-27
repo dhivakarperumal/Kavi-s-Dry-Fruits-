@@ -1,25 +1,4 @@
 User-agent: *
 Allow: /
 
-# Indexable public pages
-Disallow: /admin
-Disallow: /adminpanel
-Disallow: /dashboard
-Disallow: /login
-Disallow: /register
-
-# Allow assets that help render the storefront
-Allow: /*.js$
-Allow: /*.css$
-Allow: /*.png$
-Allow: /*.jpg$
-Allow: /*.jpeg$
-Allow: /*.webp$
-Allow: /*.svg$
-
-# Sitemap
 Sitemap: https://kavisdryfruits.com/sitemap.xml
-
-# Business info
-# Contact: +91 94895 93504
-# Location: Tirupattur, Tamil Nadu 635653

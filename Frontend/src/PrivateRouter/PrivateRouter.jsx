@@ -11,7 +11,6 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = String(user.role || "").toLowerCase();
   const hasAllowedRole = allowedRoles.some(
     (allowedRole) => String(allowedRole).toLowerCase() === userRole
   );

@@ -3,9 +3,9 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 import { toast } from "react-hot-toast";
 import dataPreloadService from "../services/dataPreloadService";
-import imagePreloadManager from "../services/imagePreloadManager";
 import api from "../services/api";
-import { parseWeightToGrams, formatStockDisplay, isProductOutOfStock, isSameProduct, getProductCartUsage } from "../utils/stockUtils";
+import { parseWeightToGrams, formatStockDisplay, isSameProduct, getProductCartUsage } from "../utils/stockUtils";
+import { normalizeCategory, normalizeCombo, normalizeProduct } from "../utils/catalog";
 
 const StoreContext = createContext();
 
@@ -62,135 +62,37 @@ export const StoreProvider = ({ children }) => {
       try {
         // Try to get from cache first
         let data = await dataPreloadService.preloadProducts(async () => {
-          const [prodRes, comboRes, catRes] = await Promise.all([
-            api.get("/products"),
-            api.get("/combos"),
-            api.get("/categories"),
+          const results = await Promise.allSettled([
+            api.get("/products", { timeout: 8000 }),
+            api.get("/combos", { timeout: 8000 }),
+            api.get("/categories", { timeout: 8000 }),
           ]);
+          const [productsResult, combosResult, categoriesResult] = results;
+          if (productsResult.status === "rejected") console.error("Product catalog request failed:", productsResult.reason);
+          if (combosResult.status === "rejected") console.error("Combo catalog request failed:", combosResult.reason);
+          if (categoriesResult.status === "rejected") console.error("Category catalog request failed:", categoriesResult.reason);
+          if (productsResult.status === "rejected" && combosResult.status === "rejected") {
+            throw productsResult.reason;
+          }
 
-          const rawProducts = prodRes.data || [];
-          const rawCombos = comboRes.data || [];
-          const rawCategories = catRes.data || [];
-          
-          // Map MySQL categories
-          const mappedCategories = rawCategories.map(c => {
-            let images = {};
-            try {
-              const parsed = typeof c.cimgs === 'string' ? JSON.parse(c.cimgs || '{}') : (c.cimgs || {});
-              if (Array.isArray(parsed)) {
-                images = {
-                  default: parsed[0] || "",
-                  hover: parsed[1] || parsed[0] || ""
-                };
-              } else {
-                images = {
-                  default: parsed.default || "",
-                  hover: parsed.hover || parsed.default || ""
-                };
-              }
-            } catch (e) {
-              console.warn(`Failed to parse images for category ${c.cname}:`, e);
-            }
-            return {
-              ...c,
-              name: c.cname,
-              images
-            };
-          });
+          const rawProducts = productsResult.status === "fulfilled" && Array.isArray(productsResult.value.data)
+            ? productsResult.value.data
+            : [];
+          const rawCombos = combosResult.status === "fulfilled" && Array.isArray(combosResult.value.data)
+            ? combosResult.value.data
+            : [];
+          const rawCategories = categoriesResult.status === "fulfilled" && Array.isArray(categoriesResult.value.data)
+            ? categoriesResult.value.data
+            : [];
 
-          // Map MySQL products to Frontend schema
-          const mappedProducts = rawProducts.map(p => {
-            const variants = typeof p.variants === 'string' ? JSON.parse(p.variants || '[]') : (p.variants || []);
-            const prices = {};
-            const weights = [];
-            
-            variants.forEach(v => {
-              prices[v.weight] = {
-                mrp: Number(v.mrp),
-                offerPrice: Number(v.offerPrice)
-              };
-              weights.push(v.weight);
-            });
-
-            return {
-              ...p,
-              type: 'single',
-              prices,
-              weights,
-              category: p.category || "General",
-              image: (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []))[0] || "",
-              imageUrl: (typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []))[0] || "",
-              images: typeof p.images === 'string' ? JSON.parse(p.images || '[]') : (p.images || []),
-              health_benefits: typeof p.healthBenefits === 'string' ? JSON.parse(p.healthBenefits || '[]') : (p.healthBenefits || []),
-              tags: typeof p.tags === 'string' ? JSON.parse(p.tags || '[]') : (p.tags || []),
-              rating: Number(p.rating || 4.5),
-              stock: Number(p.totalStock || 0),
-              isOutOfStock: isProductOutOfStock({ ...p, stock: Number(p.totalStock || 0), weights, type: 'single' })
-            };
-          });
-
-          // Map MySQL combos to Frontend schema
-          const mappedCombos = rawCombos.map(c => {
-            const details = typeof c.comboDetails === 'string' ? JSON.parse(c.comboDetails || '{}') : (c.comboDetails || {});
-            const items = typeof c.comboItems === 'string' ? JSON.parse(c.comboItems || '[]') : (c.comboItems || []);
-            
-            // Price fallback chain: direct DB columns → comboDetails → 0
-            const offerPrice = Number(c.offerPrice || c.price || details.offerPrice || details.mrp || 0);
-            const mrp = Number(c.mrp || details.mrp || offerPrice || 0);
-            // Weight fallback: direct field → sum of items → 'Combo'
-            let weight = String(details.totalWeight || c.totalWeight || '');
-            if (!weight || weight === '0' || weight === 'Combo') {
-              const calculatedWeight = items.reduce((sum, item) => {
-                const wStr = String(item.weight || "").toLowerCase();
-                let w = parseFloat(wStr) || 0;
-                if (wStr.includes("kg") || wStr.includes("k")) w *= 1000;
-                return sum + w;
-              }, 0);
-              weight = calculatedWeight > 0 ? String(calculatedWeight) : 'Combo';
-            }
-            const stock = Number(c.totalStock ?? c.stock ?? 0);
-
-            return {
-              ...c,
-              id: c.id,  
-              type: 'combo',
-              category: 'Combo',
-              price: offerPrice,
-              offerPrice,
-              mrp,
-              stock,
-              isOutOfStock: stock <= 0,
-              image: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
-              imageUrl: (typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []))[0] || "",
-              combos: items, // Rename for frontend compatibility
-              comboItems: items,
-              comboDetails: details,
-              prices: { [weight]: { mrp, offerPrice } },
-              weights: [weight],
-              images: typeof c.images === 'string' ? JSON.parse(c.images || '[]') : (c.images || []),
-              health_benefits: typeof c.healthBenefits === 'string' ? JSON.parse(c.healthBenefits || '[]') : (c.healthBenefits || []),
-              tags: typeof c.tags === 'string' ? JSON.parse(c.tags || '[]') : (c.tags || []),
-              rating: Number(c.rating || 4.8)
-            };
-          });
-
-          return { products: [...mappedProducts, ...mappedCombos], categories: mappedCategories };
+          return {
+            products: [...rawProducts.map(normalizeProduct), ...rawCombos.map(normalizeCombo)],
+            categories: rawCategories.map(normalizeCategory),
+          };
         });
 
         setAllProducts(data.products || []);
         setAllCategories(data.categories || []);
-
-        // Preload critical images for homepage safely
-        try {
-          if (data.products && data.products.length > 0 && imagePreloadManager?.preloadHomepageImages) {
-            const topProducts = data.products.slice(0, 12);
-            imagePreloadManager.preloadHomepageImages(topProducts).catch(err => 
-              console.warn('Image preload error:', err)
-            );
-          }
-        } catch (imgErr) {
-          console.warn('Image preload non-critical error:', imgErr);
-        }
       } catch (err) {
         const isNetworkIssue = !err?.response && !!err?.message && /network|timeout|connection|failed/i.test(err.message);
 

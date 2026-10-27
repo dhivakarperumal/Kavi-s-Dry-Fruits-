@@ -5,10 +5,8 @@ const DEFAULTS = {
   title: "Kavi's Dry Fruits | Premium Dry Fruits, Nuts, Seeds & Gift Boxes",
   description:
     "Buy premium dry fruits, almonds, cashews, pistachios, dates, raisins, seeds & gift boxes. Pan India delivery from Kavi's Dry Fruits.",
-  keywords:
-    "dry fruits online, premium dry fruits, almonds, cashews, pista, dates, raisins, gift boxes, healthy snacks",
   canonical: "https://kavisdryfruits.com/",
-  image: "https://www.kavisdryfruits.com/og-image.jpg",
+  image: "https://kavisdryfruits.com/Kavi_logo.png",
 };
 
 /**
@@ -18,7 +16,6 @@ const DEFAULTS = {
 const EnhancedSEO = ({ 
   title, 
   description, 
-  keywords, 
   canonical, 
   image,
   productData = null,
@@ -27,7 +24,6 @@ const EnhancedSEO = ({
 }) => {
   const t = title || DEFAULTS.title;
   const d = description || DEFAULTS.description;
-  const k = keywords || DEFAULTS.keywords;
   const c = canonical || DEFAULTS.canonical;
   const img = image || DEFAULTS.image;
 
@@ -35,11 +31,12 @@ const EnhancedSEO = ({
   const orgData = organizationData || {
     name: "Kavi's Dry Fruits",
     url: "https://kavisdryfruits.com",
-    logo: "https://www.kavisdryfruits.com/logo.png",
+    logo: "https://kavisdryfruits.com/Kavi_logo.png",
     description: "Premium dry fruits, nuts, seeds and gift boxes from Tirupattur, Tamil Nadu",
     address: {
-      streetAddress: "Tirupattur",
+      streetAddress: "No.58, Vaitheeshwaran Nagar",
       addressLocality: "Tirupattur",
+      addressRegion: "Tamil Nadu",
       postalCode: "635653",
       addressCountry: "IN"
     },
@@ -47,24 +44,18 @@ const EnhancedSEO = ({
       telephone: "+91-94895-93504",
       contactType: "Sales"
     },
-    sameAs: [
-      "https://www.facebook.com/kavisdryfruits",
-      "https://www.instagram.com/kavisdryfruits",
-      "https://www.twitter.com/kavisdryfruits"
+    areaServed: [
+      { "@type": "AdministrativeArea", name: "Tamil Nadu" },
+      { "@type": "Country", name: "India" }
     ]
   };
 
   // Generate breadcrumb schema
   const getBreadcrumbSchema = () => {
-    const items = breadcrumbs || [
-      { name: "Home", url: "https://kavisdryfruits.com" },
-      { name: "Shop", url: "https://kavisdryfruits.com/shop" }
-    ];
-
     return {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
-      itemListElement: items.map((item, index) => ({
+      itemListElement: (breadcrumbs || []).map((item, index) => ({
         "@type": "ListItem",
         position: index + 1,
         name: item.name,
@@ -76,6 +67,9 @@ const EnhancedSEO = ({
   // Generate product schema if product data provided
   const getProductSchema = () => {
     if (!productData) return null;
+    const price = Number(productData.price);
+    const rating = productData.rating;
+    const ratingCount = Number(rating?.count);
 
     return {
       "@context": "https://schema.org",
@@ -87,17 +81,17 @@ const EnhancedSEO = ({
         "@type": "Brand",
         name: "Kavi's Dry Fruits"
       },
-      offers: {
+      offers: price > 0 ? {
         "@type": "Offer",
         url: productData.url || c,
         priceCurrency: "INR",
-        price: productData.price || "0",
-        availability: "InStock"
-      },
-      aggregateRating: productData.rating ? {
+        price,
+        availability: productData.availability || "https://schema.org/InStock"
+      } : undefined,
+      aggregateRating: Number.isFinite(ratingCount) && ratingCount > 0 ? {
         "@type": "AggregateRating",
-        ratingValue: productData.rating.value || "4.5",
-        ratingCount: productData.rating.count || "100"
+        ratingValue: rating.value,
+        ratingCount
       } : undefined
     };
   };
@@ -106,7 +100,8 @@ const EnhancedSEO = ({
   const getOrganizationSchema = () => {
     return {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+      "@type": "GroceryStore",
+      "@id": "https://kavisdryfruits.com/#business",
       name: orgData.name,
       url: orgData.url,
       logo: orgData.logo,
@@ -115,6 +110,7 @@ const EnhancedSEO = ({
         "@type": "PostalAddress",
         streetAddress: orgData.address.streetAddress,
         addressLocality: orgData.address.addressLocality,
+        addressRegion: orgData.address.addressRegion,
         postalCode: orgData.address.postalCode,
         addressCountry: orgData.address.addressCountry
       },
@@ -123,7 +119,8 @@ const EnhancedSEO = ({
         telephone: orgData.contactPoint.telephone,
         contactType: orgData.contactPoint.contactType
       },
-      sameAs: orgData.sameAs
+      telephone: orgData.contactPoint.telephone,
+      areaServed: orgData.areaServed
     };
   };
 
@@ -132,7 +129,6 @@ const EnhancedSEO = ({
       {/* Basic Meta Tags */}
       <title>{t}</title>
       <meta name="description" content={d} />
-      <meta name="keywords" content={k} />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta name="language" content="English" />
       <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
@@ -157,8 +153,6 @@ const EnhancedSEO = ({
       <meta name="twitter:title" content={t} />
       <meta name="twitter:description" content={d} />
       <meta name="twitter:image" content={img} />
-      <meta name="twitter:site" content="@kavisdryfruits" />
-      <meta name="twitter:creator" content="@kavisdryfruits" />
 
       {/* Additional SEO Meta Tags */}
       <meta name="author" content="Kavi's Dry Fruits" />
@@ -177,9 +171,7 @@ const EnhancedSEO = ({
         {JSON.stringify(getOrganizationSchema())}
       </script>
 
-      <script type="application/ld+json">
-        {JSON.stringify(getBreadcrumbSchema())}
-      </script>
+      {breadcrumbs && <script type="application/ld+json">{JSON.stringify(getBreadcrumbSchema())}</script>}
 
       {productData && (
         <script type="application/ld+json">

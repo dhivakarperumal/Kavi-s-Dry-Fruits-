@@ -1,0 +1,9 @@
+Options -MultiViews
+RewriteEngine On
+DirectoryIndex index.html
+
+# Let Apache serve existing assets and files, and route application paths to Vite's entry point.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^ index.html [L]

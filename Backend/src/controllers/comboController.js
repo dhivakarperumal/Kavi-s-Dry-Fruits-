@@ -30,6 +30,32 @@ exports.getCombos = async (req, res) => {
   }
 };
 
+exports.getComboById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isNumericId = /^\d+$/.test(id);
+    const [rows] = isNumericId
+      ? await db.query('SELECT * FROM combos WHERE id = ? LIMIT 1', [id])
+      : await db.query('SELECT * FROM combos WHERE productId = ? LIMIT 1', [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Combo not found' });
+    }
+
+    const row = rows[0];
+    res.json({
+      ...row,
+      images: parseJson(row.images, []),
+      comboItems: parseJson(row.comboItems, []),
+      healthBenefits: parseJson(row.healthBenefits, []),
+      comboDetails: parseJson(row.comboDetails, {}),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.addCombo = async (req, res) => {
   const connection = await db.getConnection();
   try {
