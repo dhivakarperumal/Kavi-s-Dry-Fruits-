@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const comboController = require('../controllers/comboController');
 const reviewController = require('../controllers/reviewController');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 const {
   MAX_COMBO_IMAGES,
   MAX_COMBO_IMAGE_SIZE_BYTES,
@@ -32,10 +33,10 @@ const upload = multer({
 
 router.get('/', comboController.getCombos);
 router.get('/:id', comboController.getComboById);
-router.post('/', upload.array('images', 20), comboController.addCombo);
+router.post('/', authenticate, requireAdmin, upload.array('images', 20), comboController.addCombo);
 router.post('/:id/review', reviewController.addReview);
-router.put('/:id', upload.array('images', 20), comboController.updateCombo);
-router.delete('/:id', comboController.deleteCombo);
+router.put('/:id', authenticate, requireAdmin, upload.array('images', 20), comboController.updateCombo);
+router.delete('/:id', authenticate, requireAdmin, comboController.deleteCombo);
 
 router.use((error, _req, res, next) => {
   if (error instanceof multer.MulterError) {

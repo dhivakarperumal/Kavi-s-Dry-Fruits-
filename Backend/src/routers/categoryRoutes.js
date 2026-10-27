@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const categoryController = require('../controllers/categoryController');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const categoryUploadDir = path.join(__dirname, '../../uploads/categories');
 fs.mkdirSync(categoryUploadDir, { recursive: true });
@@ -41,8 +42,8 @@ const upload = multer({
 });
 
 router.get('/', categoryController.getCategories);
-router.post('/', upload.array('images', 10), categoryController.addCategory);
-router.put('/:id', upload.array('images', 10), categoryController.updateCategory);
-router.delete('/:id', categoryController.deleteCategory);
+router.post('/', authenticate, requireAdmin, upload.array('images', 10), categoryController.addCategory);
+router.put('/:id', authenticate, requireAdmin, upload.array('images', 10), categoryController.updateCategory);
+router.delete('/:id', authenticate, requireAdmin, categoryController.deleteCategory);
 
 module.exports = router;

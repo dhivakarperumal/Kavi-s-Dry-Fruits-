@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import App from "./App.jsx";
@@ -49,11 +49,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-if (window.location.hash.startsWith("#/")) {
-  window.history.replaceState(null, "", window.location.hash.slice(1));
-}
-
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,

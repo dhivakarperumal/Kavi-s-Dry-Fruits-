@@ -23,7 +23,7 @@ This is the backend server for both KaviDryFruits e-commerce platform and MediCa
    ```
 
 3. Set up MySQL database:
-   - Create a database named `medicare_db`
+   - Create a database named `kavisdryfruits_db`
    - Update database credentials in `.env` file if needed
 
 4. Start the development server:
@@ -66,7 +66,7 @@ This is the backend server for both KaviDryFruits e-commerce platform and MediCa
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Create a `Backend/.env` file with the following variables. Use unique, strong secrets and do not commit this file:
 
 ```
 PORT=5000
@@ -74,9 +74,17 @@ NODE_ENV=development
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
-DB_NAME=medicare_db
-JWT_SECRET=your_jwt_secret_key_here
+DB_NAME=kavisdryfruits_db
+JWT_SECRET=generate_a_long_random_secret
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+CLIENT_URL=http://localhost:5173
+INITIAL_ADMIN_EMAIL=admin@example.com
+INITIAL_ADMIN_PASSWORD=use_a_unique_password_with_at_least_12_characters
 ```
+
+`GOOGLE_CLIENT_ID` must match the OAuth client ID configured as `VITE_GOOGLE_CLIENT_ID` in the frontend build environment. The backend verifies Google ID tokens before creating or logging in an account.
+
+The backend does not create an administrator with a default password. To bootstrap an administrator on a new database, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` before starting the API. If the legacy `admin@gmail.com` account still uses the known `admin@123` password, startup disables it unless a replacement `INITIAL_ADMIN_PASSWORD` (at least 12 characters) is configured. Existing plaintext password values are cleared during database initialization; only password hashes are retained.
 
 ### Instagram homepage feed
 

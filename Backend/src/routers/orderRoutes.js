@@ -10,18 +10,24 @@ const {
   updateLocation,
   getOrderLocation
 } = require('../controllers/orderController');
+const {
+  authenticate,
+  requireAdmin,
+  authorizeSelfOrAdmin,
+  authorizeOrderOwner,
+} = require('../middleware/auth');
 const router = express.Router();
 
 // Specific routes MUST come before wildcard /:id routes
-router.get('/user/:userId', getUserOrders);
-router.post('/location/update', updateLocation);
+router.get('/user/:userId', authenticate, authorizeSelfOrAdmin(), getUserOrders);
+router.post('/location/update', authenticate, requireAdmin, updateLocation);
 
-router.get('/', getOrders);
-router.post('/', createOrder);
-router.get('/:id', getOrderById);
-router.put('/:id', updateOrder);
-router.delete('/:id', deleteOrder);
-router.get('/:id/tracking', getOrderTracking);
-router.get('/:id/location', getOrderLocation);
+router.get('/', authenticate, requireAdmin, getOrders);
+router.post('/', authenticate, createOrder);
+router.get('/:id/tracking', authenticate, authorizeOrderOwner, getOrderTracking);
+router.get('/:id/location', authenticate, authorizeOrderOwner, getOrderLocation);
+router.get('/:id', authenticate, authorizeOrderOwner, getOrderById);
+router.put('/:id', authenticate, requireAdmin, updateOrder);
+router.delete('/:id', authenticate, requireAdmin, deleteOrder);
 
 module.exports = router;

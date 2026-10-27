@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const productController = require('../controllers/productController');
 const reviewController = require('../controllers/reviewController');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const productUploadDir = path.join(__dirname, '../../uploads/products');
 fs.mkdirSync(productUploadDir, { recursive: true });
@@ -26,9 +27,9 @@ const upload = multer({
 
 router.get('/', productController.getProducts);
 router.get('/:id', productController.getProductById);
-router.post('/', upload.array('images', 10), productController.addProduct);
+router.post('/', authenticate, requireAdmin, upload.array('images', 10), productController.addProduct);
 router.post('/:id/review', reviewController.addReview);
-router.put('/:id', upload.array('images', 10), productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
+router.put('/:id', authenticate, requireAdmin, upload.array('images', 10), productController.updateProduct);
+router.delete('/:id', authenticate, requireAdmin, productController.deleteProduct);
 
 module.exports = router;

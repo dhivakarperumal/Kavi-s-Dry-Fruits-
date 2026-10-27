@@ -87,6 +87,8 @@ const initializeDatabase = async () => {
   await syncColumns('contact_submissions', tableDefinitions.contact_submissions);
   await syncColumns('admin_push_subscriptions', tableDefinitions.admin_push_subscriptions);
 
+  await promisePool.query('UPDATE users SET password = NULL WHERE password IS NOT NULL');
+
   // UUID Maintenance
   try {
     const [blankRows] = await promisePool.query("SELECT id FROM users WHERE user_id IS NULL OR user_id = ''");
@@ -97,14 +99,63 @@ const initializeDatabase = async () => {
 };
 
 const ensureAdminUser = async () => {
-  const [admins] = await promisePool.query('SELECT id FROM users WHERE email = ?', ['admin@gmail.com']);
-  if (admins.length > 0) return;
-  const passwordHash = await bcrypt.hash('admin@123', 10);
-  await promisePool.query(
-    'INSERT INTO users (user_id, username, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?, ?)',
-    [createUuid(), 'Admin', 'admin@gmail.com', '', passwordHash, 'Admin']
+  const initialAdminEmail = String(process.env.INITIAL_ADMIN_EMAIL || '').trim().toLowerCase();
+  const initialAdminPassword = process.env.INITIAL_ADMIN_PASSWORD || '';
+  const [legacyAdmin] = await promisePool.query(
+    'SELECT id, password_hash FROM users WHERE email = ? LIMIT 1',
+    ['admin@gmail.com']
   );
-  console.log('✓ Default admin user created');
+
+  if (legacyAdmin.length > 0 && legacyAdmin[0].password_hash &&
+      await bcrypt.compare('admin@123', legacyAdmin[0].password_hash)) {
+    if (initialAdminPassword.length < 12) {
+      await promisePool.query(
+        'UPDATE users SET status = ?, password = NULL WHERE id = ?',
+        ['inactive', legacyAdmin[0].id]
+      );
+      console.error('The known default admin credential was disabled. Configure INITIAL_ADMIN_PASSWORD (12+ characters) to restore administrator access.');
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(initialAdminPassword, 10);
+    await promisePool.query(
+      'UPDATE users SET password_hash = ?, password = NULL, role = ?, status = ? WHERE id = ?',
+      [passwordHash, 'Admin', 'active', legacyAdmin[0].id]
+    );
+    console.warn('Replaced the known default admin password using INITIAL_ADMIN_PASSWORD.');
+    return;
+  }
+
+  const [admins] = await promisePool.query(
+    'SELECT id FROM users WHERE LOWER(role) = ? AND LOWER(status) = ? LIMIT 1',
+    ['admin', 'active']
+  );
+  if (admins.length > 0) return;
+
+  if (!initialAdminEmail || initialAdminPassword.length < 12 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(initialAdminEmail)) {
+    console.error('No active administrator account exists. Configure INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD (12+ characters) to bootstrap one.');
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(initialAdminPassword, 10);
+  const [existingUsers] = await promisePool.query(
+    'SELECT id FROM users WHERE email = ? LIMIT 1',
+    [initialAdminEmail]
+  );
+
+  if (existingUsers.length > 0) {
+    await promisePool.query(
+      'UPDATE users SET role = ?, status = ?, password_hash = ?, password = NULL WHERE id = ?',
+      ['Admin', 'active', passwordHash, existingUsers[0].id]
+    );
+  } else {
+    await promisePool.query(
+      'INSERT INTO users (user_id, username, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [createUuid(), 'Administrator', initialAdminEmail, '', passwordHash, 'Admin']
+    );
+  }
+  console.log('Administrator account bootstrapped from environment configuration.');
 };
 
 promisePool.initializeDatabase = initializeDatabase;

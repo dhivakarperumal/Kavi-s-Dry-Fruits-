@@ -92,11 +92,15 @@ const Users = () => {
           toast.error("Name, Email and Role are required");
           return;
         }
+        if (typeof selectedUser.password !== "string" || selectedUser.password.length < 12) {
+          toast.error("Set a password with at least 12 characters.");
+          return;
+        }
         await api.post("/auth/register", {
           firstName: selectedUser.fullName,
           email: selectedUser.email,
           phone: selectedUser.phone,
-          password: selectedUser.password || "user123",
+          password: selectedUser.password,
           role: selectedUser.role || "User"
         });
         toast.success("User added successfully!");
@@ -143,10 +147,8 @@ const Users = () => {
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
-  const generatePassword = (name, phone) => {
-    if (!name || !phone) return "kavi" + Math.floor(Math.random() * 1000);
-    const lastTwo = phone.slice(-2);
-    return name.replace(/\s+/g, "").toLowerCase() + lastTwo;
+  const generatePassword = () => {
+    return window.crypto.randomUUID().replace(/-/g, "");
   };
 
   const handleAddUser = () => {
@@ -508,10 +510,10 @@ const Users = () => {
               
               {addMode && (
                 <div className="col-span-1 md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Login Password Phase</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Initial Password (12+ characters)</label>
                   <div className="relative">
-                    <input type="text" value={selectedUser.password} onChange={(e) => setSelectedUser(p => ({ ...p, password: e.target.value }))} className="w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500" placeholder="Set password or generate..." />
-                    <button type="button" onClick={() => setSelectedUser(p => ({ ...p, password: generatePassword(p.fullName, p.phone) }))} className="absolute right-3 top-2.5 h-11 px-5 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-green-200 transition-colors">Auto Generate</button>
+                    <input type="password" autoComplete="new-password" value={selectedUser.password} onChange={(e) => setSelectedUser(p => ({ ...p, password: e.target.value }))} className="w-full bg-gray-50 rounded-[1.25rem] px-6 py-4 outline-none focus:ring-4 focus:ring-green-500/10 focus:bg-white border-2 border-transparent focus:border-green-500" placeholder="Set password or generate..." />
+                    <button type="button" onClick={() => setSelectedUser(p => ({ ...p, password: generatePassword() }))} className="absolute right-3 top-2.5 h-11 px-5 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-green-200 transition-colors">Auto Generate</button>
                   </div>
                 </div>
               )}

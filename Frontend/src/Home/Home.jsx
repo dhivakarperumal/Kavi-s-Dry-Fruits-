@@ -23,7 +23,7 @@ const Home = () => {
         <FestiveGiftPack/> 
         <NewArrived/>
         <ClientsAbout/>        
-        <InstagramFeed/>
+      
         <Subscribe/>
     </div>
   )

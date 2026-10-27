@@ -156,10 +156,10 @@ io.on('connection', (socket) => {
     console.log('No token provided in socket handshake');
   }
   
-  // As a fallback for development/testing, if it's the admin panel we can allow them to join
   socket.on('join-admin', () => {
-    socket.join('admins');
-    console.log(`Socket explicitly joined admins room: ${socket.id}`);
+    if (String(socket.user?.role || '').toLowerCase() === 'admin') {
+      socket.join('admins');
+    }
   });
 
   console.log('A user connected:', socket.id);

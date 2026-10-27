@@ -80,7 +80,7 @@ const createOrder = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const userId = req.body.userId || null;
+    const userId = req.user.userUuid || String(req.user.userId);
     const clientName = req.body.clientName || null;
     const clientPhone = req.body.clientPhone || null;
     const clientGST = req.body.clientGST || null;
@@ -245,7 +245,7 @@ const createOrder = async (req, res) => {
     try {
       const io = req.app.get('io');
       if (io) {
-        io.emit('newOrder', {
+        io.to('admins').emit('newOrder', {
           orderId,
           clientName,
           totalAmount,
@@ -289,7 +289,7 @@ const createOrder = async (req, res) => {
         }
 
         for (const item of lowStockAlerts) {
-          io.emit('lowStockAlert', {
+          io.to('admins').emit('lowStockAlert', {
             productId: item.productId,
             name: item.name,
             remainingStock: Number(item.totalStock || 0),

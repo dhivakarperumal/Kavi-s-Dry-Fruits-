@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { FaEye, FaEyeSlash, FaWhatsapp, FaEnvelope, FaPhone } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import api from "../services/api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -151,6 +150,9 @@ const Login = () => {
         email: loginEmail,
         password: loginPassword,
       });
+      if (!data.token) {
+        throw new Error("The login response did not contain an authentication token.");
+      }
       const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
@@ -161,7 +163,7 @@ const Login = () => {
         email:     data.email,
         role:      normalizedRole,
       };
-      login(userData, data.token || "user-token");
+      login(userData, data.token);
       showMsg("Login successful! Redirecting...", "success");
       setTimeout(() => navigate(normalizedRole === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
@@ -173,15 +175,12 @@ const Login = () => {
   const handleGoogle = async (credentialResponse) => {
     clearMsg();
     try {
-      const decoded = jwtDecode(credentialResponse.credential);
       const { data } = await api.post("/auth/google-login", {
-        firstName: decoded.given_name || decoded.name?.split(" ")[0] || "User",
-        lastName:  decoded.family_name || "",
-        username:  decoded.name || decoded.email?.split("@")[0] || "User",
-        email:     decoded.email,
-        googleId:  decoded.sub,
-        provider:  "google",
+        credential: credentialResponse.credential,
       });
+      if (!data.token) {
+        throw new Error("The login response did not contain an authentication token.");
+      }
       const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
@@ -192,9 +191,9 @@ const Login = () => {
         email:     data.email,
         role:      normalizedRole,
         provider:  data.provider,
-        photoURL:  decoded.picture || "",
+        photoURL:  data.photoURL || "",
       };
-      login(userData, credentialResponse.credential);
+      login(userData, data.token);
       showMsg("Google login successful!", "success");
       setTimeout(() => navigate(data.role?.toLowerCase() === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {

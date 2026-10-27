@@ -1,7 +1,9 @@
 const express = require('express');
 const { getCart, addToCart, updateQuantity, updateWeight, removeCartItem, clearCart } = require('../controllers/cartController');
+const { authenticate, authorizeSelfOrAdmin } = require('../middleware/auth');
 const router = express.Router();
 
+router.use(authenticate, authorizeSelfOrAdmin());
 router.get('/:userId', getCart);
 router.post('/:userId', addToCart);
 router.post('/:userId/update-quantity', updateQuantity);
