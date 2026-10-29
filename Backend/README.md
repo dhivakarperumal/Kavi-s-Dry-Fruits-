@@ -82,7 +82,21 @@ INITIAL_ADMIN_EMAIL=admin@example.com
 INITIAL_ADMIN_PASSWORD=use_a_unique_password_with_at_least_12_characters
 ```
 
-`GOOGLE_CLIENT_ID` must match the OAuth client ID configured as `VITE_GOOGLE_CLIENT_ID` in the frontend build environment. The backend verifies Google ID tokens before creating or logging in an account.
+Set `GOOGLE_CLIENT_ID` in the backend process environment to the same OAuth Web client ID configured as `VITE_GOOGLE_CLIENT_ID` in the frontend build environment. The local `Backend/.env` should use `GOOGLE_CLIENT_ID`; configure it in the production hosting control panel as well, then restart/redeploy the backend. The backend verifies Google ID tokens against that exact audience before creating or logging in an account.
+
+In Google Cloud Console, open that OAuth Web client and add every frontend origin under **Authorized JavaScript origins** (for example, `http://localhost:5173`, `http://127.0.0.1:5173` if used, and `https://kavisdryfruits.com`). Origins must match the browser address exactly, including scheme and port. A Google error saying `Missing required parameter: client_id` means the browser received an older/different frontend build without a client ID; an origin-not-allowed error must be fixed in the OAuth client's origin list and cannot be fixed in application code. A 503 from the production `/api/auth/google-login` endpoint means the deployed API service or proxy is unavailable; deploy the current backend and check the hosting service's logs and health before retrying.
+
+Admin web-push notifications require VAPID credentials on the backend. Generate a key pair from the `Backend` directory with `npx web-push generate-vapid-keys`, then set these variables in the production backend environment:
+
+```
+VAPID_PUBLIC_KEY=generated_public_key
+VAPID_PRIVATE_KEY=generated_private_key
+VAPID_SUBJECT=mailto:admin@kavisdryfruits.com
+```
+
+Keep the private key only in the backend environment; do not commit it or put it in the frontend. Use one stable key pair and do not regenerate it during routine deployments, because existing browser push subscriptions are tied to the public key. Restart the backend after setting the variables. If they are absent, `GET /api/push/public-key` intentionally returns `503 Web Push is not configured`; this disables server push notifications, while in-app notifications continue to work.
+
+During local Vite development on `localhost` or `127.0.0.1`, the frontend uses `http://localhost:5000/api` and `http://localhost:5000` for the API and socket by default, regardless of the production `VITE_API_URL` and `VITE_SOCKET_URL` values. Start the local backend and ensure its MySQL connection is available. Production builds continue using `VITE_API_URL` and `VITE_SOCKET_URL`.
 
 The backend does not create an administrator with a default password. To bootstrap an administrator on a new database, set `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD` before starting the API. If the legacy `admin@gmail.com` account still uses the known `admin@123` password, startup disables it unless a replacement `INITIAL_ADMIN_PASSWORD` (at least 12 characters) is configured. Existing plaintext password values are cleared during database initialization; only password hashes are retained.
 

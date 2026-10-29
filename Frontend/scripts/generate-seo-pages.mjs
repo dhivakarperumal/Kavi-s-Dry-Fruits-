@@ -93,11 +93,20 @@ const writeRoutePage = async (routePath, metadata) => {
 };
 
 try {
-  const [products, combos, categories] = await Promise.all([
-    fetchJson("/products"),
-    fetchJson("/combos"),
-    fetchJson("/categories"),
-  ]);
+  let products = [];
+  let combos = [];
+  let categories = [];
+  try {
+    [products, combos, categories] = await Promise.all([
+      fetchJson("/products"),
+      fetchJson("/combos"),
+      fetchJson("/categories"),
+    ]);
+  } catch (error) {
+    console.warn(`[seo] Could not load live catalog from ${apiUrl}: ${error.message}`);
+    console.warn("[seo] Generating static public metadata pages only.");
+  }
+
   let generated = 0;
   const staticPages = [
     {

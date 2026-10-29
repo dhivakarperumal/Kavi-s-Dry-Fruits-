@@ -60,6 +60,328 @@
 			"isBackground": true,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Check OAuth config safely",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const fs=require('fs'); const parse=p=>Object.fromEntries(fs.readFileSync(p,'utf8').split(/\\r?\\n/).filter(x=>x&&!x.startsWith('#')).map(x=>{const i=x.indexOf('=');return [x.slice(0,i).trim(),x.slice(i+1).trim()]})); const f=parse('Frontend/.env'),b=parse('Backend/.env'); const front=f.VITE_GOOGLE_CLIENT_ID; const back=b.GOOGLE_CLIENT_ID||b.VITE_GOOGLE_CLIENT_ID||'300098164569-qkmatesg46cpagaigi8ismitdlph1eao.apps.googleusercontent.com'; console.log(JSON.stringify({frontendClientConfigured:!!front,backendClientConfigured:!!back,frontendMatchesBackend:front===back,backendDatabaseIsLocal:['localhost','127.0.0.1'].includes(b.DB_HOST),localApiConfigured:f.VITE_API_URL?.includes('localhost:5000')}));"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Compare OAuth IDs safely",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"const fs=require(\"fs\");const parse=p=>Object.fromEntries(fs.readFileSync(p,\"utf8\").split(/\\r?\\n/).filter(x=>x&&!x.startsWith(\"#\")).map(x=>{const i=x.indexOf(\"=\");return [x.slice(0,i).trim(),x.slice(i+1).trim()]}));const f=parse(\"Frontend/.env\"),b=parse(\"Backend/.env\");const front=f.VITE_GOOGLE_CLIENT_ID;const back=b.GOOGLE_CLIENT_ID||b.VITE_GOOGLE_CLIENT_ID||\"300098164569-qkmatesg46cpagaigi8ismitdlph1eao.apps.googleusercontent.com\";console.log(JSON.stringify({frontendClientConfigured:!!front,backendClientConfigured:!!back,frontendMatchesBackend:front===back,backendDatabaseIsLocal:[\"localhost\",\"127.0.0.1\"].includes(b.DB_HOST),localApiConfigured:f.VITE_API_URL?.includes(\"localhost:5000\")}));"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Compare OAuth config securely",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				".oauth-config-check.cjs"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Start local backend server",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Backend",
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Check local API availability",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"fetch(\"http://localhost:5000/\").then(async r=>{console.log(JSON.stringify({status:r.status,body:(await r.text()).slice(0,200)}))}).catch(e=>{console.log(JSON.stringify({error:e.cause?.code||e.message}))})"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Check backend syntax",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--check",
+				"Backend/index.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Check API syntax",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--check",
+				"Backend/src/controllers/authController.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build frontend after Google auth reset",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Lint Google login files",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"src/Auth/Login.jsx",
+				"src/main.jsx",
+				"src/services/api.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Validate backend startup syntax",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--check",
+				"Backend/index.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Validate backend Google auth syntax",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--check",
+				"Backend/src/controllers/authController.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Lint changed auth frontend files",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/Auth/Login.jsx",
+				"Frontend/src/main.jsx",
+				"Frontend/src/services/api.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Lint Google login components",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/Auth/Login.jsx",
+				"Frontend/src/services/api.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Final Google auth frontend build",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Final Google auth lint",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/Auth/Login.jsx",
+				"Frontend/src/Auth/GoogleSignInButton.jsx",
+				"Frontend/src/services/api.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Final backend auth syntax",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"--check",
+				"Backend/src/controllers/authController.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build frontend role fix",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Lint private router fix",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/PrivateRouter/PrivateRouter.jsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build OAuth console fixes",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Lint OAuth button and config",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/Auth/GoogleSignInButton.jsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Lint route-scoped Google provider",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"exec",
+				"--",
+				"eslint",
+				"--config",
+				"Frontend/eslint.config.js",
+				"Frontend/src/main.jsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Build route-scoped Google provider",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"Frontend",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

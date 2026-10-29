@@ -5,6 +5,8 @@ const jwt      = require('jsonwebtoken');
 const db       = require('../config/db');
 const { sendWhatsAppOTP } = require('../config/whatsappService');
 
+const GOOGLE_OAUTH_CLIENT_ID = '1064659078546-t6unqsgn8l1kbattsc314udjc2o2hceu.apps.googleusercontent.com';
+
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
@@ -140,11 +142,10 @@ const login = async (req, res) => {
 
 const googleLogin = async (req, res) => {
   const { credential } = req.body;
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    console.error('GOOGLE_CLIENT_ID is not configured.');
-    return res.status(503).json({ success: false, message: 'Google login is temporarily unavailable.' });
-  }
+  const clientId =
+    process.env.GOOGLE_CLIENT_ID ||
+    process.env.VITE_GOOGLE_CLIENT_ID ||
+    GOOGLE_OAUTH_CLIENT_ID;
   if (typeof credential !== 'string' || !credential.trim()) {
     return res.status(400).json({ success: false, message: 'A Google credential is required.' });
   }
@@ -184,9 +185,10 @@ const googleLogin = async (req, res) => {
     } else {
       const userUuid  = createUuid();
       const defaultRole = 'User';
+      const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
       const [result]  = await db.query(
-        'INSERT INTO users (user_id, username, email, role, provider, google_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [userUuid, username, normalizedEmail, defaultRole, 'google', claims.sub]
+        'INSERT INTO users (user_id, username, email, password_hash, role, provider, google_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [userUuid, username, normalizedEmail, passwordHash, defaultRole, 'google', claims.sub]
       );
       user = {
         id: result.insertId, user_id: userUuid,

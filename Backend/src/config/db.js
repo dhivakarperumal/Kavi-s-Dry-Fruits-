@@ -39,6 +39,7 @@ const initializeDatabase = async () => {
       await promisePool.query(sql);
     } catch (err) {
       console.error(`❌ Error creating table ${tableName}:`, err.message);
+      throw err;
     }
   }
 
@@ -58,7 +59,10 @@ const initializeDatabase = async () => {
           await promisePool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
         }
       }
-    } catch (err) { console.warn(`[Sync-Warn] ${table} sync failed:`, err.message); }
+    } catch (err) {
+      console.error(`[Sync-Error] ${table} schema sync failed:`, err.message);
+      throw err;
+    }
   };
 
   await syncColumns('products', tableDefinitions.products);

@@ -43,10 +43,22 @@ const withLoading = (Page) => (
   </Suspense>
 );
 
+const googleClientId =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() ||
+  "300098164569-qkmatesg46cpagaigi8ismitdlph1eao.apps.googleusercontent.com";
+
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js").catch((error) => {
-    console.warn("Service worker registration failed:", error);
-  });
+  if (import.meta.env.DEV) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => registration.unregister());
+    }).catch((error) => {
+      console.warn("Unable to unregister the development service worker:", error);
+    });
+  } else {
+    navigator.serviceWorker.register("/service-worker.js").catch((error) => {
+      console.warn("Service worker registration failed:", error);
+    });
+  }
 }
 
 const router = createHashRouter([
@@ -143,36 +155,40 @@ const router = createHashRouter([
     )
   },
 
-  { path: "/login", element: <NoIndex>{withLoading(Login)}</NoIndex> },
+  {
+    path: "/login",
+    element: (
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <NoIndex>{withLoading(Login)}</NoIndex>
+      </GoogleOAuthProvider>
+    ),
+  },
   { path: "/register", element: <NoIndex>{withLoading(Register)}</NoIndex> },
   // { path: "/admin/invoice", element: <ViewInvoice /> },
   
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <HelmetProvider>
-      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-        <AuthProvider>
-          <StoreProvider>
-            <AdminNotificationProvider>
-              <RouterProvider router={router} />
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  style: {
-                    background: "#333",
-                    color: "#fff",
-                    borderRadius: "10px",
-                    fontSize: "14px",
-                  },
-                  duration: 2000,
-                }}
-              />
-            </AdminNotificationProvider>
-          </StoreProvider>
-        </AuthProvider>
-      </GoogleOAuthProvider>
-    </HelmetProvider>
-  </React.StrictMode>
+  // Google Identity Services is global and StrictMode replays its initialization effect in development.
+  <HelmetProvider>
+    <AuthProvider>
+      <StoreProvider>
+        <AdminNotificationProvider>
+          <RouterProvider router={router} />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: "#333",
+                color: "#fff",
+                borderRadius: "10px",
+                fontSize: "14px",
+              },
+              duration: 2000,
+            }}
+          />
+        </AdminNotificationProvider>
+      </StoreProvider>
+    </AuthProvider>
+  </HelmetProvider>
 );
