@@ -3,10 +3,10 @@ const { getFavorites, addToFavorites, removeFavoriteItem, clearWishlist } = requ
 const { authenticate, authorizeSelfOrAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-router.use(authenticate, authorizeSelfOrAdmin());
-router.get('/:userId', getFavorites);
-router.post('/:userId', addToFavorites);
-router.delete('/:userId/:productId', removeFavoriteItem);
-router.delete('/:userId', clearWishlist);
+router.use(authenticate);
+router.get('/:userId', authorizeSelfOrAdmin(), getFavorites);
+router.post('/:userId', authorizeSelfOrAdmin(), addToFavorites);
+router.delete('/:userId/:productId', authorizeSelfOrAdmin(), removeFavoriteItem);
+router.delete('/:userId', authorizeSelfOrAdmin(), clearWishlist);
 
 module.exports = router;

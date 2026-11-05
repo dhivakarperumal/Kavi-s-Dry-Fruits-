@@ -2,7 +2,7 @@ Options -MultiViews
 RewriteEngine On
 DirectoryIndex index.html
 
-# Let Apache serve existing assets and files, and route application paths to Vite's entry point.
+# Let Apache serve existing assets and files. Hash-based routes stay on index.html.
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
