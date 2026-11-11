@@ -8,7 +8,13 @@ import { toast } from "react-hot-toast";
 import { Helmet } from "react-helmet-async";
 import LodingPage from "../Component/LoadingPage";
 import api from "../services/api";
-import { isLowStock, formatStockDisplay, getProductCartUsage } from "../utils/stockUtils";
+import { isLowStock, getProductCartUsage } from "../utils/stockUtils";
+import { normalizeCombo } from "../utils/catalog";
+
+const getMetaDescription = (value) => {
+  const description = String(value || "").replace(/\s+/g, " ").trim();
+  return description.length > 155 ? `${description.slice(0, 152).trimEnd()}...` : description;
+};
 
 const SingleComboProduct = () => {
   const { id } = useParams();
@@ -16,6 +22,9 @@ const SingleComboProduct = () => {
   const { allProducts, addToCart, addToFav, loadingProducts, cartItems } = useStore();
 
   const [product, setProduct] = useState(null);
+  const [productLoading, setProductLoading] = useState(true);
+  const [productLoadError, setProductLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [selectedImage, setSelectedImage] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [reviewInput, setReviewInput] = useState({ user: "", comment: "" });
@@ -35,38 +44,76 @@ const SingleComboProduct = () => {
 
 
   useEffect(() => {
-    if (!id || !allProducts.length) return;
-
-    // Direct find in preloaded store
-    const selected = allProducts.find(
-      (p) => 
-        (p.id === id || p.productId === id || p.id === parseInt(id)) &&
-        (p.category === "Combo" || p.type === "combo")
+    if (!id) return;
+    const selected = allProducts.find((item) =>
+      (String(item.id) === String(id) || String(item.productId) === String(id)) &&
+      (item.category === "Combo" || item.type === "combo")
     );
 
     if (selected) {
       setProduct(selected);
       setSelectedImage(selected.images?.[0] || "");
       setQuantity(1);
-    } else {
-      const existsAsProduct = allProducts.find(p => String(p.id) === String(id) || p.productId === id);
-      if (existsAsProduct) {
-        navigate(`/shop/${existsAsProduct.id}`, { replace: true });
-        return;
-      }
-      setProduct(null);
+      setProductLoading(false);
+      setProductLoadError(false);
+      return;
     }
-    window.scrollTo(0, 0);
-  }, [id, allProducts]);
 
-  if (loadingProducts) {
+    const existsAsProduct = allProducts.find((item) =>
+      String(item.id) === String(id) || String(item.productId) === String(id)
+    );
+    if (existsAsProduct) {
+      navigate(`/shop/${existsAsProduct.id}`, { replace: true });
+      return;
+    }
+
+    let active = true;
+    setProduct(null);
+    setProductLoading(true);
+    setProductLoadError(false);
+    window.scrollTo(0, 0);
+
+    api.get(`/combos/${encodeURIComponent(id)}`, { timeout: 8000 })
+      .then(({ data }) => {
+        if (!active) return;
+        const fetchedCombo = normalizeCombo(data);
+        setProduct(fetchedCombo);
+        setSelectedImage(fetchedCombo.images?.[0] || "");
+        setQuantity(1);
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error?.response?.status !== 404) {
+          console.error("Combo detail request failed:", error);
+          setProductLoadError(true);
+        }
+      })
+      .finally(() => {
+        if (active) setProductLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, allProducts, navigate, retryCount]);
+
+  if (productLoading || (!product && loadingProducts)) {
     return <LodingPage />;
   }
 
   if (!product) {
     return (
-      <div className="text-center mt-10 text-red-600 font-semibold">
-        Combo product not found.
+      <div className="text-center mt-10 mb-16 font-semibold">
+        <p className="text-red-600">{productLoadError ? "Unable to load this combo right now." : "Combo product not found."}</p>
+        {productLoadError && (
+          <button
+            type="button"
+            className="mt-4 rounded bg-green1 px-4 py-2 text-white"
+            onClick={() => setRetryCount((count) => count + 1)}
+          >
+            Try again
+          </button>
+        )}
       </div>
     );
   }
@@ -79,8 +126,10 @@ const SingleComboProduct = () => {
   const comboStock = Number(product.stock ?? product.totalStock ?? 0);
   const isOutOfStock = comboStock <= 0;
   const lowStock = !isOutOfStock && isLowStock(comboStock, true);
+  const metaDescription = getMetaDescription(
+    `Buy ${product.name}, a premium dry fruit combo from Kavi's Dry Fruits. ${product.description || "Carefully selected, packed and delivered across Tamil Nadu and India."}`
+  );
   const cartUsage = getProductCartUsage(cartItems, product);
-  const remainingUnits = Math.max(0, comboStock - cartUsage);
   const canFulfill = !isOutOfStock && (quantity + cartUsage <= comboStock);
 
   // --- Quantity Handlers ---
@@ -163,34 +212,41 @@ const SingleComboProduct = () => {
   return (
     <>
       <Helmet>
-        <title>Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi’s Dry Fruits Tirupattur</title>
+        <title>{product.name} | Dry Fruit Gift Combo | Kavi's Dry Fruits</title>
 
         <meta
           name="description"
-          content="Buy premium dry fruits, nuts, seeds, raisins, dates and combo packs at best prices. Fresh quality delivered across Tamil Nadu and India. Contact +91 94895 93504. Tirupattur 635653."
+          content={metaDescription}
         />
 
-        <meta
-          name="keywords"
-          content="
-      dry fruits shop, buy dry fruits online, almonds online, cashews online, pistachios online, dates online, raisins online, premium dry fruits store,
-      fresh dry fruits Tirupattur, Tirupattur dry fruits, dry fruits 635653, dry fruits Tamil Nadu,
-      dry fruits Chennai, dry fruits Coimbatore, dry fruits Madurai, dry fruits Vellore, dry fruits Salem,
-      dry fruits Krishnagiri, dry fruits Dharmapuri, dry fruits Erode, dry fruits Tirunelveli,
-      dry fruits Kanyakumari, dry fruits Tiruvannamalai, dry fruits Namakkal, dry fruits Trichy,
-      dry fruits Thanjavur, dry fruits Cuddalore, dry fruits Dindigul, dry fruits Kanchipuram,
-      buy nuts online India, premium nuts store, healthy snacks online, organic dry fruits,
-      big size cashews W180, premium almonds, roasted pistachios, family pack dry fruits,
-      dry fruits combo pack, Tamil Nadu pincode delivery, dry fruits shop phone number +91 94895 93504
-    "
-        />
+        <link rel="canonical" href={`https://kavisdryfruits.com/combos/${product.id}/`} />
 
-        <link rel="canonical" href="https://kavisdryfruits.com/shop" />
-
-        <meta property="og:title" content="Shop Premium Dry Fruits & Nuts – Kavi’s Dry Fruits Tirupattur" />
-        <meta property="og:description" content="Premium almonds, cashews, pista, dates & seeds delivered across Tamil Nadu & India. Contact +91 94895 93504." />
-        <meta property="og:url" content="https://kavisdryfruits.com/shop" />
-        <meta property="og:type" content="website" />
+        <meta property="og:title" content={`${product.name} | Kavi's Dry Fruits`} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={(product.images?.[0] || "https://kavisdryfruits.com/Kavi_logo.png").replace(/^http:\/\/(?:www\.)?kavisdryfruits\.com\//i, "https://kavisdryfruits.com/")} />
+        <meta property="og:url" content={`https://kavisdryfruits.com/combos/${product.id}/`} />
+        <meta property="og:type" content="product" />
+        <meta name="twitter:card" content="summary_large_image" />
+        {offerPrice > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Product",
+              name: product.name,
+              description: product.description || `Premium dry fruit combo from Kavi's Dry Fruits.`,
+              image: product.images?.filter(Boolean).map((image) => image.replace(/^http:\/\/(?:www\.)?kavisdryfruits\.com\//i, "https://kavisdryfruits.com/")),
+              brand: { "@type": "Brand", name: "Kavi's Dry Fruits" },
+              offers: {
+                "@type": "Offer",
+                url: `https://kavisdryfruits.com/combos/${product.id}/`,
+                priceCurrency: "INR",
+                price: offerPrice,
+                availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+                seller: { "@type": "Organization", name: "Kavi's Dry Fruits" },
+              },
+            })}
+          </script>
+        )}
       </Helmet>
 
       <PageHeader title="Product Details" subtitle="Combos" curpage={product.name} />
@@ -220,6 +276,11 @@ const SingleComboProduct = () => {
                   src={selectedImage}
                   alt={product.name}
                   className="w-full h-[26rem] mt-1 md:mt-5 sm:h-[32rem] object-contain rounded-lg bg-white cursor-zoom-in"
+                  width="640"
+                  height="640"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   onMouseEnter={() => setZoomed(true)}
                   onMouseLeave={() => setZoomed(false)}
                   onMouseMove={handleMouseMove}

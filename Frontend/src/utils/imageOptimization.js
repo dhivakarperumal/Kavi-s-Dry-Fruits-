@@ -10,6 +10,13 @@
 
 const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-family="Arial" font-size="16" fill="%23999"%3ELoading image...%3C/text%3E%3C/svg%3E';
 
+export const normalizeImageUrl = (imageUrl) => {
+  if (typeof imageUrl !== 'string') return '';
+  return imageUrl
+    .replace(/^http:\/\/(?:www\.)?kavisdryfruits\.com(?=\/)/i, 'https://kavisdryfruits.com')
+    .replace(/^http:\/\/(?!localhost(?::|\/)|127\.0\.0\.1(?::|\/))/i, 'https://');
+};
+
 /**
  * Get optimized image URL with width parameter for Firebase Storage
  * @param {string} imageUrl - Original Firebase Storage URL
@@ -18,15 +25,16 @@ const DEFAULT_PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/
  */
 export const getOptimizedImageUrl = (imageUrl, width = 400) => {
   if (!imageUrl) return DEFAULT_PLACEHOLDER;
+  const secureImageUrl = normalizeImageUrl(imageUrl);
   
   // Check if it's a Firebase Storage URL
-  if (imageUrl.includes('firebasestorage.googleapis.com')) {
+  if (secureImageUrl.includes('firebasestorage.googleapis.com')) {
     // Add width parameter for image optimization
-    const separator = imageUrl.includes('?') ? '&' : '?';
-    return `${imageUrl}${separator}w=${width}`;
+    const separator = secureImageUrl.includes('?') ? '&' : '?';
+    return `${secureImageUrl}${separator}w=${width}`;
   }
   
-  return imageUrl;
+  return secureImageUrl;
 };
 
 /**
@@ -74,12 +82,15 @@ export const isValidImageUrl = (url) => {
  * @returns {string} Best available URL
  */
 export const getImageWithFallback = (primaryUrl, fallbackUrl = null) => {
-  if (isValidImageUrl(primaryUrl)) {
-    return getOptimizedImageUrl(primaryUrl);
+  const normalizedPrimary = normalizeImageUrl(primaryUrl);
+  const normalizedFallback = normalizeImageUrl(fallbackUrl);
+
+  if (isValidImageUrl(normalizedPrimary)) {
+    return getOptimizedImageUrl(normalizedPrimary);
   }
   
-  if (isValidImageUrl(fallbackUrl)) {
-    return getOptimizedImageUrl(fallbackUrl);
+  if (isValidImageUrl(normalizedFallback)) {
+    return getOptimizedImageUrl(normalizedFallback);
   }
   
   return DEFAULT_PLACEHOLDER;

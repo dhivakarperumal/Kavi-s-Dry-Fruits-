@@ -48,18 +48,6 @@
     const [errors, setErrors] = useState({});
 
 
-    // ---------------- Order ID generation ----------------
-    const generateOrderId = async () => {
-      try {
-        const res = await api.get("/orders");
-        const orderNumber = (res.data?.length || 0) + 1;
-        return `KDF00${String(orderNumber).padStart(3, "0")}`;
-      } catch (err) {
-        console.error("generateOrderId error:", err);
-        return `KDF${Date.now()}`;
-      }
-    };
-
     const userIdToUse = String(
       user?.user_id || 
       user?.userUuid || 
@@ -686,8 +674,6 @@
         throw new Error("Cart is empty.");
       }
 
-      const orderId = await generateOrderId();
-
       const trimmedCartItems = itemsToCheckout.map((item) => {
         const safeImage = item.image || (item.images && item.images[0]) || "";
         const actualProductId = String(item.productId || (item.docId ? item.docId.split("_")[0] : null) || item.id || "");
@@ -705,7 +691,6 @@
       });
 
       const orderData = {
-        orderId,
         userId: userIdToUse,
         clientName: form.fullname,
         clientPhone: form.contact,

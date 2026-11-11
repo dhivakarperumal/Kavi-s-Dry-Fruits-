@@ -1,80 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://kavisdryfruits.com/</loc>
-    <priority>1.0</priority>
-    <changefreq>daily</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/shop</loc>
-    <priority>0.9</priority>
-    <changefreq>daily</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/aboutus</loc>
-    <priority>0.8</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/contactus</loc>
-    <priority>0.8</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/healthbenefits</loc>
-    <priority>0.7</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/combos</loc>
-    <priority>0.8</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/offers</loc>
-    <priority>0.7</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/privacy-policy</loc>
-    <priority>0.5</priority>
-    <changefreq>yearly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/return-policy</loc>
-    <priority>0.5</priority>
-    <changefreq>yearly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/category/dryfruits</loc>
-    <priority>0.8</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/category/nuts</loc>
-    <priority>0.8</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/category/dates</loc>
-    <priority>0.8</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://kavisdryfruits.com/category/seeds</loc>
-    <priority>0.8</priority>
-    <changefreq>weekly</changefreq>
-  </url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://kavisdryfruits.com/</loc></url>
+  <url><loc>https://kavisdryfruits.com/shop/</loc></url>
+  <url><loc>https://kavisdryfruits.com/aboutus/</loc></url>
+  <url><loc>https://kavisdryfruits.com/contactus/</loc></url>
+  <url><loc>https://kavisdryfruits.com/healthbenefits/</loc></url>
+  <url><loc>https://kavisdryfruits.com/combos/</loc></url>
+  <url><loc>https://kavisdryfruits.com/offers/</loc></url>
+  <url><loc>https://kavisdryfruits.com/privacy-policy/</loc></url>
+  <url><loc>https://kavisdryfruits.com/return-policy/</loc></url>
+  <url><loc>https://kavisdryfruits.com/shop/47/</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/46/</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/45/</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/44/</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/43/</loc><lastmod>2026-09-18</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/39/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/38/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/37/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/36/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/35/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/34/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/33/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/32/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/31/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/30/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/shop/29/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/combos/26/</loc><lastmod>2026-09-29</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/combos/25/</loc><lastmod>2026-09-29</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/combos/24/</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/combos/21/</loc><lastmod>2026-09-22</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/combos/19/</loc><lastmod>2026-09-22</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/category/dates/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/category/dryfruits/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/category/raisins/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/category/seeds/</loc><lastmod>2026-09-16</lastmod></url>
+  <url><loc>https://kavisdryfruits.com/category/nuts/</loc><lastmod>2026-09-16</lastmod></url>
 </urlset>

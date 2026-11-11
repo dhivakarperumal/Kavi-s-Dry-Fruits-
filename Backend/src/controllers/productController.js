@@ -31,6 +31,33 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+exports.getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isNumericId = /^\d+$/.test(id);
+    const [rows] = isNumericId
+      ? await db.query('SELECT * FROM products WHERE id = ? LIMIT 1', [id])
+      : await db.query('SELECT * FROM products WHERE productId = ? LIMIT 1', [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const row = rows[0];
+    res.json({
+      ...row,
+      images: parseJson(row.images, []),
+      variants: parseJson(row.variants, []),
+      healthBenefits: parseJson(row.healthBenefits, []),
+      comboItems: parseJson(row.comboItems, []),
+      comboDetails: parseJson(row.comboDetails, {}),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.addProduct = async (req, res) => {
   try {
     const {

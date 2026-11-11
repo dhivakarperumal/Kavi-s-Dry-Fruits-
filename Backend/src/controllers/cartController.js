@@ -20,10 +20,16 @@ const addToCart = async (req, res) => {
     const finalImage = image || imageUrl;
     
     // Check if exists
-    const [existing] = await db.query('SELECT id, quantity FROM cart WHERE docId = ?', [docId]);
+    const [existing] = await db.query(
+      'SELECT id, quantity FROM cart WHERE docId = ? AND userId = ?',
+      [docId, userId]
+    );
     
     if (existing.length > 0) {
-      await db.query('UPDATE cart SET quantity = ? WHERE docId = ?', [quantity, docId]);
+      await db.query(
+        'UPDATE cart SET quantity = ? WHERE docId = ? AND userId = ?',
+        [quantity, docId, userId]
+      );
       res.json({ message: 'Cart updated' });
     } else {
       await db.query(
@@ -70,8 +76,12 @@ const updateWeight = async (req, res) => {
 
 const updateQuantity = async (req, res) => {
   try {
+    const { userId } = req.params;
     const { docId, quantity } = req.body;
-    await db.query('UPDATE cart SET quantity = ? WHERE docId = ?', [quantity, docId]);
+    await db.query(
+      'UPDATE cart SET quantity = ? WHERE docId = ? AND userId = ?',
+      [quantity, docId, userId]
+    );
     res.json({ message: 'Quantity updated' });
   } catch (error) {
     res.status(500).json({ error: error.message });

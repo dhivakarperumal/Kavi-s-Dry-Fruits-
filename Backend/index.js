@@ -29,9 +29,16 @@ const reviewRoutes = require('./src/routers/reviewRoutes');
 const contactFormRoutes = require('./src/routers/contactFormRoutes');
 const bannerRoutes = require('./src/routers/bannerRoutes');
 const pushRoutes = require('./src/routers/pushRoutes');
+const instagramRoutes = require('./src/routers/instagramRoutes');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
+const allowedClientOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:5173',
+  ...(process.env.NODE_ENV !== 'production'
+    ? ['http://localhost:5173', 'http://127.0.0.1:5173']
+    : []),
+];
 
 const uploadsRoot = path.join(__dirname, 'uploads');
 const requiredUploadDirs = [
@@ -46,12 +53,16 @@ requiredUploadDirs.forEach((dir) => fs.mkdirSync(dir, { recursive: true }));
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: allowedClientOrigins,
   credentials: true
 }));
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1y',
+  immutable: true,
+  etag: true,
+}));
 app.use('/uploads', (req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 
@@ -92,25 +103,12 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact-form', contactFormRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/instagram', instagramRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
   res.send('Welcome to KAVI\'S Dry Fruits API');
 });
-
-// Database Initialization
-(async () => {
-  try {
-    const [rows] = await db.query('SELECT 1');
-    console.log('✓ MySQL Connected Successfully');
-    
-    // Run modular database initialization
-    await initializeDatabase();
-    await ensureAdminUser();
-  } catch (error) {
-    console.error('✗ Unable to initialize database:', error.message);
-  }
-})();
 
 // Start Server
 const http = require('http');
@@ -121,7 +119,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: allowedClientOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }
@@ -150,10 +148,10 @@ io.on('connection', (socket) => {
     console.log('No token provided in socket handshake');
   }
   
-  // As a fallback for development/testing, if it's the admin panel we can allow them to join
   socket.on('join-admin', () => {
-    socket.join('admins');
-    console.log(`Socket explicitly joined admins room: ${socket.id}`);
+    if (String(socket.user?.role || '').toLowerCase() === 'admin') {
+      socket.join('admins');
+    }
   });
 
   console.log('A user connected:', socket.id);
@@ -162,6 +160,23 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await db.query('SELECT 1');
+    console.log('✓ MySQL Connected Successfully');
+    await initializeDatabase();
+    await ensureAdminUser();
+
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('✗ Unable to initialize database; API server was not started:', error.message);
+    await db.end().catch((closeError) => {
+      console.error('Unable to close the database pool:', closeError.message);
+    });
+    process.exitCode = 1;
+  }
+};
+
+startServer();

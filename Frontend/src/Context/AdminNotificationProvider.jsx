@@ -58,8 +58,7 @@ export const AdminNotificationProvider = ({ children }) => {
   const handleNavigate = useCallback((link) => {
     if (!link) return;
     const route = toRoute(link);
-    window.history.pushState(null, "", route);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.location.hash = route;
   }, []);
 
   // Flash the document title if the tab is hidden / in the background

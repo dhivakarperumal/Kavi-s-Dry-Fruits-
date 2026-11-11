@@ -1,10 +1,11 @@
 const db = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, user_id, username as fullName, email, phone, role, password, status, created_at as createdAt FROM users'
+      'SELECT id, user_id, username as fullName, email, phone, role, status, created_at as createdAt FROM users'
     );
     res.json({ success: true, users });
   } catch (error) {
@@ -20,17 +21,27 @@ const updateUser = async (req, res) => {
 
   try {
     let query = 'UPDATE users SET username = ?, email = ?, phone = ?, role = ?';
-    let params = [fullName, email, phone, role];
+    const normalizedRole = String(role || '').trim().toLowerCase();
+    if (!['admin', 'user'].includes(normalizedRole)) {
+      return res.status(400).json({ success: false, message: 'Role must be Admin or User.' });
+    }
+    let params = [fullName, email, phone, normalizedRole === 'admin' ? 'Admin' : 'User'];
 
     if (password) {
-      const passwordHash = await require('bcryptjs').hash(password, 10);
-      query += ', password = ?, password_hash = ?';
-      params.push(password, passwordHash);
+      if (typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+      }
+      const passwordHash = await bcrypt.hash(password, 10);
+      query += ', password = NULL, password_hash = ?';
+      params.push(passwordHash);
     }
     
     if (status) {
+      if (!['active', 'inactive'].includes(String(status).toLowerCase())) {
+        return res.status(400).json({ success: false, message: 'Status must be active or inactive.' });
+      }
       query += ', status = ?';
-      params.push(status);
+      params.push(String(status).toLowerCase());
     }
 
     query += ' WHERE id = ?';
@@ -64,11 +75,6 @@ const getUserProfile = async (req, res) => {
     // Try by UUID first
     let [rows] = await db.query('SELECT user_id, username, email, phone, role FROM users WHERE user_id = ?', [userId]);
     
-    // Fallback: If not found by UUID, try by email (if userId looks like an email)
-    if (rows.length === 0 && userId.includes('@')) {
-      [rows] = await db.query('SELECT user_id, username, email, phone, role FROM users WHERE email = ?', [userId]);
-    }
-
     if (rows.length === 0) return res.status(404).json({ message: 'User not found' });
     res.json(rows[0]);
   } catch (error) {
@@ -92,7 +98,7 @@ const updateProfile = async (req, res) => {
 const deleteProfile = async (req, res) => {
   try {
     const { userId } = req.params;
-    await db.query('UPDATE users SET status = "inactive" WHERE user_id = ? OR email = ?', [userId, userId]);
+    await db.query('UPDATE users SET status = "inactive" WHERE user_id = ?', [userId]);
     res.json({ success: true, message: 'Account marked as inactive' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -105,20 +111,22 @@ const updatePassword = async (req, res) => {
     const { userId } = req.params;
     const { currentPassword, newPassword } = req.body;
 
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return res.status(400).json({ message: 'New password must be at least 8 characters.' });
+    }
+
     const [users] = await db.query('SELECT password_hash FROM users WHERE user_id = ?', [userId]);
     if (users.length === 0) return res.status(404).json({ message: 'User not found' });
 
     const user = users[0];
-    const bcrypt = require('bcryptjs');
-    
-    // Check current password if user has one
-    if (user.password_hash && currentPassword) {
+    if (user.password_hash) {
+      if (!currentPassword) return res.status(400).json({ message: 'Current password is required.' });
       const isValid = await bcrypt.compare(currentPassword, user.password_hash);
       if (!isValid) return res.status(401).json({ message: 'Incorrect current password' });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await db.query('UPDATE users SET password = ?, password_hash = ? WHERE user_id = ?', [newPassword, passwordHash, userId]);
+    await db.query('UPDATE users SET password = NULL, password_hash = ? WHERE user_id = ?', [passwordHash, userId]);
     
     res.json({ message: 'Password updated successfully' });
   } catch (error) {

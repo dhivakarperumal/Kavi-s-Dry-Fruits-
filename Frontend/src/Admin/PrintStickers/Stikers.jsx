@@ -8,6 +8,63 @@ import {
   FaThLarge, FaBars, FaSearch, FaTimes, FaLayerGroup, FaCheck, FaSyncAlt
 } from "react-icons/fa";
 
+const generateBarcodeImage = (value) => {
+  const canvas = document.createElement("canvas");
+  JsBarcode(canvas, value, {
+    format: "CODE128",
+    width: 3,
+    height: 80,
+    displayValue: false,
+    margin: 0,
+  });
+  return canvas.toDataURL("image/png");
+};
+
+const generateBarcodeSvg = (value) => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  JsBarcode(svg, value, {
+    format: "CODE128",
+    width: 3,
+    height: 80,
+    displayValue: false,
+    margin: 0,
+  });
+  svg.setAttribute("class", "barcode-svg");
+  return svg.outerHTML;
+};
+
+const isDataImage = (value) => typeof value === "string" && /^data:image\//i.test(value);
+const isSupportedBarcodeImage = (value) => typeof value === "string" && /^data:image\/(?:png|jpe?g);base64,/i.test(value);
+const getBarcodeValue = (...values) => values.find(
+  (value) => typeof value === "string" && value.trim() && !isDataImage(value.trim())
+)?.trim() || "";
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (character) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+}[character]));
+
+const normalizeSticker = (sticker) => {
+  if (!sticker || typeof sticker !== "object") return sticker;
+
+  const barcode = getBarcodeValue(sticker.barcode, sticker.barcodeValue, sticker.productId) || "MANUAL";
+  const barcodeWasImage = isDataImage(sticker.barcode);
+  let barcodeImg = sticker.barcodeImg;
+
+  if (barcodeWasImage || !isSupportedBarcodeImage(barcodeImg)) {
+    try {
+      barcodeImg = generateBarcodeImage(barcode);
+    } catch (error) {
+      console.error("Failed to repair saved sticker barcode:", error);
+      barcodeImg = "";
+    }
+  }
+
+  return { ...sticker, barcode, barcodeImg };
+};
+
 const Stickers = ({ adminData }) => {
   const [productsList, setProductsList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -19,8 +76,10 @@ const Stickers = ({ adminData }) => {
   const [stickersList, setStickersList] = useState(() => {
     try {
       const saved = localStorage.getItem("kavi_stickers_queue");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.map(normalizeSticker) : [];
+    } catch (error) {
+      console.error("Failed to load saved stickers from localStorage:", error);
       return [];
     }
   });
@@ -73,7 +132,7 @@ const Stickers = ({ adminData }) => {
           id: p.id,
           productId: p.productId || "",
           name: p.name || "",
-          barcode: p.barcode || p.barcodeValue || p.productId || "",
+          barcode: getBarcodeValue(p.barcode, p.barcodeValue, p.productId),
           price: firstVariant.offerPrice || firstVariant.price || "",
           type: "Single Product",
         };
@@ -85,7 +144,7 @@ const Stickers = ({ adminData }) => {
           id: c.id,
           productId: c.productId || "",
           name: c.name || "",
-          barcode: c.barcode || c.barcodeValue || c.productId || "",
+          barcode: getBarcodeValue(c.barcode, c.barcodeValue, c.productId),
           price: details?.offerPrice || details?.price || "",
           type: "Combo Pack",
         };
@@ -113,14 +172,14 @@ const Stickers = ({ adminData }) => {
               id: p.id,
               productId: p.productId || "",
               name: p.name || "",
-              barcode: p.barcode || p.barcodeValue || p.productId || "",
+              barcode: getBarcodeValue(p.barcode, p.barcodeValue, p.productId),
               type: "Single Product",
             })),
             ...combos.map((c) => ({
               id: c.id,
               productId: c.productId || "",
               name: c.name || "",
-              barcode: c.barcode || c.barcodeValue || c.productId || "",
+              barcode: getBarcodeValue(c.barcode, c.barcodeValue, c.productId),
               type: "Combo Pack",
             })),
           ];
@@ -175,7 +234,7 @@ const Stickers = ({ adminData }) => {
         productId: selected.productId || "",
         productName: selected.name || "",
         price: selected.price || prev.price || "",
-        barcode: selected.barcode || selected.barcodeValue || selected.productId || "",
+        barcode: getBarcodeValue(selected.barcode, selected.barcodeValue, selected.productId),
       }));
     }
   };
@@ -242,15 +301,7 @@ const Stickers = ({ adminData }) => {
 
     try {
       // Pre-render high quality barcode image
-      const canvas = document.createElement("canvas");
-      JsBarcode(canvas, barcode, {
-        format: "CODE128",
-        width: 3,
-        height: 80,
-        displayValue: false,
-        margin: 0,
-      });
-      const barcodeImgData = canvas.toDataURL("image/png");
+      const barcodeImgData = generateBarcodeImage(barcode.trim());
 
       if (editingId) {
         // Update existing
@@ -358,142 +409,88 @@ const Stickers = ({ adminData }) => {
     }
 
     setLoading(true);
-
     const iframe = document.createElement("iframe");
-    iframe.id = "print-iframe-" + Date.now();
-    iframe.style.position = "absolute";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
+    iframe.title = title;
+    iframe.style.position = "fixed";
+    iframe.style.width = "1px";
+    iframe.style.height = "1px";
+    iframe.style.left = "-10000px";
     iframe.style.border = "0";
     document.body.appendChild(iframe);
 
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${title}</title>
-          <style>
-            @page { 
-              size: auto; 
-              margin: 4mm; 
-            }
-            * {
-              box-sizing: border-box;
-            }
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              margin: 0; 
-              padding: 2mm; 
-              background: #fff;
-              color: #000;
-            }
-            .sticker-grid {
-              display: grid;
-              grid-template-columns: repeat(10, minmax(0, 1fr));
-              column-gap: 12px;
-              row-gap: 20px;
-              justify-content: center;
-            }
-            .sticker-card {
-              width: 100%;
-              min-width: 0;
-              text-align: center;
-              padding: 0;
-              border: none;
-              border-radius: 0;
-              background: #fff;
-              page-break-inside: avoid;
-            }
-            .product-name {
-              font-size: 8px;
-              font-weight: 800;
-              line-height: 1.1;
-              color: #111;
-              margin-bottom: 2px;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
-            .sku-tag {
-              font-size: 7px;
-              color: #555;
-              font-weight: bold;
-              margin-bottom: 2px;
-              font-family: monospace;
-            }
-            .barcode-img {
-              width: 100%;
-              height: 38px;
-              display: block;
-              object-fit: contain;
-              image-rendering: -webkit-optimize-contrast;
-              image-rendering: crisp-edges;
-            }
-            .price-tag {
-              font-weight: 900;
-              font-size: 11px;
-              margin-top: -2px;
-              line-height: 1;
-              color: #000;
-              white-space: nowrap;
-            }
-            .date-tag {
-              font-size: 10px;
-              color: #111;
-              margin-top: 1px;
-              font-weight: 500;
-              white-space: nowrap;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="sticker-grid">
-    `);
-
-    itemsToPrint.forEach((item) => {
-      const qty = Number(item.printQty) || 1;
-      for (let i = 0; i < qty; i++) {
-        doc.write(`
-          <div class="sticker-card">
-            <img src="${item.barcodeImg}" class="barcode-img" onload="this.setAttribute('loaded', 'true')" />
-            <div class="price-tag">MRP: ₹${item.price}</div>
-            <div class="date-tag">${formatDate(item.packingDate)}</div>
-          </div>
-        `);
-      }
-    });
-
-    doc.write(`
-          </div>
-        </body>
-      </html>
-    `);
-    doc.close();
-
-    const waitForImages = () => {
-      const imgs = doc.querySelectorAll("img");
-      const allLoaded = Array.from(imgs).every((img) => img.getAttribute("loaded") === "true");
-
-      if (allLoaded || imgs.length === 0) {
-        setTimeout(() => {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
-          setLoading(false);
-          toast.success("Printing triggered");
-          setTimeout(() => {
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe);
-            }
-          }, 2000);
-        }, 400);
-      } else {
-        setTimeout(waitForImages, 100);
-      }
+    const cleanup = () => {
+      setLoading(false);
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
     };
 
-    waitForImages();
+    try {
+      const doc = iframe.contentDocument;
+      const printWindow = iframe.contentWindow;
+      if (!doc || !printWindow) throw new Error("Print frame could not be initialized");
+
+      const cards = itemsToPrint.flatMap((item) => {
+        const barcodeValue = getBarcodeValue(item.barcode, item.barcodeValue, item.productId) || "MANUAL";
+        const barcodeSvg = generateBarcodeSvg(barcodeValue);
+
+        const qty = Math.max(1, Number(item.printQty) || 1);
+        return Array.from({ length: qty }, () => `
+          <div class="sticker-card">
+            ${barcodeSvg}
+            <div class="price-tag">MRP: ₹${escapeHtml(item.price)}</div>
+            <div class="date-tag">${escapeHtml(formatDate(item.packingDate))}</div>
+          </div>
+        `);
+      });
+
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>${escapeHtml(title)}</title>
+            <style>
+              @page { size: auto; margin: 4mm; }
+              * { box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 0; padding: 2mm; background: #fff; color: #000;
+              }
+              .sticker-grid {
+                display: grid; grid-template-columns: repeat(10, minmax(0, 1fr));
+                column-gap: 12px; row-gap: 20px; justify-content: center;
+              }
+              .sticker-card {
+                width: 100%; min-width: 0; text-align: center; padding: 0;
+                border: none; border-radius: 0; background: #fff; page-break-inside: avoid;
+              }
+              .barcode-svg {
+                width: 100%; height: 38px; display: block; object-fit: contain;
+                image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;
+              }
+              .price-tag {
+                font-weight: 900; font-size: 11px; margin-top: -2px;
+                line-height: 1; color: #000; white-space: nowrap;
+              }
+              .date-tag {
+                font-size: 10px; color: #111; margin-top: 1px;
+                font-weight: 500; white-space: nowrap;
+              }
+            </style>
+          </head>
+          <body><div class="sticker-grid">${cards.join("")}</div>          </body>
+        </html>
+      `);
+      doc.close();
+      printWindow.addEventListener("afterprint", cleanup, { once: true });
+      setTimeout(cleanup, 30000);
+      printWindow.focus();
+      printWindow.print();
+      toast.success("Printing dialog opened");
+    } catch (error) {
+      console.error("Sticker printing failed:", error);
+      toast.error(error.message || "Unable to prepare stickers for printing.");
+      cleanup();
+    }
   };
 
   // Print All Stickers in Queue

@@ -15,56 +15,45 @@ const routeSEO = {
   "/": {
     title: "Kavi's Dry Fruits | Premium Dry Fruits, Nuts, Seeds & Gift Boxes",
     description:
-      "Buy premium dry fruits, almonds, cashews, pistachios, dates, raisins, seeds, spices and gift boxes with Pan India delivery from Kavi's Dry Fruits.",
-    keywords:
-      "dry fruits online, premium dry fruits, almonds, cashews, pistachios, dates, raisins, gift boxes, healthy snacks, dry fruits Tamil Nadu",
+      "Shop premium almonds, cashews, pistachios, dates, seeds and dry fruit gift boxes from Kavi's Dry Fruits, with delivery across Tamil Nadu and India.",
   },
   "/shop": {
     title: "Shop Premium Dry Fruits, Nuts, Dates & Seeds | Kavi's Dry Fruits",
     description:
-      "Explore premium dry fruits, nuts, seeds, dates, raisins and festive combo boxes with fresh quality and Pan India delivery.",
-    keywords:
-      "dry fruits shop, buy nuts online, dates online, pistachios online, almonds online, cashews online, premium dry fruits store",
+      "Shop premium dry fruits, nuts, seeds, dates, raisins and festive gift boxes, delivered across Tamil Nadu and India.",
   },
   "/aboutus": {
     title: "About Kavi's Dry Fruits | Premium Dry Fruit Store in Tirupattur",
     description:
-      "Learn about Kavi's Dry Fruits, our commitment to premium quality, hygienic packing and trusted dry fruits delivery across Tamil Nadu and India.",
-    keywords: "about Kavi's Dry Fruits, dry fruits store Tirupattur, premium dry fruits brand",
+      "Learn about Kavi's Dry Fruits, based in Tirupattur, Tamil Nadu, and our commitment to quality, hygienic packing and delivery across Tamil Nadu and India.",
   },
   "/contactus": {
     title: "Contact Kavi's Dry Fruits | Dry Fruit Shop in Tirupattur",
     description:
-      "Contact Kavi's Dry Fruits for premium dry fruits, gift boxes, combo packs and delivery support across Tamil Nadu and India.",
-    keywords: "contact dry fruits shop, Kavi's Dry Fruits phone number, Tirupattur dry fruits contact",
+      "Contact Kavi's Dry Fruits in Tirupattur for product enquiries, gift boxes and delivery support across Tamil Nadu and India.",
   },
   "/combos": {
     title: "Combo Dry Fruit Packs & Gift Boxes | Kavi's Dry Fruits",
     description:
       "Discover premium dry fruit combo packs, family gift boxes and festive gift hampers curated for every occasion and celebration.",
-    keywords: "dry fruit combo packs, gift boxes, festival hampers, premium dry fruit gift boxes",
   },
   "/offers": {
     title: "Dry Fruit Offers & Deals | Kavi's Dry Fruits",
     description:
       "Shop the best dry fruit offers, seasonal discounts and fresh combo deals on premium almonds, cashews, dates and seeds.",
-    keywords: "dry fruits offers, discounts, best deals, festive offers on dry fruits",
   },
   "/healthbenefits": {
     title: "Health Benefits of Dry Fruits, Nuts & Seeds | Kavi's Dry Fruits",
     description:
       "Explore the health benefits of almonds, walnuts, dates, seeds, raisins and nuts for better nutrition and healthy snacking.",
-    keywords: "health benefits of dry fruits, almonds benefits, dates benefits, nuts health benefits",
   },
   "/privacy-policy": {
     title: "Privacy Policy | Kavi's Dry Fruits",
     description: "Read the privacy policy of Kavi's Dry Fruits and how we handle customer information and website data.",
-    keywords: "privacy policy, Kavi's Dry Fruits privacy policy",
   },
   "/return-policy": {
     title: "Return Policy | Kavi's Dry Fruits",
-    description: "Review Kavi's Dry Fruits return and refund policy for products, delivery issues and customer support.",
-    keywords: "return policy, dry fruits return policy, refund policy",
+    description: "Review the return and refund terms for Kavi's Dry Fruits orders and learn how to contact customer support.",
   },
 };
 
@@ -82,11 +71,10 @@ const App = () => {
     }
 
     if (pathname.startsWith("/category/")) {
-      const categoryName = pathname.replace("/category/", "").replace(/-/g, " ");
+      const categoryName = pathname.replace("/category/", "").replace(/[-_]/g, " ");
       return {
         title: `${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} | Kavi's Dry Fruits`,
         description: `Shop premium ${categoryName} products including quality dry fruits, nuts and healthy snacks from Kavi's Dry Fruits.`,
-        keywords: `${categoryName}, dry fruits, nuts, premium quality, Kavi's Dry Fruits`,
       };
     }
 
@@ -94,12 +82,13 @@ const App = () => {
       return {
         title: "Premium Dry Fruits Product | Kavi's Dry Fruits",
         description: "Discover fresh, premium dry fruits and nut products with trusted quality, packaging and nationwide delivery.",
-        keywords: "premium dry fruits product, buy dry fruits online, Kavi's Dry Fruits",
       };
     }
 
     return routeSEO["/"];
   }, [location.pathname]);
+  const isPrivatePage = /^\/(admin|adminpanel|dashboard|login|register|account|addtocart|addtofav|checkout|orders|tracking)(\/|$)/i.test(location.pathname);
+  const isProductDetailPage = /^\/(?:shop|combos)\/[^/]+\/?$/i.test(location.pathname);
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 200);
@@ -119,12 +108,14 @@ const App = () => {
 
   return (
     <>
-      <SEO
-        title={currentSeo.title}
-        description={currentSeo.description}
-        keywords={currentSeo.keywords}
-        canonical={`https://kavisdryfruits.com${location.pathname === "/" ? "/" : location.pathname}`}
-      />
+      {!isProductDetailPage && (
+        <SEO
+          title={currentSeo.title}
+          description={currentSeo.description}
+          robots={isPrivatePage ? "noindex, nofollow" : undefined}
+          canonical={`https://kavisdryfruits.com${location.pathname === "/" ? "/" : `${location.pathname.replace(/\/+$/, "")}/`}`}
+        />
+      )}
       <ScrollToTop />
       <Header />
       <Navbar />

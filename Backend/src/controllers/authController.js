@@ -1,8 +1,11 @@
 const bcrypt   = require('bcryptjs');
 const crypto   = require('crypto');
+const axios    = require('axios');
 const jwt      = require('jsonwebtoken');
 const db       = require('../config/db');
 const { sendWhatsAppOTP } = require('../config/whatsappService');
+
+const GOOGLE_OAUTH_CLIENT_ID = '1064659078546-t6unqsgn8l1kbattsc314udjc2o2hceu.apps.googleusercontent.com';
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -42,6 +45,12 @@ const register = async (req, res) => {
       message: 'firstName, email, and password are required.',
     });
   }
+  if (typeof password !== 'string' || password.length < 12) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must be at least 12 characters.',
+    });
+  }
 
   if (typeof password !== 'string' || password.length < 12) {
     return res.status(400).json({
@@ -62,8 +71,8 @@ const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const userUuid     = createUuid();
     const [result]     = await db.query(
-      'INSERT INTO users (user_id, username, email, phone, password_hash, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [userUuid, firstName.trim(), normalizedEmail, normalizedPhone, passwordHash, password, 'User']
+      'INSERT INTO users (user_id, username, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [userUuid, firstName.trim(), normalizedEmail, normalizedPhone, passwordHash, 'User']
     );
     const token = signToken({ id: result.insertId, user_id: userUuid, role: 'User' });
 
@@ -141,13 +150,40 @@ const login = async (req, res) => {
 // ─────────────────────────────────────────────
 
 const googleLogin = async (req, res) => {
-  const { firstName, lastName, username, email, googleId, provider } = req.body;
-
-  if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
+  const { credential } = req.body;
+  const clientId =
+    process.env.GOOGLE_CLIENT_ID ||
+    process.env.VITE_GOOGLE_CLIENT_ID ||
+    GOOGLE_OAUTH_CLIENT_ID;
+  if (typeof credential !== 'string' || !credential.trim()) {
+    return res.status(400).json({ success: false, message: 'A Google credential is required.' });
+  }
 
   try {
-    const normalizedEmail = email.trim().toLowerCase();
-    const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+    const { data: claims } = await axios.get('https://oauth2.googleapis.com/tokeninfo', {
+      params: { id_token: credential },
+      timeout: 5000,
+    });
+    const verifiedEmail = claims.email_verified === true || claims.email_verified === 'true';
+    const validIssuer = ['accounts.google.com', 'https://accounts.google.com'].includes(claims.iss);
+    if (
+      claims.aud !== clientId ||
+      !validIssuer ||
+      !claims.sub ||
+      !claims.exp ||
+      Number(claims.exp) * 1000 <= Date.now() ||
+      !verifiedEmail ||
+      !claims.email
+    ) {
+      return res.status(401).json({ success: false, message: 'Google credential is invalid or expired.' });
+    }
+
+    const normalizedEmail = claims.email.trim().toLowerCase();
+    const username = String(claims.name || claims.given_name || normalizedEmail.split('@')[0]).trim();
+    const [existingUsers] = await db.query(
+      'SELECT id, user_id, username, email, phone, role, provider, status FROM users WHERE email = ? LIMIT 1',
+      [normalizedEmail]
+    );
 
     let user;
     if (existingUsers.length > 0) {
@@ -157,17 +193,16 @@ const googleLogin = async (req, res) => {
       }
     } else {
       const userUuid  = createUuid();
-      const fullName  = `${firstName} ${lastName}`.trim();
-      const isAdminGoogleEmail = normalizedEmail === 'admin@gmail.com';
-      const defaultRole = isAdminGoogleEmail ? 'Admin' : 'User';
+      const defaultRole = 'User';
+      const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
       const [result]  = await db.query(
-        'INSERT INTO users (user_id, username, email, role, provider, google_id) VALUES (?, ?, ?, ?, ?, ?)',
-        [userUuid, fullName || username, normalizedEmail, defaultRole, provider || 'google', googleId]
+        'INSERT INTO users (user_id, username, email, password_hash, role, provider, google_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [userUuid, username, normalizedEmail, passwordHash, defaultRole, 'google', claims.sub]
       );
       user = {
         id: result.insertId, user_id: userUuid,
-        username: fullName || username, email: normalizedEmail,
-        role: defaultRole, provider: provider || 'google', google_id: googleId,
+        username, email: normalizedEmail,
+        role: defaultRole, provider: 'google', google_id: claims.sub,
       };
     }
 
@@ -186,9 +221,13 @@ const googleLogin = async (req, res) => {
       email:     user.email,
       role:      user.role,
       provider:  user.provider,
+      photoURL:  claims.picture || '',
     });
   } catch (error) {
-    console.error('Google login error:', error);
+    if (error.response?.status === 400 || error.response?.status === 401) {
+      return res.status(401).json({ success: false, message: 'Google credential is invalid or expired.' });
+    }
+    console.error('Google login error:', error.message);
     return res.status(500).json({ success: false, message: 'Unable to process Google login.' });
   }
 };

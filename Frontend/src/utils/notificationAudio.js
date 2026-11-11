@@ -108,6 +108,12 @@ export const setNotificationVolume = (volume) => {
  * Synthesizes a given sound preset using Web Audio API
  */
 export const playPresetSound = (presetId = "whatsapp", volume = 0.8) => {
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.userActivation &&
+    !navigator.userActivation.hasBeenActive
+  ) return;
+
   try {
     // If user chose Custom MP3 or uploaded sound
     if (presetId === "custom") {

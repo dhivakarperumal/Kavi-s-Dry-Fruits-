@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { FaEye, FaEyeSlash, FaWhatsapp, FaEnvelope, FaPhone } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import GoogleSignInButton from "./GoogleSignInButton";
 import api from "../services/api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -151,6 +150,9 @@ const Login = () => {
         email: loginEmail,
         password: loginPassword,
       });
+      if (!data.token) {
+        throw new Error("The login response did not contain an authentication token.");
+      }
       const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
@@ -161,7 +163,7 @@ const Login = () => {
         email:     data.email,
         role:      normalizedRole,
       };
-      login(userData, data.token || "user-token");
+      login(userData, data.token);
       showMsg("Login successful! Redirecting...", "success");
       setTimeout(() => navigate(normalizedRole === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
@@ -172,16 +174,20 @@ const Login = () => {
   // ── Google Login ────────────────────────────────────────────────────────────
   const handleGoogle = async (credentialResponse) => {
     clearMsg();
+    if (!credentialResponse?.credential) {
+      showMsg(
+        `Google did not return a sign-in credential. Add ${window.location.origin} to the OAuth client's Authorized JavaScript origins in Google Cloud Console.`
+      );
+      return;
+    }
+
     try {
-      const decoded = jwtDecode(credentialResponse.credential);
       const { data } = await api.post("/auth/google-login", {
-        firstName: decoded.given_name || decoded.name?.split(" ")[0] || "User",
-        lastName:  decoded.family_name || "",
-        username:  decoded.name || decoded.email?.split("@")[0] || "User",
-        email:     decoded.email,
-        googleId:  decoded.sub,
-        provider:  "google",
+        credential: credentialResponse.credential,
       });
+      if (!data.token) {
+        throw new Error("The login response did not contain an authentication token.");
+      }
       const normalizedRole = String(data.role || "user").trim().toLowerCase();
       const userData = {
         userId:    data.userId,
@@ -192,13 +198,26 @@ const Login = () => {
         email:     data.email,
         role:      normalizedRole,
         provider:  data.provider,
-        photoURL:  decoded.picture || "",
+        photoURL:  data.photoURL || "",
       };
-      login(userData, credentialResponse.credential);
+      login(userData, data.token);
       showMsg("Google login successful!", "success");
       setTimeout(() => navigate(data.role?.toLowerCase() === "admin" ? "/adminpanel" : "/"), 1000);
     } catch (err) {
-      showMsg(err.response?.data?.message || "Google login failed.");
+      const isNetworkError = !err.response && (err.code === "ERR_NETWORK" || err.message === "Network Error");
+      const isServiceUnavailable = err.response?.status === 503;
+      showMsg(
+        isServiceUnavailable
+          ? "Google sign-in is unavailable because the API server is not responding. Check the backend service and try again."
+          : err.response?.status === 401
+          ? "Google rejected this sign-in token. Confirm the frontend and backend use the same OAuth client ID, then restart the backend."
+          : err.response?.data?.message ||
+          (isNetworkError
+            ? import.meta.env.DEV
+              ? "Google sign-in reached the browser, but the local API is unavailable. Start the backend server on port 5000 and try again."
+              : "Google sign-in reached the browser, but the login API is unavailable. Please try again later."
+            : "Google login failed.")
+      );
     }
   };
 
@@ -423,14 +442,11 @@ const Login = () => {
               </div>
 
               {/* Google */}
-              <GoogleLogin
+              <GoogleSignInButton
                 onSuccess={handleGoogle}
-                onError={() => showMsg("Google login failed.")}
-                theme="outline"
-                size="large"
-                text="continue_with"
-                shape="rectangular"
-                logo_alignment="center"
+                onError={() => showMsg(
+                  `Google sign-in failed for ${window.location.origin}. In Google Cloud Console, add this exact origin to the OAuth Web client’s Authorized JavaScript origins, then reload the page.`
+                )}
               />
             </>
           )}
