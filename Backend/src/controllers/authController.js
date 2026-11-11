@@ -43,6 +43,13 @@ const register = async (req, res) => {
     });
   }
 
+  if (typeof password !== 'string' || password.length < 12) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must be at least 12 characters.',
+    });
+  }
+
   try {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPhone = typeof phone === 'string' ? phone.trim() : '';
@@ -58,10 +65,12 @@ const register = async (req, res) => {
       'INSERT INTO users (user_id, username, email, phone, password_hash, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [userUuid, firstName.trim(), normalizedEmail, normalizedPhone, passwordHash, password, 'User']
     );
+    const token = signToken({ id: result.insertId, user_id: userUuid, role: 'User' });
 
     return res.status(201).json({
       success: true,
       message: 'Registration successful.',
+      token,
       userId:   result.insertId,
       user_id:  userUuid,
       userUuid,
